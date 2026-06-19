@@ -1,0 +1,817 @@
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+<div class="tab-contents" layout:fragment="content">
+	<div class="location"></div>
+	<div class="search-conditions con-box">
+		<div class="setting-grid" th:data-visible-target='${tabPage}'>
+			<label for="doe088Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe088Warekey" name="doe088Warekey"
+						data-cb-val="combovl" data-cb-name="combonm"
+						data-cb-url="/md/organization/warehouse" data-cb-select=""
+						data-cb-variable="warekeyList">
+					</select>
+				</div>
+			</div>
+			<label for="doe088Btrcate" class="setting-grid-title">[[#{bm.btrpma.btrcate}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe088Btrcate" name="doe088Btrcate"
+						data-cb-val="btrcate" data-cb-name="btrcnam"
+						data-cb-url="/bm/billing/doe079/btrcat" data-cb-select=""
+						data-cb-variable="btrcatList">
+						<option value="">[[#{ms.chooseAll}]]</option>
+					</select>
+				</div>
+			</div>
+			<label class="setting-grid-title ic-title-nece">[[#{bm.btrfhd.fccdate}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-date-group">
+					<input type="date" max="2999-12-31" id="doe088ConfirmdateFrom"
+						onkeyup="setInputDateDel(this)" name="doe088Confirmdate" /> <span>~</span>
+					<input type="date" max="2999-12-31" id="doe088ConfirmdateTo"
+						onkeyup="setInputDateDel(this)" name="doe088Confirmdate" />
+				</div>
+			</div>
+			<label for="doe088Btrpitc" class="setting-grid-title">[[#{bm.btrpma.btrpitc}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe088Itemcod" name="doe088Itemcod"
+						data-cb-val="comcdvl" data-cb-name="comcdvl"
+						data-cb-url="/md/doe014/grid?comcdky=itemcod" data-cb-select=""
+						data-cb-variable="itemcodList">
+						<option value="">[[#{ms.chooseAll}]]</option>
+					</select>
+				</div>
+			</div>
+			<label for="doe088Btrfcbt" class="setting-grid-title">[[#{bm.btrfit.btrfcbt}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe088Btrfcbt" name="doe088Btrfcbt">
+						<option value="">[[#{ms.chooseAll}]]</option>
+					</select>
+				</div>
+			</div>
+			<label for="doe088Btrfpat" class="setting-grid-title">[[#{bm.btrfit.btrfpat}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe088Btrfpat" name="doe088Btrfpat"
+						data-cb-val="combovl" data-cb-name="combonm"
+						data-cb-url="/md/partner/vehicle" data-cb-select=""
+						data-cb-variable="vehickyList">
+						<option value="">[[#{ms.chooseAll}]]</option>
+					</select>
+				</div>
+			</div>
+			<label for="doe088Sbillto" class="setting-grid-title">[[#{bm.btrfit.sbillto}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe088Sbillto" name="doe088Sbillto">
+						<option value="">[[#{ms.chooseAll}]]</option>
+					</select>
+				</div>
+			</div>
+			<label for="doe088Skumkey" class="setting-grid-title">[[#{search.skuCode}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-wrapper">
+					<input type="text" id="doe088Skumkey" name="doe088Skumkey" onkeyup="doe088SearchKeyup()"
+						th:placeholder="${#messages.msg('search.skuCode')}" >
+				</div>
+			</div>
+			<label for="doe088Addsiky" class="setting-grid-title">[[#{bm.baddco.addconm}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe088Addsiky" name="doe088Addsiky" 
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=addsiky" 
+						data-cb-select="" data-cb-variable="addsikyList">
+							<option value="">[[#{ms.chooseAll}]]</option>
+						</select>
+					</div>
+				</div>
+		</div>
+		<div class="search-btn-group">
+			<button type="button" class="btn-search btn-navy btn-green"
+				id="doe088BtnSearch">
+				<img alt="">[[#{bt.search}]]
+			</button>
+			<button type="button" class="btn-clear btn-white" id="doe088BtnReset">
+				<img alt="">[[#{bt.reset}]]
+			</button>
+		</div>
+	</div>
+	<div class="search-list">
+		<div class="list-top" th:data-visible-target='${tabPage}'>
+			<div class="list-title ic-title-mark">
+				<span>[[#{menu.bm.doe088}]]</span>
+			</div>
+			<div class="edit-btn-wrapper">
+				<button class="btn-navy btn-green" id="doe088BtnBilling">
+					<img class="ic-bt-save" alt="">[[#{bm.bt.billStatement}]]
+				</button>
+				<button class="btn-navy btn-green" id="doe088BtnPayment">
+					<img class="ic-bt-save" alt="">[[#{bm.bt.payStatement}]]
+				</button>
+				<button class="btn-white btn-green" id="doe088BillSummary">
+					<img class="ic-bt-save" alt="">실적집계
+				</button>
+			</div>
+		</div>
+		<ul class="nav nav-tabs" id="doe088GridTab">
+			<li class="nav-item"><a class="nav-link active doe088"
+				data-toggle="tab" data-tab-type="before" href="#doe088BeforeClose" id="doe088BeforeTab">[[#{bm.common.transfer}]]</a>
+			</li>
+			<li class="nav-item"><a class="nav-link doe088"
+				data-toggle="tab" data-tab-type="after" href="#doe088AfterClose" id="doe088AfterTab">[[#{bm.common.transport}]]</a>
+			</li>
+		</ul>
+		<div class="tab-content">
+			<div class="list-grid-wrapper con-box tab-pane show active" id="doe088BeforeClose">
+				<div class="search-list">
+					<div class="grid-container">
+						<div id="doe088BeforeGrid"></div>
+					</div>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box tab-pane active" id="doe088AfterClose">
+				<div class="search-list">
+					<div class="grid-container">
+						<div id="doe088AfterGrid"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- 로딩 이미지 -->
+		<div class="spinner" id="spinner">
+		</div>
+	</div>
+	<!-- 청구 명세서 모달 -->
+	<div class="modal fade modalTm" id="doe088BillStatementModal" role="dialog" aria-labelledby="doe088BillStatementModal" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content popup-register modal-con" style="top:120px; display:flex;">
+				<div class="modal-top">
+					<h5 class="box-title" id="doe088BillStatement">[[#{bm.bt.billStatement}]]</h5>
+				</div>
+				<div class="modal-body">
+					<div class="setting-grid">
+						<label for="doe088CustkeyMd" class="setting-grid-title">[[#{search.cunamlc}]]</label>
+						<div class="setting-grid-content">
+							<div class="input-group">
+								<select id="doe088CustkeyMd">
+									<option value="">[[#{ms.chooseAll}]]</option>
+								</select>
+							</div>
+						</div>
+						<label for="doe088BtrfcbtMd" class="setting-grid-title">청구 대상</label>
+						<div class="setting-grid-content">
+							<div class="radio-group" id="doe088BillRadio">
+								<input type="radio" id="doe088BtrfcbtMd" name="doe088BillRadio" value="btrfcbt" checked="checked">
+								<label for="doe088BtrfcbtMd">[[#{bm.btrfit.btrfcbt}]]</label>
+								<input type="radio" id="doe088SbilltoMd" name="doe088BillRadio" value="sbillto">
+								<label for="doe088SbilltoMd">[[#{bm.btrfit.sbillto}]]</label>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-bottom">
+					<button class="btn-white" id="doe088BillStatementMdSave">확인</button>
+					<button class="btn-white" id="doe088BillStatementMdClose">[[#{bt.close}]]</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- 실적집계 모달 -->
+	<div class="modal fade modalTm" id="doe088BillSummaryModal" tabindex="-1" role="dialog" aria-labelledby="doe088VerifySummaryModal" aria-hidden="true">
+		<div class="modal-dialog modal-xl" role="document">
+			<div class="modal-content">
+				<div class="modal-top">
+					<h5 class="box-title" id="doe088BillDaySummarTitle">실적집계</h5>
+				</div>
+				<div class="modal-body">
+					<div class="search-list">
+						<div class="list-top">
+							<div class="list-title ic-title-mark">
+								<span>일별집계</span>
+							</div>
+							<div class="edit-btn-wrapper">
+								<span>※마감 전 정산금이 포함된 집계 내역입니다.</span>
+							</div>
+						</div>
+						<div class="list-grid-wrapper con-box">
+							<div id="doe088DayBillSummaryGrid"></div>
+						</div>
+						<div class="list-top">
+							<div class="list-title ic-title-mark">
+								<span id="doe088Month"></span><span>월 누적집계</span>
+							</div>
+						</div>
+						<div class="list-grid-wrapper con-box">
+							<div id="doe088MonthBillSummaryGrid"></div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-bottom">
+					<button class="btn-white" id="doe088BillSummaryMdClose">[[#{bt.close}]]</button>
+				</div>
+			</div>
+		</div>
+	</div>
+<script>
+!async function(){
+
+	const pageId = `[[${tabPage}]]`;
+
+	const billStatementModalId = document.getElementById(pageId + 'BillStatementModal');
+	//모달 키보드와 마우스로 안닫히게끔 설정
+	const billStatementModal = new bootstrap.Modal(billStatementModalId, {
+		backdrop: 'static',
+		keyboard : false
+	});
+	
+	const billSummaryModalId = document.getElementById(pageId + 'BillSummaryModal');
+	//모달 키보드와 마우스로 안닫히게끔 설정
+	const billSummaryModal = new bootstrap.Modal(billSummaryModalId, {
+		backdrop: 'static',
+		keyboard : false
+	});
+
+	document.querySelector('#doe088BillStatementMdClose').addEventListener('click', function() {
+		billStatementModal.hide();
+		document.activeElement.blur();
+		document.querySelector('#doe088CustkeyMd').selectedIndex = 0;
+		document.querySelectorAll('#doe088BillRadio input[type="radio"]').forEach(function(radio) {
+		    if (radio.value !== 'btrfcbt') {
+				return;
+		    }
+		    radio.checked = true;
+		});
+		$('#doe088CustkeyMd').pqSelect('refreshData');
+	});
+
+	document.querySelectorAll('.nav-item .nav-link').forEach(navLink => {
+	    navLink.addEventListener('click', () => {
+	    	 const targetElement = document.querySelector(`#tabli_${pageId}`);
+	        // 특정 요소의 클래스가 .on 인지 확인
+
+	        if (targetElement?.classList.contains('on')) {
+	            // 선택된 탭을 상수로 저장
+	            const clickedTab = navLink;
+	            // 지연 없이 바로 클래스가 변경되었는지 확인
+	            requestAnimationFrame(() => {
+	                if (clickedTab.classList.contains('active') && clickedTab.classList.contains('show')) {
+	                	const initTabType = clickedTab.getAttribute('data-tab-type');
+	    	            if(initTabType === 'after') {
+		    	            doe088AfterGridObject.getGrid().refresh();
+		    	            return;
+	    	            }
+	    	            doe088BeforeGridObject.getGrid().refresh();
+	                }
+	            });
+	        }
+	    });
+	});
+	
+	//날짜 From to 역전 불가
+	dateValidation(document.querySelector('#' + pageId + 'ConfirmdateFrom'), document.querySelector('#' + pageId + 'ConfirmdateTo'),pageId +'Confirmdate',1,'M');
+	
+	//창고명 변경시 Head Grid, Item Grid empty 
+	document.querySelector('#doe088Warekey').addEventListener('change', () => {
+		getDoe088SearchList();
+	});
+	
+	//조회 버튼 클릭
+	document.querySelector('#doe088BtnSearch').addEventListener('click', function(){
+		getDoe088SearchList();
+	});
+
+	//검색영역 초기화 버튼
+	document.querySelector('#doe088BtnReset').addEventListener('click', function(){
+		const tabType = document.querySelector('.nav-item .nav-link.active[id*="' + pageId + '"]').getAttribute('data-tab-type');
+		const gridObject = tabType === 'after' ? doe088AfterGridObject : doe088BeforeGridObject;
+		makeEmptyGrid(gridObject);
+		document.querySelectorAll(`input[id*="${pageId}"], select[id*="${pageId}"]`).forEach(function(el){
+			if(el.localName === 'select'){
+				el.selectedIndex = 0;
+				if(el.className === 'pq-select'){	//고객명
+					$('#' + el.id).pqSelect('refreshData');
+					return;
+				}
+			}else {
+				if(el.type === 'date' && el.name === 'doe088Confirmdate'){	//input			
+					document.querySelector('#' + el.name + 'From').value = moment().subtract('1','M').format('YYYY-MM-DD');
+					document.querySelector('#' + el.name + 'To').value = moment().format('YYYY-MM-DD');	//한달뒤 set
+					return;
+				}
+				el.value = '';
+			}
+		});
+	});
+
+	document.querySelector('#doe088BtnBilling').addEventListener('click', function() {
+		billStatementModal.show();
+	});
+	
+	document.querySelector('#doe088BillSummary').addEventListener('click', function() {
+		document.querySelector('#doe088Month').insertAdjacentText('afterbegin',moment().format('MM'));
+		billSummaryModal.show();
+	});
+	
+	//shown.bs.modal 시점에 grid open => javacript 미동작
+	$('#doe088BillSummaryModal').on('shown.bs.modal', async function() {
+		doe088DayModalGridObject.open();
+		doe088MonthModalGridObject.open();
+	});
+
+	document.querySelector('#doe088BillSummaryMdClose').addEventListener('click', function() {
+		document.querySelector('#doe088Month').textContent = '';
+		billSummaryModal.hide();
+		document.activeElement.blur();
+	});
+	
+	$('#doe088BillSummaryModal').on('hidden.bs.modal', async function() { 
+		doe088DayModalGridObject.getGrid().destroy();
+		doe088MonthModalGridObject.getGrid().destroy();
+	});
+
+	//모달 켜지기 전에 pqSelect되면 디자인이 깨지기때문에 show된 후 세팅
+	$('#doe088BillStatementModal').on('shown.bs.modal', function (event) {
+    	$('#doe088CustkeyMd').pqSelect({ deselect : false });
+    	$('#doe088CustkeyMd').pqSelect('refreshData');
+    });
+
+	/********** 청구명세서 출력 *************/
+	document.querySelector('#doe088BillStatementMdSave').addEventListener('click', async function() {
+		const tabType = document.querySelector('.nav-item .nav-link.active[id*="' + pageId + '"]').getAttribute('data-tab-type');
+		const tabText = document.querySelector('.nav-item .nav-link.active[id*="' + pageId + '"]').innerText;
+		const report = [];
+		if(!document.querySelector('#doe088CustkeyMd :checked').value){
+			alert('[[#{search.cunamlc}]][[#{bm.doe088.selectValue}]]');
+			$('#doe088CustkeyMd').pqSelect('open');
+			return;
+		}
+
+		const reportObj = {
+				warekey : document.querySelector('#doe088Warekey :checked').value,
+				confirmdatefrom : document.querySelector('#doe088ConfirmdateFrom').value.replace(/-/g,''),
+				confirmdateto : document.querySelector('#doe088ConfirmdateTo').value.replace(/-/g,''),
+				type : pageId + '_1'
+		};
+		//라디오버튼 값에 따라 key값이 btrfcbt or sbillto 동적으로 변경
+		reportObj[document.querySelector('#doe088BillRadio input[name="doe088BillRadio"]:checked').value] = document.querySelector('#doe088CustkeyMd :checked').value;
+		reportObj['doctype'] = tabType ==='after' ? '920' : '910';
+		report.push(reportObj);
+		
+		if(!confirm(tabText +' [[#{bm.bt.billStatement}]][[#{bm.doe088.printConfirm}]]')){
+			return;
+		}
+
+		await reportPrint(report, pageId + '/billing');
+		//출력 status를 못받아오기때문에 iframe이 생성됐는지 확인 후 조회, iframe이 없단건 출력/조회 될 정보가 없단 뜻
+		if(document.querySelector('iframe')){
+			getDoe088SearchList();
+		}
+	});
+
+	/********** 지급명세서 출력 *************/
+	document.querySelector('#doe088BtnPayment').addEventListener('click', async function() {
+		const tabType = document.querySelector('.nav-item .nav-link.active[id*="' + pageId + '"]').getAttribute('data-tab-type');
+		const tabText = document.querySelector('.nav-item .nav-link.active[id*="' + pageId + '"]').innerText;
+		$('#doe088Btrfcbt').pqSelect('refreshData');
+		const report = [];
+
+		if(!document.querySelector('#doe088Btrfpat :checked').value){
+			alert('[[#{bm.btrfit.btrfpat}]][[#{bm.doe088.selectValue}]]');
+			$('#doe088Btrfpat').pqSelect('open');
+			return;
+		}
+		const reportObj = {
+				vehicky : document.querySelector('#doe088Btrfpat :checked').value,
+				warekey : document.querySelector('#doe088Warekey :checked').value,
+				confirmdatefrom : document.querySelector('#doe088ConfirmdateFrom').value.replace(/-/g,''),
+				confirmdateto : document.querySelector('#doe088ConfirmdateTo').value.replace(/-/g,''),
+				type : pageId + '_2'
+		};
+		reportObj['doctype'] = tabType ==='after' ? '920' : '910';
+		report.push(reportObj);
+		if(!confirm(tabText +' [[#{bm.bt.payStatement}]][[#{bm.doe088.printConfirm}]]')){
+			return;
+		}
+
+		await reportPrint(report, pageId + '/payment');
+		getDoe088SearchList();
+	});
+	
+	/********** 이송 tab grid *************/
+	const doe088BeforeGridColModel = [
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true },
+		{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true },
+		{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false, summary: { type : 'max' }},
+		{ title: '[[#{bm.btrfhd.bfhdkey}]]', dataType: 'string', dataIndx: 'bfhdkey', editable: false, hidden: true },
+		{ title: '[[#{tm.common.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+		{ title: '[[#{bm.btrfit.bfhdcit}]]', dataType: 'integer', dataIndx: 'bfhdcit', editable: false, summary: { type : 'count' }},
+		{ title: '[[#{bm.btrfhd.fccdate}]]', dataType: 'string', dataIndx: 'fccdate', editable: false },
+		{ title: '[[#{bm.btrfhd.fcctime}]]', dataType: 'string', dataIndx: 'fcctime', editable: false , hidden: true},
+		{ title: '[[#{bm.btrfhd.fccuser}]]', dataType: 'string', dataIndx: 'fccuser', editable: false , hidden: true},
+		{ title: '[[#{bm.btrfit.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false, hidden: true },
+		{ title: '[[#{bm.btrfit.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false , hidden: true},
+		{ title: '[[#{bm.btrfit.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false, hidden: true },
+		{ title: '[[#{bm.btrfit.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+		{ title: '[[#{bm.btrfit.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+		{ title: '[[#{bm.doe082.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false, summary: { type : 'count' }},
+		{ title: '[[#{bm.doe082.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, format: "#,###.000", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, format: "#,###", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, format: "#,###.0", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, format: "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.doe082.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, format: "#,###", summary : { type : 'max' }},
+		{ title: '[[#{bm.doe082.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editable: false, format: "#,###.0", summary : { type : 'max' }},
+		{ title: '[[#{bm.doe082.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg', editable: false, format: "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.doe086.adcoper}]]', dataType: 'string', dataIndx: 'adcoper', editable: false},
+		{ title: '[[#{bm.doe086.addcnam}]]', dataType: 'string', dataIndx: 'adconam', editable: false},
+		{ title: '[[#{bm.btrfit.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false, hidden: true },
+		{ title: '[[#{bm.doe085.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false ,hidden :true},
+		{ title: '[[#{bm.common.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+		{ title: '[[#{grid.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false ,hidden :true},
+		{ title: '[[#{grid.ownamlc}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+		{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false},	//원본 목적지
+		{ title: '[[#{bm.btrpit.regiorg}]]', dataType: 'string', dataIndx: 'reorgnm', editable: false },
+		{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false},	//변경 목적지
+		{ title: '[[#{bm.btrpit.regimod}]]', dataType: 'string', dataIndx: 'remodnm', editable: false },
+		{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },	//원본 상세착지
+		{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false},	//변경 상세착지
+		{ title: '[[#{grid.demdman}]]', dataType: 'string', dataIndx: 'demdman', editable: false },	//담당자명
+		{ title: '[[#{grid.demdadr}]]', dataType: 'string', dataIndx: 'demdadr', editable: false},	//상세착지 주소
+		{ title: '[[#{grid.dempocd}]]', dataType: 'string', dataIndx: 'dempocd', editable: false },	//우편번호
+		{ title: '[[#{grid.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false},	//담당자 전화번호
+		{ title: '[[#{bm.btrfit.btrfitc}]]', dataType: 'string', dataIndx: 'btrfitc', editable: false },
+		{ title: '[[#{bm.btrfit.btrfigb}]]', dataType: 'string', dataIndx: 'btrfigb', editable: false },
+		{ title: '[[#{bm.btrfit.btrfitn}]]', dataType: 'string', dataIndx: 'btrfitn', editable: false },
+		{ title: '[[#{bm.btrfit.rcvdate}]]', dataType: 'string', dataIndx: 'rcvdate', editable: false},
+		{ title: '[[#{bm.doe082.rcvdcky}]]', dataType: 'string', dataIndx: 'rcvdcky', editable: false , hidden: true },
+		{ title: '[[#{bm.doe082.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+		{ title: '[[#{bm.doe082.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+		{ title: '[[#{bm.doe082.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+		{ title: '[[#{bm.common.payadst}]]', dataType: 'string', dataIndx: 'payadst', editable: false ,hidden : true},
+		{ title: '[[#{bm.btrfit.btrfcbt}]]', dataType: 'string', dataIndx: 'btrfcbt', editable: false,
+			editor: {
+				type: 'select',
+	            init: function (ui) {
+	            	ui.$cell.find('select').pqSelect({ checkbox : true });
+	                setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open');
+		        	}, 250);
+				},
+			    options: []
+			},
+			render : function(ui) {
+				return document.querySelector('#doe088Btrfcbt>option[value="'+ ui.cellData + '"]')?.innerHTML || '';
+			}
+		},
+		{ title: '[[#{bm.btrfit.btrfpat}]]', dataType: 'string', dataIndx: 'btrfpat', editable: false },
+		{ title: '[[#{bm.btrfit.sbillto}]]', dataType: 'string', dataIndx: 'sbillto', editable: false , hidden: true },
+		{ title: '[[#{bm.btrfit.sbillto}]]', dataType: 'string', dataIndx: 'sbillnm', editable: false },
+		{ title: '[[#{bm.btrfma.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+		{ title: '[[#{bm.btrfit.calweig}]]', dataType: 'string', dataIndx: 'calweig', editable: false , hidden: true},
+		{ title: '[[#{bm.btrfit.calweig}]]', dataType: 'string', dataIndx: 'calwgnm', editable: false },	//계산중량명 ex)gross중량 , net중량
+		{ title: '[[#{bm.btrfit.btrfky1}]]', dataType: 'string', dataIndx: 'btrfky1', editable: false, hidden: true },
+		{ title: '[[#{bm.btrfit.btrfit1}]]', dataType: 'string', dataIndx: 'btrfit1', editable: false },
+		{ title: '[[#{bm.btrfit.btrfch1}]]', dataType: 'integer', dataIndx: 'btrfch1', editable: false, format : "#,###", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.btrfcc1}]]', dataType: 'integer', dataIndx: 'btrfcc1', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.btrfpa1}]]', dataType: 'integer', dataIndx: 'btrfpa1', editable: false, format : "#,###", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.btrfpc1}]]', dataType: 'integer', dataIndx: 'btrfpc1', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfhd.trfdfch}]]', dataType: 'integer', dataIndx: 'trfdfch', editable: false, format: "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfhd.trfdfpa}]]', dataType: 'integer', dataIndx: 'trfdfpa', editable: false, format: "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.btrfec1}]]', dataType: 'integer', dataIndx: 'btrfec1', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.btrfep1}]]', dataType: 'integer', dataIndx: 'btrfep1', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.holichr}]]', dataType: 'integer', dataIndx: 'holichr', editable: false, summary: {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.holipay}]]', dataType: 'integer', dataIndx: 'holipay', editable: false, summary: {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.btrfky2}]]', dataType: 'string', dataIndx: 'btrfky2', editable: false, hidden: true },
+		{ title: '[[#{bm.btrfit.btrfit2}]]', dataType: 'string', dataIndx: 'btrfit2', editable: false },
+		{ title: '[[#{bm.btrfit.btrfch2}]]', dataType: 'integer', dataIndx: 'btrfch2', editable: false, format : "#,###", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.btrfcc2}]]', dataType: 'integer', dataIndx: 'btrfcc2', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.btrfpa2}]]', dataType: 'integer', dataIndx: 'btrfpa2', editable: false, format : "#,###", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.btrfpc2}]]', dataType: 'integer', dataIndx: 'btrfpc2', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.btrfky3}]]', dataType: 'string', dataIndx: 'btrfky3', editable: false, hidden: true },
+		{ title: '[[#{bm.btrfit.btrfit3}]]', dataType: 'string', dataIndx: 'btrfit3', editable: false },
+		{ title: '[[#{bm.btrfit.btrfch3}]]', dataType: 'integer', dataIndx: 'btrfch3', editable: false, format : "#,###", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.btrfcc3}]]', dataType: 'integer', dataIndx: 'btrfcc3', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.btrfpa3}]]', dataType: 'integer', dataIndx: 'btrfpa3', editable: false, format : "#,###", summary : { type : 'max' }},
+		{ title: '[[#{bm.btrfit.btrfpc3}]]', dataType: 'integer', dataIndx: 'btrfpc3', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.btrfit4}]]', dataType: 'string', dataIndx: 'btrfit4', editable: false},
+		{ title: '[[#{bm.btrfit.btrfch4}]]', dataType: 'integer', dataIndx: 'btrfch4', editable: false , summary : {type : 'max'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.btrfcc4}]]', dataType: 'integer', dataIndx: 'btrfcc4', editable: false , summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.btrfpa4}]]', dataType: 'integer', dataIndx: 'btrfpa4', editable: false , summary : {type : 'max'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.btrfpc4}]]', dataType: 'integer', dataIndx: 'btrfpc4', editable: false , summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.surchco}]]', dataType: 'integer', dataIndx: 'surchco', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.addchco}]]', dataType: 'integer', dataIndx: 'addchco', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.addpaco}]]', dataType: 'integer', dataIndx: 'addpaco', editable: false, format : "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrfit.adcmemo}]]', dataType: 'string', dataIndx: 'adcmemo', editable: false },
+		{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+		{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },
+		{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+		{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+		{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+		{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+		{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+	];
+	
+	/********** 운송 tab grid *************/
+	const doe088AfterGridColModel = [
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false,hidden:true },
+		{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden : true },
+		{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false, summary: { type : 'max' }},
+		{ title: '[[#{bm.btrpit.bphdkey}]]', dataType: 'string', dataIndx: 'bphdkey', editable: false, hidden:true },
+		{ title: '[[#{tm.common.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+		{ title: '[[#{bm.btrpit.bphdcit}]]', dataType: 'integer', dataIndx: 'bphdcit', editable: false, summary : {type : 'count'}},
+		{ title: '[[#{bm.btrphd.pccdate}]]', dataType: 'string', dataIndx: 'pccdate', editable: false },
+		{ title: '[[#{bm.btrphd.pcctime}]]', dataType: 'string', dataIndx: 'pcctime', editable: false ,hidden :true},
+		{ title: '[[#{bm.btrphd.pccuser}]]', dataType: 'string', dataIndx: 'pccuser', editable: false ,hidden :true},
+		{ title: '[[#{bm.btrpit.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false , hidden:true },
+		{ title: '[[#{bm.btrpit.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false , hidden: true},
+		{ title: '[[#{bm.btrpit.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false , hidden:true },
+		{ title: '[[#{bm.btrpit.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+		{ title: '[[#{bm.btrpit.btrpkey}]]', dataType: 'string', dataIndx: 'btrpkey', editable: false, hidden:true },
+		{ title: '[[#{bm.btrpit.btrcate}]]', dataType: 'string', dataIndx: 'btrcate', editable: false, hidden:true},
+		{ title: '[[#{bm.btrpit.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+		{ title: '[[#{grid.skuCode}]]', dataType: 'string', dataIndx: 'skumkey', editable: false, summary : {type : 'count'}},
+		{ title: '[[#{bm.btrpit.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, hidden: true, format: '#,###.000', summary : {type : 'sum'}},
+		{ title: '[[#{bm.btrpit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, summary : {type : 'max'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, summary : {type : 'max'}, format: '#,###.0' },
+		{ title: '[[#{bm.btrpit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, summary : {type : 'max'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editable: false, summary : {type : 'max'}, format: '#,###.0' },
+		{ title: '[[#{bm.btrpit.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.doe086.adcoper}]]', dataType: 'float', dataIndx: 'adcoper', editable: false },
+		{ title: '[[#{bm.doe086.adconam}]]', dataType: 'string', dataIndx: 'adconam', editable: false },
+		{ title: '[[#{bm.btrpit.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false , hidden:true },
+		{ title: '[[#{grid.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false, hidden :true},
+		{ title: '[[#{grid.ownamlc}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+		{ title: '[[#{grid.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false, hidden : true },
+		{ title: '[[#{bm.common.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+		{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false},	//원본 목적지
+		{ title: '[[#{bm.btrpit.regiorg}]]', dataType: 'string', dataIndx: 'reorgnm', editable: false },
+		{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false},	//변경 목적지
+		{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },	//원본 상세착지
+		{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false},	//변경 상세착지
+		{ title: '[[#{grid.demdman}]]', dataType: 'string', dataIndx: 'demdman', editable: false },	//담당자명
+		{ title: '[[#{grid.demdadr}]]', dataType: 'string', dataIndx: 'demdadr', editable: false},	//상세착지 주소
+		{ title: '[[#{grid.dempocd}]]', dataType: 'string', dataIndx: 'dempocd', editable: false },	//우편번호
+		{ title: '[[#{grid.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false},	//담당자 전화번호
+		{ title: '[[#{bm.btrpit.regimod}]]', dataType: 'string', dataIndx: 'remodnm', editable: false },
+		{ title: '[[#{bm.btrpit.btrpitc}]]', dataType: 'string', dataIndx: 'btrpitc', editable: false },
+		{ title: '[[#{bm.btrpit.btrpitn}]]', dataType: 'string', dataIndx: 'btrpitn', editable: false },
+		{ title: '[[#{bm.btrpit.btrpigb}]]', dataType: 'string', dataIndx: 'btrpigb', editable: false },
+		{ title: '[[#{bm.btrpit.btrpict}]]', dataType: 'string', dataIndx: 'btrpict', editable: false },
+		{ title: '[[#{bm.btrpit.calweig}]]', dataType: 'string', dataIndx: 'calweig', editable: false ,hidden:true},	//계산중량
+		{ title: '[[#{bm.btrpit.calweig}]]', dataType: 'string', dataIndx: 'calwgnm', editable: false },	//계산중량명 ex)gross중량 , net중량
+		{ title: '[[#{bm.doe082.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+		{ title: '[[#{bm.doe082.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+		{ title: '[[#{bm.doe082.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+		{ title: '[[#{bm.doe086.spehdat}]]', dataType: 'string', dataIndx: 'speidat', editable: false},
+		{ title: '[[#{bm.doe086.spehtim}]]', dataType: 'string', dataIndx: 'speitim', editable: false},
+		{ title: '[[#{bm.btrpit.trnindt}]]', dataType: 'string', dataIndx: 'trnindt', editable: false},
+		{ title: '[[#{bm.btrpit.trnintm}]]', dataType: 'string', dataIndx: 'trnintm', editable: false},
+		{ title: '[[#{bm.doe086.tpnstat}]]', dataType: 'string', dataIndx: 'tpistat', editable: false},
+		{ title: '[[#{bm.common.payadst}]]', dataType: 'string', dataIndx: 'payadst', editable: false ,
+			render : function(ui){
+				if(ui.rowData.payadst !== ''){
+					return { 
+						style : { 'background' : '#aaebff'} 
+					}
+				}
+			}
+		},
+		{ title: '[[#{bm.btrpit.btrpcbt}]]', dataType: 'string', dataIndx: 'btrpcbt', editable: false ,hidden :true},
+		{ title: '[[#{bm.btrpit.btrpcbt}]]', dataType: 'string', dataIndx: 'btcbtnm', editable: false },
+		{ title: '[[#{bm.btrpit.btrppat}]]', dataType: 'string', dataIndx: 'btrppat', editable: false },
+		{ title: '[[#{bm.btrpit.sbillto}]]', dataType: 'string', dataIndx: 'sbillto', editable: false , hidden:true },
+		{ title: '[[#{bm.btrpit.sbillto}]]', dataType: 'string', dataIndx: 'sbillnm', editable: false },
+		{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false},
+		{ title: '[[#{bm.btrpit.btrpitm}]]', dataType: 'string', dataIndx: 'btrpitm', editable: false },
+		{ title: '[[#{bm.btrpit.btrpchr}]]', dataType: 'integer', dataIndx: 'btrpchr', editable: false, summary : {type : 'max'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrpcco}]]', dataType: 'integer', dataIndx: 'btrpcco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrppay}]]', dataType: 'integer', dataIndx: 'btrppay', editable: false, summary : {type : 'max'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrppco}]]', dataType: 'integer', dataIndx: 'btrppco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrphd.trpdfch}]]', dataType: 'integer', dataIndx: 'trpdfch', editable: false, format: "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrphd.trpdfpa}]]', dataType: 'integer', dataIndx: 'trpdfpa', editable: false, format: "#,###", summary : { type : 'sum' }},
+		{ title: '[[#{bm.btrpit.btrpecc}]]', dataType: 'integer', dataIndx: 'btrpecc', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrpepc}]]', dataType: 'integer', dataIndx: 'btrpepc', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.holichr}]]', dataType: 'integer', dataIndx: 'holichr', editable: false, summary: {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.holipay}]]', dataType: 'integer', dataIndx: 'holipay', editable: false, summary: {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.surchco}]]', dataType: 'integer', dataIndx: 'surchco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.addchco}]]', dataType: 'integer', dataIndx: 'addchco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.addpaco}]]', dataType: 'integer', dataIndx: 'addpaco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.adcmemo}]]', dataType: 'string', dataIndx: 'adcmemo', editable: false },
+		{ title: '[[#{bm.btrpit.vhplnky}]]', dataType: 'string', dataIndx: 'vhplnky', editable: false , hidden:true },
+		{ title: '[[#{bm.btrpit.vhplnit}]]', dataType: 'integer', dataIndx: 'vhplnit', editable: false , hidden:true },
+		{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+		{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },
+		{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+		{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+		{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+		{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+		{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+	];
+
+	/********** 일별 실적 그리드 *************/
+	const doe088ModalDaySummaryGridCM = [
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false,hidden:true },
+		{ title: '[[#{bm.btrfit.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+		{ title: '[[#{bm.btrfit.btrfitc}]]', dataType: 'string', dataIndx: 'itemcod', editable: false },
+		{ title: '[[#{bm.btrfit.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false ,hidden:true },
+		{ title: '[[#{bm.btrfit.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false },
+		{ title: '[[#{bm.btrfit.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false ,hidden:true},
+		{ title: '[[#{bm.btrfit.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+		{ title: '일별 총 중량(kg)', dataType: 'integer', dataIndx:'dayweig', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '일별 청구금액(원)', dataType: 'integer', dataIndx:'daytoch', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '일별 할증청구금액(원)', dataType: 'integer', dataIndx:'dayexco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '일별 휴일할증 청구금액(원)', dataType: 'integer', dataIndx:'dayhoch', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '일별 총청구금액(원)', dataType: 'integer', dataIndx:'totchco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '일별 지급금액(원)', dataType: 'integer', dataIndx:'daytopa', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '일별 할증지급금액(원)', dataType: 'integer', dataIndx:'dayexpa', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '일별 휴일할증 지급금액(원)', dataType: 'integer', dataIndx:'dayhopa', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '일별 총지급금액(원)', dataType: 'integer', dataIndx:'totpaco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+	];
+	
+	/********** 월별 실적 그리드 *************/
+	const doe088MonthModalSummaryGridCM = [
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false,hidden:true },
+		{ title: '[[#{bm.btrfit.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+		{ title: '[[#{bm.btrfit.btrfitc}]]', dataType: 'string', dataIndx: 'itemcod', editable: false },
+		{ title: '[[#{bm.btrfit.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false ,hidden:true},
+		{ title: '[[#{bm.btrfit.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false },
+		{ title: '[[#{bm.btrfit.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false ,hidden:true},
+		{ title: '[[#{bm.btrfit.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+		{ title: '월별 총 중량(kg)', dataType: 'integer', dataIndx:'dayweig', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '월별 청구금액(원)', dataType: 'integer', dataIndx:'daytoch', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '월별 지급금액(원)', dataType: 'integer', dataIndx:'daytopa', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '월별 청구누계', dataType: 'integer', dataIndx:'totchco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '월별 지급누계', dataType: 'integer', dataIndx:'totpaco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '월별 할증청구금액(원)', dataType: 'integer', dataIndx:'dayexco', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '월별 할증지급금액(원)', dataType: 'integer', dataIndx:'dayexpa', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '월별 휴일할증 청구금액(원)', dataType: 'integer', dataIndx:'dayhoch', editable: false, summary : {type : 'sum'}, format: '#,###' },
+		{ title: '월별 휴일할증 지급금액(원)', dataType: 'integer', dataIndx:'dayhopa', editable: false, summary : {type : 'sum'}, format: '#,###' }
+	];
+	const doe088BeforeGridObject = new GridUtil(doe088BeforeGridColModel, pageId, 'doe088BeforeGrid');
+	const doe088AfterGridObject = new GridUtil(doe088AfterGridColModel, pageId, 'doe088AfterGrid');
+	const doe088DayModalGridObject = new GridUtil(doe088ModalDaySummaryGridCM, pageId, 'doe088DayBillSummaryGrid');
+	const doe088MonthModalGridObject = new GridUtil(doe088MonthModalSummaryGridCM, pageId, 'doe088MonthBillSummaryGrid');
+
+	doe088BeforeGridObject.setFind();
+	doe088AfterGridObject.setFind();
+
+	if(!doe088BeforeGridObject.groupModel.on) {
+		doe088BeforeGridObject.setGroupModel({
+            on: true,
+            dataIndx: ['bfhdkey','vhcfnam'],
+            grandSummary : true,
+            merge: true,
+            header: false
+        });
+	}
+
+	if(!doe088AfterGridObject.groupModel.on) {
+		doe088AfterGridObject.setGroupModel({
+            on: true,
+            dataIndx: ['bphdkey', 'vhcfnam'],
+            grandSummary : true,
+            merge: true,
+            header: false
+        });
+	}
+	
+	if(!doe088DayModalGridObject.groupModel.on) {
+		doe088DayModalGridObject.setGroupModel({
+            on: true,
+            dataIndx: ['btrcnam','itemcod'],
+            grandSummary : true,
+            merge: true,
+            header: false,
+            showSummary :[true]
+        });
+	}
+	
+	if(!doe088MonthModalGridObject.groupModel.on) {
+		doe088MonthModalGridObject.setGroupModel({
+            on: true,
+            numberCell : {show: true},
+            dataIndx: ['btrcnam','itemcod'],
+            grandSummary : true,
+            merge: true,
+            header: false,
+            showSummary :[true]
+        });
+	}
+	
+	doe088BeforeGridObject.setCreate(async function(evnet,ui){
+		//정산일자 set
+		document.querySelector('#doe088ConfirmdateFrom').value = moment().subtract('1','M').format('YYYY-MM-DD');
+		document.querySelector('#doe088ConfirmdateTo').value = moment().format('YYYY-MM-DD');
+
+		await _commonInit(pageId);	//search select box init
+
+		const rData = await fetchUtil('GET','/md/partner/customer',{warekey : document.querySelector('#doe088Warekey :checked').value});
+		if(rData.status === 200){
+			const custkeyList = await rData.json();
+			let sbilltoHtml = '';
+			for(const custkeyData of custkeyList){
+				sbilltoHtml += '<option value="' + custkeyData.combovl + '">' + custkeyData.combonm + '</>';
+			}
+			document.querySelector('#doe088Btrfcbt').insertAdjacentHTML('beforeend', sbilltoHtml);
+			document.querySelector('#doe088Sbillto').insertAdjacentHTML('beforeend', sbilltoHtml);
+			document.querySelector('#doe088CustkeyMd').insertAdjacentHTML('beforeend', sbilltoHtml);
+
+		}
+		
+		await initTab(pageId);	//tab 화면 초기화 설정
+
+		$('#doe088Itemcod').pqSelect({ deselect: false });
+		$('#doe088Btrfcbt').pqSelect({ deselect: false });
+		$('#doe088Btrfpat').pqSelect({ deselect: false });
+		$('#doe088Sbillto').pqSelect({ deselect: false });
+	});
+	
+	//일별 실적집계 grid create
+	doe088DayModalGridObject.setCreate(async function(event, ui) {
+		const params = {
+				warekey : document.querySelector('#doe088Warekey :checked').value,
+				poshpdtfrom : moment().format('YYYYMMDD'),
+				poshpdtto : moment().format('YYYYMMDD')
+		}
+		await getModalBillSummaryList(params,this);
+	});
+	//월별 실적집계 grid create
+	doe088MonthModalGridObject.setCreate(async function(event, ui) {
+		const params = {
+				warekey : document.querySelector('#doe088Warekey :checked').value,
+				poshpdtfrom : moment().startOf('month').format('YYYYMMDD'),
+				poshpdtto : moment().endOf('month').format('YYYYMMDD')
+		}
+		await getModalBillSummaryList(params,this);
+	});
+	
+	doe088BeforeGridObject.open();
+	doe088AfterGridObject.open();
+
+	//Search func
+	async function getDoe088SearchList() {
+		const params = makeSearchData(pageId);
+		
+		//목적지 셀박 두개 이상 선택시
+		if(params.skumkey.trim() !== ''){
+			if(params.skumkey.split(' ').length > 1){
+				params['skumkeyList'] = [];
+				for(const skumkey of params.skumkey.split(' ')){
+					params['skumkeyList'].push(skumkey);
+				}
+				delete params['skumkey'];	//skumkeyList 가 들었을땐 skumkey 요소 삭제
+			}
+		}
+		
+		//명세서 출력시 조회 param을 위함
+		if(document.querySelector('#doe088BillStatementModal').classList.contains('show')){
+			params[document.querySelector('#doe088BillRadio :checked').value] =  document.querySelector('#doe088CustkeyMd :checked').value;
+		}
+		let grid;
+		let url;
+
+		const tabType = document.querySelector('.nav-item .nav-link.active[id*="' + pageId + '"]').getAttribute('data-tab-type');
+		if(tabType === 'after'){
+			grid = pq.grid('#doe088AfterGrid');
+			url = '/bm/billing/doe088/grid/after';
+		}else{
+			grid = pq.grid('#doe088BeforeGrid');
+			url = '/bm/billing/doe088/grid/before';
+		}
+
+		grid.showLoading();
+		const rData = await fetchUtil('GET', url ,params);
+		if(rData.status === 200){
+			const dataList = await rData.json();
+			grid.option('dataModel', { data: dataList, recIndx: 'rowkey' });
+		}
+		grid.refreshDataAndView();
+		grid.hideLoading();
+	}
+	
+	async function getModalBillSummaryList(params,grid){
+		grid.showLoading();
+		const rData = await fetchUtil('GET','/bm/billing/doe088/grid/modal',params);
+		const SummaryList = await rData.json();
+		if(rData.status === 200){
+			grid.option('dataModel', { data: SummaryList, recIndx: 'rowkey' });
+		}
+		grid.hideLoading();
+		grid.refreshDataAndView();
+	}
+	
+	doe088SearchKeyup = async function (){
+		const key = this.event.key || this.event.keyCode;
+		if(key === 'Enter' || key === 13) {
+			await getDoe088SearchList();
+		}
+	}
+}();
+</script>
+</div>
+</html>

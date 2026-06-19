@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Language" content="ko">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="-1">
+	<script th:src="@{/js/scripts/jquery-3.6.0.min.js}"></script>
+	<!-- 파비콘 -->
+<!-- 	<link rel="/manifest" th:href="@{/manifest_pc.json}" /> -->
+	<link id="rPath" th:data-contextPath="${contextPath}" />
+	<link rel="apple-touch-icon" sizes="57x57" th:href="@{/design/assets/favicon/apple-icon-57x57.png}">
+	<link rel="apple-touch-icon" sizes="60x60" th:href="@{/design/assets/favicon/apple-icon-60x60.png}">
+	<link rel="apple-touch-icon" sizes="72x72" th:href="@{/design/assets/favicon/apple-icon-72x72.png}">
+	<link rel="apple-touch-icon" sizes="76x76" th:href="@{/design/assets/favicon/apple-icon-76x76.png}">
+	<link rel="apple-touch-icon" sizes="114x114" th:href="@{/design/assets/favicon/apple-icon-114x114.png}">
+	<link rel="apple-touch-icon" sizes="120x120" th:href="@{/design/assets/favicon/apple-icon-120x120.png}">
+	<link rel="apple-touch-icon" sizes="144x144" th:href="@{/design/assets/favicon/apple-icon-144x144.png}">
+	<link rel="apple-touch-icon" sizes="152x152" th:href="@{/design/assets/favicon/apple-icon-152x152.png}">
+	<link rel="apple-touch-icon" sizes="180x180" th:href="@{/design/assets/favicon/apple-icon-180x180.png}">
+	<link rel="icon" type="image/png" sizes="192x192" th:href="@{/design/assets/favicon/android-icon-192x192.png}">
+	<link rel="icon" type="image/png" sizes="32x32" th:href="@{/design/assets/favicon/favicon-32x32.png}">
+	<link rel="icon" type="image/png" sizes="96x96" th:href="@{/design/assets/favicon/favicon-96x96.png}">
+	<link rel="icon" type="image/png" sizes="16x16" th:href="@{/design/assets/favicon/favicon-16x16.png}">
+	<meta name="msapplication-TileColor" content="#ffffff">
+	<meta name="msapplication-TileImage" th:content="@{/design/assets/favicon/ms-icon-144x144.png}">
+	<meta name="theme-color" content="#ffffff">
+
+	<title>스마트물류플랫폼</title>
+    <!-- CSS -->
+	<link rel="stylesheet" th:href="@{/design/css/main.css}">
+	<link rel="stylesheet" th:href="@{/design/css/common.css}">
+
+	<script th:src="@{/js/scripts/jquery-3.6.0.min.js}"></script>
+	<script th:src="@{/js/scripts/jquery-ui.min.js}"></script>
+	<script th:src="@{/js/scripts/script.js}"></script>
+	<style>
+		.wrapper {
+			min-width: auto;
+			min-height: auto;
+		}
+		.Ptype07 {
+			height: calc(100% - 28px);
+		}
+
+		.setting-grid-content span{
+			font-size : 0.9em;
+		}
+
+		input::placeholder{
+			font-size : 0.9em;
+		}
+	</style>
+</head>
+<body>
+	<div class="wrapper">
+            <div class="info-body Ptype07">
+                <div class="info-box">
+                    <div class="box-title">[[#{sy.signup}]]</div>
+                    <div class="setting-grid gap-10 con-box" style="grid-template-rows: none;">
+                        <!-- useract, 사용자 ID -->
+                        <label class="setting-grid-title ic-title-nece" th:for="signUpUseract">[[#{sy.susrma.useract}]]</label>
+                        <div class="setting-grid-content">
+                            <div class="input-wrapper">
+                                <input id="signUpUseract" name="signUpUseract" th:placeholder="${#messages.msg('sy.plhodr.useract')}"
+                                type="text" value="" maxlength="20" onkeydown="checkSpacebar()">
+                                <div class="edit-btn-wrapper"><button id="checkUseract" class="btn-white">[[#{sy.syu04.checkId}]]</button></div>
+                            </div>
+                            <div id="signUpUseractErr"><span></span></div>
+                            <div id="checkUseractErr"><span></span></div>
+                        </div>
+                        <!-- usernam, 사용자이름 -->
+                        <label class="setting-grid-title ic-title-nece" th:for="signUpUsernam">[[#{sy.susrma.usernam}]]</label>
+                        <div class="setting-grid-content">
+                            <div class="input-wrapper">
+                                <input id="signUpUsernam" name="signUpUsernam" th:placeholder="${#messages.msg('sy.plhodr.usernam')}"
+                                type="text" value="" maxlength="20" onkeydown="checkSpacebar()">
+                            </div>
+                            <div id="signUpUsernamErr"><span></span></div>
+                        </div>
+                        <!-- passwrd, 비밀번호 -->
+                        <label class="setting-grid-title ic-title-nece" th:for="signUpPasswrd">[[#{sy.susrma.passwrd}]]</label>
+                        <div class="setting-grid-content">
+                            <div class="input-wrapper">
+                                <input id="signUpPasswrd" name="signUpPasswrd" th:placeholder="${#messages.msg('sy.plhodr.passwrd')}"
+                                type="password" maxlength="100" onkeydown="checkSpacebar()"/>
+                            </div>
+                            <div id="signUpPasswrdErr"><span></span></div>
+                        </div>
+                        <!-- passwrd 재확인 -->
+                        <label class="setting-grid-title ic-title-nece" th:for="confirmPasswrd">[[#{sy.syu04.confrmPwd}]]</label>
+                        <div class="setting-grid-content">
+                            <div class="input-wrapper">
+                                <input name="confirmPasswrd" id="confirmPasswrd" th:placeholder="${#messages.msg('sy.plhodr.confrmPwd')}"
+                                type="password" maxlength="100" onkeydown="checkSpacebar()">
+                            </div>
+                            <div id="confirmPasswrdErr"><span></span></div>
+                        </div>
+                        <!-- emailad, 이메일 주소 -->
+                        <label class="setting-grid-title ic-title-nece" th:for="signUpEmailad">[[#{sy.susrma.emailad}]]</label>
+                        <div class="setting-grid-content">
+                            <div class="input-wrapper">
+                                <input id="signUpEmailad" name="signUpEmailad" th:placeholder="${#messages.msg('sy.plhodr.emailad')}"
+                                type="text" value="" maxlength="50" onkeydown="checkSpacebar()">
+                            </div>
+                            <div id="signUpEmailadErr"><span></span></div>
+                        </div>
+                        <!-- telphnm, 휴대전화 번호 -->
+                        <label class="setting-grid-title ic-title-nece" th:for="signUpTelphnm">[[#{sy.susrma.telphnm}]]</label>
+                        <div class="setting-grid-content">
+                            <div class="input-wrapper">
+                                <input id="signUpTelphnm" name="signUpTelphnm" th:placeholder="${#messages.msg('sy.plhodr.telphnm')}"
+                                type="text" value="" maxlength="13" onkeydown="checkSpacebar()">
+                            </div>
+                            <div id="signUpTelphnmErr"><span></span></div>
+                    	</div>
+                        <!-- usrmemo, 사용자 메모 -->
+			        	<label class="setting-grid-title" th:for="signUpUsrmemo">[[#{sy.susrma.usrmemo}]]</label>
+			        	<div class="setting-grid-content">
+			          		<div class="input-wrapper" style="border: solid 1px #c2c5c8;">
+			              		<textarea id="signUpUsrmemo" maxlength="100"></textarea>
+			          		</div>
+			        	</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="agree-box">
+                            <div class="check-box">
+                                <input type="checkbox" name="signUpPolpryn" id="signUpPolpryn">
+                                <label for="chk" class="btn-terms">
+                                    <a href="javascript:popup()" class="underline">개인정보 수집 및 이용 약관</a><span>에 동의합니다.</span><span>(필수)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="edit-btn-wrapper">
+                    <button class="btn-navy" id="signUpButton">[[#{sy.syu04.regist}]]</button>
+                </div>
+            </div>
+            <div class="footer">Copyright © 스마트물류플랫폼 All right reserved.</div>
+	</div>
+	<script>
+		!function(){
+			// 전역변수
+			const validation = {
+					signUpUsernam : false, // 사용자명 입력
+					signUpUseract : false, // 아이디 입력
+					checkUseract : false, // 아이디 중복확인
+					signUpPasswrd : false, // 패스워드 입력
+					confirmPasswrd : false, // 비밀번호 확인 입력
+					signUpTelphnm : false, // 연락처 입력
+					signUpEmailad : false, // 이메일 입력
+					signUpPolpryn : false // 약관동의
+			};
+
+			const errorMsg = {
+					signUpUsernam : '[[#{sy.error.usernam}]]',
+					signUpUseract : '[[#{sy.error.useract}]]',
+					checkUseract : '[[#{sy.error.checkId}]]',
+					signUpPasswrd : '[[#{sy.error.passwrd}]]',
+					confirmPasswrd : '[[#{sy.error.confrmPwd}]]',
+					signUpTelphnm : '[[#{sy.error.telphnm}]]',
+					signUpEmailad : '[[#{sy.error.emailad}]]',
+					signUpPolpryn : '[[#{sy.error.polpryn}]]'
+			};
+
+			signUpInit();
+
+			// 페이지 초기화 함수
+			async function signUpInit(){
+				document.querySelector('#checkUseract').disabled = validation.signUpUseract ? false : true;
+				document.querySelector('#signUpUsernam').focus();
+			}
+
+			// 이름 입력 validation
+			document.querySelector('#signUpUsernam').addEventListener('input', function(event){
+				const signUpUsernam = document.querySelector('#signUpUsernam').value;
+				let msgText = '[[#{sy.message.usernam}]]';
+				validation.signUpUsernam = false;
+				if(!signUpUsernam){
+					msgText = '';
+				}else if(2 <= signUpUsernam.length && signUpUsernam.length <= 20){
+					msgText = '';
+					validation.signUpUsernam = true;
+				}
+				document.querySelector('#signUpUsernamErr span').innerHTML = msgText;
+			})
+
+			// 아이디 입력 validation
+			document.querySelector('#signUpUseract').addEventListener('input', function(event){
+				const signUpUseract = document.querySelector('#signUpUseract').value;
+				let msgText = '[[#{sy.message.useract}]]';
+				validation.signUpUseract = false;
+				if(!signUpUseract){
+					msgText = '';
+				}else if(4 <= signUpUseract.length && signUpUseract.length <= 20){
+					msgText = '';
+					validation.signUpUseract = true;
+				}
+				document.querySelector('#checkUseract').disabled = validation.signUpUseract ? false : true;
+				validation.checkUseract = false;
+				document.querySelector('#signUpUseractErr span').innerHTML = msgText;
+				document.querySelector('#checkUseractErr span').innerHTML = '';
+			})
+
+			// 아이디 중복확인
+			document.querySelector('#checkUseract').addEventListener('click', async function(){
+				const signUpUseract = document.querySelector('#signUpUseract').value;
+				let msgText = '[[#{sy.message.imposId}]]'; // 사용 불가능한 아이디입니다.
+				validation.checkUseract = false;
+
+				try{
+					const res = await fetch(`/platform/signup/check?useract=${signUpUseract}`);
+					if(res.status !== 200){
+						msgText = '';
+						return;
+					}else{
+						const resData = await res.json();
+						if(resData === 0){
+							msgText = '[[#{sy.message.posId}]]'; // 사용 가능한 아이디입니다.
+							validation.checkUseract = true;
+						}
+					}
+				}catch(err){
+					alert(err); //임시
+				}
+				document.querySelector('#checkUseractErr span').innerHTML = msgText;
+			})
+
+			// 비밀번호 입력 validation
+			document.querySelector('#signUpPasswrd').addEventListener('input', function(event){
+				const passwrdReg = /^(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,20}$/; // 비밀번호 정규식
+				const passwrdChk = document.querySelector('#confirmPasswrd').value;
+				let msgText = '[[#{sy.message.passwrd}]]'; // 영문, 숫자, 특수문자 포함 8~20자리를 입력하세요.
+
+				// 입력여부 및 정규식 체크
+				validation.signUpPasswrd = false;
+				if(!event.target.value.length){
+					msgText = '';
+				}else if(passwrdReg.test(event.target.value.toLowerCase())){
+					msgText = '';
+					validation.signUpPasswrd = true;
+				}
+				document.querySelector('#signUpPasswrdErr span').innerHTML = msgText;
+
+				// 비밀번호 확인 입력 내용과 일치하는지 체크
+				if(validation.signUpPasswrd && passwrdChk){
+					if(event.target.value === passwrdChk){
+						document.querySelector('#confirmPasswrdErr span').innerHTML = '[[#{sy.message.equal}]]';
+						validation.confirmPasswrd = true;
+					}else{
+						document.querySelector('#confirmPasswrdErr span').innerHTML = '[[#{sy.message.unequal}]]';
+						validation.confirmPasswrd = false;
+					}
+				}else{
+					document.querySelector('#confirmPasswrdErr span').innerHTML = '';
+				}
+			})
+
+			// 비밀번호 확인 입력 validation
+			document.querySelector('#confirmPasswrd').addEventListener('input', function(event){
+				const signUpPasswrd = document.querySelector('#signUpPasswrd').value;
+				const confirmPasswrd = event.target.value;
+				let msgText = '[[#{sy.message.unequal}]]';
+
+				// 비밀번호 입력 내용과 일치하는지 체크
+				validation.confirmPasswrd = false;
+				if(confirmPasswrd){
+					if(confirmPasswrd === signUpPasswrd){
+						msgText = '[[#{sy.message.equal}]]';
+						validation.confirmPasswrd = true;
+					}
+				}else{
+					msgText = '';
+				}
+				document.querySelector('#confirmPasswrdErr span').innerHTML = msgText;
+			})
+
+			// 이메일 입력 validation
+			document.querySelector('#signUpEmailad').addEventListener('input', function(event){
+				const emailadReg = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; // 이메일 정규식
+				let msgText = '[[#{sy.message.emailad}]]';
+
+				// 입력여부 및 정규식 체크
+				validation.signUpEmailad = false;
+				if(!event.target.value){
+					msgText = '';
+				}else if(emailadReg.test(event.target.value)){
+					msgText = '';
+					validation.signUpEmailad = true;
+				}
+				document.querySelector('#signUpEmailadErr span').innerHTML = msgText;
+			})
+
+			// 연락처 validation
+			document.querySelector('#signUpTelphnm').addEventListener('input', function(event){
+				const signUpTelphnm = event.target.value;
+				const telphnmReg = /^\d{2,3}-?\d{3,4}-?\d{4}$/; // 연락처 정규식
+				let msgText = '[[#{sy.message.telphnm}]]';
+
+				// 입력시 하이픈 포맷 설정
+				event.target.value = signUpTelphnm.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`);
+
+				// 입력여부 및 정규식 체크
+				validation.signUpTelphnm = false;
+				let filterTelphnm = signUpTelphnm.replace(/[^\d]/g, ''); // 하이픈 제거
+				if(!filterTelphnm){
+					msgText = '';
+				}else if(telphnmReg.test(filterTelphnm)){
+					msgText = '';
+					validation.signUpTelphnm = true;
+				}
+				document.querySelector('#signUpTelphnmErr span').innerHTML = msgText;
+			})
+
+			// 개인정보수집동의 validation
+			document.querySelector('#signUpPolpryn').addEventListener('input', function(event){
+				validation.signUpPolpryn = event.target.checked ? true : false; // 입력여부 체크
+			})
+
+			// 회원가입
+			document.querySelector('#signUpButton').addEventListener('click', async function(){
+				const inputInfos = document.querySelectorAll('.input-wrapper input, .edit-btn-wrapper #checkUseract, .check-box input');
+				let param = {};
+
+				// validation 검사
+				for(const inputInfo of inputInfos){
+					// validation 통과 여부 확인, 에러메시지 출력
+					if(!validation[inputInfo.id]){
+						// 체크박스
+						if(inputInfo.type === 'checkbox'){
+							if(!inputInfo.checked){
+								alert(errorMsg[inputInfo.id]);
+								inputInfo.focus();
+								return;
+							}
+						}else{
+							document.querySelector('#' + inputInfo.id + 'Err span').innerHTML = errorMsg[inputInfo.id];
+							inputInfo.focus();
+							return;
+						}
+					}
+
+					// 파라미터 적용
+					if(inputInfo.id.startsWith('signUp')){
+						let column = inputInfo.id.replace('signUp', '');
+						column = column.charAt(0).toLowerCase() + column.slice(1);
+						param[column] = inputInfo.type === 'checkbox' ? 'Y' : document.querySelector('#' + inputInfo.id).value;
+					}
+				}
+				param['usrmemo'] = document.querySelector('#signUpUsrmemo').value;
+
+				// NN 동의여부 칼럼 'Y'로 임시 지정
+				param['polsvyn'] = 'Y'; // 이용약관동의
+				param['polsmyn'] = 'Y'; // 문자수신동의
+				param['polemyn'] = 'Y'; // 이메일수신동의
+
+				// 회원가입
+				try{
+					const res = await fetch('/platform/signup', {
+						method : 'POST',
+						headers : { 'Content-Type': 'application/json' },
+						body : JSON.stringify(param)
+					});
+					if(res.ok){
+						const resData = await res.json();
+						if (resData) {
+							alert('[[#{sy.alert.regist}]]');
+							window.location = '/platform/login';
+						}
+					}
+				}catch(err){
+					alert(err); //임시
+				}
+			})
+		}();
+
+		// 스페이스바 입력 금지
+		function checkSpacebar(){
+			let kcode = event.keyCode;
+			if(kcode == 32){
+				event.returnValue = false;
+			}
+		}
+
+		// 개인정보수집동의 약관 팝업창
+		function popup(){
+		    let url = "signup/text";
+		    let name = "signup text"
+		    let option = "width = 600, height = 800, top = 100, left 200, location = no"
+		    window.open(url, name, option)
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,822 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.md.mapper.OrganizationMapper">
+
+   <!-- *************** MWARMA : 창고 마스터 *************** -->
+   <!-- 창고 리스트 조회 -->
+   <select id="selectMwarmaList" resultType="com.kbph.logistics.md.domain.MwarmaDTO">
+   	/* selectMwarmaList */
+      SELECT WAREKEY AS ROWKEY
+      	   , WAREKEY, WHNAMLC, WHNAMKO, WHNAMEN, WARADDR
+           , WARTELN, WAPOSBX, WAPOSCD, WAREPNM, WAREPTL
+           , WAREPEM, WAMANNM, WAMANTL, WAMANEM, WMPTRNM
+           , WSPTRNM, WATAREA, WASCAPA, POSTSTM, STKDYTM
+           , HOLTMFM, HOLTMTO, HOLRATE, PLARMYN, PROOFYN
+           , WHUSEYN
+           , DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+           , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+           , ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+           , DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+           , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+           , ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+           , UPDTCHK
+        FROM ${userData.schema}.MWARMA
+        <where>
+        	<if test='params.warekey != null and params.warekey != ""'>
+        		AND WAREKEY LIKE CONCAT('%' , #{params.warekey} , '%')
+	      	</if>
+	      	<if test='params.whnamlc != null and params.whnamlc != ""'>
+	         	AND UPPER(WHNAMLC) LIKE CONCAT('%' , UPPER(#{params.whnamlc}) , '%')
+	      	</if>
+	      	<if test='params.whuseyn != null and params.whuseyn != ""'>
+	         	AND WHUSEYN = #{params.whuseyn}
+	      	</if>
+      	</where>
+      	ORDER BY WHNAMLC
+   </select>
+
+   <!-- 창고키 채번 -->
+   <select id="selectWarekey" resultType="String">
+   	  /* selectWarekey */
+      SELECT ${userData.schema}.FN_MD_WAREKEY() AS WAREKEY FROM DUAL
+   </select>
+
+   <!-- 창고 등록 -->
+   <insert id="insertMwarma" parameterType="com.kbph.logistics.md.domain.MwarmaDTO">
+   	  /* insertMwarma */
+      INSERT INTO ${userData.schema}.MWARMA(
+      		 WAREKEY, WHNAMLC, WHNAMKO, WHNAMEN, WARADDR
+           , WARTELN, WAPOSBX, WAPOSCD, WAREPNM, WAREPTL
+           , WAREPEM, WAMANNM, WAMANTL, WAMANEM, WMPTRNM
+           , WSPTRNM, WATAREA, WASCAPA, POSTSTM, STKDYTM
+           , HOLTMFM, HOLTMTO, HOLRATE, WHUSEYN, PLARMYN
+           , PROOFYN
+           , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER
+     )VALUES(
+         	 #{addData.warekey}, #{addData.whnamlc}, #{addData.whnamko}
+           , #{addData.whnamen}, #{addData.waraddr}, #{addData.warteln}
+           , #{addData.waposbx}, #{addData.waposcd}, #{addData.warepnm}
+           , #{addData.wareptl}, #{addData.warepem}, #{addData.wamannm}
+           , #{addData.wamantl}, #{addData.wamanem}, #{addData.wmptrnm}
+           , #{addData.wsptrnm}, #{addData.watarea}, #{addData.wascapa}
+           , #{addData.poststm}, #{addData.stkdytm}, #{addData.holtmfm}
+           , #{addData.holtmto}, #{addData.holrate}, #{addData.whuseyn}
+           , #{addData.plarmyn}, #{addData.proofyn}
+           , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+           , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+      )
+   </insert>
+
+   <!-- 창고 수정 -->
+   <update id="updateMwarma" parameterType="com.kbph.logistics.md.domain.MwarmaDTO">
+   	  /* updateMwarma */
+      UPDATE ${userData.schema}.MWARMA SET
+           WHNAMLC = #{updateData.whnamlc}
+         , WHNAMKO = #{updateData.whnamko}
+         , WHNAMEN = #{updateData.whnamen}
+         , WARADDR = #{updateData.waraddr}
+         , WARTELN = #{updateData.warteln}
+         , WAPOSBX = #{updateData.waposbx}
+         , WAPOSCD = #{updateData.waposcd}
+         , WAREPNM = #{updateData.warepnm}
+         , WAREPTL = #{updateData.wareptl}
+         , WAREPEM = #{updateData.warepem}
+         , WAMANNM = #{updateData.wamannm}
+         , WAMANTL = #{updateData.wamantl}
+         , WAMANEM = #{updateData.wamanem}
+         , WMPTRNM = #{updateData.wmptrnm}
+         , WSPTRNM = #{updateData.wsptrnm}
+         , WATAREA = #{updateData.watarea}
+         , WASCAPA = #{updateData.wascapa}
+         , POSTSTM = #{updateData.poststm}
+         , STKDYTM = #{updateData.stkdytm}
+         , HOLTMFM = #{updateData.holtmfm}
+         , HOLTMTO = #{updateData.holtmto}
+         , HOLRATE = #{updateData.holrate}
+         , PLARMYN = #{updateData.plarmyn}
+         , PROOFYN = #{updateData.proofyn}
+         , WHUSEYN = #{updateData.whuseyn}
+         , LMODATE = to_char(NOW() ,'YYYYMMDD')
+         , LMOTIME = to_char(NOW() ,'hh24miss')
+         , LMOUSER = #{userData.useract}
+         , UPDTCHK = #{updateData.updtchk} + 1
+      WHERE WAREKEY  = #{updateData.warekey}
+      	AND	UPDTCHK = #{updateData.updtchk}
+      <choose>
+         <when test='updateData.oldWarekey != null and updateData.oldWarekey != ""'>
+            AND WAREKEY = #{updateData.oldWarekey}
+         </when>
+         <otherwise>
+            AND WAREKEY = #{updateData.warekey}
+         </otherwise>
+      </choose>
+   </update>
+
+   <!-- 창고 셀렉트박스 조회 -->
+   <select id="selectMwarmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+      /* selectMwarmaSelectBox */
+      SELECT WAREKEY AS combovl, WHNAMLC AS combonm
+      FROM ${userData.schema}.MWARMA
+      WHERE WHUSEYN = 'Y'
+      <if test = 'params.warekey != null and params.warekey != ""'>
+         AND WAREKEY = #{params.warekey}
+      </if>
+      GROUP BY WHNAMLC, WAREKEY
+      ORDER BY WHNAMLC, WAREKEY
+   </select>
+
+   <!-- 창고 프린터 이름 조회 리스트 -->
+   <select id="selectWarehousePrinterList" resultType="com.kbph.logistics.md.domain.PrinterDTO">
+   		/* selectWarehousePrinterList */
+   		SELECT WMPTRNM, WSPTRNM
+   		  FROM ${userData.schema}.MWARMA
+   		  <where>
+   		      <if test = 'warekey != null and warekey != ""'>
+   		          AND WAREKEY = '${warekey}'
+   			  </if>
+   		  </where>
+   </select>
+
+   <!-- 창고 프린터 이름 조회 단건 -->
+   <select id="selectWarehousePrinter" resultType="com.kbph.logistics.md.domain.PrinterDTO">
+   		/* selectWarehousePrinter */
+   		SELECT WMPTRNM, WSPTRNM
+   		  FROM ${userData.schema}.MWARMA
+   		  <where>
+   		      <if test = 'warekey != null and warekey != ""'>
+   		          AND WAREKEY = '${warekey}'
+   			  </if>
+   		  </where>
+   </select>
+
+   <!-- 출고지시서 출력여부 조회 -->
+   <select id="selectShipOrderYn" resultType="String">
+   		/* selectShipOrderYn */
+   		SELECT SHPORYN
+   		  FROM ${userData.schema}.MWARMA
+   		<where>
+   			<if test = 'warekey != null and warekey != ""'>
+   				AND WAREKEY = '${warekey}'
+   			</if>
+   		</where>
+   </select>
+
+   <!-- *************** MAREMA : 창고동 마스터 *************** -->
+   <!-- 창고동 리스트 조회 -->
+   <select id="selectMaremaList" resultType="com.kbph.logistics.md.domain.MaremaDTO">
+   	  /* selectMaremaList */
+      SELECT CONCAT(MA.WAREKEY, MA.AREAKEY) AS rowkey
+      	, MA.WAREKEY, MA.AREAKEY, MA.AREANAM, MA.AREATYP
+      	, MW.WHNAMLC, MA.AREMEMO, MA.ARUSEYN, MA.UPDTCHK
+      	, DATE_FORMAT(MA.CREDATE,'%Y-%m-%d') AS CREDATE
+        , DATE_FORMAT(STR_TO_DATE(MA.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+        , ${userData.schema}.FN_SY_USERNAM(MA.CREUSER) AS CREUSER
+        , DATE_FORMAT(MA.LMODATE,'%Y-%m-%d') AS LMODATE
+        , DATE_FORMAT(STR_TO_DATE(MA.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+        , ${userData.schema}.FN_SY_USERNAM(MA.LMOUSER) AS LMOUSER
+	   FROM ${userData.schema}.MAREMA MA
+	  INNER JOIN ${userData.schema}.MWARMA MW ON MA.WAREKEY = MW.WAREKEY
+	  <where>
+	  	<if test='params.warekey != null and params.warekey != ""'>
+	  		AND MA.WAREKEY = #{params.warekey}
+	  	</if>
+	    <if test='params.areakey != null and params.areakey != ""'>
+	        AND UPPER(MA.AREAKEY) LIKE CONCAT('%' , UPPER(#{params.areakey}) , '%')
+	    </if>
+	    <if test='params.areanam != null and params.areanam != ""'>
+	        AND UPPER(MA.AREANAM) LIKE CONCAT('%' , UPPER(#{params.areanam}) , '%')
+	    </if>
+	    <if test='params.areatyp != null and params.areatyp != ""'>
+	        AND MA.AREATYP = #{params.areatyp}
+	    </if>
+	    <if test='params.aruseyn != null and params.aruseyn != ""'>
+	        AND MA.ARUSEYN = #{params.aruseyn}
+	    </if>
+    </where>
+	  ORDER BY MA.AREANAM, MA.AREAKEY
+   </select>
+
+   <!-- 창고동 등록 -->
+   <insert id="insertMarema" parameterType="com.kbph.logistics.md.domain.MaremaDTO">
+      /* insertMarema */
+      INSERT
+        INTO ${userData.schema}.MAREMA
+        (
+         	WAREKEY, AREAKEY, AREANAM, AREATYP, AREMEMO
+          , ARUSEYN, CREDATE, CRETIME, CREUSER, LMODATE
+          , LMOTIME, LMOUSER
+        )
+        VALUES
+        (
+         	#{addData.warekey}, #{addData.areakey}, #{addData.areanam}
+          , #{addData.areatyp}, #{addData.arememo}, #{addData.aruseyn}
+          , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+          , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+        )
+   </insert>
+
+   <!-- 창고동 수정 -->
+   <update id="updateMarema" parameterType="com.kbph.logistics.md.domain.MaremaDTO">
+      /* updateMarema */
+      UPDATE ${userData.schema}.MAREMA SET
+           AREANAM = #{updateData.areanam}
+         , AREATYP = #{updateData.areatyp}
+         , AREMEMO = #{updateData.arememo}
+         , ARUSEYN = #{updateData.aruseyn}
+         , LMODATE = to_char(NOW() ,'YYYYMMDD')
+         , LMOTIME = to_char(NOW() ,'hh24miss')
+         , LMOUSER = #{userData.useract}
+         , UPDTCHK = #{updateData.updtchk} + 1
+      WHERE UPDTCHK = #{updateData.updtchk}
+      <choose>
+         <when test="updateData.oldWarekey != null and updateData.oldWarekey != ''">
+            AND WAREKEY = #{updateData.oldWarekey}
+         </when>
+         <otherwise>
+            AND WAREKEY = #{updateData.warekey}
+         </otherwise>
+      </choose>
+      <choose>
+         <when test="updateData.oldAreakey != null and updateData.oldAreakey != ''">
+            AND AREAKEY = #{updateData.oldAreakey}
+         </when>
+         <otherwise>
+            AND AREAKEY = #{updateData.areakey}
+         </otherwise>
+      </choose>
+   </update>
+
+   <!-- 창고동 셀렉트박스 -->
+   <select id="selectMaremaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+      /* selectMaremaSelectBox */
+      SELECT AREAKEY AS combovl, AREANAM AS combonm
+      	FROM ${userData.schema}.MAREMA
+       WHERE ARUSEYN = 'Y'
+       <if test='params.warekey != null and params.warekey != ""'>
+          AND WAREKEY = #{params.warekey}
+       </if>
+       <if test='params.areakey != null and params.areakey != ""'>
+          AND AREAKEY = #{params.areakey}
+       </if>
+       GROUP BY AREANAM, AREAKEY
+       ORDER BY AREANAM, AREAKEY
+   </select>
+
+	<!-- 창고 - 창고동 관계리스트 조회 -->
+	<select id="selectAreaRelationList" resultType="com.kbph.logistics.md.domain.MaremaDTO">
+		/* selectAreaRelationList */
+		SELECT MAR.WAREKEY, MAR.AREAKEY, MAR.AREATYP, MAR.AREANAM
+		  FROM ${userData.schema}.MAREMA MAR
+		 INNER JOIN ${userData.schema}.MWARMA MWA
+				 ON (MWA.WAREKEY = MAR.WAREKEY)
+		 WHERE MWA.WHUSEYN = 'Y'
+		   AND MAR.ARUSEYN = 'Y'
+		   <if test="param.warekey != null and param.warekey != ''">
+		       AND MAR.WAREKEY = #{param.warekey}
+		   </if>
+	</select>
+
+   <!-- *************** MLOCMA : 베드 마스터 *************** -->
+   <!-- 베드 리스트 조회 -->
+   <select id="selectMlocmaList" resultType="com.kbph.logistics.md.domain.MlocmaDTO">
+      /* selectMlocmaList */
+      SELECT CONCAT(ML.WAREKEY, ML.AREAKEY, ML.LOCAKEY) AS ROWKEY
+         , ML.WAREKEY, ML.AREAKEY , MA.AREANAM AS AREANAM, ML.LOCAKEY
+         , ML.LOCANAM, ML.LOCSTAT, ML.LOCTYPE, ML.LOCMEMO, ML.LOCWIDT
+         , ML.LOCLENG, ML.LOCHEIG, ML.LOCCUBI, ML.SIZEPRI, ML.BTRCPRI
+         , ML.ITDTPRI, ML.CUSTPRI, ML.REGIPRI, ML.DESTPRI, ML.INBOPRI
+         , ML.OUBOPRI, ML.LOUSEYN, ML.UPDTCHK
+      	 , DATE_FORMAT(ML.CREDATE,'%Y-%m-%d') AS CREDATE
+         , DATE_FORMAT(STR_TO_DATE(ML.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+         , ${userData.schema}.FN_SY_USERNAM(ML.CREUSER) AS CREUSER
+         , DATE_FORMAT(ML.LMODATE,'%Y-%m-%d') AS LMODATE
+         , DATE_FORMAT(STR_TO_DATE(ML.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+         , ${userData.schema}.FN_SY_USERNAM(ML.LMOUSER) AS LMOUSER
+      FROM ${userData.schema}.MLOCMA ML
+      INNER JOIN ${userData.schema}.MAREMA MA ON ML.WAREKEY = MA.WAREKEY AND ML.AREAKEY = MA.AREAKEY
+      <where>
+      <if test='params.warekey != null and params.warekey != ""'>
+         AND ML.WAREKEY = #{params.warekey}
+      </if>
+      <if test='params.areakey != null and params.areakey != ""'>
+         AND ML.AREAKEY = #{params.areakey}
+      </if>
+      <if test='params.areanam != null and params.areanam != ""'>
+         AND UPPER(MA.AREANAM) LIKE CONCAT('%', UPPER(#{params.areanam}), '%')
+      </if>
+      <if test='params.locakey != null and params.locakey != ""'>
+         AND UPPER(ML.LOCAKEY) LIKE CONCAT('%', UPPER(#{params.locakey}), '%')
+      </if>
+      <if test='params.locanam != null and params.locanam != ""'>
+         AND UPPER(ML.LOCANAM) LIKE CONCAT('%', UPPER(#{params.locanam}), '%')
+      </if>
+      <if test='params.louseyn != null and params.louseyn != ""'>
+         AND ML.LOUSEYN = #{params.louseyn}
+      </if>
+      <if test='params.loctype != null and params.loctype != ""'>
+         AND ML.LOCTYPE = #{params.loctype}
+      </if>
+      <if test='params.locstat != null and params.locstat != ""'>
+         AND ML.LOCSTAT = #{params.locstat}
+      </if>
+      </where>
+      ORDER BY MA.AREANAM, ML.LOCANAM, ML.LOCAKEY
+   </select>
+
+   <!-- 베드 등록 -->
+   <insert id="insertMlocma" parameterType="com.kbph.logistics.md.domain.MlocmaDTO">
+      /* insertMlocma */
+      INSERT INTO ${userData.schema}.MLOCMA(
+         WAREKEY, AREAKEY, LOCAKEY, LOCANAM, LOCSTAT
+         , LOCTYPE, LOCMEMO, LOCWIDT, LOCLENG, LOCHEIG
+         , LOCCUBI, SIZEPRI, BTRCPRI, ITDTPRI, CUSTPRI
+         , REGIPRI, DESTPRI, INBOPRI, OUBOPRI, LOUSEYN
+         , CREDATE, CRETIME , CREUSER , LMODATE, LMOTIME , LMOUSER
+      )VALUES(
+         #{addData.warekey}, #{addData.areakey}, #{addData.locakey}
+         , #{addData.locanam}, #{addData.locstat}, #{addData.loctype}
+         , #{addData.locmemo}, #{addData.locwidt}, #{addData.locleng}
+         , #{addData.locheig}, #{addData.loccubi} , #{addData.sizepri}
+         , #{addData.btrcpri}, #{addData.itdtpri}, #{addData.custpri}
+         , #{addData.regipri}, #{addData.destpri}, #{addData.inbopri}
+         , #{addData.oubopri}, #{addData.louseyn}
+         , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+         , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+      )
+   </insert>
+
+   <!-- 베드 수정 -->
+   <update id="updateMlocma" parameterType="com.kbph.logistics.md.domain.MlocmaDTO">
+      /* updateMlocma */
+      UPDATE ${userData.schema}.MLOCMA SET
+         LOCANAM = #{updateData.locanam}
+         , LOCSTAT = #{updateData.locstat}
+         , LOCTYPE = #{updateData.loctype}
+         , LOCMEMO = #{updateData.locmemo}
+         , LOCWIDT = #{updateData.locwidt}
+         , LOCLENG = #{updateData.locleng}
+         , LOCHEIG = #{updateData.locheig}
+         , LOCCUBI = #{updateData.loccubi}
+         , SIZEPRI = #{updateData.sizepri}
+         , BTRCPRI = #{updateData.btrcpri}
+         , ITDTPRI = #{updateData.itdtpri}
+         , CUSTPRI = #{updateData.custpri}
+         , REGIPRI = #{updateData.regipri}
+         , DESTPRI = #{updateData.destpri}
+         , INBOPRI = #{updateData.inbopri}
+         , OUBOPRI= #{updateData.oubopri}
+         , LOUSEYN = #{updateData.louseyn}
+         , LMODATE = to_char(NOW() ,'YYYYMMDD')
+         , LMOTIME = to_char(NOW() ,'hh24miss')
+         , LMOUSER = #{userData.useract}
+         , UPDTCHK = #{updateData.updtchk} + 1
+      WHERE UPDTCHK = #{updateData.updtchk}
+      <choose>
+         <when test="updateData.oldWarekey != null and updateData.oldWarekey !=''">
+            AND WAREKEY = #{updateData.oldWarekey}
+         </when>
+         <otherwise>
+            AND WAREKEY = #{updateData.warekey}
+         </otherwise>
+      </choose>
+      <choose>
+         <when test="updateData.oldAreakey != null and updateData.oldAreakey !=''">
+            AND AREAKEY = #{updateData.oldAreakey}
+         </when>
+         <otherwise>
+            AND AREAKEY = #{updateData.areakey}
+         </otherwise>
+      </choose>
+      <choose>
+         <when test="updateData.oldLocakey != null and updateData.oldLocakey !=''">
+            AND LOCAKEY = #{updateData.oldLocakey}
+         </when>
+         <otherwise>
+            AND LOCAKEY = #{updateData.locakey}
+         </otherwise>
+      </choose>
+   </update>
+
+   <!-- 베드 셀렉트박스 조회 -->
+   <select id="selectMlocmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+      /* selectMlocmaSelectBox */
+      SELECT LOCAKEY AS COMBOVL, LOCANAM AS COMBONM
+      FROM ${userData.schema}.MLOCMA
+      WHERE LOUSEYN = 'Y'
+      <if test='params.warekey != null and params.warekey != ""'>
+         AND WAREKEY = #{params.warekey}
+      </if>
+      <if test='params.areakey != null and params.areakey != ""'>
+         AND AREAKEY = #{params.areakey}
+      </if>
+      <if test='params.locakey != null and params.locakey != ""'>
+         AND LOCAKEY = #{params.locakey}
+      </if>
+      GROUP BY LOCANAM, LOCAKEY
+      ORDER BY LOCANAM, LOCAKEY
+   </select>
+
+   <!-- 베드 타입 조회 -->
+   <select id="selectLoctypeByKey" resultType="String">
+   	  SELECT ML.LOCTYPE FROM ${userData.schema}.MLOCMA ML
+   	  <where>
+	      <if test='params.warekey != null and params.warekey != ""'>
+	         AND ML.WAREKEY = #{params.warekey}
+	      </if>
+	      <if test='params.locakey != null and params.locakey != ""'>
+	         AND ML.LOCAKEY = #{params.locakey}
+	      </if>
+   	  </where>
+   </select>
+
+   <!-- Location 관계 리스트 조회 (창고-창고동) -->
+   <select id="selectWareAreaRelations" resultType="com.kbph.logistics.md.domain.MlocmaDTO">
+   	  /* selectWareAreaRelations */
+      SELECT MWA.WAREKEY AS WAREKEY, MAR.AREAKEY AS AREAKEY
+      	   , MAR.AREANAM AS AREANAM, CONCAT('[', MAR.AREAKEY, '] ', MAR.AREANAM) AS combonm
+      FROM ${userData.schema}.MWARMA MWA
+      INNER JOIN ${userData.schema}.MAREMA MAR ON (MWA.WAREKEY = MAR.WAREKEY)
+      WHERE MWA.WHUSEYN = 'Y' AND MAR.ARUSEYN = 'Y'
+      <if test='params.warekey != null and params.warekey != ""'>
+         AND MWA.WAREKEY = #{params.warekey}
+      </if>
+      <if test='params.areakey != null and params.areakey != ""'>
+         AND MAR.AREAKEY = #{params.areakey}
+      </if>
+      GROUP BY MWA.WAREKEY, MAR.AREAKEY, MAR.AREANAM
+      ORDER BY MWA.WAREKEY, MAR.AREAKEY
+   </select>
+
+   <!-- Location 관계 리스트 조회 (창고-베드) -->
+   <select id="selectWareAreaLocRelations" resultType="com.kbph.logistics.md.domain.MlocmaDTO">
+      /* selectWareAreaLocRelations */
+      SELECT MWA.WAREKEY AS WAREKEY, MAR.AREAKEY AS AREAKEY
+         , MAR.AREANAM AS AREANAM, MLO.LOCAKEY AS LOCAKEY, MLO.LOCANAM AS LOCANAM
+         , MLO.LOCTYPE
+      FROM ${userData.schema}.MWARMA MWA
+      INNER JOIN ${userData.schema}.MAREMA MAR ON (MWA.WAREKEY = MAR.WAREKEY)
+      INNER JOIN ${userData.schema}.MLOCMA MLO ON (MWA.WAREKEY = MLO.WAREKEY AND MAR.AREAKEY = MLO.AREAKEY)
+      WHERE MWA.WHUSEYN = 'Y' AND MAR.ARUSEYN = 'Y' AND MLO.LOUSEYN = 'Y'
+      <if test='params.warekey != null and params.warekey != ""'>
+         AND MWA.WAREKEY = #{params.warekey}
+      </if>
+      <if test='params.areakey != null and params.areakey != ""'>
+         AND MAR.AREAKEY = #{params.areakey}
+      </if>
+	  <if test="params.loctypeList != null and params.loctypeList.size != 0">
+		 AND MLO.LOCTYPE IN
+		<foreach collection="params.loctypeList" open="(" close=")" item="loctype" separator=",">
+		  	#{loctype}
+		</foreach>
+	  </if>
+      GROUP BY MWA.WAREKEY, MAR.AREAKEY, MLO.LOCAKEY, MAR.AREANAM, MLO.LOCANAM
+      ORDER BY MWA.WAREKEY, MAR.AREAKEY, MLO.LOCAKEY
+   </select>
+
+	<!-- 창고 - 창고동 - 베드 관계리스트 조회 -->
+	<select id="selectLocationRelationList" resultType="com.kbph.logistics.md.domain.MlocmaDTO">
+		/* selectLocationRelationList */
+		SELECT
+			MLO.WAREKEY, MLO.AREAKEY, MLO.LOCAKEY, MLO.LOCANAM,
+			MLO.LOCTYPE
+		FROM
+			${userData.schema}.MLOCMA MLO
+		INNER JOIN
+			${userData.schema}.MWARMA MWA
+			ON (MWA.WAREKEY = MLO.WAREKEY)
+		INNER JOIN
+			${userData.schema}.MAREMA MAR
+			ON (
+				MAR.WAREKEY = MWA.WAREKEY
+				AND MAR.WAREKEY = MLO.WAREKEY
+				AND MAR.AREAKEY = MLO.AREAKEY
+			)
+		WHERE
+			MWA.WHUSEYN = 'Y'
+			AND MAR.ARUSEYN = 'Y'
+			AND MLO.LOUSEYN = 'Y'
+			AND MLO.LOCSTAT = 'NORMAL'
+			<if test="param.warekey != null and param.warekey != ''">
+				AND MLO.WAREKEY = #{param.warekey}
+			</if>
+			<if test="param.loctype != null and param.loctype != ''">
+				AND MLO.LOCTYPE = #{param.loctype}
+			</if>
+	</select>
+
+   <!-- *************** MEQUMA : 설비 마스터 *************** -->
+   <!-- 설비 리스트 조회 -->
+   <select id="selectMequemaList" resultType="com.kbph.logistics.md.domain.MequmaDTO">
+      /* selectMequemaList */
+      SELECT CONCAT(ME.WAREKEY, ME.AREAKEY, ME.EQUIPKY) AS ROWKEY
+         , ME.WAREKEY, ME.AREAKEY, MA.AREANAM AS AREANAM
+         , ME.EQUIPKY, ME.EQUINAM, ME.EQUTYPE, ME.EQUMEMO, ME.EQUVEND
+         , DATE_FORMAT(ME.EQUPURD,'%Y-%m-%d') AS EQUPURD, ME.EQUSTAT
+         , ME.EQMANNM, ME.EQMANTL, ME.EQMANEM, ME.EQUWIDT, ME.EQULENG
+         , ME.EQUHEIG, ME.EQUWEIG, ME.EQMAXWG, ME.EQUSEYN, ME.UPDTCHK
+         , DATE_FORMAT(ME.CREDATE,'%Y-%m-%d') AS CREDATE
+         , DATE_FORMAT(STR_TO_DATE(ME.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+         , ${userData.schema}.FN_SY_USERNAM(ME.CREUSER) AS CREUSER
+         , DATE_FORMAT(ME.LMODATE,'%Y-%m-%d') AS LMODATE
+         , DATE_FORMAT(STR_TO_DATE(ME.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+         , ${userData.schema}.FN_SY_USERNAM(ME.LMOUSER) AS LMOUSER
+      FROM ${userData.schema}.MEQUMA ME
+      INNER JOIN ${userData.schema}.MAREMA MA ON ME.WAREKEY = MA.WAREKEY AND ME.AREAKEY = MA.AREAKEY
+      <where>
+      <if test = 'params.warekey != null and params.warekey != ""'>
+         AND ME.WAREKEY = #{params.warekey}
+      </if>
+      <if test = 'params.areakey != null and params.areakey != ""'>
+         AND ME.AREAKEY = #{params.areakey}
+      </if>
+      <if test = 'params.areanam != null and params.areanam != ""'>
+         AND UPPER(MA.AREANAM) LIKE CONCAT('%', UPPER(#{params.areanam}), '%')
+      </if>
+      <if test = 'params.equipky != null and params.equipky != ""'>
+         AND ME.EQUIPKY LIKE CONCAT('%', UPPER(#{params.equipky}), '%')
+      </if>
+      <if test = 'params.equinam != null and params.equinam != ""'>
+         AND UPPER(ME.EQUINAM) LIKE CONCAT('%', UPPER(#{params.equinam}), '%')
+      </if>
+      <if test = 'params.equseyn != null and params.equseyn != ""'>
+         AND ME.EQUSEYN = #{params.equseyn}
+      </if>
+      <if test = 'params.equtype != null and params.equtype != ""'>
+         AND ME.EQUTYPE = #{params.equtype}
+      </if>
+      <if test = 'params.equstat != null and params.equstat != ""'>
+         AND ME.EQUSTAT = #{params.equstat}
+      </if>
+      </where>
+      ORDER BY MA.AREANAM, ME.EQUINAM, ME.EQUIPKY
+   </select>
+
+   <!-- 설비 등록 -->
+   <insert id="insertMequma" parameterType="com.kbph.logistics.md.domain.MequmaDTO">
+      /* insertMequma */
+      INSERT INTO ${userData.schema}.MEQUMA(
+         WAREKEY, AREAKEY, EQUIPKY, EQUINAM, EQUTYPE
+         , EQUMEMO, EQUVEND, EQUPURD, EQUSTAT, EQMANNM
+         , EQMANTL, EQMANEM, EQUWIDT, EQULENG, EQUHEIG
+         , EQUWEIG, EQMAXWG, EQUSEYN, CREDATE, CRETIME
+         , CREUSER, LMODATE, LMOTIME, LMOUSER
+      )values(
+         #{addData.warekey}, #{addData.areakey}, #{addData.equipky}
+         , #{addData.equinam}, #{addData.equtype}, #{addData.equmemo}
+         , #{addData.equvend}, #{addData.equpurd}, #{addData.equstat}
+         , #{addData.eqmannm}, #{addData.eqmantl}, #{addData.eqmanem}
+         , #{addData.equwidt}, #{addData.equleng}, #{addData.equheig}
+         , #{addData.equweig}, #{addData.eqmaxwg}, #{addData.equseyn}
+         , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+         , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+      )
+   </insert>
+
+   <!-- 설비 수정 -->
+   <update id="updateMequma" parameterType="com.kbph.logistics.md.domain.MequmaDTO">
+      /* updateMequma */
+      UPDATE ${userData.schema}.MEQUMA SET
+      	EQUINAM = #{updateData.equinam}
+         , EQUTYPE = #{updateData.equtype}
+         , EQUMEMO = #{updateData.equmemo}
+         , EQUVEND = #{updateData.equvend}
+         , EQUPURD = #{updateData.equpurd}
+         , EQUSTAT = #{updateData.equstat}
+         , EQMANNM = #{updateData.eqmannm}
+         , EQMANTL = #{updateData.eqmantl}
+         , EQMANEM = #{updateData.eqmanem}
+         , EQUWIDT = #{updateData.equwidt}
+         , EQULENG = #{updateData.equleng}
+         , EQUHEIG = #{updateData.equheig}
+         , EQUWEIG = #{updateData.equweig}
+         , EQMAXWG = #{updateData.eqmaxwg}
+         , EQUSEYN = #{updateData.equseyn}
+         , LMODATE = to_char(NOW() ,'YYYYMMDD')
+         , LMOTIME = to_char(NOW() ,'hh24miss')
+         , LMOUSER = #{userData.useract}
+         , UPDTCHK = #{updateData.updtchk} + 1
+      WHERE UPDTCHK = #{updateData.updtchk}
+      <choose>
+         <when test="updateData.oldWarekey != null and updateData.oldWarekey !=''">
+            AND WAREKEY = #{updateData.oldWarekey}
+         </when>
+         <otherwise>
+            AND WAREKEY = #{updateData.warekey}
+         </otherwise>
+      </choose>
+      <choose>
+         <when test="updateData.oldAreakey != null and updateData.oldAreakey !=''">
+            AND AREAKEY = #{updateData.oldAreakey}
+         </when>
+         <otherwise>
+            AND AREAKEY = #{updateData.areakey}
+         </otherwise>
+      </choose>
+      <choose>
+         <when test="updateData.oldEquipky != null and updateData.oldEquipky !=''">
+            AND EQUIPKY = #{updateData.oldEquipky}
+         </when>
+         <otherwise>
+            AND EQUIPKY = #{updateData.equipky}
+         </otherwise>
+      </choose>
+   </update>
+
+   <!-- 설비 셀렉트박스 조회 -->
+   <select id="selectMequmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+      /* selectMequmaSelectBox */
+      SELECT EQUIPKY AS COMBOVL, EQUINAM AS COMBONM
+      FROM ${userData.schema}.MEQUMA
+      WHERE EQUSEYN = 'Y'
+      <if test='params.warekey != null and params.warekey != ""'>
+         AND WAREKEY = #{params.warekey}
+      </if>
+      <if test='params.areakey != null and params.areakey != ""'>
+         AND AREAKEY = #{params.areakey}
+      </if>
+      <if test='params.equipky != null and params.equipky != ""'>
+         AND EQUIPKY = #{params.equipky}
+      </if>
+      <if test='params.equtype != null and params.equtype != ""'>
+         AND EQUTYPE = #{params.equtype}
+      </if>
+      <if test='params.equstat != null and params.equstat != ""'>
+         AND EQUSTAT = #{params.equstat}
+      </if>
+      GROUP BY EQUINAM, EQUIPKY
+      ORDER BY EQUINAM, EQUIPKY
+   </select>
+
+   <!-- 설비 관계 리스트 조회 (창고-설비) -->
+   <select id="selectWareAreaEquipRelations" resultType="com.kbph.logistics.md.domain.MequmaDTO">
+      /* selectWareAreaEquipRelations */
+      SELECT MW.WAREKEY AS WAREKEY, MA.AREAKEY AS AREAKEY
+         , MA.AREANAM AS AREANAM, ME.EQUIPKY AS EQUIPKY, ME.EQUINAM AS EQUINAM
+      FROM ${userData.schema}.MWARMA MW
+      INNER JOIN ${userData.schema}.MAREMA MA ON (MW.WAREKEY = MA.WAREKEY)
+      INNER JOIN ${userData.schema}.MEQUMA ME ON (MA.WAREKEY = ME.WAREKEY AND MA.AREAKEY = ME.AREAKEY)
+      WHERE MW.WHUSEYN = 'Y' AND MA.ARUSEYN = 'Y' AND ME.EQUSEYN = 'Y'
+      <if test='params.warekey != null and params.warekey != ""'>
+         AND MW.WAREKEY = #{params.warekey}
+      </if>
+      <if test='params.areakey != null and params.areakey != ""'>
+         AND MA.AREAKEY = #{params.areakey}
+      </if>
+      GROUP BY MW.WAREKEY, MA.AREAKEY, ME.EQUIPKY, MA.AREANAM, ME.EQUINAM
+      ORDER BY MW.WAREKEY, MA.AREAKEY, ME.EQUIPKY
+   </select>
+
+   <!-- *************** MEQLOC : 설비-베드 매핑 *************** -->
+   <!-- 설비 베드 매핑 조회 -->
+   <select id="selectMlocmaForMapping" resultType="com.kbph.logistics.md.domain.MlocmaDTO">
+      /* selectMlocmaForMapping */
+      SELECT CONCAT(ML.WAREKEY, ML.AREAKEY, ML.LOCAKEY) AS ROWKEY
+         , ML.WAREKEY, ML.AREAKEY, ML.LOCAKEY, ML.LOCANAM, ML.LOCSTAT
+         , ML.LOCTYPE, ML.LOCMEMO, ML.LOCWIDT, ML.LOCLENG, ML.LOCHEIG
+         , ML.LOCCUBI, ML.SIZEPRI, ML.BTRCPRI, ML.ITDTPRI, ML.CUSTPRI
+         , ML.REGIPRI, ML.DESTPRI, ML.INBOPRI, ML.OUBOPRI, ML.LOUSEYN
+         , MEL.UPDTCHK, MEL.MANEQYN, MEL.ELUSEYN, ME.EQUIPKY, MC.COMCDTX
+         , ME.EQUINAM
+         , ML.UPDTCHK AS UPDTCHK2
+         , DATE_FORMAT(ML.CREDATE,'%Y-%m-%d') AS CREDATE
+         , DATE_FORMAT(STR_TO_DATE(ML.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+         , ${userData.schema}.FN_SY_USERNAM(ML.CREUSER) AS CREUSER
+         , DATE_FORMAT(ML.LMODATE,'%Y-%m-%d') AS LMODATE
+         , DATE_FORMAT(STR_TO_DATE(ML.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+         , ${userData.schema}.FN_SY_USERNAM(ML.LMOUSER) AS LMOUSER
+      FROM ${userData.schema}.MLOCMA ML
+	  LEFT JOIN ${userData.schema}.MEQUMA ME ON ML.WAREKEY = ME.WAREKEY AND ML.AREAKEY = ME.AREAKEY
+	  LEFT JOIN ${userData.schema}.MEQLOC MEL ON ML.WAREKEY = MEL.WAREKEY AND ML.AREAKEY = MEL.AREAKEY
+	  	AND ME.EQUIPKY = MEL.EQUIPKY AND ML.LOCAKEY = MEL.LOCAKEY
+	  INNER JOIN ${userData.schema}.MCODEM MC
+	     ON MC.COMCDKY = 'LOCTYPE'
+	    AND MC.COMCDVL = ML.LOCTYPE
+	    AND MC.COUSEYN = 'Y'
+	  WHERE ML.LOUSEYN = 'Y'
+	  <if test='params.warekey != null and params.warekey != ""'>
+          AND ML.WAREKEY = #{params.warekey}
+      </if>
+      <if test='params.areakey != null and params.areakey != ""'>
+          AND ML.AREAKEY = #{params.areakey}
+      </if>
+      <if test='params.equipky != null and params.equipky != ""'>
+          AND ME.EQUIPKY = #{params.equipky}
+      </if>
+      ORDER BY ML.LOCANAM, ML.LOCAKEY, MEL.EQUIPKY
+   </select>
+
+   <!-- 설비-베드 매핑 등록여부 확인 -->
+   <select id="selectMeqlocCnt" resultType="int">
+   		/* selectMeqlocCnt */
+   		SELECT COUNT(*) FROM ${userData.schema}.MEQLOC
+		 WHERE WAREKEY = #{params.warekey}
+		   AND AREAKEY = #{params.areakey}
+		   AND EQUIPKY = #{params.equipky}
+		   AND LOCAKEY = #{params.locakey}
+   </select>
+
+   <!-- 설비-베드 매핑 등록 -->
+   <insert id="insertMeqloc" parameterType="com.kbph.logistics.md.domain.MeqlocDTO">
+   		/* insertMeqloc */
+   		INSERT
+   		  INTO ${userData.schema}.MEQLOC(
+   		  		WAREKEY, AREAKEY, EQUIPKY, LOCAKEY
+   		  		, MANEQYN, ELUSEYN, CREDATE, CRETIME
+   		  		, CREUSER, LMODATE, LMOTIME, LMOUSER
+	  	  )
+	  	  VALUES(
+			  	#{addData.warekey}, #{addData.areakey}, #{addData.equipky}
+		  	  , #{addData.locakey}, #{addData.maneqyn}, #{addData.eluseyn}
+		      , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		      , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+	  	  )
+   </insert>
+
+   <!-- 설비-베드 매핑 수정 -->
+   <update id="updateMeqloc" parameterType="com.kbph.logistics.md.domain.MeqlocDTO">
+   		/* updateMeqloc */
+   		UPDATE ${userData.schema}.MEQLOC
+   		   SET ELUSEYN = #{updateData.eluseyn}
+   		   	 , MANEQYN = #{updateData.maneqyn}
+         	 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+         	 , LMOTIME = to_char(NOW() ,'hh24miss')
+         	 , LMOUSER = #{userData.useract}
+         	 , UPDTCHK = #{updateData.updtchk} + 1
+      	 WHERE UPDTCHK = #{updateData.updtchk}
+       	<if test='updateData.warekey != null and updateData.warekey != ""'>
+       		AND WAREKEY = #{updateData.warekey}
+   		</if>
+   		<if test='updateData.areakey != null and updateData.areakey != ""'>
+  			AND AREAKEY = #{updateData.areakey}
+		</if>
+		<if test='updateData.equipky != null and updateData.equipky != ""'>
+			AND EQUIPKY = #{updateData.equipky}
+		</if>
+		<if test='updateData.locakey != null and updateData.locakey != ""'>
+			AND LOCAKEY = #{updateData.locakey}
+		</if>
+   </update>
+
+   <update id="updateMeqlocUnuse" parameterType="String">
+   		/* updateMeqlocUnuse */
+   		UPDATE ${userData.schema}.MEQLOC
+   		SET ELUSEYN = "N", MANEQYN = "N"
+   		WHERE LOCAKEY = #{locakey}
+   </update>
+
+   <select id="selectEquipkyByLoc" resultType="String">
+   	  /* selectEquipkyByLoc */
+   	  SELECT GROUP_CONCAT(MQ.EQUIPKY ORDER BY MQ.MANEQYN DESC SEPARATOR ',') AS EQUIPKY
+	   FROM ${userData.schema}.MEQLOC MQ
+	  INNER JOIN ${userData.schema}.MLOCMA ML
+	     ON ML.WAREKEY = MQ.WAREKEY
+	    AND ML.AREAKEY = MQ.AREAKEY
+	    AND ML.LOCAKEY = MQ.LOCAKEY
+	    AND ML.LOUSEYN = 'Y'
+	  INNER JOIN ${userData.schema}.MEQUMA ME
+	  	 ON ME.WAREKEY = MQ.WAREKEY
+	  	AND ME.AREAKEY = MQ.AREAKEY
+	   	AND ME.EQUIPKY = MQ.EQUIPKY
+	   	AND ME.EQUSTAT = 'NORMAL'
+	  WHERE MQ.ELUSEYN = 'Y'
+	   <if test='param.warekey != null and param.warekey != ""'>
+	   		AND MQ.WAREKEY = #{param.warekey}
+   	   </if>
+   	   <if test='param.areakey != null and param.areakey != ""'>
+   	   		AND MQ.AREAKEY = #{param.areakey}
+	   </if>
+	   <if test='param.locakey != null and param.locakey != ""'>
+	   		AND MQ.LOCAKEY = #{param.locakey}
+   	   </if>
+  	   	 ORDER BY MQ.MANEQYN DESC
+   </select>
+
+   <select id="selectEquipByLocForSelectBox" resultType="com.kbph.logistics.md.domain.MeqlocDTO">
+   	  /* selectEquipByLocForSelectBox */
+		SELECT MQ.WAREKEY, MQ.AREAKEY, MQ.LOCAKEY, MQ.EQUIPKY
+			 , ML.LOCTYPE, ML.LOCANAM, EQ.EQUINAM
+		  FROM ${userData.schema}.MEQLOC MQ
+		 INNER JOIN ${userData.schema}.MLOCMA ML
+		 		 ON ML.WAREKEY = MQ.WAREKEY
+		 		AND ML.AREAKEY = MQ.AREAKEY
+		 		AND ML.LOCAKEY = MQ.LOCAKEY
+		 INNER JOIN ${userData.schema}.MEQUMA EQ
+		 		 ON EQ.WAREKEY = MQ.WAREKEY
+		 		AND EQ.AREAKEY = MQ.AREAKEY
+		 		AND EQ.EQUIPKY = MQ.EQUIPKY
+		 WHERE MQ.ELUSEYN = 'Y' AND EQ.EQUSTAT = 'NORMAL'
+   	   	 <if test='param.warekey != null and param.warekey != ""'>
+   	   	 	AND MQ.WAREKEY = #{param.warekey}
+   	   	 </if>
+   	   	 <if test='param.areakey != null and param.areakey != ""'>
+   	   	 	AND MQ.AREAKEY = #{param.areakey}
+   	   	 </if>
+   	   	 <if test='param.locakey != null and param.locakey != ""'>
+   	   	 	AND MQ.LOCAKEY = #{param.locakey}
+   	   	 </if>
+   	   	 <if test='param.loctype != null and param.loctype != ""'>
+   	   	 	AND ML.LOCTYPE = #{param.loctype}
+   	   	 </if>
+   	   ORDER BY ML.LOCANAM
+   </select>
+</mapper>

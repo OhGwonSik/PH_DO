@@ -1,0 +1,224 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="doe078Addsiky" class="setting-grid-title">[[#{bm.baddco.addconm}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe078Addsiky" name="doe078Addsiky"
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=addsiky"
+						data-cb-select="" data-cb-variable="addsikyList">
+							<option value="">[[#{ms.chooseAll}]]</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe078BtnSearch"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe078BtnReset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.bm.doe078}]]</span>
+				</div>
+				<div class="edit-btn-wrapper">
+					<button class="btn-navy btn-green" id="doe078BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box">
+				<div id="doe078Pqgrid">그리드</div>
+			</div>
+		</div>
+<script>
+!function(){
+	const pageId = '[[${tabPage}]]';
+
+	const doe078GridCM = [
+		{ title: '', dataType: 'String',  dataIndx: 'state', type: 'checkBoxSelection', align: 'center'
+			, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+			cb: { all: false, header: true, check: 'Y', uncheck: 'N' }
+		},
+		{ title: '[[#{bm.baddco.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false, hidden: true},
+		{ title: '[[#{bm.baddco.minleng}]]', dataType: 'integer', dataIndx: 'minleng' ,styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+		{ title: '[[#{bm.baddco.maxleng}]]', dataType: 'integer', dataIndx: 'maxleng',styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+		{ title: '[[#{bm.baddco.minwidt}]]', dataType: 'float', dataIndx: 'minwidt' ,styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }, format :"#,###.0"},
+		{ title: '[[#{bm.baddco.maxwidt}]]', dataType: 'float', dataIndx: 'maxwidt',styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }, format :'#,###.0'},
+		{ title: '[[#{bm.baddco.adcoper}]]', dataType: 'float',	 dataIndx: 'adcoper' ,styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }, format :'0.00'},
+		{ title: '[[#{bm.baddco.addsiky}]]', dataType: 'string', dataIndx: 'addsiky' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			editor: {
+				type: 'select',
+	            init: function (ui) {
+	            	ui.$cell.find('select').pqSelect({ checkbox : true });
+	                setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open');
+		        	}, 250);
+				},
+			    options: []
+			},
+			render : gridRenderAndValue
+		},
+		{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+		{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+		{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+		{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+		{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+		{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+		{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+	];
+
+	const doe078GridObj = new GridUtil(doe078GridCM,pageId,'doe078Pqgrid');
+	doe078GridObj.setReset();
+	doe078GridObj.setFind();
+
+	doe078GridObj.setCreate(async function(event,ui){
+		await _commonInit(pageId);
+
+		comboCreateData('doe078Pqgrid', 'addsiky', addsikyList, { combovl : 'combovl', combonm : 'combonm' });
+	})
+	//grid row추가 버튼
+	doe078GridObj.setAdd(function(event,ui){
+		const rowData = {
+				state : 'Y',
+				minleng : 0 ,
+				maxleng : 0 ,
+				minwidt : 0 ,
+				maxwidt : 0 ,
+				adcoper : 0 ,
+				addsiky : ''
+		};
+
+    	const rowIndx = this.addRow({
+    		newRow: rowData,
+    		checkEditable: false
+    	});
+
+    	this.goToPage({ rowIndx: rowIndx });
+    	this.editFirstCellInRow({ rowIndx: rowIndx });
+	});
+
+	//grid row 삭제 버튼 : 삭제 후 저장 시 데이터 삭제 flow
+	doe078GridObj.setDelete(function(event,ui){
+		const checkList = this.Checkbox('state').getCheckedNodes();
+       	if(!checkList.length) {
+       		alert('[[#{ms.choiceRowZero}]]');
+       		return;
+       	}
+
+   		if(confirm(checkList.length + '[[#{ms.allRowDelete}]]')) {
+  			for(const checkData of checkList) {
+  				this.deleteRow({ rowIndx: checkData.pq_ri });
+  	   		}
+   		}
+	});
+
+	doe078GridObj.setBeforeValidate(function(event,ui){
+		if(ui.source !== 'undo' && (ui.source === 'edit' || ui.source === 'paste' || ui.source === 'checkbox')){
+			for(const updateData of ui.updateList){
+				//newData는 문자열로 들어오기때문에 값만 비교
+				if((updateData.oldRow.minleng !== updateData.newRow.minleng) || (updateData.oldRow.maxleng !== updateData.newRow.maxleng)
+					|| (updateData.oldRow.minwidt !== updateData.newRow.minwidt) || (updateData.oldRow.maxwidt !== updateData.newRow.maxwidt)){
+					this.updateRow( {
+		       			rowIndx : updateData.rowIndx,
+		       		    newRow : {
+		       		    	state: 'Y'
+		       		    },
+		       		    checkEditable: false
+		       		});
+				}
+			}
+		}
+	});
+
+	doe078GridObj.setChange(function(event,ui){
+		if(ui.source !== 'undo' && ui.source === 'paste'){
+			for(const updateData of ui.updateList){
+				this.updateRow({
+					rowIndx : updateData.rowIndx,
+					newRow : {
+						state : 'Y',
+						minleng : updateData.rowData.minleng,
+						maxleng : updateData.rowData.maxleng,
+						minwidt : updateData.rowData.minwidt,
+						maxwidt : updateData.rowData.maxwidt,
+						addsiky : updateData.rowData.addsiky
+					},
+					checkEditable : false
+				});
+			}
+
+			for(const addData of ui.addList){
+				addData.rowData.state = 'Y';
+				addData.rowData.minleng = addData.newRow.minleng;
+				addData.rowData.maxleng = addData.newRow.maxleng;
+				addData.rowData.minwidt = addData.newRow.minwidt;
+				addData.rowData.maxwidt = addData.newRow.maxwidt;
+				addData.rowData.addsiky = addData.newRow.addsiky;
+			}
+		}
+		doe078GridObj.getGrid().refresh();
+	})
+
+	doe078GridObj.open();
+
+	//조회 버튼 클릭
+	document.querySelector('#doe078BtnSearch').addEventListener('click', function(){
+		getDoe078List();
+	});
+
+	//검색영역 초기화 버튼
+	document.querySelector('#doe078BtnReset').addEventListener('click', function(){
+		const headGrid = doe078GridObj.getGrid().getData();
+		if(headGrid.length > 0){
+			if(!confirm('[[#{ms.listViewRollback}]]')){
+				return;
+			}
+		}
+		document.querySelector('#doe078Addsiky').value = '';
+		makeEmptyGrid(doe078GridObj);
+	});
+
+	//저장 버튼 클릭
+	document.querySelector('#doe078BtnSave').addEventListener('click', async function(){
+		const grid = pq.grid('#doe078Pqgrid');
+		const params = makeSaveData(grid);
+
+		if(!params){
+			return;
+		}
+
+		if(confirm('[[#{ms.checksave}]]')) {
+			grid.showLoading();
+
+			const rData = await fetchUtil('POST','/bm/billing/doe078/save', params);
+
+			if(rData.status === 200){
+				await getDoe078List();
+				grid.refreshDataAndView();
+			}
+
+			grid.hideLoading();
+		}
+	});
+
+	async function getDoe078List() {
+		const grid = pq.grid('#doe078Pqgrid');
+		grid.showLoading();
+		const rData = await fetchUtil('GET','/bm/billing/doe078/baddco', { addsiky: document.querySelector('#doe078Addsiky').value });
+		if(rData.status !== 200){
+			grid.hideLoading();
+			return;
+		}
+		const baddcoList = await rData.json();
+
+		grid.option('dataModel', { data: baddcoList, recIndx: 'rowkey' });
+		grid.refreshDataAndView();
+		grid.hideLoading();
+	}
+}();
+</script>
+</div>
+</html>

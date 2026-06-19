@@ -1,0 +1,359 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doe015Warekey" class="setting-grid-title ic-title-nece">[[#{menu.md.dom001}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe015Warekey" name="doe015Warekey"
+								data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+								data-cb-select="" data-cb-variable="warekeyList">
+							</select>
+						</div>
+					</div>
+					<label for="doe015Docctnm" class="setting-grid-title">[[#{md.mdocma.docctnm}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mdocma.docctnm')}"
+							id="doe015Docctnm" name="doe015Docctnm">
+						</div>
+					</div>
+					<label for="doe015Doctynm" class="setting-grid-title">[[#{md.mdocma.doctynm}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mdocma.doctynm')}"
+							id="doe015Doctynm" name="doe015Doctynm">
+						</div>
+					</div>
+					<label for="doe015Rsncdnm" class="setting-grid-title">[[#{md.mrscma.rsncdnm}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mrscma.rsncdnm')}"
+							id="doe015Rsncdnm" name="doe015Rsncdnm">
+						</div>
+					</div>
+					<label for="doe015Rsuseyn" class="setting-grid-title">[[#{md.useyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe015Rsuseyn">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doe015BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doe015BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe015}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe015BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe015Grid"></div>
+				</div>
+			</div>
+		<script>
+		!function(){
+			let doe015CurrentWarekey; // 현재 warekey 검색값 저장
+			const doe015ComboData = {};
+			const pageId = '[[${tabPage}]]';
+			let initData;
+
+			// 칼럼
+			const doe015GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{menu.md.dom001}]]', dataType: 'string', dataIndx: 'warekey', editable: false,
+					editor: { options: [] }, render : gridRenderAndValue
+		         },
+				{ title: '[[#{md.mdocma.doccate}]]', dataType: 'string', dataIndx: 'doccate', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+		        	 editor: {
+		        		 type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+			            options: ui => {
+			            	return initData[ui.dataIndx].map(obj => {
+			            		if(obj['warekey'] === ui.rowData['warekey']){
+			            			let rObj = {};
+					        		rObj[obj[ui.dataIndx]] = obj['docctnm'];
+					        		return rObj;
+					        	}
+				           	}).filter(e => e);
+				        }
+		           },
+					render: ui => {
+						const option = initData[ui.dataIndx].find(obj => obj['warekey'] === ui.rowData['warekey'] && obj[ui.dataIndx] === ui.cellData);
+						return { text: option && ui.cellData ? option['docctnm'] : '' };
+					}
+				},
+				{ title: '[[#{md.mdocma.doctype}]]', dataType: 'string', dataIndx: 'doctype', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+			            options: ui => {
+				           		return initData[ui.dataIndx].map(obj => {
+				           			if(obj['warekey'] === ui.rowData['warekey'] && obj['doccate'] === ui.rowData['doccate']){
+				           				let rObj = {};
+				           				rObj[obj[ui.dataIndx]] = obj['doctynm'];
+				           				return rObj;
+				           			}
+				           		}).filter(e => e);
+				        }
+		           },
+					render: ui => {
+						const option = initData[ui.dataIndx].find(obj => obj['warekey'] === ui.rowData['warekey']
+																							&& obj['doccate'] === ui.rowData['doccate']
+																							&& obj[ui.dataIndx] === ui.cellData);
+						return { text: option && ui.cellData ? option['doctynm'] : '' };
+					}
+				},
+				{ title: '[[#{md.mrscma.rsncode}]]', dataType: 'string', dataIndx: 'rsncode', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mrscma.rsncdnm}]]', dataType: 'string', dataIndx: 'rsncdnm', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'rsuseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.order}]]', dataType: 'integer', dataIndx: 'rsncdod', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mrscma.rscate1}]]', dataType: 'string', dataIndx: 'rscate1', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mrscma.rscate2}]]', dataType: 'string', dataIndx: 'rscate2', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mrscma.rscate3}]]', dataType: 'string', dataIndx: 'rscate3', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mrscma.rsattr1}]]', dataType: 'string', dataIndx: 'rsattr1', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mrscma.rsattr2}]]', dataType: 'string', dataIndx: 'rsattr2', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mrscma.rsattr3}]]', dataType: 'string', dataIndx: 'rsattr3', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const doe015Grid = new GridUtil(doe015GridCM, pageId, pageId + 'Grid');
+			doe015Grid.setFind();
+			doe015Grid.setReset();
+
+			// Grid 생성시 이벤트
+			doe015Grid.setCreate(async function(evt, ui) {
+				await _commonInit(pageId);
+				const res = await fetchUtil('GET', '/md/' + pageId + '/init');
+				if(res.status !== 200) {
+					return;
+				}
+				initList = await res.json();
+				initData = initList.item;
+				for(let key of Object.keys(initData)){
+					const gData = initData[key];
+
+					const options = gData.map(obj => {
+			        	let rObj = {};
+			        	rObj[obj['combovl']] = obj['combonm'];
+			        	return rObj;
+					});
+					doe015ComboData[key] = options;
+				}
+				comboCreateData(pageId + 'Grid', 'warekey', warekeyList, { combovl : 'combovl', combonm : 'combonm' });
+				this.option('freezeCols', 1);
+			});
+
+			// 그리드 행 추가
+			doe015Grid.setAdd(function(evt, ui){
+				if(!doe015CurrentWarekey){
+					alert('[[#{ms.noSearchError}]]');
+					return;
+				}
+
+				const rowData = {
+					state: true,
+					warekey: doe015CurrentWarekey,
+					rsncdod: 0,
+					rsuseyn: 'Y'
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'Grid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe015Grid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {state: true};
+
+		           		if(updateData.newRow.hasOwnProperty('rsuseyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+					const updateRowList = [];
+
+					for(const updateData of ui.updateList){
+		    			const newRow = { state: true };
+
+		    			if(updateData.newRow.hasOwnProperty('doccate')){
+		    				newRow['doctype'] = null;
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('rsncode') && updateData.oldRow.hasOwnProperty('rsncode')){
+		    				newRow['rsncode'] = updateData?.newRow?.rsncode?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('comcdky') && updateData.oldRow.hasOwnProperty('comcdky')){
+		    				newRow['comcdky'] = updateData?.newRow?.comcdky?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('comcdvl') && updateData.oldRow.hasOwnProperty('comcdvl')){
+		    				newRow['comcdvl'] = updateData?.newRow?.comcdvl?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+						updateRowList.push({
+							rowIndx: updateData.rowIndx,
+							newRow: newRow
+						});
+
+						this.updateRow({
+							rowIndx : updateData.rowIndx,
+							rowList: updateRowList,
+							newRow : {
+								state: true,
+								warekey: doe015CurrentWarekey,
+								rsuseyn: updateData.rowData.rsuseyn,
+								rsncdod: updateData.rowData.rsncdod
+							},
+							checkEditable : false
+						})
+					}
+					for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.warekey = doe015CurrentWarekey;
+		    			addData.rowData.rsuseyn = addData?.newRow?.rsuseyn || 'Y';
+		    			addData.rowData.rsncdod = addData?.newRow?.rsncdod || 0;
+					}
+		    	}
+			});
+
+			// Grid 객체 생성
+			doe015Grid.open();
+
+			// 검색 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+				await getDoe015List();
+			})
+
+			// 저장 버튼
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe015Grid, [ 'doccate', 'doctype', 'rsncode', 'rsncdnm' ])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe015Grid, [ 'doccate', 'doctype', 'rsncode' ]);
+				if(!validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doe015Grid, refineGridUtilSaveList(doe015Grid), '/md/' + pageId + '/grid');
+				getDoe015List();
+			})
+
+			// 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+				makeEmptyGrid(doe015Grid);
+				resetSearchConditions(pageId);
+			})
+
+			// 창고 변경시 자동조회
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(doe015CurrentWarekey && grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						this.value = doe015CurrentWarekey;
+						return;
+					}
+				}
+				await getDoe015List();
+			});
+
+			// Grid 데이터 조회 함수
+			async function getDoe015List(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				const data = {
+						warekey : document.querySelector('#' + pageId + 'Warekey').value,
+						docctnm : document.querySelector('#' + pageId + 'Docctnm').value.toUpperCase(),
+						doctynm : document.querySelector('#' + pageId + 'Doctynm').value.toUpperCase(),
+						rsncdnm : document.querySelector('#' + pageId + 'Rsncdnm').value.toUpperCase(),
+						rsuseyn : document.querySelector('#' + pageId + 'Rsuseyn').value
+				};
+
+				doe015CurrentWarekey = data.warekey;
+
+				grid.showLoading();
+				const res = await fetchUtil('GET', '/md/' + pageId + '/grid', data);
+
+				if(res.status===200){
+					const doe015List = await res.json();
+					grid.option( 'dataModel', {
+						data: doe015List,
+						recIndx: 'rowkey'
+					});
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+
+			const itemList = document.querySelectorAll('.setting-grid input');
+			itemList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			})
+
+			// Enter로 검색
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getDoe015List();
+			    }
+			}
+		}();
+		</script>
+	</div>
+</html>

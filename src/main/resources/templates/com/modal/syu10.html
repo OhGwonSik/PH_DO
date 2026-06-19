@@ -1,0 +1,321 @@
+<!-- Modal modalgridlayout start -->
+<div class="modal fade bd-example-modal-lg" id="modalgridlayout" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg">
+		<div class="modal-content">
+			<div class="modal-header">
+				<div class="modal-title" style="margin: 0;">[[#{sy.layout.syu10Title}]]</div>
+				<input type="hidden" id="syu10_progrid">
+				<input type="hidden" id="syu10_pgridid">
+				<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+			</div>
+			<div class="modal-body" >
+				<div class="card" style="border: none;">
+					<div class="card-body grid-layout">
+						<div class="row">
+							<div class="col-12 col-md-6">
+								<div class="grid-left-box">
+									<div class="row">
+										<div class="col-10">
+											<div class="form-group align-items-center row col">
+												<label for="syu10_numberCell" class="col-6 col-form-label">[[#{sy.layout.numberCell}]]</label>
+												<input type="checkbox" class="col-1 form-control" id="syu10_numberCell"/>
+											</div>
+											<div class="form-group align-items-center row col">
+												<label class="col-6 col-form-label">[[#{sy.layout.selectionModel}]]</label>
+												<div class="d-flex align-items-center gap-6">
+											  		<input type="radio" id="syu10_cell" name="syu10_hoverMode" value="cell">
+											  		<label class="form-check-label" for="syu10_cell">[[#{sy.layout.selectionModelCell}]]</label>
+											  		<input type="radio" id="syu10_row" name="syu10_hoverMode" value="row">
+											  		<label for="syu10_row">[[#{sy.layout.selectionModelRow}]]</label>
+												</div>
+											</div>
+											<div class="form-group align-items-center row col">
+												<label for="syu10_freezeCols" class="col-6 col-form-label">[[#{sy.layout.freezeCol}]]</label>
+												<input type="number" class="col-6 form-control" id="syu10_freezeCols" disabled>
+											</div>
+						 					<div class="form-group align-items-center row col">
+											  	<label for="syu10_freezeRows" class="col-6 col-form-label">[[#{sy.layout.freezeRow}]]</label>
+											  	<input type="number" class="col-6 form-control" id="syu10_freezeRows" disabled>
+											</div>
+											<div class="form-group align-items-center row col">
+												<label for="syu10_columnBorders" class="col-6 col-form-label">[[#{sy.layout.columnBorders}]]</label>
+												<input type="checkbox" class="col-1 form-control" id="syu10_columnBorders"/>
+											</div>
+											<div class="form-group align-items-center row col">
+												<label for="syu10_rowBorders" class="col-6 col-form-label">[[#{sy.layout.rowBorders}]]</label>
+												<input type="checkbox" class="col-1 form-control" id="syu10_rowBorders"/>
+											</div>
+											<div class="form-group align-items-center row col">
+												<label for="syu10_stripeRows" class="col-6 col-form-label">[[#{sy.layout.stripeRows}]]</label>
+												<input type="checkbox" class="col-1 form-control" id="syu10_stripeRows"/>
+											</div>
+											<div class="form-group align-items-center row col">
+												<label for="syu10_height" class="col-6 col-form-label">[[#{sy.layout.height}]]</label>
+												<input type="number" class="col-6 form-control" id="syu10_height" disabled/>
+											</div>
+										</div>
+										<div class="col-2 grid-btn-list">
+											<button type="button" class="btn btn-primary btn1" id="syu10_arrowthickstop_n">
+												<span class="ui-icon ui-icon-arrowthickstop-1-n"></span>
+											</button>
+											<br><br>
+											<button type="button" class="btn btn-primary btn2" id="syu10_arrowthick_n">
+												<span class="ui-icon ui-icon-arrowthick-1-n"></span>
+											</button>
+											<br><br>
+											<button type="button" class="btn btn-primary btn3" id="syu10_arrowthick_s">
+												<span class="ui-icon ui-icon-arrowthick-1-s"></span>
+											</button>
+											<br><br>
+											<button type="button" class="btn btn-primary btn4" id="syu10_arrowthickstop_s">
+												<span class="ui-icon ui-icon-arrowthickstop-1-s"></span>
+											</button>
+										</div>
+									</div>
+								</div>
+							</div>
+							<div class="col-12 col-md-6">
+								<div id="syu10_grid" style="width: auto; height: 100%"></div>
+							</div>
+						</div>
+        			</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-border-lg" data-dismiss="modal">[[#{bt.close}]]</button>
+						<button type="button" class="btn btn-main-lg" id="syu10_save">[[#{bt.save}]]</button>
+					</div>
+    			</div>
+  			</div>
+		</div>
+	</div>
+</div>
+
+<script>
+$(function(){
+	$("#syu10_arrowthickstop_n").click(function () {
+		let grid = pq.grid("#syu10_grid"), rows = [];
+		let Sel = grid.Selection();
+
+		if(grid.Selection().getSelection().length > 0){
+			$.each(grid.Selection().getSelection(),function(index,item){
+				rows.push(item.rowData);
+			});
+			grid.moveNodes( rows, 0 );
+		}
+		Sel.removeAll();
+	});
+
+	$("#syu10_arrowthick_n").click(function () {
+		let grid = pq.grid("#syu10_grid"), rows = [], moveIndx;
+		let Sel = grid.Selection();
+
+		if(grid.Selection().getSelection().length > 0){
+			$.each(grid.Selection().getSelection(),function(index,item){
+				moveIndx = (item.rowData.pq_ri-1) === -1 ? 0 : item.rowData.pq_ri-1;
+				grid.moveNodes( [item.rowData], moveIndx );
+			});
+		}
+		Sel.removeAll();
+	});
+
+	$("#syu10_arrowthick_s").click(function () {
+		let grid = pq.grid("#syu10_grid"), rows = [], moveIndx;
+		let Sel = grid.Selection();
+
+		if(grid.Selection().getSelection().length > 0){
+			$.each(grid.Selection().getSelection().reverse(),function(index,item){
+				moveIndx = (item.rowData.pq_ri+2) > grid.getData().length ? grid.getData().length : item.rowData.pq_ri+2;
+				grid.moveNodes( [item.rowData], moveIndx );
+			});
+		}
+		Sel.removeAll();
+	});
+
+	$("#syu10_arrowthickstop_s").click(function () {
+		let grid = pq.grid("#syu10_grid"), rows = [];
+		let Sel = grid.Selection();
+
+		if(grid.Selection().getSelection().length > 0){
+			$.each(grid.Selection().getSelection(),function(index,item){
+				rows.push(item.rowData);
+			});
+			grid.moveNodes( rows, grid.getData().length );
+		}
+		Sel.removeAll();
+	});
+
+	$("#syu10_save").click(function () {
+		let grid = pq.grid("#syu10_grid");
+
+		const data = {
+				data : grid.getData()
+			  , progrid : $("#syu10_progrid").val()
+			  , pgridid : $("#syu10_pgridid").val()
+			  , nubrcel : $("#syu10_numberCell").is(":checked")
+			  , hovermd :  $("input:radio[name='syu10_hoverMode']:checked").val()
+			  , frezcol : Number($("#syu10_freezeCols").val())
+			  , frezrow : Number($("#syu10_freezeRows").val())
+			  , colbodr : $("#syu10_columnBorders").is(":checked")
+			  , rowbodr : $("#syu10_rowBorders").is(":checked")
+			  , strprow : $("#syu10_stripeRows").is(":checked")
+			  , gheight : Number($("#syu10_height").val())
+		};
+
+		grid.showLoading();
+		let aul = new AjaxUtil_Order("/sy/syu10/save", data);
+		aul.setCallbackSuccess(function (data){
+			alert("[[#{ms.saveSuccess}]]");
+			$("#modalgridlayout").modal("hide");
+		});
+		aul.setComplete(function(data){
+			grid.hideLoading();
+		});
+	    aul.send();
+	});
+
+	var syu10_obj = {
+		colModel: [
+			{ title: "[[#{sy.layout.title}]]", dataType: 'string', dataIndx: "title", editable: false },
+			{ title: "[[#{sy.layout.hidden}]]", dataType: 'bool', dataIndx: "hidden",
+				align: "center",
+		        type: 'checkbox',
+		        cb: { all: false, header: true, check: true, uncheck: false  },
+		        render: function (ui) {
+					const cb = ui.column.cb, cellData = ui.cellData, checked = cb.check === cellData ? 'checked' : '';
+		        },
+		        editor: false,
+		        styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+			},
+			{ title: "[[#{sy.layout.dataindx}]]", dataType: 'string', dataIndx: "dataIndx", editable: false }
+		],
+		height: 475, //'100%',
+		showTitle: false,
+		showToolbar: false,
+		hwrap: false,
+	    rowHt: 32,
+	    rowBorders: true,
+	    trackModel: { on: true },
+	    postRenderInterval: -1,
+	    scrollModel: { autoFit: false },
+	    editor: { select: true },
+        //resizable: true,
+        flex: { one: true },
+	    numberCell: { show: true, width: 50 },
+		selectionModel: { type: 'cell', mode: 'block'},
+		dragModel: { on: true, diHelper:['title'] },
+		dropModel: { on: true }
+	};
+
+	pq.grid("#syu10_grid", syu10_obj);
+});
+
+//============================================================
+//layoutSetting : Layout Save 이벤트 정의
+//============================================================
+function setLayoutSetting(t){
+	if(t.$grid_center.context.id !== 'doe061OrderGrid' && t.$grid_center.context.previousElementSibling){
+		alert('탭은 레이아웃을 변경 할 수 없습니다.');
+		return;
+	}
+	let grid = pq.grid("#" + t.$grid_center.context.id);
+	const data = {
+		data : t.colModel
+	  , progrid : t.option("gprogrid")
+	  , pgridid : t.$grid_center.context.id
+	  , nubrcel : t.option("numberCell").show
+	  , hovermd : t.option("hoverMode")
+	  , frezcol : t.option("freezeCols")
+	  , frezrow : t.option("freezeRows")
+	  , colbodr : t.option("columnBorders")
+	  , rowbodr : t.option("rowBorders")
+	  , strprow : t.option("stripeRows")
+	  , gheight : t.option("height")
+	};
+
+	grid.showLoading();
+	let aul = new AjaxUtil_Order("/sy/syu10/save", data);
+	aul.setCallbackSuccess(function (data){
+		alert("[[#{ms.saveSuccess}]]");
+	});
+	aul.setComplete(function(data){
+		grid.hideLoading();
+	});
+	aul.send();
+}
+
+//============================================================
+//layoutSetting : Layout Reset 이벤트 정의
+//============================================================
+function setLayoutReset(t){
+	if(t.$grid_center.context.id !== 'doe061OrderGrid' && t.$grid_center.context.previousElementSibling){
+		alert('탭은 레이아웃을 변경 할 수 없습니다.');
+		return;
+	}
+	let grid = pq.grid("#" + t.$grid_center.context.id);
+
+	const data = {
+		progrid : t.option("gprogrid")
+	  , pgridid : t.$grid_center.context.id
+	};
+
+	grid.showLoading();
+	let aul = new AjaxUtil_Order("/sy/syu10/reset", data, "DELETE");
+	aul.setCallbackSuccess(function (data){
+		alert("[[#{ms.saveSuccess}]]");
+	});
+	aul.setComplete(function(data){
+		grid.hideLoading();
+	});
+	aul.send();
+}
+
+function modalGridLayoutShow(gridtg){
+
+	$("#syu10_progrid").val(gridtg.option("gprogrid"));
+	$("#syu10_pgridid").val(gridtg.$grid_center.context.id);
+
+	//줄 번호
+	$("input:checkbox[id='syu10_numberCell']").prop("checked", gridtg.option("numberCell").show);
+
+	//selection Model
+	$("input:radio[id='syu10_" + gridtg.option("hoverMode") + "']").prop("checked", true);
+
+	//col 고정
+	$("#syu10_freezeCols").val(gridtg.option("freezeCols"));
+
+	//row 고정
+	$("#syu10_freezeRows").val(gridtg.option("freezeRows"));
+
+	//컬럼 선
+	$("input:checkbox[id='syu10_columnBorders']").prop("checked", gridtg.option("columnBorders"));
+
+	//줄 선
+	$("input:checkbox[id='syu10_rowBorders']").prop("checked", gridtg.option("rowBorders"));
+
+	//줄 스트라이프
+	$("input:checkbox[id='syu10_stripeRows']").prop("checked", gridtg.option("stripeRows"));
+
+	//height
+	$("#syu10_height").val(gridtg.option("height"));
+
+	let syu10_grid = pq.grid("#syu10_grid");
+	syu10_grid.option( "dataModel", { data: gridtg.colModel, recIndx: "dataIndx" } );
+
+	$("#modalgridlayout").modal("show");
+	$("#modalgridlayout").css("z-index", 1050);
+	$('.modal-backdrop').css('z-index', 997);
+}
+
+$('#modalgridlayout').on('shown.bs.modal', function() {
+	const grid = pq.grid("#syu10_grid");
+	grid.refreshDataAndView();
+});
+
+$('#modalgridlayout').on('hide.bs.modal', function (e) {
+	let grid = pq.grid("#syu10_grid");
+	grid.rollback();
+	grid.history({ method: 'resetUndo' });
+});
+</script>
+<!-- Modal modalgridlayout end -->

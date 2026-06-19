@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.bm.mapper.BmReportMapper">
+	<!-- 이송 지급명세서  -->
+	<select id="selectTransferPayment" resultType="com.kbph.logistics.bm.domain.BmReportDTO">
+		/* selectTransferPayment 이송지급 */
+		SELECT BI.RCVDATE AS TRSDATE, BH.BFHDKEY
+		 	 , GROUP_CONCAT(DISTINCT BC.BTRCNAM) AS BTRCNAM
+		 	 , GROUP_CONCAT(DISTINCT BI.BTRFPA1) AS BTRPAY1
+		     , GROUP_CONCAT(DISTINCT BI.BTRFPA2) AS BTRPAY2
+		     , GROUP_CONCAT(DISTINCT BI.BTRFPA3) AS BTRPAY3
+		     , GROUP_CONCAT(DISTINCT BI.BTRFPA4) AS BTRPAY4
+		 	 , SUM(
+	 	 			CASE WHEN BI.CALWEIG = 'GROSSWG' THEN BI.GROSSWG
+	 	 				 ELSE BI.SKUWEIG
+	 	 			 END
+	 	 	   ) AS TOTALWG
+	 	 	 , MG.RENAMLC AS RENAMLC
+		     , (COUNT(DISTINCT MG.RENAMLC) - 1) as REGICNT
+		     , BH.TRFDFPA AS TRSDFPA
+		     , SUM(BI.BTRFEP1) AS EXTRAPA		<!-- 할증지급(사이즈별) -->
+		     , SUM(BI.HOLIPAY) AS HOLIPAY		<!-- 할증지급(야간/휴일) -->
+		     , SUM(BI.BTRFPC1 + BI.BTRFPC2 + BI.BTRFPC3 + BI.BTRFPC4 ) AS PAYMENT
+		     , SUM(BI.BTRFPC1 + BI.BTRFPC2 + BI.BTRFPC3 + BI.BTRFPC4 + BI.BTRFEP1 +  BI.HOLIPAY ) + BH.TRFDFPA AS TOTPACO
+		     , BH.BFHMEMO AS TRSMEMO
+		     , MW.WHNAMLC, MVH.VHCFNAM, MVO.VONAMLC, BH.PAYADYN
+		  FROM ${userInfo.schema}.BTRFHD BH
+		 INNER JOIN ${userInfo.schema}.BTRFIT BI
+		    ON BH.WAREKEY = BI.WAREKEY
+		   AND BH.BFHDKEY = BI.BFHDKEY
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		    ON BC.BTRCATE = BI.BTRCATE
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+			ON MW.WAREKEY = BH.WAREKEY
+			AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.commonSchema}.MVHCMA MVH
+		 	ON MVH.VEHICKY = BH.VEHICKY
+		 	AND MVH.VOWNKEY = BH.VOWNKEY
+		 	AND MVH.VHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.commonSchema}.MVOWMA MVO
+		 	ON MVO.VOWNKEY = BH.VOWNKEY
+		 	AND MVO.VOUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.WRCVIT WI
+		    ON WI.WAREKEY = BH.WAREKEY
+		   AND WI.RCVDCKY = BI.RCVDCKY
+		   AND WI.RCVDCIT = BI.RCVDCIT
+		 INNER JOIN ${userInfo.schema}.MREGMA MG
+		    ON MG.REGIKEY = WI.REGIMOD
+		   AND MG.REUSEYN = 'Y'
+		 WHERE BH.WAREKEY = #{param.warekey}
+		   AND BH.VEHICKY = #{param.vehicky}
+		   AND BH.FCCFMYN = 'Y'
+		<choose>
+			<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto == ""'>
+				<![CDATA[ AND BH.FCCDATE >= #{param.confirmdatefrom} ]]>
+			</when>
+			<when test='param.confirmdatefrom != null and param.confirmdateto != "" and param.confirmdatefrom == ""'>
+				<![CDATA[ AND BH.FCCDATE <= #{param.confirmdateto}]]>
+			</when>
+			<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto != null and param.confirmdateto != ""'>
+				AND BH.FCCDATE BETWEEN #{param.confirmdatefrom} AND #{param.confirmdateto}
+			</when>
+		</choose>
+		 GROUP BY BI.RCVDATE, BH.BFHDKEY, BH.TRFDFPA, BH.TOORGPA
+		 		, BH.TOSURPA, BH.TOTPACO, BH.BFHMEMO, MW.WHNAMLC
+		 		, MVH.VHCFNAM, MVO.VONAMLC, BH.PAYADYN
+	</select>
+
+	<!-- 운송 지급명세서 -->
+	<select id="selectTransportPayment" resultType="com.kbph.logistics.bm.domain.BmReportDTO">
+		/* selectTransportPayment 운송지급*/
+		SELECT IFNULL(WH.SPEHDAT, TI.BILDATE) AS TRSDATE
+			 , BH.BPHDKEY
+		 	 , GROUP_CONCAT(DISTINCT BC.BTRCNAM) AS BTRCNAM
+		 	 , GROUP_CONCAT(DISTINCT BI.BTRPPAY) AS BTRPAY1
+		 	 , SUM(
+	 	 			CASE WHEN BI.CALWEIG = 'GROSSWG' THEN BI.GROSSWG
+	 	 			ELSE BI.SKUWEIG
+	 	 			 END
+	 	 	   ) AS TOTALWG
+	 	 	 , (COUNT(DISTINCT MG.RENAMLC) - 1) as REGICNT
+		     , MG.RENAMLC AS RENAMLC		
+		     , BH.TRPDFPA AS TRSDFPA
+		     , SUM(BI.BTRPEPC) AS EXTRAPA		<!-- 할증지급(사이즈별) -->
+		     , SUM(BI.HOLIPAY) AS HOLIPAY		<!-- 할증지급(야간/휴일) -->
+		     , SUM(BI.BTRPPAY) AS PAYMENT
+		     , SUM(BI.BTRPPAY + BI.BTRPEPC +  BI.HOLIPAY) + BH.TRPDFPA AS TOTPACO
+		     , BH.BPHMEMO AS TRSMEMO
+		     , MW.WHNAMLC, MVH.VHCFNAM, MVO.VONAMLC, MW.WAREKEY
+		     , BH.PAYADYN
+		  FROM ${userInfo.schema}.BTRPHD BH
+		 INNER JOIN ${userInfo.schema}.BTRPIT BI
+		    ON BH.WAREKEY = BI.WAREKEY
+		   AND BH.BPHDKEY = BI.BPHDKEY
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		    ON BC.BTRCATE = BI.BTRCATE
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+			ON MW.WAREKEY = BH.WAREKEY
+			AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.commonSchema}.MVHCMA MVH
+		 	ON MVH.VEHICKY = BH.VEHICKY
+		 	AND MVH.VOWNKEY = BH.VOWNKEY
+		 	AND MVH.VHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.commonSchema}.MVOWMA MVO
+		 	ON MVO.VOWNKEY = BH.VOWNKEY
+		 	AND MVO.VOUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.TPLNIT TI
+		    ON TI.WAREKEY = BH.WAREKEY
+		   AND TI.VHPLNKY = BI.VHPLNKY
+		   AND TI.VHPLNIT = BI.VHPLNIT
+		 LEFT JOIN ${userInfo.schema}.WSHPIT WS
+		 	ON WS.WAREKEY = TI.WAREKEY
+		 	AND WS.SKUMKEY = TI.SKUMKEY
+		 LEFT JOIN ${userInfo.schema}.WSHPHD WH
+		 	ON WH.WAREKEY = WS.WAREKEY
+		 	AND WH.SHPDCKY = WS.SHPDCKY
+		 INNER JOIN ${userInfo.schema}.MREGMA MG
+		    ON MG.REGIKEY = BI.REGIMOD
+		   AND MG.REUSEYN = 'Y'
+		 WHERE BH.WAREKEY = #{param.warekey}
+		   AND BH.VEHICKY = #{param.vehicky}
+		   AND BH.PCCFMYN = 'Y'
+		  <choose>
+		  	<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto == ""'>
+				<![CDATA[ AND BH.PCCDATE >= #{param.confirmdatefrom} ]]>
+			</when>
+			<when test='param.confirmdatefrom != null and param.confirmdateto != "" and param.confirmdatefrom == ""'>
+				<![CDATA[ AND BH.PCCDATE <= #{param.confirmdateto}]]>
+			</when>
+			<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto != null and param.confirmdateto != ""'>
+				AND BH.PCCDATE BETWEEN #{param.confirmdatefrom} AND #{param.confirmdateto}
+			</when>
+		  </choose>
+		 GROUP BY BI.TRNINDT, BH.BPHDKEY, BH.TRPDFPA, BH.TOORGPA
+		        , TOTPACO, BH.BPHMEMO, MW.WHNAMLC
+		        , MVH.VHCFNAM, MVO.VONAMLC, MW.WAREKEY, BH.PAYADYN
+	</select>
+
+	<!-- 이송청구명세서 SQL  -->
+	<sql id="selectTransferChargeSql">
+		SELECT BI.RCVDATE AS TRSDATE
+		     , BI.BFHDKEY
+		     , GROUP_CONCAT(DISTINCT BC.BTRCNAM) AS BTRCNAM
+		     , GROUP_CONCAT(DISTINCT BI.BTRFCH1) AS BTRCHR1
+		     , GROUP_CONCAT(DISTINCT BI.BTRFCH2) AS BTRCHR2
+		     , GROUP_CONCAT(DISTINCT BI.BTRFCH3) AS BTRCHR3
+		     , GROUP_CONCAT(DISTINCT BI.BTRFCH4) AS BTRCHR4
+		     , MG.RENAMLC AS RENAMLC
+		     , (COUNT(DISTINCT MG.RENAMLC) - 1) as REGICNT
+		     , SUM(
+		     		CASE
+		   				WHEN BI.CALWEIG = 'GROSSWG'
+		   					THEN BI.GROSSWG
+		   				ELSE BI.SKUWEIG
+		   			 END
+		   	   ) AS TOTALWG
+		   	 , BH.TRFDFCH AS TRSDFPA		<!-- 부적청구 -->
+		   	 , SUM(BI.BTRFEC1) AS EXTRACH	<!-- 항목1 할증(사이즈별) -->
+		   	 , SUM(BI.HOLICHR) AS HOLICHR	<!-- 야간/휴일 할증 -->
+		     , ( CASE WHEN BI.SBILLTO IS NOT NULL AND TRIM(BI.SBILLTO) != ''
+		     		THEN SUM(BI.BTRFCC1 + BI.BTRFCC2 + BI.BTRFCC3 + BI.BTRFCC4)		<!-- (항목1~4 + 추가금액)  -->
+	      			ELSE  SUM( BI.BTRFCC1 + BI.BTRFCC2 + BI.BTRFCC3 + BI.BTRFCC4 + BI.ADDCHCO)
+		      		 END
+		       ) AS CHARGE		<!-- 총 청구 : 기본청구금(항목1~4 + 부적) + 할증청구 + 휴일할증 + 추가청구금 -->
+		     , ( CASE WHEN BI.SBILLTO IS NOT NULL AND TRIM(BI.SBILLTO) != ''
+		     		THEN SUM(BI.BTRFCC1 + BI.BTRFCC2 + BI.BTRFCC3 + BI.BTRFCC4 + BI.BTRFEC1+ BI.HOLICHR) + BH.TRFDFCH		<!-- (항목1~4 + 할증청구 + 휴일+ 부적청구)  -->
+	      			ELSE SUM(BI.BTRFCC1 + BI.BTRFCC2 + BI.BTRFCC3 + BI.BTRFCC4 + BI.BTRFEC1+ BI.HOLICHR + BI.ADDCHCO) + BH.TRFDFCH
+		      		 END
+		       ) AS TOTCHCO		<!-- 총 청구 : 기본청구금(항목1~4 + 부적) + 할증청구 + 휴일할증 + 추가청구금 -->
+		     , BH.BFHMEMO, MW.WHNAMLC, MW.WAMANNM, MW.WARADDR
+		     , BH.FCCDATE AS TCCDATE
+		     , MC.CUNAMLC AS BTRFCBT
+		  FROM ${userInfo.schema}.BTRFIT BI
+		 INNER JOIN ${userInfo.schema}.BTRFHD BH
+		    ON BH.BFHDKEY = BI.BFHDKEY
+		   AND BH.WAREKEY = BI.WAREKEY
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		    ON BC.BTRCATE = BI.BTRCATE
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		    ON BH.WAREKEY = MW.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MCUSMA MC
+		    ON MC.CUSTKEY = #{param.btrfcbt}
+		   AND MC.CUDELYN = 'Y'
+	   	 INNER JOIN ${userInfo.schema}.WRCVIT WI
+		    ON WI.WAREKEY = BH.WAREKEY
+		   AND WI.RCVDCKY = BI.RCVDCKY
+		   AND WI.RCVDCIT = BI.RCVDCIT
+		 INNER JOIN ${userInfo.schema}.MREGMA MG
+		    ON MG.REGIKEY = WI.REGIORG
+		   AND MG.REUSEYN = 'Y'
+		 WHERE BI.WAREKEY = #{param.warekey}
+		   AND BI.BTRFCBT = #{param.btrfcbt}
+		   AND BH.FCCFMYN = 'Y'
+		   AND BH.FCCFMYN = 'Y'
+		 <choose>
+			<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto == ""'>
+				<![CDATA[ AND BH.FCCDATE >= #{param.confirmdatefrom} ]]>
+			</when>
+			<when test='param.confirmdatefrom != null and param.confirmdateto != "" and param.confirmdatefrom == ""'>
+				<![CDATA[ AND BH.FCCDATE <= #{param.confirmdateto}]]>
+			</when>
+			<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto != null and param.confirmdateto != ""'>
+				AND BH.FCCDATE BETWEEN #{param.confirmdatefrom} AND #{param.confirmdateto}
+			</when>
+		</choose>
+		GROUP BY BI.RCVDATE, BI.BFHDKEY, BH.TRFDFCH, BH.BFHMEMO
+		       , MW.WHNAMLC, MW.WAMANNM, MW.WARADDR, BH.FCCDATE
+		       , MC.CUNAMLC
+	</sql>
+	<!-- 이송청구명세서 -->
+	<select id="selectTransferCharge" resultType="com.kbph.logistics.bm.domain.BmReportDTO">
+		/* selectTransferCharge */
+		<include refid="selectTransferChargeSql"></include>
+	</select>
+
+	<!-- 이송 추가청구명세서 -->
+	<select id="selectTransferSurCharge" resultType="com.kbph.logistics.bm.domain.BmReportDTO">
+	/* selectTransferSurCharge */
+		SELECT BI.RCVDATE AS TRSDATE, BH.BFHDKEY
+		     , GROUP_CONCAT(DISTINCT BC.BTRCNAM) AS BTRCNAM
+		     , GROUP_CONCAT(DISTINCT BI.BTRFCH1) AS BTRCHR1
+		     , GROUP_CONCAT(DISTINCT BI.BTRFCH2) AS BTRCHR2
+		     , GROUP_CONCAT(DISTINCT BI.BTRFCH3) AS BTRCHR3
+		     , GROUP_CONCAT(DISTINCT BI.BTRFCH4) AS BTRCHR4
+		     , MG.RENAMLC AS RENAMLC
+		     , (COUNT(DISTINCT MG.RENAMLC) - 1) as REGICNT
+		     , SUM(
+		     		CASE
+		     			WHEN BI.CALWEIG = 'GROSSWG'
+		     				THEN BI.GROSSWG ELSE BI.SKUWEIG
+		     		 END
+		       ) AS TOTALWG
+		     , (SUM(BI.ADDCHCO) + SUM(BI.SURCHCO)) AS CHARGE	<!-- 추가금액 : 청구금액 컬럼에 표기 -->
+		     , (SUM(BI.ADDCHCO) + SUM(BI.SURCHCO)) AS TOTCHCO	<!-- 합계금액 -->
+		     , BH.BFHMEMO, MW.WHNAMLC, MW.WAMANNM, MW.WARADDR
+		     , BH.FCCDATE AS TCCDATE, MC.CUNAMLC AS BTRFCBT
+		  FROM ${userInfo.schema}.BTRFHD BH
+		 INNER JOIN ${userInfo.schema}.BTRFIT BI
+		    ON BH.WAREKEY = BI.WAREKEY
+		   AND BH.BFHDKEY = BI.BFHDKEY
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		    ON BC.BTRCATE = BI.BTRCATE
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		 	ON BH.WAREKEY = MW.WAREKEY
+			AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MCUSMA MC
+			ON MC.CUSTKEY = BI.SBILLTO
+			AND MC.CUDELYN = 'Y'
+			<!-- AND MC.SURCHYN = 'Y' -->
+		 INNER JOIN ${userInfo.schema}.WRCVIT WI
+		    ON WI.WAREKEY = BH.WAREKEY
+		   AND WI.RCVDCKY = BI.RCVDCKY
+		   AND WI.RCVDCIT = BI.RCVDCIT
+		 INNER JOIN ${userInfo.schema}.MREGMA MG
+		    ON MG.REGIKEY = WI.REGIMOD
+		   AND MG.REUSEYN = 'Y'
+		 WHERE BH.WAREKEY = #{param.warekey}
+		   AND BI.SBILLTO = #{param.sbillto}
+		   AND BH.FCCFMYN = 'Y'
+		   <!-- AND BH.TOSURCH > 0 AND BI.ADDCHCO > 0  추가금액이 없어도 조회될 수 있도록 변경-->
+			<choose>
+				<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto == ""'>
+					<![CDATA[ AND BH.FCCDATE >= #{param.confirmdatefrom} ]]>
+				</when>
+				<when test='param.confirmdatefrom != null and param.confirmdateto != "" and param.confirmdatefrom == ""'>
+					<![CDATA[ AND BH.FCCDATE <= #{param.confirmdateto}]]>
+				</when>
+				<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto != null and param.confirmdateto != ""'>
+					AND BH.FCCDATE BETWEEN #{param.confirmdatefrom} AND #{param.confirmdateto}
+				</when>
+			</choose>
+		 GROUP BY BI.RCVDATE, BH.BFHDKEY, BH.BFHMEMO, MW.WHNAMLC
+		        , MW.WAMANNM, MW.WARADDR, MW.WARADDR, BH.FCCDATE
+		        , MC.CUNAMLC
+	</select>
+
+	<!-- 운송 청구명세서  -->
+	<select id="selectTransportCharge" resultType="com.kbph.logistics.bm.domain.BmReportDTO">
+		/* selectTransportCharge */
+		SELECT
+			 IFNULL(WH.SPEHDAT, TI.BILDATE) AS TRSDATE,
+			 BH.BPHDKEY ,
+		     GROUP_CONCAT(DISTINCT BC.BTRCNAM) AS BTRCNAM ,
+		     GROUP_CONCAT(DISTINCT BI.BTRPCHR) AS BTRCHR1 ,
+			 (COUNT(DISTINCT MG.RENAMLC) - 1) as REGICNT,
+		     MG.RENAMLC AS RENAMLC,
+			 SUM(CASE WHEN BI.CALWEIG = 'GROSSWG' THEN BI.GROSSWG
+				ELSE BI.SKUWEIG END) AS TOTALWG ,
+			 BH.TRPDFCH AS TRSDFPA ,		<!-- 부적청구 -->
+			 SUM(BI.BTRPECC) AS EXTRACH ,		<!-- 할증 + 야간휴일할증 -->
+			 SUM(BI.HOLICHR) AS HOLICHR ,
+			 SUM( CASE WHEN BI.SBILLTO IS NOT NULL AND TRIM(BI.SBILLTO) != '' THEN BI.BTRPCCO 		<!-- 추가청구처가 있을 경우 운송청구금만-->
+				ELSE BI.BTRPCCO + BI.ADDCHCO + BI.SURCHCO END ) AS CHARGE ,							<!-- 추가청구처가 없을 경우 운송청구금 + 추가청구금 합산 -->
+			 ( CASE WHEN BI.SBILLTO IS NOT NULL AND TRIM(BI.SBILLTO) != ''
+			 	THEN SUM(BI.BTRPCCO + BI.BTRPECC + BI.HOLICHR) + BH.TRPDFCH								<!-- 추가청구처가 있을 경우 운송비청구금 + 할증 + 야간할증 + 부적청구 합산 -->
+				ELSE SUM(BI.BTRPCCO + BI.BTRPECC + BI.HOLICHR + BI.ADDCHCO + BI.SURCHCO) + BH.TRPDFCH  	<!-- 추가청구처가 없을 경우 운송비청구금 + 할증 + 야간할증 + 부적청구 + 추가청구금 합산 -->
+			 END ) AS TOTCHCO ,
+		     BH.BPHMEMO, MW.WHNAMLC, MW.WAMANNM, MW.WARADDR,
+		     BH.PCCDATE AS TCCDATE, MC.CUNAMLC AS BTRFCBT
+		  FROM ${userInfo.schema}.BTRPHD BH
+		 INNER JOIN ${userInfo.schema}.BTRPIT BI
+		    ON BH.WAREKEY = BI.WAREKEY
+		   AND BH.BPHDKEY = BI.BPHDKEY
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		    ON BC.BTRCATE = BI.BTRCATE
+		 INNER JOIN ${userInfo.schema}.TPLNIT TI
+		    ON TI.WAREKEY = BH.WAREKEY
+		   AND TI.VHPLNKY = BI.VHPLNKY
+		   AND TI.VHPLNIT = BI.VHPLNIT
+		 LEFT JOIN ${userInfo.schema}.WSHPIT WS	<!-- 직송일 경우 출고 테이블에 데이터 없음 -->
+		 	ON WS.WAREKEY = TI.WAREKEY
+		 	AND WS.SKUMKEY = TI.SKUMKEY
+		 LEFT JOIN ${userInfo.schema}.WSHPHD WH
+		 	ON WH.WAREKEY = WS.WAREKEY
+		 	AND WH.SHPDCKY = WS.SHPDCKY
+		 INNER JOIN ${userInfo.schema}.MREGMA MG
+		    ON MG.REGIKEY = TI.REGIORG
+		   AND MG.REUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		 	ON BH.WAREKEY = MW.WAREKEY
+			AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MCUSMA MC
+			ON MC.CUSTKEY = #{param.btrfcbt}
+			AND MC.CUDELYN = 'Y'
+		 WHERE BH.WAREKEY = #{param.warekey}
+		   AND BI.BTRPCBT = #{param.btrfcbt}
+		   AND BH.PCCFMYN = 'Y'
+			<choose>
+				<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto == ""'>
+					<![CDATA[ AND BH.PCCDATE >= #{param.confirmdatefrom} ]]>
+				</when>
+				<when test='param.confirmdatefrom != null and param.confirmdateto != "" and param.confirmdatefrom == ""'>
+					<![CDATA[ AND BH.PCCDATE <= #{param.confirmdateto}]]>
+				</when>
+				<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto != null and param.confirmdateto != ""'>
+					AND BH.PCCDATE BETWEEN #{param.confirmdatefrom} AND #{param.confirmdateto}
+				</when>
+			</choose>
+		 GROUP BY BI.TRNINDT, BH.BPHDKEY, BH.TRPDFCH, BH.TOORGCH
+		        , BH.TOSURCH, BH.TOTCHCO, BH.BPHMEMO, MW.WHNAMLC
+		        , MW.WAMANNM, MW.WARADDR, BH.PCCDATE, MC.CUNAMLC
+	</select>
+
+	<!-- 운송 추가청구명세서  -->
+	<select id="selectTransportSurCharge" resultType="com.kbph.logistics.bm.domain.BmReportDTO">
+	/* selectTransportSurCharge */
+		SELECT IFNULL(WH.SPEHDAT, TI.BILDATE) AS TRSDATE, BH.BPHDKEY
+		     , GROUP_CONCAT(DISTINCT BC.BTRCNAM) AS BTRCNAM
+		     , GROUP_CONCAT(DISTINCT BI.BTRPCHR) AS BTRCHR1
+		     , (COUNT(DISTINCT MG.RENAMLC) - 1) as REGICNT
+		     , MG.RENAMLC AS RENAMLC
+		     , SUM(
+		     		CASE
+		     			WHEN BI.CALWEIG = 'GROSSWG'
+		     				THEN BI.GROSSWG
+		     			ELSE BI.SKUWEIG
+		     		 END
+		       ) AS TOTALWG
+		     , (SUM(BI.ADDCHCO) + SUM(BI.SURCHCO)) AS CHARGE
+		     , (SUM(BI.ADDCHCO) + SUM(BI.SURCHCO)) AS TOTCHCO
+		     , BH.BPHMEMO, MW.WHNAMLC, MW.WAMANNM, MW.WARADDR
+		     , BH.PCCDATE AS TCCDATE, MC.CUNAMLC AS BTRFCBT
+		  FROM ${userInfo.schema}.BTRPHD BH
+		 INNER JOIN ${userInfo.schema}.BTRPIT BI
+		    ON BH.WAREKEY = BI.WAREKEY
+		   AND BH.BPHDKEY = BI.BPHDKEY
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		    ON BC.BTRCATE = BI.BTRCATE
+		 INNER JOIN ${userInfo.schema}.TPLNIT TI
+		    ON TI.WAREKEY = BH.WAREKEY
+		   AND TI.VHPLNKY = BI.VHPLNKY
+		   AND TI.VHPLNIT = BI.VHPLNIT
+		 LEFT JOIN ${userInfo.schema}.WSHPIT WS	<!-- 직송일 경우 출고 테이블에 데이터 없음 -->
+		 	ON WS.WAREKEY = TI.WAREKEY
+		 	AND WS.SKUMKEY = TI.SKUMKEY
+		 LEFT JOIN ${userInfo.schema}.WSHPHD WH
+		 	ON WH.WAREKEY = WS.WAREKEY
+		 	AND WH.SHPDCKY = WS.SHPDCKY
+		 INNER JOIN ${userInfo.schema}.MREGMA MG
+		    ON MG.REGIKEY = TI.REGIMOD	<!-- 변경목적지 -->
+		   AND MG.REUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		 	ON BH.WAREKEY = MW.WAREKEY
+			AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MCUSMA MC
+			ON MC.CUSTKEY = BI.SBILLTO
+			AND MC.CUDELYN = 'Y'
+		 WHERE BH.WAREKEY = #{param.warekey}
+		   AND BI.SBILLTO = #{param.sbillto}
+		   <!-- AND BH.TOSURCH > 0 AND BI.ADDCHCO > 0 -->
+		   AND BH.PCCFMYN = 'Y'
+			<choose>
+				<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto == ""'>
+					<![CDATA[ AND BH.PCCDATE >= #{param.confirmdatefrom} ]]>
+				</when>
+				<when test='param.confirmdatefrom != null and param.confirmdateto != "" and param.confirmdatefrom == ""'>
+					<![CDATA[ AND BH.PCCDATE <= #{param.confirmdateto}]]>
+				</when>
+				<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto != null and param.confirmdateto != ""'>
+					AND BH.PCCDATE BETWEEN #{param.confirmdatefrom} AND #{param.confirmdateto}
+				</when>
+			</choose>
+		 GROUP BY BI.TRNINDT, BH.BPHDKEY, BH.BPHMEMO, MW.WHNAMLC
+		        , MW.WAMANNM, MW.WARADDR, BH.PCCDATE, MC.CUNAMLC
+	</select>
+
+	<!-- 인쇄 로그 카운트 -->
+	<!-- 지급 -->
+	<select id="selectPaymentPrintCnt" resultType="Integer">
+		/* selectPaymentPrintCnt */
+		SELECT COUNT(PRINTSQ) AS printcount
+		  FROM ${userData.schema}.SPRTHI
+		 WHERE WAREKEY = #{param.warekey}
+		   AND DOCTYPE = #{param.doctype}
+		   AND PROGRID = #{param.progrid}
+		 <if test='param.doctype.equals("910")'> <!-- 이송 -->
+		   AND BFHDKEY = #{param.bfhdkey}
+		 </if>
+		 <if test='param.doctype.equals("920")'> <!-- 운송 -->
+		   AND BPHDKEY = #{param.bphdkey}
+		 </if>
+	</select>
+
+	<!-- 청구 -->
+	<select id="selectChargePrintCnt" resultType="Integer">
+		/* selectChargePrintCnt */
+		SELECT COUNT(PRINTSQ) AS printcount
+		  FROM ${userData.schema}.SPRTHI
+		 WHERE WAREKEY = #{param.warekey}
+		   AND DOCTYPE = #{param.doctype}
+		   AND PROGRID = #{param.progrid}
+		 <if test='param.doctype.equals("910")'> <!-- 이송 -->
+		   AND BFHDKEY = #{param.bfhdkey}
+		 </if>
+		 <if test='param.doctype.equals("920")'> <!-- 운송 -->
+		   AND BPHDKEY = #{param.bphdkey}
+		 </if>
+		 <if test='param.btrfcbt != null and param.btrfcbt != ""'>
+		 	AND CBILLTO = #{param.btrfcbt}
+		 </if>
+		 <if test='param.sbillto != null and param.sbillto != ""'>
+		 	AND SBILLTO = #{param.sbillto}
+		 </if>
+	</select>
+
+	<!-- 로그 저장 -->
+	<!-- 지급 -->
+	<insert id="insertPaymentPrintLog" parameterType="com.kbph.logistics.bm.domain.BmReportDTO">
+		/* insertPaymentPrintLog */
+		INSERT INTO ${userData.schema}.SPRTHI(
+			PRINTSQ, WAREKEY, DOCCATE, DOCTYPE, PROGRID
+			, BFHDKEY, BPHDKEY, PRTDATE, PRTTIME, PRTUSER
+			, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME
+			, LMOUSER
+		)VALUES(
+			#{saveData.printsq}, #{saveData.warekey}, #{saveData.doccate}
+			, #{saveData.doctype}, #{saveData.progrid}
+			<if test='saveData.doctype.equals("910")'>
+				, #{saveData.bfhdkey}, ''
+			</if>
+			<if test='saveData.doctype.equals("920")'>
+				, '', #{saveData.bphdkey}
+			</if>
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW()  ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 청구 -->
+	<insert id="insertChargePrintLog" parameterType="com.kbph.logistics.bm.domain.BmReportDTO">
+		/* insertChargePrintLog */
+		INSERT INTO ${userData.schema}.SPRTHI(
+			PRINTSQ, WAREKEY, DOCCATE, DOCTYPE, PROGRID
+			, CBILLTO, SBILLTO, BFHDKEY, BPHDKEY, PRTDATE
+			, PRTTIME, PRTUSER, CREDATE, CRETIME, CREUSER
+			, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			#{saveData.printsq}, #{saveData.warekey}, #{saveData.doccate}
+			, #{saveData.doctype}, #{saveData.progrid}
+			<if test='saveData.btrfcbt != null and saveData.btrfcbt != ""'>
+				, #{saveData.btrfcbt}, ''
+			</if>
+			<if test='saveData.sbillto != null and saveData.sbillto != ""'>
+				, '', #{saveData.sbillto}
+			</if>
+			<if test='saveData.doctype.equals("910")'>
+				, #{saveData.bfhdkey}, ''
+			</if>
+			<if test='saveData.doctype.equals("920")'>
+				, '', #{saveData.bphdkey}
+			</if>
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW()  ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+</mapper>

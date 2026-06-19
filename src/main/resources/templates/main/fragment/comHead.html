@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="fragments-comHead">
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+	<meta http-equiv="Content-Language" content="ko">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta http-equiv="Pragma" CONTENT="no-cache">
+	<meta http-equiv="Expires" CONTENT="-1">
+	<link id="rPath" th:data-contextPath="${contextPath}" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- 파비콘 -->
+	<link rel="manifest" th:href="@{/manifests/manifest_pc.json}" />
+	<title> [[#{title.platform}]] </title>
+
+	<!-- Context Path -->
+	<script th:inline="javascript">
+		const rPath = /*[[${contextPath}]]*/'';
+	    function getTokenValue(item){
+ 	    	const token = localStorage.getItem(item)?.replace('Bearer ', '');
+	 		const base64Payload = token?.split('.')[1];
+	 		const base64 = base64Payload?.replace(/-/g, '+').replace(/_/g, '/');
+
+	 		return JSON.parse(
+			      decodeURIComponent(
+			        window.atob(base64)
+					          .split('')
+					          .map(function (c) {
+					            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+					          })
+			        		  .join('')
+				)
+	 		);
+	    }
+
+	    const userAttr = getTokenValue('accessToken');
+	    const pagePath = /*[[${pagePath}]]*/'';
+	    const mainHeader = /*[[${mainHeader}]]*/'';
+	    const userMenu = /*[[${userMenu}]]*/'';
+	</script>
+
+	<!-- CSS -->
+	<!-- CSS : Bootstrap -->
+	<link rel="stylesheet" th:href="@{/library/bootstrap/bootstrap-4.1.3/css/bootstrap.css}">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+	<link rel="stylesheet" th:href="@{/library/bootstrap/bootstrap-icons.css}">
+
+	<!-- CSS : Bootstrap 토글 -->
+	<link rel="stylesheet" th:href="@{/library/bootstrap/bootstrap-4.1.3/css/bootstrap4-toggle.css}" />
+	<!-- CSS : Bootstrap Month/Timepicker -->
+	<link rel="stylesheet" th:href="@{/library/MonthPicker/MonthPicker.css}">
+	<link rel="stylesheet" th:href="@{/library/timepicker/bootstrap-timepicker.css}">
+
+	<!-- css : PQGrid  -->
+	<link rel="stylesheet" th:href="@{/library/paramquery-pro 8.6/themes/bootstrap/pqgrid.css}">
+	<link rel="stylesheet" th:href="@{/library/paramquery-pro 8.6/pqgrid.min2.css}">
+	<link rel="stylesheet" th:href="@{/library/paramquery-pro 8.6/pqgrid.ui.min.css}">
+	<link rel="stylesheet" th:href="@{/library/paramquery-pro 8.6/pqSelect/pqselect.min.css}">
+
+	<!-- css : jQuery UI Theme -->
+	<link rel="stylesheet" th:href="@{/library/jqueryui/jquery-ui-1.11.4/jquery-ui.css}" />
+	<link rel="stylesheet" th:href="@{/design/css/main.css}">      <!-- main:공통 CSS -->
+	<link rel="stylesheet" th:href="@{/design/css/common.css}">  <!-- main:추가 CSS -->
+	<!-- CSS END -->
+
+	<!-- JavaScript : jquery -->
+	<script th:src="@{/js/scripts/jquery-3.6.0.min.js}"></script>
+	<script th:src="@{/js/scripts/jquery-ui.min.js}"></script>
+	<script th:src="@{/js/scripts/script.js}" defer></script>
+
+	<!-- PQ그리드 context를 쓰기 위해서는 밑에 있는 제이쿼리 2개 필요 -->
+	<script type="text/javascript" th:src="@{/library/jquery/jquery-2.2.4.js}"></script>
+	<script th:src="@{/library/jqueryui/jquery-ui-1.11.4/jquery-ui.js}"></script>
+
+	<!-- JavaScript : Bootstrap Library -->
+	<!-- JavaScript : 날짜 라이브러리 -->
+	<script th:src="@{/library/daterangepicker/moment.js}"></script>
+	<script th:src="@{/library/MonthPicker/MonthPicker.js}"></script>
+	<script th:src="@{/library/timepicker/bootstrap-timepicker.js}"></script>
+	<!--  라이브러리 로딩 중 외부 통신하지 않는 umd 패키지를 사용함-->
+	<script type="module" th:src="@{/library/chart/chart.umd.js}"></script>
+
+	<!-- JavaScript : Main 프레임  -->
+	<script type="text/javascript" th:src="@{/js/main/jqueryTab.js}"></script>
+	<script type="text/javascript" th:src="@{/js/main/mainSideBar.js}"></script>
+
+	<!-- JavaScript : jsZip for zip and xlsx import/export -->
+	<script th:src="@{/library/paramquery-pro 8.6/jsZip-2.5.0/jszip.min.js}"></script>
+
+	<!-- JavaScript : 클라이언트 측에서 파일을 저장하는 라이브러리 -->
+	<script th:src="@{/library/paramquery-pro 8.6/FileSaver.js}"></script>
+
+	<!-- JavaScript : pggrid -->
+	<script th:src="@{/library/paramquery-pro 8.6/pqgrid.min2.js}"></script>
+	<script th:src="@{/library/paramquery-pro 8.6/pqTouch/pqtouch.min.js}"></script><!--for touch devices-->
+	<script th:src="@{/library/paramquery-pro 8.6/pqSelect/pqselect.min.js}"></script>
+	<script th:src="@{/library/paramquery-pro 8.6/localize/pq-localize-kr.js}"></script>
+
+	<script>
+		pq.cRenderBody.prototype.preInit=function(l){var t=this,i=t.isBody(),o=t.that,n=o.options,s=o.eventNamespace,e="pq-table "+t.getTblCls(n),r=["pq-cont-inner ","pq-cont-right","pq-cont-left","pq-cont-lt","pq-cont-tr"];if(l.empty(),l[0].innerHTML=['<div class="pq-grid-cont">',i?'<div class="pq-grid-norows">'+n.strNoRows+"</div>":"",'<div class="',r[0]+r[1],'"><div class="pq-table-right '+e+'"></div>',i?"":'<div class="pq-r-spacer" style="position:absolute;top:0;height:10px;"></div>',"</div>",'<div class="'+r[0]+r[2]+'"><div class="pq-table-left '+e+'"></div></div>','<div class="'+r[0]+r[4]+'"><div class="pq-table-tr '+e+'"></div></div>','<div class="'+r[0]+r[3]+'"><div class="pq-table-lt '+e+'"></div></div>',"</div>"].join(""),t.$cright=l.find("."+r[1]).on("scroll",t.onNativeScroll.bind(t)),t.virtualWin&&$(window).on("scroll"+s+" resize"+s,t.onNativeScroll.bind(t)),i||(t.$spacer=l.find(".pq-r-spacer")),t.$cleft=l.find("."+r[2]).on("scroll",t.onScrollL.bind(t)),t.$clt=l.find("."+r[3]).on("scroll",t.onScrollLT),t.$ctr=l.find("."+r[4]).on("scroll",t.onScrollT),t.$tbl=l.find(".pq-table").on("scroll",t.onScrollLT),t.$tbl_right=l.find(".pq-table-right"),t.$tbl_left=l.find(".pq-table-left"),t.$tbl_lt=l.find(".pq-table-lt"),t.$tbl_tr=l.find(".pq-table-tr"),i){function c(l){l.on("mousewheel DOMMouseScroll",t.onMouseWheel(t))}c(t.$cleft),c(t.$ctr),t.$norows=l.find(".pq-grid-norows")}};
+	</script>
+
+	<!-- Bootstrap 추가 -->
+	<script type="text/javascript" th:src="@{/library/bootstrap/bootstrap-4.1.3/js/bootstrap4-toggle.js}"></script>
+	<script type="text/javascript" th:src="@{/library/bootstrap/bootstrap-4.1.3/js/bootstrap.bundle.js}"></script>
+
+	<!-- JavaScript : 카카오 우편번호 -->
+	<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+</th:block>
+</html>

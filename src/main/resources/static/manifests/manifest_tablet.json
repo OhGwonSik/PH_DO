@@ -1,0 +1,27 @@
+
+{
+	"manifest_version": 3,
+    "version": "1.0.0",
+    "name": "경북포항 스마트 물류 플랫폼",
+    "short_name": "경북포항 스마트 물류 플랫폼",
+    "description": "경북포항 스마트 물류 플랫폼",
+    "scope": "/",
+    "start_url": "/platform/login",
+    "display": "standalone",
+  	"orientation": "landscape",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
+    "icons": [
+	    {
+	      "src": "/platform/tablet/assets/favicon/favicon.ico",
+	      "sizes": "64x64 32x32 24x24 16x16",
+	      "type": "image/x-icon"
+	    },
+	    {
+	      "src": "/platform/tablet/assets/favicon/favicon-96x96.png",
+	      "sizes": "32x32",
+	      "type": "image/png"
+	    }
+    ]
+
+}

@@ -1,0 +1,37 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="fragments-mainSideBar" style="background-color:white; border-right: 1px solid #c3cbd8">
+	<!-- sidebar menu -->
+	<button class="btn-sidebar show"><img></button>
+	<div class="sidebar-container show">
+		<div class="sidebar-menu-wrapper" id="sideMenuBar">
+			<details class="falist">
+				<summary>
+					<span class="submenu-title">
+						<img class="ic-bookmark-on" alt="">[[#{header.favorite}]]
+					</span>
+					<img class="ic-submenu-open"  alt="">
+				</summary>
+				<ul class ="details-submenu fa-list">
+				</ul>
+			</details>
+		</div>
+	</div>
+	<!-- //sidebar menu -->
+
+	<!--  mainSideBar 종료 -->
+<script>
+window.addEventListener('DOMContentLoaded', async function() {
+	// 메뉴트리 구성
+	getUserMenuList();
+});
+
+// search 입력
+function searchcmdKeyevent(o){
+	if(event.keyCode===13){
+		var tprogcmd = o.value.toLowerCase();
+		mainSearchKeyevent(tprogcmd);
+	}
+}
+</script>
+</div>
+</html>

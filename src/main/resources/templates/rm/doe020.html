@@ -1,0 +1,1008 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{/main/fragment/defaultLayout}">
+<div class="tab-contents Ptype05" layout:fragment="content">
+	<div class="location"></div>
+	<div class="search-conditions con-box">
+		<div class="setting-grid" th:data-visible-target ='${tabPage}'>
+			<!-- 마스터 검색조건 -->
+			<label for="doe020Alstrmd" class="setting-grid-title" data-visible-category='["master"]'>[[#{rm.walsma.alstrmd}]]</label>
+			<div class="setting-grid-content" data-visible-category='["master"]'>
+				<div class="input-wrapper">
+					<input type="text" th:placeholder="${#messages.msg('rm.walsma.alstrmd')}" id="doe020Alstrmd" name="doe020Alstrmd" data-visible-category='["master"]'>
+				</div>
+			</div>
+			<label for="doe020Alstrnm" class="setting-grid-title" data-visible-category='["master"]'>[[#{rm.walsma.alstrnm}]]</label>
+			<div class="setting-grid-content" data-visible-category='["master"]'>
+				<div class="input-wrapper" >
+					<input type="text" th:placeholder="${#messages.msg('rm.walsma.alstrnm')}" id="doe020Alstrnm" name="doe020Alstrnm" data-visible-category='["master"]'>
+				</div>
+			</div>
+			<label for="doe020Aluseyn" class="setting-grid-title ic-title-nece" data-visible-category='["master"]'>[[#{rm.walsma.aluseyn}]]</label>
+			<div class="setting-grid-content" data-visible-category='["master"]'>
+				<div class="input-group">
+					<select id="doe020Aluseyn">
+						<option value="">[[#{ms.chooseAll}]]</option>
+						<option value="Y">[[#{search.use}]]</option>
+						<option value="N">[[#{search.unuse}]]</option>
+					</select>
+				</div>
+			</div>
+			<!-- 마스터 검색조건 end-->
+
+			<!-- 전략 헤더 검색조건 -->
+			<label for="doe020Warekey" class="setting-grid-title ic-title-nece" data-visible-category='["strategy", "order"]'>[[#{search.whnamlc}]]</label>
+			<div class="setting-grid-content" data-visible-category='["strategy", "order"]'>
+				<div class="input-group" >
+					<select id="doe020Warekey" data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse" data-cb-select="" data-cb-variable="warekeyList">
+					</select>
+				</div>
+			</div>
+			<label for="doe020Alstrky" class="setting-grid-title" data-visible-category='["strategy", "order"]'>[[#{rm.walshd.alstrky}]]</label>
+			<div class="setting-grid-content" data-visible-category='["strategy", "order"]'>
+				<div class="input-wrapper">
+					<input type="text" th:placeholder="${#messages.msg('rm.walshd.alstrky')}" id="doe020Alstrky" name="doe020Alstrky" data-visible-category='["strategy", "order"]'>
+				</div>
+			</div>
+			<label for="doe020AlstrnmForStrategy" class="setting-grid-title" data-visible-category='["strategy"]'>[[#{rm.walshd.alstrnm}]]</label>
+			<div class="setting-grid-content" data-visible-category='["strategy"]'>
+				<div class="input-wrapper">
+					<input type="text" th:placeholder="${#messages.msg('rm.walshd.alstrnm')}" id="doe020AlstrnmForStrategy" name="doe020AlstrnmForStrategy" data-visible-category='["strategy"]'>
+				</div>
+			</div>
+			<label for="doe020AluseynForStrategy" class="setting-grid-title ic-title-nece" data-visible-category='["strategy"]'>[[#{rm.walshd.aluseyn}]]</label>
+			<div class="setting-grid-content" data-visible-category='["strategy"]'>
+				<div class="input-group" >
+					<select id="doe020AluseynForStrategy">
+						<option value="">[[#{ms.chooseAll}]]</option>
+						<option value="Y">Y</option>
+						<option value="N">N</option>
+					</select>
+				</div>
+			</div>
+			<!-- 전략 헤더 검색조건 end -->
+
+			<!-- 오더별 전략 검색조건 -->
+			<label for="doe020Doccate" class="setting-grid-title ic-title-nece" data-visible-category='["order"]'>[[#{grid.doccate}]]</label>
+			<div class="setting-grid-content" data-visible-category='["order"]'>
+				<div class="input-group" >
+					<select id="doe020Doccate" data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/document/document-category?doccate=200" data-cb-variable="doccate200List">
+					</select>
+				</div>
+			</div>
+			<label for="doe020Doctype" class="setting-grid-title ic-title-nece" data-visible-category='["order"]'>[[#{grid.doctype}]]</label>
+			<div class="setting-grid-content" data-visible-category='["order"]'>
+				<div class="input-group" >
+					<select id="doe020Doctype" data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/document/document-type?doccate=200" data-cb-select="" data-cb-variable="doctype200List">
+						<option value="">[[#{ms.chooseAll}]]</option>
+					</select>
+				</div>
+			</div>
+			<label for="doe020AluseynForOrder" class="setting-grid-title ic-title-nece" data-visible-category='["order"]'>[[#{rm.walord.aluseyn}]]</label>
+			<div class="setting-grid-content" data-visible-category='["order"]'>
+				<div class="input-group" >
+					<select id="doe020AluseynForOrder">
+						<option value="">[[#{ms.chooseAll}]]</option>
+						<option value="Y">Y</option>
+						<option value="N">N</option>
+					</select>
+				</div>
+			</div>
+			<!-- 오더별 전략 검색조건 end -->
+			<div class="search-btn-group" hidden='hidden'>
+				<select id="doe020Alstrtg" data-cb-val="" data-cb-name="" data-cb-url="/md/code/common-code?comcdky=alstrtg" data-cb-variable="alstrtgList">
+				</select>
+				<select id="doe020Alstrst" data-cb-val="" data-cb-name="" data-cb-url="/md/code/common-code?comcdky=alstrst" data-cb-variable="alstrstList">
+				</select>
+			</div>
+		</div>
+		<div class="search-btn-group">
+			<button type="button" class="btn-search btn-navy btn-green" id="doe020BtnSearch">
+				<img>[[#{bt.search}]]
+			</button>
+			<button type="button" class="btn-clear btn-white" id="doe020BtnReset">
+				<img>[[#{bt.reset}]]
+			</button>
+		</div>
+	</div>
+	<ul class="nav nav-tabs" id="doe020Tab">
+		<li class="nav-item"><a class="nav-link allocationStrategyMaster active" data-toggle="tab" href="#doe020AllocationStrategyMaster" data-tab-type="master">[[#{menu.rm.allocationStrategyMaster}]]</a></li>
+		<li class="nav-item"><a class="nav-link allocationStrategy" data-toggle="tab" href="#doe020AllocationStrategy" data-tab-type="strategy">[[#{menu.rm.allocationStrategy}]]</a></li>
+		<li class="nav-item"><a class="nav-link allocationStrategyForOrder" data-toggle="tab" href="#doe020AllocationStrategyForOrder" data-tab-type="order">[[#{menu.rm.allocationStrategyForOrder}]]</a></li>
+	</ul>
+	<div class="tab-content">
+		<div class="list-grid-wrapper con-box tab-pane show active" id="doe020AllocationStrategyMaster">
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.rm.allocationStrategyMasterGrid}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe020BtnSaveAllocationStrategyMasterGrid">
+							<img class="ic-bt-save">[[#{bt.save}]]
+						</button>
+					</div>
+				</div>
+				<div class="grid-container">
+					<div id="doe020AllocationStrategyMasterGrid"></div>
+				</div>
+			</div>
+		</div>
+		<div class="list-grid-wrapper con-box tab-pane active" id="doe020AllocationStrategy">
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">[[#{menu.rm.allocationStrategyHeaderGrid}]]</div>
+					<div class="edit-btn-wrapper">
+						<button id="doe020BtnSaveAllocationStrategyHeaderGrid" class="btn-navy">
+							<img class="ic-bt-save">[[#{bt.save}]]
+						</button>
+					</div>
+				</div>
+				<div class="grid-container">
+					<div id="doe020AllocationStrategyHeaderGrid"></div>
+				</div>
+				<div class="list-top">
+					<div class="list-title ic-title-mark">[[#{menu.rm.allocationStrategyItemGrid}]]</div>
+					<div class="edit-btn-wrapper">
+						<button id="doe020BtnSaveAllocationStrategyItemGrid" class="btn-navy">
+							<img class="ic-bt-save">[[#{bt.save}]]
+						</button>
+					</div>
+				</div>
+				<div class="grid-container">
+					<div id="doe020AllocationStrategyItemGrid"></div>
+				</div>
+			</div>
+		</div>
+		<div class="list-grid-wrapper con-box tab-pane active" id="doe020AllocationStrategyForOrder">
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">[[#{menu.rm.allocationStrategyForOrderGrid}]]</div>
+					<div class="edit-btn-wrapper">
+						<button id="doe020BtnSaveAllocationStrategyForOrderGrid" class="btn-navy">
+							<img class="ic-bt-save">[[#{bt.save}]]
+						</button>
+					</div>
+				</div>
+				<div class="grid-container">
+					<div id="doe020AllocationStrategyForOrderGrid"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		!function(){
+			const pageId = '[[${tabPage}]]';
+
+			// Column Model
+			const doe020AllocationStrategyMasterGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox', sortable: false, editor: false, cb: { all: false,	header: true } },
+				{ title: '', dataType: 'string', dataIndx: '[[#{common.grid.recIndx}]]', editable: false, hidden: true },
+				{
+					title: '[[#{rm.walsma.alstrmd}]]',
+					dataType: 'string',
+					dataIndx: 'alstrmd',
+					styleHead: {
+						'background-color':'[[#{grid.styleHead01}]]'
+					},
+					editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				}, { title: '[[#{rm.walsma.alstrnm}]]', dataType: 'string', dataIndx: 'alstrnm', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{
+					title: '[[#{rm.walsma.alstrtg}]]',
+					dataType: 'string',
+					dataIndx: 'alstrtg',
+					styleHead: {
+						'background-color':'[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        						 checkbox: true,
+		        						 search: false,
+		        						 width: getSelectBoxWidthCondition(ui)
+		        					});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => {
+							return window[document.querySelector('#' + pageId + 'Alstrtg').dataset.cbVariable];
+						}
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => {
+							return e['[[#{grid.comboKey}]]'] === ui.cellData;
+						});
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData
+ 						};
+					}
+				}, { title: '[[#{rm.walsma.alstrod}]]', dataType: 'string', dataIndx: 'alstrod', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{rm.walsma.aluseyn}]]', dataType: 'string', dataIndx: 'aluseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			];
+			const doe020AllocationStrategyHeaderGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox', sortable: false, editor: false, cb: { all: false,	header: true } },
+				{ title: '', dataType: 'string', dataIndx: '[[#{common.grid.recIndx}]]', editable: false, hidden: true },
+				{
+					title: '[[#{grid.whnamlc}]]',
+					dataType: 'string',
+					dataIndx: 'warekey',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => {
+							return e['[[#{grid.comboKey}]]'] === ui.cellData;
+						});
+						return {
+							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData
+						};
+					},
+					editable: false
+				}, { title: '[[#{rm.walshd.alstrky}]]', dataType: 'string', dataIndx: 'alstrky', styleHead: { 'background-color': '[[#{grid.styleHead01}]]' }, editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']},
+				{ title: '[[#{rm.walshd.alstrnm}]]', dataType: 'string', dataIndx: 'alstrnm', styleHead: { 'background-color': '[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{rm.walshd.aluseyn}]]', dataType: 'string', dataIndx: 'aluseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			];
+			const doe020AllocationStrategyItemGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox', sortable: false, editor: false, cb: { all: false,	header: true } },
+				{ title: '', dataType: 'string', dataIndx: '[[#{common.grid.recIndx}]]', editable: false, hidden: true },
+				{
+					title: '[[#{grid.whnamlc}]]',
+					dataType: 'string',
+					dataIndx: 'warekey',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => {
+							return e['[[#{grid.comboKey}]]'] === ui.cellData;
+						});
+						return {
+							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData
+						};
+					},
+					editable: false
+				}, { title: '[[#{rm.walsit.alstrky}]]', dataType: 'string', dataIndx: 'alstrky', styleHead: { 'background-color': '[[#{grid.styleHead01}]]' }, editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']},
+				{ title: '[[#{rm.walsit.alstrit}]]', dataType: 'integer', dataIndx: 'alstrit', styleHead: { 'background-color': '[[#{grid.styleHead01}]]' }, editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']},
+				{
+					title: '[[#{rm.walsma.alstrmd}]]',
+					dataType: 'string',
+					dataIndx: 'alstrmd',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+							ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+							});
+							setTimeout(() => {
+								ui.$cell.find('select').pqSelect('open');
+							}, 250);
+	        			},
+						valueIndx: 'alstrmd',
+			            labelIndx: 'alstrmd',
+						options: []
+					}
+				}, { title: '[[#{rm.walsit.alstrwg}]]', dataType: 'integer', dataIndx: 'alstrwg', styleHead: { 'background-color': '[[#{grid.styleHead01}]]' }},
+				{
+					title: '[[#{rm.walsit.alstrst}]]',
+					dataType: 'string',
+					dataIndx: 'alstrst',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect(
+		        					 {
+		        						 checkbox: true,
+		        						 search: false,
+		        						 width: getSelectBoxWidthCondition(ui)
+		        					});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => {
+							return window[document.querySelector('#' + pageId + 'Alstrst').dataset.cbVariable];
+						}
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => {
+							return e['[[#{grid.comboKey}]]'] === ui.cellData;
+						});
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData
+ 						};
+					}
+				},
+				{ title: '[[#{rm.walsit.alestyn}]]', dataType: 'string', dataIndx: 'alestyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{rm.walsit.aluseyn}]]', dataType: 'string', dataIndx: 'aluseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			];
+			const doe020AllocationStrategyForOrderGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox', sortable: false, editor: false, cb: { all: false,	header: true } },
+				{ title: '', dataType: 'string', dataIndx: '[[#{common.grid.recIndx}]]', editable: false, hidden: true },
+				{
+					title: '[[#{grid.whnamlc}]]',
+					dataType: 'string',
+					dataIndx: 'warekey',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => {
+							return e['[[#{grid.comboKey}]]'] === ui.cellData;
+						});
+						return {
+							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData
+						};
+					},
+					editable: false
+				}, {
+					title: '[[#{rm.walord.alstrky}]]',
+					dataType: 'string',
+					dataIndx: 'alstrky',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+							ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+							});
+							setTimeout(() => {
+								ui.$cell.find('select').pqSelect('open');
+							}, 250);
+	        			},
+						valueIndx: 'alstrky',
+			            labelIndx: 'alstrky',
+						options: []
+					},
+					editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				},
+
+				{ title: '[[#{rm.walord.aluseyn}]]', dataType: 'string', dataIndx: 'aluseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{
+					title: '[[#{grid.doccate}]]',
+					dataType: 'string',
+					dataIndx: 'doccate',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        						 checkbox: true,
+		        						 search: false,
+		        						 width: getSelectBoxWidthCondition(ui)
+		        					});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => {
+							return window[document.querySelector('#' + pageId + 'Doccate').dataset.cbVariable];
+						}
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => {
+							return e['[[#{grid.comboKey}]]'] === ui.cellData;
+						});
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData
+ 						};
+					}
+				}, {
+					title: '[[#{grid.doctype}]]',
+					dataType: 'string',
+					dataIndx: 'doctype',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => {
+							return window[document.querySelector('#' + pageId + 'Doctype').dataset.cbVariable];
+						}
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => {
+							return e['[[#{grid.comboKey}]]'] === ui.cellData && e.doccate === ui.rowData.doccate;
+						});
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData
+ 						};
+					}
+				},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			];
+
+			// Grid Object
+			const doe020AllocationStrategyMasterGrid = new GridUtil(doe020AllocationStrategyMasterGridCM, pageId, pageId + 'AllocationStrategyMasterGrid');
+			const doe020AllocationStrategyHeaderGrid = new GridUtil(doe020AllocationStrategyHeaderGridCM, pageId, pageId + 'AllocationStrategyHeaderGrid');
+ 			const doe020AllocationStrategyItemGrid = new GridUtil(doe020AllocationStrategyItemGridCM, pageId, pageId + 'AllocationStrategyItemGrid');
+ 			const doe020AllocationStrategyForOrderGrid = new GridUtil(doe020AllocationStrategyForOrderGridCM, pageId, pageId + 'AllocationStrategyForOrderGrid');
+
+			// 그리드 초기화 세팅
+			doe020AllocationStrategyMasterGrid.setReset();
+ 			doe020AllocationStrategyHeaderGrid.setReset();
+ 			doe020AllocationStrategyItemGrid.setReset();
+ 			doe020AllocationStrategyForOrderGrid.setReset();
+
+			// 그리드 추가
+			doe020AllocationStrategyMasterGrid.setAdd(function(evt, ui){
+				const rowData = {
+					state: 'Y',
+					alstrod: 1,
+					aluseyn: 'Y'
+				};
+
+				if(this.getData( { dataIndx: ['alstrod'] } ).length > 0){
+					rowData['alstrod'] = Number(this.getData( { dataIndx: ['alstrod'] } )?.reduce((list, value) => list['alstrod'] >= value['alstrod'] ? list : value)['alstrod']) + 1;
+				}
+
+				const rowIndx = this.addRow({
+					rowData: rowData,
+					checkEditable: false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxAlge: rowIndx,
+					colIndx: this.getColIndx( { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe020AllocationStrategyMasterGrid.setChange(async function(evt, ui) {
+				if('edit' === ui.source || 'paste' === ui.source){
+					const updateRowList = [];
+
+					for(const updateData of ui.updateList) {
+		    			const newRow = { state: 'Y' };
+
+		    			updateRowList.push({
+							rowIndx: updateData.rowIndx,
+							newRow: newRow
+						});
+					}
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+
+		    	} else if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					ui.updateList.forEach(updateData => {
+		    			const newRow = { state: 'Y' };
+
+		           		if(updateData.newRow.hasOwnProperty('aluseyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}
+
+		    	if('paste' === ui.source){
+		    		ui.addList.forEach( addData => addData.newRow = {
+						state: 'Y',
+						aluseyn: addData?.newRow?.aluseyn || 'Y'
+					});
+					this.updateRow({
+						rowList: ui.addList,
+						checkEditable: false
+					});
+		    	}
+			});
+
+			// 그리드 추가
+			doe020AllocationStrategyHeaderGrid.setAdd(function(evt, ui) {
+				const rowData = {
+					state: 'Y',
+					warekey: document.querySelector('#' + pageId + 'Warekey').value,
+					aluseyn: 'Y'
+				};
+
+				const rowIndx = this.addRow({
+					rowData: rowData,
+					checkEditable: false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxAlge: rowIndx,
+					colIndx: this.getColIndx( { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe020AllocationStrategyHeaderGrid.setChange(async function(evt, ui) {
+				if('edit' === ui.source || 'paste' === ui.source){
+					const updateRowList = [];
+
+					for(const updateData of ui.updateList) {
+		    			const newRow = { state: 'Y' };
+
+		    			updateRowList.push({
+							rowIndx: updateData.rowIndx,
+							newRow: newRow
+						});
+					}
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+
+		    	} else if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					ui.updateList.forEach(updateData => {
+		    			const newRow = { state: 'Y' };
+
+		           		if(updateData.newRow.hasOwnProperty('aluseyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}
+
+		    	if('paste' === ui.source){
+		    		ui.addList.forEach( addData => addData.newRow = {
+						state: 'Y',
+						aluseyn: addData?.newRow?.aluseyn || 'Y'
+					});
+					this.updateRow({
+						rowList: ui.addList,
+						checkEditable: false
+					});
+		    	}
+			});
+
+			doe020AllocationStrategyHeaderGrid.setRowDblClick(async function(evt, ui){
+				if(!ui.rowData.rowkey){
+					return;
+				}
+
+				const data = {
+					warekey : ui.rowData.warekey,
+					alstrky : ui.rowData.alstrky
+				};
+
+				this.Checkbox('state').checkNodes(	[this.getRowData({rowIndxPage: ui.rowIndx})]);
+				await getDoe020AllocationStrategyItemGridList(data);
+			});
+
+			// 그리드 추가
+			doe020AllocationStrategyItemGrid.setAdd(function(evt, ui) {
+				const headGrid = doe020AllocationStrategyHeaderGrid.getGrid();
+				const rowData = {
+					state: 'Y',
+					warekey: headGrid.Selection().getSelection()[0].rowData.warekey || '',
+					alstrky: headGrid.Selection().getSelection()[0].rowData.alstrky || '',
+ 					alstrit: 1,
+ 					alstrod: 1,
+ 					alstrwg: 1,
+ 					alstrst: 'DESC',
+					aluseyn: 'Y',
+					alestyn: 'N'
+				};
+
+				if(this.getData().length > 0){
+					rowData['alstrit'] = this.getData( { dataIndx: ['alstrit'] } )?.reduce((list, value) => {
+							return list['alstrit'] >= value['alstrit'] ? list : value;
+					})['alstrit'] + 1;
+					rowData['alstrod'] = this.getData( { dataIndx: ['alstrod'] } )?.reduce((list, value) => {
+						return list['alstrod'] >= value['alstrod'] ? list : value;
+					})['alstrod'] + 1;
+				}
+
+				const rowIndx = this.addRow({
+					rowData: rowData,
+					checkEditable: false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxAlge: rowIndx,
+					colIndx: this.getColIndx( { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe020AllocationStrategyItemGrid.setChange(async function(evt, ui) {
+				if('edit' === ui.source || 'paste' === ui.source){
+					const updateRowList = [];
+
+					for(const updateData of ui.updateList) {
+		    			const newRow = { state: 'Y' };
+
+		    			updateRowList.push({
+							rowIndx: updateData.rowIndx,
+							newRow: newRow
+						});
+					}
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+
+		    	} else if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					ui.updateList.forEach(updateData => {
+		    			const newRow = { state: 'Y' };
+
+		           		if(updateData.newRow.hasOwnProperty('alestyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+
+		           		if(updateData.newRow.hasOwnProperty('aluseyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}
+
+		    	if('paste' === ui.source){
+		    		ui.addList.forEach( addData => addData.newRow = {
+						state: 'Y',
+						aluseyn: addData?.newRow?.aluseyn || 'Y'
+					});
+					this.updateRow({
+						rowList: ui.addList,
+						checkEditable: false
+					});
+		    	}
+			});
+
+
+			// 그리드 추가
+			doe020AllocationStrategyForOrderGrid.setAdd(function(evt, ui) {
+				const rowData = {
+					state: 'Y',
+					warekey : document.querySelector('#' + pageId + 'Warekey').value,
+					doccate : document.querySelector('#' + pageId + 'Doccate').value,
+					aluseyn: 'Y'
+				};
+
+				const rowIndx = this.addRow({
+					rowData: rowData,
+					checkEditable: false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxAlge: rowIndx,
+					colIndx: this.getColIndx( { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe020AllocationStrategyForOrderGrid.setChange(async function(evt, ui) {
+				if('edit' === ui.source || 'paste' === ui.source){
+					const updateRowList = [];
+
+					for(const updateData of ui.updateList) {
+		    			const newRow = { state: 'Y' };
+
+		    			updateRowList.push({
+							rowIndx: updateData.rowIndx,
+							newRow: newRow
+						});
+					}
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+
+		    	} else if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					ui.updateList.forEach(updateData => {
+		    			const newRow = { state: 'Y' };
+
+		           		if(updateData.newRow.hasOwnProperty('aluseyn') || updateData.newRow.hasOwnProperty('alestyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}
+
+		    	if('paste' === ui.source){
+		    		ui.addList.forEach( addData => addData.newRow = {
+						state: 'Y',
+						aluseyn: addData?.newRow?.aluseyn || 'Y'
+					});
+					this.updateRow({
+						rowList: ui.addList,
+						checkEditable: false
+					});
+		    	}
+			});
+
+ 			doe020AllocationStrategyHeaderGrid.setHeight(250);
+ 			doe020AllocationStrategyItemGrid.setHeight(250);
+
+ 			initFunc();
+			doe020AllocationStrategyMasterGrid.open();
+			doe020AllocationStrategyHeaderGrid.open();
+			doe020AllocationStrategyItemGrid.open();
+			doe020AllocationStrategyForOrderGrid.open();
+
+			async function initFunc(){
+				await _commonInit(pageId);
+				initTab(pageId);
+				initSearchCondition();
+			}
+
+			// AllocationStrategyMasterGrid 데이터 조회 함수
+			async function getDoe020AllocationStrategyMasterGridList(){
+				const data = {
+					alstrmd : document.querySelector('#' + pageId + 'Alstrmd').value,
+					alstrnm : document.querySelector('#' + pageId + 'Alstrnm').value,
+					aluseyn : document.querySelector('#' + pageId + 'Aluseyn').value
+				};
+
+				await getGridUtilList(doe020AllocationStrategyMasterGrid, data, '/rm/allocationStrategy/' + pageId + '/grids/1');
+			}
+
+			// AllocationStrategyHeaderGrid 데이터 조회 함수
+			async function getDoe020AllocationStrategyHeaderGridList(){
+				const data = {
+					warekey : document.querySelector('#' + pageId + 'Warekey').value,
+					alstrky : document.querySelector('#' + pageId + 'Alstrky').value,
+					alstrnm : document.querySelector('#' + pageId + 'AlstrnmForStrategy').value,
+					aluseyn : document.querySelector('#' + pageId + 'AluseynForStrategy').value
+				};
+
+				await getGridUtilList(doe020AllocationStrategyHeaderGrid, data, '/rm/allocationStrategy/' + pageId + '/grids/2');
+			}
+
+			// AllocationStrategyItemGrid 데이터 조회 함수
+			async function getDoe020AllocationStrategyItemGridList(data){
+				const resPromise = await Promise.allSettled([getGridUtilList(doe020AllocationStrategyItemGrid, data, '/rm/allocationStrategy/' + pageId + '/grids/3'), getAllocationStrategyMasterList()]);
+				doe020AllocationStrategyItemGrid.getGrid().columns.alstrmd.editor.options = resPromise[1].value;
+			}
+
+			// AllocationStrategyForOrder 데이터 조회 함수
+			async function getDoe020AllocationStrategyForOrderGridList(){
+				const data = {
+						warekey : document.querySelector('#' + pageId + 'Warekey').value,
+						alstrky : document.querySelector('#' + pageId + 'Alstrky').value,
+						doccate : document.querySelector('#' + pageId + 'Doccate').value,
+						doctype : document.querySelector('#' + pageId + 'Doctype').value,
+						aluseyn : document.querySelector('#' + pageId + 'AluseynForOrder').value
+				};
+				const headerData = {
+						warekey : document.querySelector('#' + pageId + 'Warekey').value,
+						pastrky : document.querySelector('#' + pageId + 'Alstrky').value,
+						pauseyn : 'Y'
+					}
+
+				const resPromise = await Promise.allSettled([getGridUtilList(doe020AllocationStrategyForOrderGrid, data, '/rm/allocationStrategy/' + pageId + '/grids/4'), getAllocationStrategyHeaderList(headerData)]);
+				doe020AllocationStrategyForOrderGrid.getGrid().columns.alstrky.editor.options = resPromise[1].value;
+			}
+
+			// 셀렉트박스용 할당전략 마스터 데이터 조회
+			async function getAllocationStrategyMasterList(){
+				const res = await fetchUtil('GET', '/rm/allocationStrategy/' + pageId + '/grids/1');
+
+				return res.status !== 200 ? [] : res.json();
+			}
+
+			// 셀렉트박스용 적치전략 헤더 데이터 조회
+			async function getAllocationStrategyHeaderList(data){
+				const res = await fetchUtil('GET', '/rm/allocationStrategy/' + pageId + '/grids/2', data);
+
+				return res.status !== 200 ? [] : res.json();
+			}
+
+			// doe020AllocationStrategyMasterGrid 저장
+			async function saveDoe020AllocationStrategyMasterGridList(){
+				const validationResult = validateEssentialFieldBeforeSaveGridUtil(doe020AllocationStrategyMasterGrid, ['alstrmd', 'alstrnm', 'alstrtg'])
+												&& validateDuplicationFieldBeforeSaveGridUtil(doe020AllocationStrategyMasterGrid, ['alstrmd'])
+
+				if( !validationResult || !confirm('[[#{ms.checksave}]]')){ // 저장 하시겠습니까?
+					return;
+				}
+
+				saveGridUtil(doe020AllocationStrategyMasterGrid, refineGridUtilSaveList(doe020AllocationStrategyMasterGrid), '/rm/allocationStrategy/' + pageId + '/grids/1');
+			}
+
+			// doe020AllocationStrategyHeaderGrid 저장
+			async function saveDoe020AllocationStrategyHeaderGridList(){
+				const validationResult = validateEssentialFieldBeforeSaveGridUtil(doe020AllocationStrategyHeaderGrid, ['warekey', 'alstrky', 'alstrnm'])
+											&& validateDuplicationFieldBeforeSaveGridUtil(doe020AllocationStrategyHeaderGrid, ['warekey', 'alstrky'])
+
+				if(!validationResult || !confirm('[[#{ms.checksave}]]')){ // 저장 하시겠습니까?
+					return;
+				}
+
+				await saveGridUtil(doe020AllocationStrategyHeaderGrid, refineGridUtilSaveList(doe020AllocationStrategyHeaderGrid), '/rm/allocationStrategy/' + pageId + '/grids/2');
+ 				makeEmptyGrid(doe020AllocationStrategyItemGrid);
+			}
+
+			// doe020AllocationStrategyItemGrid 저장
+			async function saveDoe020AllocationStrategyItemGridList(data){
+				const validationResult = validateEssentialFieldBeforeSaveGridUtil(doe020AllocationStrategyItemGrid, ['warekey', 'alstrky', 'alstrit', 'alstrmd', 'alstrwg', 'alstrst'])
+												&& validateDuplicationFieldBeforeSaveGridUtil(doe020AllocationStrategyItemGrid, ['warekey', 'alstrky', 'alstrit'])
+
+				if(!validationResult || !confirm('[[#{ms.checksave}]]')){ // 저장 하시겠습니까?
+					return;
+				}
+
+				await saveGridUtil(doe020AllocationStrategyItemGrid, refineGridUtilSaveList(doe020AllocationStrategyItemGrid), '/rm/allocationStrategy/' + pageId + '/grids/3');
+			}
+
+			// doe020AllocationStrategyForOrderGrid 저장
+			async function saveDoe020AllocationStrategyForOrderGridList(){
+				const validationResult = validateEssentialFieldBeforeSaveGridUtil(doe020AllocationStrategyForOrderGrid, ['warekey', 'alstrky', 'doccate', 'doctype'])
+												&& validateDuplicationFieldBeforeSaveGridUtil(doe020AllocationStrategyForOrderGrid, ['warekey', 'doccate', 'doctype' ])
+
+				if(!validationResult || (!confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+
+				await saveGridUtil(doe020AllocationStrategyForOrderGrid, refineGridUtilSaveList(doe020AllocationStrategyForOrderGrid), '/rm/allocationStrategy/' + pageId + '/grids/4');
+			}
+
+			function initSearchCondition(){
+				const targetDoms = document.querySelectorAll('.setting-grid[data-visible-target=' + pageId + '] [data-visible-category]');
+
+				targetDoms.forEach(dom => {
+					if(!JSON.parse(dom.dataset.visibleCategory).includes('master')){
+						dom.setAttribute('hidden', 'hidden');
+						resetSearchConditions(pageId);
+					}
+				});
+			}
+
+			/* Event */
+			// 검색버튼 누를시 이벤트
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async () => { // 임시
+				const targetTab = document.querySelector('#' + pageId + 'Tab' + ' .nav-link.active');
+				const tabType = targetTab.dataset.tabType;
+
+				if('master' === tabType){
+					await getDoe020AllocationStrategyMasterGridList();
+				} else if('strategy' === tabType){
+					await getDoe020AllocationStrategyHeaderGridList();
+				} else if('order' === tabType){
+					await getDoe020AllocationStrategyForOrderGridList();
+				}
+			});
+
+			// 탭 클릭시 검색영역 변경 이벤트
+			document.querySelectorAll('#' + pageId + 'Tab' + ' .nav-link')?.forEach(tab => {
+				tab.addEventListener('click', () => {
+					const tabType = tab.dataset.tabType;
+					const targetDoms = document.querySelectorAll('.setting-grid[data-visible-target=' + pageId + '] [data-visible-category]');
+
+					targetDoms.forEach(dom => {
+						if(JSON.parse(dom.dataset.visibleCategory).includes(tabType)){
+							dom.removeAttribute('hidden');
+						} else {
+							dom.setAttribute('hidden', 'hidden');
+							resetSearchConditions(pageId);
+						}
+					});
+				});
+			});
+
+			// 초기화
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async () => {
+				resetSearchConditions(pageId);
+   				makeEmptyGrid(doe020AllocationStrategyMasterGrid);
+ 				makeEmptyGrid(doe020AllocationStrategyHeaderGrid);
+ 				makeEmptyGrid(doe020AllocationStrategyItemGrid);
+ 				makeEmptyGrid(doe020AllocationStrategyForOrderGrid);
+			});
+
+			// 마스터 저장
+			document.querySelector('#' + pageId + 'BtnSaveAllocationStrategyMasterGrid').addEventListener('click', async () => {
+				await saveDoe020AllocationStrategyMasterGridList();
+			});
+			// 전략 헤더 저장
+			document.querySelector('#' + pageId + 'BtnSaveAllocationStrategyHeaderGrid').addEventListener('click', async () => {
+				await saveDoe020AllocationStrategyHeaderGridList();
+			});
+			//전략 아이템 저장
+			document.querySelector('#' + pageId + 'BtnSaveAllocationStrategyItemGrid').addEventListener('click', async () => {
+				await saveDoe020AllocationStrategyItemGridList();
+			});
+			// 오더별 전략 저장
+			document.querySelector('#' + pageId + 'BtnSaveAllocationStrategyForOrderGrid').addEventListener('click', async () => {
+				await saveDoe020AllocationStrategyForOrderGridList();
+			});
+			/* Event end */
+		}();
+</script>
+</div>
+</html>
+
+

@@ -1,0 +1,963 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.md.mapper.PartnerMapper">
+	<!-- *************** MVOWMA : 차주 마스터 *************** -->
+	<!-- 차주 리스트 조회 -->
+	<select id="selectMvowmaList" resultType="com.kbph.logistics.md.domain.MvowmaDTO">
+		/* selectMvowmaList */
+		SELECT VOWNKEY AS ROWKEY
+			 , VOWNKEY, VOREGNO, VOWAFFI, VONAMLC, VOWMEMO
+			 , VOWBANK, VOWACNM, VOWTELN, VOWADDR, VOMANNM
+			 , VOMANTL, VOMANEM, DMWPLNM, PUBLCYN, VOUSEYN
+			 , SIGUPYN, UPDTCHK
+             , DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+             , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+             , ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+             , DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+             , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+             , ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+		  FROM ${userData.commonSchema}.MVOWMA
+		<where>
+			<!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 조회 (임시) -->
+			<choose>
+				<when test='params.dmwplnm != null and params.dmwplnm != ""'>
+					AND (PUBLCYN = 'Y'
+					 OR (PUBLCYN = 'N' AND DMWPLNM = #{params.dmwplnm}))
+				</when>
+				<otherwise>
+					AND (PUBLCYN = 'Y'
+					 OR (PUBLCYN = 'N' AND DMWPLNM = REPLACE(LOWER(#{userData.schema}), '_', '-')))
+				</otherwise>
+			</choose>
+			<if test='params.vownkey != null and params.vownkey != ""'>
+				AND VOWNKEY LIKE CONCAT('%', #{params.vownkey} , '%')
+			</if>
+			<if test='params.vonamlc != null and params.vonamlc != ""'>
+				AND UPPER(VONAMLC) LIKE CONCAT('%', UPPER(#{params.vonamlc}), '%')
+			</if>
+			<if test ='params.vowaffi != null and params.vowaffi != ""'>
+				AND VOWAFFI = #{params.vowaffi}
+			</if>
+			<if test ='params.vouseyn != null and params.vouseyn != ""'>
+				AND VOUSEYN = #{params.vouseyn}
+			</if>
+			<if test='params.sigupyn != null and params.sigupyn != ""'>
+				AND SIGUPYN = #{params.sigupyn}
+			</if>
+		</where>
+	     ORDER BY VONAMLC, VOWNKEY
+	</select>
+
+	<!-- 차주키 채번 -->
+	<select id="selectVownkey" resultType="String">
+		/* selectVownkey */
+		SELECT ${userData.commonSchema}.FN_MD_VOWNKEY() AS VOWNKEY
+		  FROM DUAL
+	</select>
+
+	<!-- 차주 등록 -->
+	<insert id="insertMvowma" parameterType="com.kbph.logistics.md.domain.MvowmaDTO">
+		/* insertMvowma */
+		INSERT INTO ${userData.commonSchema}.MVOWMA (
+			   VOWNKEY, VOREGNO, VOWAFFI, VONAMLC, VOWMEMO
+			 , VOWBANK, VOWACNM, VOWTELN, VOWADDR, VOMANNM
+			 , VOMANTL, VOMANEM, VOUSEYN, CREDATE, CRETIME
+			 , CREUSER, LMODATE, LMOTIME, LMOUSER, SIGUPYN
+			 , PUBLCYN, DMWPLNM
+	   )VALUES(
+	  		   #{addData.vownkey}, #{addData.voregno}, #{addData.vowaffi}, #{addData.vonamlc}
+			 , #{addData.vowmemo}, #{addData.vowbank}, #{addData.vowacnm}, #{addData.vowteln}
+			 , #{addData.vowaddr}, #{addData.vomannm}, #{addData.vomantl}, #{addData.vomanem}, #{addData.vouseyn}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , #{addData.sigupyn}, #{addData.publcyn}, (
+		 		<!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 등록 (임시) -->
+			 	<choose>
+			 		<when test='addData.dmwplnm != null and addData.dmwplnm != ""'>
+			 			#{addData.dmwplnm}
+		 			</when>
+		 			<otherwise>
+		 				REPLACE(LOWER(#{userData.schema}), '_', '-')
+	 				</otherwise>
+	 			</choose>
+			 )
+	    )ON DUPLICATE KEY UPDATE
+			    VOREGNO = VALUES(voregno), VOWAFFI = VALUES(vowaffi), VONAMLC = VALUES(vonamlc)
+			  , VOWMEMO = VALUES(vowmemo), VOWBANK = VALUES(vowbank), VOWACNM = VALUES(vowacnm)
+			  , VOWTELN = VALUES(vowteln), VOWADDR = VALUES(vowaddr), VOMANNM = VALUES(vomannm)
+			  , VOMANTL = VALUES(vomantl), VOMANEM = VALUES(vomanem), VOUSEYN = VALUES(vouseyn)
+			  , LMODATE = VALUES(LMODATE), LMOTIME = VALUES(LMOTIME), LMOUSER = VALUES(LMOUSER)
+			  , SIGUPYN = VALUES(sigupyn), PUBLCYN = 'Y' , DMWPLNM = VALUES(dmwplnm)
+	</insert>
+
+	<!-- 차주 수정 -->
+	<update id="updateMvowma" parameterType="com.kbph.logistics.md.domain.MvowmaDTO">
+		/* updateMvowma */
+		UPDATE ${userData.commonSchema}.MVOWMA
+		   SET VOREGNO = #{updateData.voregno}
+			 , VOWAFFI = #{updateData.vowaffi}
+			 , VONAMLC = #{updateData.vonamlc}
+			 , VOWMEMO = #{updateData.vowmemo}
+			 , VOWBANK = #{updateData.vowbank}
+			 , VOWACNM = #{updateData.vowacnm}
+			 , VOWTELN = #{updateData.vowteln}
+			 , VOWADDR = #{updateData.vowaddr}
+			 , VOMANNM = #{updateData.vomannm}
+			 , VOMANTL = #{updateData.vomantl}
+			 , VOMANEM = #{updateData.vomanem}
+			 , PUBLCYN = #{updateData.publcyn}
+			 , DMWPLNM = (
+			 	<!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 수정 (임시) -->
+			 	<choose>
+					 <when test='updateData.dmwplnm != null and updateData.dmwplnm != "" and updateData.publcyn.equals("N")'>
+				 		 #{updateData.dmwplnm}
+					 </when>
+					 <when test='updateData.publcyn.equals("Y")'>
+					 	''
+					 </when>
+					 <otherwise>
+						 REPLACE(LOWER(#{userData.schema}), '_', '-')
+					 </otherwise>
+				 </choose>
+			 )
+			 , VOUSEYN = #{updateData.vouseyn}
+			 , SIGUPYN = #{updateData.sigupyn}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		<choose>
+			<when test='updateData.oldVownkey != null and updateData.oldVownkey != ""'>
+				AND VOWNKEY = #{updateData.oldVownkey}
+			</when>
+			<otherwise>
+				AND VOWNKEY = #{updateData.vownkey}
+			</otherwise>
+		</choose>
+	</update>
+
+	<!-- 차주 공용여부 관련 칼럼 수정 -->
+	<update id="updateMvowmaPublicStat" parameterType="com.kbph.logistics.md.domain.MvowmaDTO">
+		/* updateMvowmaPublcyn */
+		UPDATE ${userData.commonSchema}.MVOWMA
+		   SET PUBLCYN = #{updateData.publcyn}
+		   	 , DMWPLNM = (
+			 	<!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 수정 (임시) -->
+			 	<choose>
+					 <when test='updateData.dmwplnm != null and updateData.dmwplnm != "" and updateData.publcyn.equals("N")'>
+				 		 #{updateData.dmwplnm}
+					 </when>
+					 <when test='updateData.publcyn.equals("Y")'>
+					 	''
+					 </when>
+					 <otherwise>
+						 REPLACE(LOWER(#{userData.schema}), '_', '-')
+					 </otherwise>
+				 </choose>
+			 )
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		   AND VOWNKEY = #{updateData.vownkey}
+	</update>
+
+	<!-- 차주 사용자 등록 플래그 수정 -->
+	<update id="updateMvowmaSign" parameterType="com.kbph.logistics.md.domain.MvowmaDTO">
+		/* updateMvowmaSign */
+		UPDATE ${userData.commonSchema}.MVOWMA
+		   SET SIGUPYN = #{updateData.sigupyn}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		   AND VOWNKEY = #{updateData.vownkey}
+	 </update>
+
+	<!-- 차주 셀렉트박스 조회 -->
+	<select id="selectMvowmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMvowmaSelectBox */
+		SELECT VOWNKEY AS combovl, VONAMLC
+			 , CONCAT('[', VOWNKEY, '] ', VONAMLC) AS combonm
+		  FROM ${userData.commonSchema}.MVOWMA
+		 WHERE VOUSEYN = 'Y'
+		 <choose>
+				<!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 수정 (임시) -->
+				<when test='params.dmwplnm != null and params.dmwplnm != ""'>
+					AND (PUBLCYN = 'Y'
+					 OR (PUBLCYN = 'N' AND DMWPLNM = #{params.dmwplnm}))
+				</when>
+				<otherwise>
+					AND (PUBLCYN = 'Y'
+					 OR (PUBLCYN = 'N' AND DMWPLNM = REPLACE(LOWER(#{userData.schema}), '_', '-')))
+				</otherwise>
+		 </choose>
+		 <if test='params.vownkey != null and params.vownkey != ""'>
+		 	AND VOWNKEY = #{params.vownkey}
+		 </if>
+		 GROUP BY VONAMLC, VOWNKEY
+		 ORDER BY VONAMLC, VOWNKEY
+	</select>
+
+	<!-- *************** MVHCMA : 차량 마스터 *************** -->
+	<!-- 차량 리스트 조회 -->
+	<select id="selectMvhcmaList" resultType="com.kbph.logistics.md.domain.MvhcmaDTO">
+		/* selectMvhcmaList */
+		SELECT CONCAT(MVH.VOWNKEY, MVH.VEHICKY) AS ROWKEY
+			 , MVH.VOWNKEY, MVO.VONAMLC AS VONAMLC, MVH.VEHICKY, MVH.VHCSNAM
+			 , MVH.VHCFNAM, MVH.DLVTYPE, MVH.VHCOPTY, MVH.VHCTYPE, MVH.VHCTNCD
+			 , MVH.VHCMAXW, MVH.VHCCAPA, MVH.DRVERNM, MVH.DRVERPH, MVH.INBVHYN
+			 , MVH.OUBVHYN, MVH.POSCOYN, MVH.VHCSTAT, MVH.VHCMEMO, MVH.VHCVRYN
+			 , MVH.VHUSEYN, MVH.UPDTCHK, MVH.DMWPLNM, MVH.PUBLCYN
+             , DATE_FORMAT(MVH.CREDATE,'%Y-%m-%d') AS CREDATE
+             , DATE_FORMAT(STR_TO_DATE(MVH.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+             , ${userData.schema}.FN_SY_USERNAM(MVH.CREUSER) AS CREUSER
+             , DATE_FORMAT(MVH.LMODATE,'%Y-%m-%d') AS LMODATE
+             , DATE_FORMAT(STR_TO_DATE(MVH.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+             , ${userData.schema}.FN_SY_USERNAM(MVH.LMOUSER) AS LMOUSER
+             , MVO.UPDTCHK AS VOUDTCK
+		  FROM ${userData.commonSchema}.MVHCMA MVH
+		 INNER JOIN ${userData.commonSchema}.MVOWMA MVO
+		    ON MVH.VOWNKEY = MVO.VOWNKEY
+		 <where>
+		 	<!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 수정 (임시) -->
+			<choose>
+				<when test='params.dmwplnm != null and params.dmwplnm != ""'>
+					AND (MVH.PUBLCYN = 'Y'
+					 OR (MVH.PUBLCYN = 'N' AND MVH.DMWPLNM = #{params.dmwplnm}))
+				</when>
+				<otherwise>
+					AND (MVH.PUBLCYN = 'Y'
+					 OR (MVH.PUBLCYN = 'N' AND MVH.DMWPLNM = REPLACE(LOWER(#{userData.schema}), '_', '-')))
+				</otherwise>
+			</choose>
+			<if test='params.vownkey != null and params.vownkey != ""'>
+				AND UPPER(MVH.VOWNKEY) LIKE CONCAT('%', UPPER(#{params.vownkey}), '%')
+			</if>
+			<if test='params.vehicky != null and params.vehicky != ""'>
+				AND UPPER(MVH.VEHICKY) LIKE CONCAT('%', UPPER(#{params.vehicky}), '%')
+			</if>
+			<if test='params.vhcsnam != null and params.vhcsnam != ""'>
+				AND UPPER(MVH.VHCSNAM) LIKE CONCAT('%', UPPER(#{params.vhcsnam}), '%')
+			</if>
+			<if test='params.vonamlc != null and params.vonamlc != ""'>
+				AND UPPER(VONAMLC) LIKE CONCAT('%', UPPER(#{params.vonamlc}), '%')
+			</if>
+			<if test = 'params.dlvtype != null and params.dlvtype != ""'>
+				AND DLVTYPE = #{params.dlvtype}
+			</if>
+			<if test = 'params.vhcopty != null and params.vhcopty != ""'>
+				AND VHCOPTY = #{params.vhcopty}
+			</if>
+			<if test = 'params.vhcstat != null and params.vhcstat != ""'>
+				AND VHCSTAT = #{params.vhcstat}
+			</if>
+			<if test = 'params.vhuseyn != null and params.vhuseyn != ""'>
+				AND VHUSEYN = #{params.vhuseyn}
+			</if>
+			<if test = 'params.vhctype != null and params.vhctype != ""'>
+				AND VHCTYPE = #{params.vhctype}
+			</if>
+			<if test = 'params.vhctncd != null and params.vhctncd != ""'>
+				AND VHCTNCD = #{params.vhctncd}
+			</if>
+			<if test = 'params.ifprsts != null and params.ifprsts != ""'>
+				AND IFPRSTS = #{params.ifprsts}
+			</if>
+		</where>
+		ORDER BY MVH.VHCSNAM, MVH.VOWNKEY, MVH.VEHICKY
+	</select>
+
+	<!-- 차량코드 채번 -->
+	<select id="selectVehicky" resultType="String">
+		/* selectVehicky */
+		SELECT ${userData.commonSchema}.FN_MD_VEHICKY() AS VOWNKEY FROM DUAL
+	</select>
+
+	<!-- 차량 등록 -->
+	<insert id="insertMvhcma" parameterType="com.kbph.logistics.md.domain.MvhcmaDTO">
+		/* insertMvhcma */
+		INSERT INTO ${userData.commonSchema}.MVHCMA(
+			   VOWNKEY, VEHICKY, VHCSNAM, VHCFNAM
+			 , DLVTYPE, VHCOPTY, VHCTYPE, VHCTNCD
+			 , VHCMAXW, VHCCAPA, DRVERNM, DRVERPH
+			 , INBVHYN, OUBVHYN, POSCOYN, VHCSTAT
+			 , VHCMEMO, DMWPLNM, PUBLCYN, VHCVRYN
+			 , VHUSEYN, CREDATE, CRETIME, CREUSER
+			 , LMODATE, LMOTIME, LMOUSER
+	   )VALUES(
+			   #{addData.vownkey}, #{addData.vehicky}, #{addData.vhcfnam}, #{addData.vhcfnam}
+			 , #{addData.dlvtype}, #{addData.vhcopty}, #{addData.vhctype}, 'T250'
+			 , #{addData.vhcmaxw}, #{addData.vhccapa}, #{addData.drvernm}, #{addData.drverph}
+			 , #{addData.inbvhyn}, #{addData.oubvhyn}, #{addData.poscoyn}, '00'
+			 , #{addData.vhcmemo}, (
+			 	 <!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 등록 (임시) -->
+				 <choose>
+					 <when test='addData.dmwplnm != null and addData.dmwplnm != ""'>
+				 		 #{addData.dmwplnm}
+					 </when>
+					 <otherwise>
+						 REPLACE(LOWER(#{userData.schema}), '_', '-')
+					 </otherwise>
+				 </choose>
+			 ), #{addData.publcyn}, #{addData.vhcvryn}
+			 , #{addData.vhuseyn}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+	   )
+	</insert>
+
+	<!-- 차량 수정 -->
+	<update id="updateMvhcma" parameterType="com.kbph.logistics.md.domain.MvhcmaDTO">
+		/* updateMvhcma */
+		UPDATE ${userData.commonSchema}.MVHCMA
+		   SET VHCSNAM = #{updateData.vhcsnam}
+			 , VHCFNAM = #{updateData.vhcfnam}
+			 , DLVTYPE = #{updateData.dlvtype}
+			 , VHCOPTY = #{updateData.vhcopty}
+			 , VHCTYPE = #{updateData.vhctype}
+			 , VHCTNCD = #{updateData.vhctncd}
+			 , VHCMAXW = #{updateData.vhcmaxw}
+			 , VHCCAPA = #{updateData.vhccapa}
+			 , DRVERNM = #{updateData.drvernm}
+			 , DRVERPH = #{updateData.drverph}
+			 , INBVHYN = #{updateData.inbvhyn}
+			 , OUBVHYN = #{updateData.oubvhyn}
+			 , POSCOYN = #{updateData.poscoyn}
+			 , VHCSTAT = #{updateData.vhcstat}
+			 , VHCMEMO = #{updateData.vhcmemo}
+			 , DMWPLNM = (
+				 <!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 수정 (임시) -->
+				 <choose>
+					 <when test='updateData.dmwplnm != null and updateData.dmwplnm != "" and updateData.publcyn.equals("N")'>
+				 		 #{updateData.dmwplnm}
+					 </when>
+					 <when test='updateData.publcyn.equals("Y")'>
+					 	''
+					 </when>
+					 <otherwise>
+						 REPLACE(LOWER(#{userData.schema}), '_', '-')
+					 </otherwise>
+				 </choose>
+			 )
+			 , PUBLCYN = #{updateData.publcyn}
+			 , VHCVRYN = #{updateData.vhcvryn}
+			 , VHUSEYN = #{updateData.vhuseyn}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		 <choose>
+		 	 <when test='updateData.oldVownkey != null and updateData.oldVownkey != ""'>
+				 AND VOWNKEY = #{updateData.oldVownkey}
+			 </when>
+			 <otherwise>
+				 AND VOWNKEY = #{updateData.vownkey}
+			 </otherwise>
+		 </choose>
+		 <choose>
+			 <when test='updateData.oldVehicky != null and updateData.oldVehicky != ""'>
+				 AND VEHICKY = #{updateData.oldVehicky}
+			 </when>
+			 <otherwise>
+				 AND VEHICKY = #{updateData.vehicky}
+			 </otherwise>
+		 </choose>
+	</update>
+
+	<!-- 차량 셀렉트박스 조회 -->
+	<select id="selectMvhcmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMvhcmaSelectBox */
+		SELECT VEHICKY AS combovl, VHCFNAM AS combonm
+		  FROM ${userData.commonSchema}.MVHCMA MV
+		 WHERE MV.VHUSEYN = 'Y'
+		 <choose>
+			 <!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 수정 (임시) -->
+			 <when test='params.dmwplnm != null and params.dmwplnm != ""'>
+		 		 AND (MV.PUBLCYN = 'Y'
+		 		  OR (MV.PUBLCYN = 'N' AND MV.DMWPLNM = #{params.dmwplnm}))
+			 </when>
+			 <otherwise>
+				 AND (MV.PUBLCYN = 'Y'
+				  OR (MV.PUBLCYN = 'N' AND MV.DMWPLNM = REPLACE(LOWER(#{userData.schema}), '_', '-')))
+			 </otherwise>
+		 </choose>
+		 <if test='params.vownkey != null and params.vownkey != ""'>
+			 AND MV.VOWNKEY LIKE CONCAT('%', UPPER(#{params.vownkey}), '%')
+		 </if>
+		 GROUP BY MV.VHCSNAM, MV.VEHICKY
+		 ORDER BY MV.VHCSNAM, MV.VEHICKY
+	</select>
+
+	<!-- 차주-차량 관계리스트 조회 -->
+	<select id="selectVehicleRelationList" resultType="com.kbph.logistics.md.domain.MvhcmaDTO">
+		/* selectVehicleRelationList */
+		SELECT MVH.VOWNKEY, MVH.VEHICKY, MVH.VHCSNAM, MVH.VHCFNAM, MVH.DRVERNM
+		  FROM ${userData.commonSchema}.MVHCMA MVH
+		 INNER JOIN ${userData.commonSchema}.MVOWMA MVO
+				 ON (MVO.VOWNKEY = MVH.VOWNKEY)
+		 INNER JOIN ${userData.schema}.MCODEM MC1
+		 		 ON MVH.VHCTYPE = MC1.COMCDVL
+		 		AND MC1.COMCDKY = 'VHCTYPE'
+		 		<choose>
+		 			<when test='param.comcdsy != null and param.comcdsy != ""'>
+						AND MC1.COMCDSY = #{param.comcdsy}
+					</when>
+					<otherwise>
+						AND MC1.COMCDSY = 'N'
+					</otherwise>
+				</choose>
+		 INNER JOIN ${userData.schema}.MCODEM MC2
+				 ON MVH.VHCTNCD = MC2.COMCDVL
+				AND MC2.COMCDKY = 'VHCTNCD'
+				<choose>
+					<when test='param.comcdsy != null and param.comcdsy != ""'>
+						AND MC2.COMCDSY = #{param.comcdsy}
+					</when>
+					<otherwise>
+						AND MC2.COMCDSY = 'N'
+					</otherwise>
+				</choose>
+		 WHERE MVO.VOUSEYN = 'Y'
+		   AND MVH.VHUSEYN = 'Y'
+		   <!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 조회 (임시) -->
+		   <choose>
+		   		<when test='param.dmwplnm != null and param.dmwplnm != ""'>
+		   			 AND (MVH.PUBLCYN = 'Y'
+		   			  OR (MVH.PUBLCYN = 'N' AND MVH.DMWPLNM = #{param.dmwplnm}))
+	   			</when>
+	   			<otherwise>
+	   				AND (MVH.PUBLCYN = 'Y'
+	   				 OR (MVH.PUBLCYN = 'N' AND MVH.DMWPLNM = REPLACE(LOWER(#{userData.schema}), '_', '-')))
+   				</otherwise>
+			</choose>
+			<if test='param.vownkey != null and param.vownkey != ""'>
+		       AND MVH.VOWNKEY = #{param.vownkey}
+	        </if>
+    </select>
+
+    <!-- 차량번호 개수 조회 -->
+    <select id="selectVhcfnamCnt" resultType="Integer">
+    	/* selectVhcfnamCnt */
+    	SELECT COUNT(1) FROM ${userData.commonSchema}.MVHCMA MVH
+    	WHERE MVH.VHCFNAM = #{param.vhcfnam}
+    </select>
+
+     <!-- update check -->
+    <select id="selectOneMvhcma" resultType="com.kbph.logistics.md.domain.MvhcmaDTO">
+    	/* selectOneMvhcma */
+    	SELECT
+    		MVH.VOWNKEY, MVH.VEHICKY, MVH.VHCFNAM, MVH.VHCTYPE,
+    		MVH.VHCTNCD, MVH.VHCOPTY, MVH.DRVERNM, MVH.DRVERPH,
+    		MVH.POSCOYN, MVH.VHCVRYN, MVH.VHUSEYN, MVO.VONAMLC,
+    		MVH.UPDTCHK, MVO.UPDTCHK AS VOUDTCK
+    	FROM
+    		${userData.commonSchema}.MVHCMA MVH
+    	INNER JOIN
+    		${userData.commonSchema}.MVOWMA MVO
+    	ON
+    		MVH.VOWNKEY = MVO.VOWNKEY
+    	WHERE
+    		MVH.VHCFNAM = #{param.vhcfnam}
+    </select>
+
+	<!-- 차량 공용여부 관련 칼럼 수정 -->
+	<update id="updateMvhcmaPublicStat" parameterType="com.kbph.logistics.md.domain.MvhcmaDTO">
+		/* updateMvhcmaPublicStat */
+		UPDATE ${userData.commonSchema}.MVHCMA
+		   SET PUBLCYN = #{updateData.publcyn}
+		   	 , DMWPLNM = (
+			 	<!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 수정 (임시) -->
+			 	<choose>
+					 <when test='updateData.dmwplnm != null and updateData.dmwplnm != "" and updateData.publcyn.equals("N")'>
+				 		 #{updateData.dmwplnm}
+					 </when>
+					 <when test='updateData.publcyn.equals("Y")'>
+					 	''
+					 </when>
+					 <otherwise>
+						 REPLACE(LOWER(#{userData.schema}), '_', '-')
+					 </otherwise>
+				 </choose>
+			 )
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		   AND VHCFNAM = #{updateData.vhcfnam}
+	</update>
+
+	<!-- *************** MREGMA : 목적지(권역) 마스터 *************** -->
+	<!-- 목적지 리스트 조회 -->
+	<select id="selectMregmaList" resultType="com.kbph.logistics.md.domain.MregmaDTO">
+		/* selectMregmaList */
+		SELECT REGIKEY AS ROWKEY, REGIKEY, RENAMLC
+			 , REGADDR, REGMEMO, REUSEYN, UPDTCHK
+             , DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+             , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+             , ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+             , DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+             , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+             , ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+		  FROM ${userData.schema}.MREGMA
+		  <where>
+		      <if test='params.regikey != null and params.regikey != ""'>
+		          AND REGIKEY LIKE CONCAT('%', UPPER(#{params.regikey}), '%')
+	          </if>
+	          <if test='params.renamlc != null and params.renamlc != ""'>
+				  AND UPPER(RENAMLC) LIKE CONCAT('%', UPPER(#{params.renamlc}), '%')
+			  </if>
+			  <if test='params.regaddr != null and params.regaddr != ""'>
+			      AND UPPER(REGADDR) LIKE CONCAT('%', UPPER(#{params.regaddr}), '%')
+			  </if>
+			  <if test='params.reuseyn != null and params.reuseyn != ""'>
+			      AND REUSEYN = #{params.reuseyn}
+			  </if>
+		 </where>
+		 ORDER BY RENAMLC, REGIKEY
+	</select>
+
+	<!-- 목적지 등록 -->
+	<insert id="insertMregma" parameterType="com.kbph.logistics.md.domain.MregmaDTO">
+		/* insertMregma */
+		INSERT INTO ${userData.schema}.MREGMA(
+			   REGIKEY, RENAMLC, REGADDR, REGMEMO, REUSEYN
+			 , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME
+			 , LMOUSER
+	   )VALUES(
+	   		   #{addData.regikey}, #{addData.renamlc}, #{addData.regaddr}
+			 , #{addData.regmemo}, #{addData.reuseyn}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 목적지 수정 -->
+	<update id="updateMregma" parameterType="com.kbph.logistics.md.domain.MregmaDTO">
+		/* updateMregma */
+		UPDATE ${userData.schema}.MREGMA
+		   SET RENAMLC = #{updateData.renamlc}
+			 , REGADDR = #{updateData.regaddr}
+			 , REGMEMO = #{updateData.regmemo}
+			 , REUSEYN = #{updateData.reuseyn}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		 <choose>
+			<when test='updateData.oldRegikey != null and updateData.oldRegikey != ""'>
+				AND REGIKEY = #{updateData.oldRegikey}
+			</when>
+			<otherwise>
+				AND REGIKEY = #{updateData.regikey}
+			</otherwise>
+		</choose>
+	</update>
+
+	<!-- 목적지 셀렉트박스 조회 -->
+	<select id="selectMregmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMregmaSelectBox */
+		SELECT REGIKEY AS COMBOVL, RENAMLC
+			 , CONCAT('[', REGIKEY, '] ', RENAMLC) AS COMBONM
+		  FROM ${userData.schema}.MREGMA
+		 WHERE REUSEYN = 'Y'
+		 <if test='params.regikey != null and params.regikey != ""'>
+		     AND REGIKEY = #{params.regikey}
+		 </if>
+		 GROUP BY RENAMLC, REGIKEY
+		 ORDER BY RENAMLC, REGIKEY
+	</select>
+
+	<!-- 고객 - 목적지 관계리스트  -->
+	<select id="selectRegistrationRelationList" resultType="com.kbph.logistics.md.domain.MdesmaDTO" >
+		/* selectRegistrationRelationList */
+		SELECT MDE.REGIKEY, MDE.CUSTKEY, MRE.RENAMLC
+		  FROM ${userData.schema}.MDESMA MDE
+		 INNER JOIN ${userData.schema}.MCUSMA MCU
+		 		 ON(MCU.CUSTKEY = MDE.CUSTKEY)
+		 INNER JOIN ${userData.schema}.MREGMA MRE
+		 		 ON(MRE.REGIKEY = MDE.REGIKEY)
+		 WHERE MCU.CUDELYN = 'Y'
+		   AND MRE.REUSEYN = 'Y'
+		   AND MDE.DEUSEYN = 'Y'
+		 GROUP BY MDE.REGIKEY, MDE.CUSTKEY, MRE.RENAMLC
+	</select>
+
+	<!-- 목적지 사용여부 조회 -->
+	<select id="selectMregmaReuseyn" resultType="String">
+		/* selectMregmaReuseyn */
+		SELECT REUSEYN
+		  FROM ${userData.schema}.MREGMA
+		<where>
+			<if test='regikey != null and regikey != ""'>
+				AND REGIKEY = #{regikey}
+			</if>
+		</where>
+	</select>
+
+	<!-- *************** MCUSMA : 고객 마스터 *************** -->
+	<!-- 고객 리스트 조회 -->
+	<select id="selectMcusmaList" resultType="com.kbph.logistics.md.domain.McusmaDTO">
+		/* selectMcusmaList */
+		SELECT CUSTKEY AS ROWKEY
+			 , CUSTKEY, CUREGNO, CUNAMLC, CUNAMKO, CUNAMEN
+			 , CUSADDR, CUSTELN, CUPOSBX, CUPOSCD, CUREPNM
+			 , CUREPTL, CUREPEM, CUMANNM, CUMANTL, CUMANEM
+			 , CUSBANK, CUSACNM, SURCHYN, CUDELYN, UPDTCHK
+             , DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+             , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+             , ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+             , DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+             , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+             , ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+		  FROM ${userData.schema}.MCUSMA
+		  <where>
+		      <if test='params.custkey != null and params.custkey != ""'>
+		          AND CUSTKEY LIKE CONCAT('%', UPPER(#{params.custkey}), '%')
+		      </if>
+			  <if test='params.cunamlc != null and params.cunamlc != ""'>
+				  AND UPPER(CUNAMLC) LIKE CONCAT('%', UPPER(#{params.cunamlc}), '%')
+			  </if>
+			  <if test='params.cudelyn != null and params.cudelyn != ""'>
+				  AND CUDELYN = #{params.cudelyn}
+			  </if>
+		 </where>
+		 ORDER BY CUNAMLC, CUSTKEY
+	</select>
+
+	<!-- 고객 등록 -->
+	<insert id="insertMcusma" parameterType="com.kbph.logistics.md.domain.McusmaDTO">
+		/* insertMcusma */
+		INSERT INTO ${userData.schema}.MCUSMA(
+			   CUSTKEY, CUREGNO, CUNAMLC, CUNAMKO, CUNAMEN
+			 , CUSADDR, CUSTELN, CUPOSBX, CUPOSCD, CUREPNM
+			 , CUREPTL, CUREPEM, CUMANNM, CUMANTL, CUMANEM
+			 , CUSBANK, CUSACNM, SURCHYN, CUDELYN, CREDATE
+			 , CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER
+	   )VALUES(
+	   		   #{addData.custkey}, #{addData.curegno}, #{addData.cunamlc}
+			 , #{addData.cunamko}, #{addData.cunamen}, #{addData.cusaddr}
+			 , #{addData.custeln}, #{addData.cuposbx}, #{addData.cuposcd}
+			 , #{addData.curepnm}, #{addData.cureptl}, #{addData.curepem}
+			 , #{addData.cumannm}, #{addData.cumantl}, #{addData.cumanem}
+			 , #{addData.cusbank}, #{addData.cusacnm}, #{addData.surchyn}, #{addData.cudelyn}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 고객 수정 -->
+	<update id="updateMcusma" parameterType="com.kbph.logistics.md.domain.McusmaDTO">
+		/* updateMcusma */
+		UPDATE ${userData.schema}.MCUSMA
+		   SET CUREGNO = #{updateData.curegno}
+			 , CUNAMLC = #{updateData.cunamlc}
+			 , CUNAMKO = #{updateData.cunamko}
+			 , CUNAMEN = #{updateData.cunamen}
+			 , CUSADDR = #{updateData.cusaddr}
+			 , CUSTELN = #{updateData.custeln}
+			 , CUPOSBX = #{updateData.cuposbx}
+			 , CUPOSCD = #{updateData.cuposcd}
+			 , CUREPNM = #{updateData.curepnm}
+			 , CUREPTL = #{updateData.cureptl}
+			 , CUREPEM = #{updateData.curepem}
+			 , CUMANNM = #{updateData.cumannm}
+			 , CUMANTL = #{updateData.cumantl}
+			 , CUMANEM = #{updateData.cumanem}
+			 , CUSBANK = #{updateData.cusbank}
+			 , CUSACNM = #{updateData.cusacnm}
+			 , SURCHYN = #{updateData.surchyn}
+			 , CUDELYN = #{updateData.cudelyn}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		 <choose>
+		     <when test='updateData.oldCustkey != null and updateData.oldCustkey != ""'>
+				 AND CUSTKEY = #{updateData.oldCustkey}
+			 </when>
+			 <otherwise>
+				 AND CUSTKEY = #{updateData.custkey}
+			 </otherwise>
+		 </choose>
+	</update>
+
+	<!-- 고객 셀렉트박스 조회 -->
+	<select id="selectMcusmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMcusmaSelectBox */
+		SELECT CUSTKEY AS combovl, CUNAMLC AS combonm
+<!-- 			 , CONCAT('[', CUSTKEY, '] ', CUNAMLC) AS combonm -->
+		  FROM ${userData.schema}.MCUSMA
+		 WHERE CUDELYN = 'Y'
+		 <if test='params.custkey != null and params.custkey != ""'>
+		     AND CUSTKEY = #{params.custkey}
+	     </if>
+	    GROUP BY CUNAMLC, CUSTKEY
+		ORDER BY CUNAMLC, CUSTKEY
+	</select>
+
+	<!-- *************** MDESMA : 상세착지 마스터 *************** -->
+	<!-- 상세착지 리스트 조회 -->
+	<select id="selectMdesmaList" resultType="com.kbph.logistics.md.domain.MdesmaDTO">
+		/* selectMdesmaList */
+		SELECT CONCAT(MD.REGIKEY, MD.CUSTKEY, MD.DESTKEY) AS ROWKEY
+			 , MD.REGIKEY, MR.RENAMLC AS RENAMLC, MD.CUSTKEY, MC.CUNAMLC AS CUNAMLC
+			 , MD.DESTKEY, MD.DENAMLC, MD.DENAMKO, MD.DENAMEN, MD.DEMANNM
+			 , MD.DEPOSBX, MD.DEPOSCD, MD.DESADDR, MD.DESTELN, MD.DESMEMO
+			 , MD.UNAVAT1, MD.UNAVAT2, MD.UNAVAT3, MD.DEUSEYN, MD.UPDTCHK, MR.REUSEYN
+             , DATE_FORMAT(MD.CREDATE,'%Y-%m-%d') AS CREDATE
+             , DATE_FORMAT(STR_TO_DATE(MD.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+             , ${userData.schema}.FN_SY_USERNAM(MD.CREUSER) AS CREUSER
+             , DATE_FORMAT(MD.LMODATE,'%Y-%m-%d') AS LMODATE
+             , DATE_FORMAT(STR_TO_DATE(MD.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+             , ${userData.schema}.FN_SY_USERNAM(MD.LMOUSER) AS LMOUSER
+		 FROM ${userData.schema}.MDESMA MD
+		INNER JOIN ${userData.schema}.MREGMA MR
+				ON MD.REGIKEY = MR.REGIKEY
+		INNER JOIN ${userData.schema}.MCUSMA MC
+				ON MD.CUSTKEY = MC.CUSTKEY
+		<where>
+			<if test='params.regikey != null and params.regikey != ""'>
+				AND MD.REGIKEY LIKE CONCAT('%', UPPER(#{params.regikey}), '%')
+			</if>
+			<if test='params.renamlc != null and params.renamlc != ""'>
+				AND UPPER(MR.RENAMLC) LIKE CONCAT('%', UPPER(#{params.renamlc}), '%')
+			</if>
+			<if test='params.custkey != null and params.custkey != ""'>
+				AND MD.CUSTKEY LIKE CONCAT('%', UPPER(#{params.custkey}), '%')
+			</if>
+			<if test='params.cunamlc != null and params.cunamlc != ""'>
+				AND UPPER(MC.CUNAMLC) LIKE CONCAT('%', UPPER(#{params.cunamlc}), '%')
+			</if>
+			<if test='params.destkey != null and params.destkey != ""'>
+				AND MD.DESTKEY LIKE CONCAT('%', UPPER(#{params.destkey}), '%')
+			</if>
+			<if test='params.denamlc != null and params.denamlc != ""'>
+				AND UPPER(MD.DENAMLC) LIKE CONCAT('%', UPPER(#{params.denamlc}), '%')
+			</if>
+			<if test='params.deuseyn != null and params.deuseyn != ""'>
+				AND MD.DEUSEYN = #{params.deuseyn}
+			</if>
+		</where>
+		ORDER BY MC.CUNAMLC, MR.RENAMLC, MD.DENAMLC
+	</select>
+
+	<!-- 상세착지 등록 -->
+	<insert id="insertMdesma" parameterType="com.kbph.logistics.md.domain.MdesmaDTO">
+		/* insertMdesma */
+		INSERT INTO ${userData.schema}.MDESMA(
+			   REGIKEY, CUSTKEY, DESTKEY, DENAMLC, DENAMKO
+			 , DENAMEN, DEMANNM, DEPOSBX, DEPOSCD, DESADDR
+			 , DESTELN, DESMEMO, UNAVAT1, UNAVAT2, UNAVAT3
+			 , DEUSEYN, CREDATE, CRETIME, CREUSER, LMODATE
+			 , LMOTIME, LMOUSER
+	   )VALUES(
+	   		   #{addData.regikey}, #{addData.custkey}, #{addData.destkey}
+			 , #{addData.denamlc}, #{addData.denamko}, #{addData.denamen}
+			 , #{addData.demannm}, #{addData.deposbx}, #{addData.deposcd}
+			 , #{addData.desaddr}, #{addData.desteln}, #{addData.desmemo}
+			 , #{addData.unavat1}, #{addData.unavat2}, #{addData.unavat3}, #{addData.deuseyn}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 상세착지 수정 -->
+	<update id="updateMdesma" parameterType="com.kbph.logistics.md.domain.MdesmaDTO">
+		/* updateMdesma */
+		UPDATE ${userData.schema}.MDESMA
+		   SET DENAMLC = #{updateData.denamlc}
+			 , DENAMKO = #{updateData.denamko}
+			 , DENAMEN = #{updateData.denamen}
+			 , DEMANNM = #{updateData.demannm}
+			 , DEPOSBX = #{updateData.deposbx}
+			 , DEPOSCD = #{updateData.deposcd}
+			 , DESADDR = #{updateData.desaddr}
+			 , DESTELN = #{updateData.desteln}
+			 , DESMEMO = #{updateData.desmemo}
+			 , UNAVAT1 = #{updateData.unavat1}
+			 , UNAVAT2 = #{updateData.unavat2}
+			 , UNAVAT3 = #{updateData.unavat3}
+			 , DEUSEYN = #{updateData.deuseyn}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		 <choose>
+			 <when test='updateData.oldRegikey != null and updateData.oldRegikey != ""'>
+			     AND REGIKEY = #{updateData.oldRegikey}
+			 </when>
+			 <otherwise>
+			     AND REGIKEY = #{updateData.regikey}
+			 </otherwise>
+		 </choose>
+		 <choose>
+			 <when test='updateData.oldCustkey != null and updateData.oldCustkey != ""'>
+				 AND CUSTKEY = #{updateData.oldCustkey}
+			 </when>
+			 <otherwise>
+				 AND CUSTKEY = #{updateData.custkey}
+			 </otherwise>
+		 </choose>
+		 <choose>
+			 <when test='updateData.oldDestkey != null and updateData.oldDestkey != ""'>
+				 AND DESTKEY = #{updateData.oldDestkey}
+			 </when>
+			 <otherwise>
+				 AND DESTKEY = #{updateData.destkey}
+			 </otherwise>
+		 </choose>
+	</update>
+
+	<!-- 상세착지 셀렉트박스 조회 -->
+	<select id="selectMdesmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMdesmaSelectBox */
+		SELECT DESTKEY AS combovl, DENAMLC AS combonm
+		  FROM ${userData.schema}.MDESMA
+		 WHERE DEUSEYN = 'Y'
+		 <if test='params.regikey != null and params.regikey != ""'>
+		   	 AND REGIKEY = #{params.regikey}
+		 </if>
+		 <if test='params.custkey != null and params.custkey != ""'>
+			 AND CUSTKEY = #{params.custkey}
+		 </if>
+		 <if test='params.destkey != null and params.destkey != ""'>
+			 AND DESTKEY = #{params.destkey}
+		 </if>
+		 GROUP BY DENAMLC, DESTKEY
+		 ORDER BY DENAMLC, DESTKEY
+	</select>
+
+	<!-- 고객 - 목적지 - 상세착지 관계리스트  -->
+	<select id="selectDestinationRelationList" resultType="com.kbph.logistics.md.domain.MdesmaDTO" >
+		/* selectDestinationRelationList */
+		SELECT
+			CONCAT(MDE.CUSTKEY,'-',MDE.DESTKEY,'-',MDE.REGIKEY) AS CDRCODE
+			, MDE.CUSTKEY AS OWNERKY
+			, MDE.REGIKEY, MDE.DESTKEY
+			, MDE.DENAMLC, MCU.CUNAMLC, MRE.RENAMLC
+			, MDE.DEMANNM, MDE.DEPOSCD, MDE.DESADDR, MDE.DESTELN
+		  FROM ${userData.schema}.MDESMA MDE
+		 INNER JOIN ${userData.schema}.MCUSMA MCU
+				 ON(MCU.CUSTKEY = MDE.CUSTKEY)
+		 INNER JOIN ${userData.schema}.MREGMA MRE
+				 ON(MRE.REGIKEY = MDE.REGIKEY)
+		 WHERE MCU.CUDELYN = 'Y'
+		   AND MRE.REUSEYN = 'Y'
+		   AND MDE.DEUSEYN = 'Y'
+	</select>
+
+	<!-- *************** MOWRMA : 판매계약사 마스터 (보류) *************** -->
+	<!-- 판매계약사 리스트 조회 -->
+	<select id="selectMowrmaList" resultType="com.kbph.logistics.md.domain.MowrmaDTO">
+		/* selectMowrmaList */
+		SELECT OWNERKY AS rowkey
+			 , OWNERKY, OWNAMLC, OWNAMKO, OWNAMEN, OWNADDR
+			 , OWNTELN, OWPOSBX, OWPOSCD, OWREPNM, OWREPTL
+			 , OWREPEM, OWBLCTC, OWNEORD, OWUSEYN, UPDTCHK
+             , DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+             , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+             , ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+             , DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+             , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+             , ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+		  FROM ${userData.schema}.MOWRMA
+		  <where>
+		      <if test='params.ownerky != null and params.ownerky != ""'>
+		          AND OWNERKY LIKE CONCAT('%', UPPER(#{params.ownerky}), '%')
+			  </if>
+			  <if test='params.ownamlc != null and params.ownamlc != ""'>
+			      AND OWNAMLC LIKE CONCAT('%', UPPER(#{params.ownamlc}), '%')
+			  </if>
+			  <if test='params.owuseyn != null and params.owuseyn != ""'>
+			      AND OWUSEYN = #{params.owuseyn}
+			  </if>
+		 </where>
+		 ORDER BY OWNEORD, OWNERKY
+	</select>
+
+	<!-- 판매계약사 등록 -->
+	<insert id="insertMowrma" parameterType="com.kbph.logistics.md.domain.MowrmaDTO">
+		/* insertMowrma */
+		INSERT INTO ${userData.schema}.MOWRMA(
+			OWNERKY, OWNAMLC, OWNAMKO, OWNAMEN, OWNADDR
+			, OWNTELN, OWPOSBX, OWPOSCD, OWREPNM, OWREPTL
+			, OWREPEM, OWBLCTC, OWNEORD, OWUSEYN, CREDATE
+			, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			#{addData.ownerky}, #{addData.ownamlc}, #{addData.ownamko}
+			, #{addData.ownamen}, #{addData.ownaddr}, #{addData.ownteln}
+			, #{addData.owposbx}, #{addData.owposcd}, #{addData.owrepnm}
+			, #{addData.owreptl}, #{addData.owrepem}, #{addData.owblctc}
+			, #{addData.owneord}, #{addData.owuseyn}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 판매계약사 수정 -->
+	<update id="updateMowrma" parameterType="com.kbph.logistics.md.domain.MowrmaDTO">
+		/* updateMowrma */
+		UPDATE ${userData.schema}.MOWRMA SET
+			OWNAMLC = #{updateData.ownamlc}
+			, OWNAMKO = #{updateData.ownamko}
+			, OWNAMEN = #{updateData.ownamen}
+			, OWNADDR = #{updateData.ownaddr}
+			, OWNTELN = #{updateData.ownteln}
+			, OWPOSBX = #{updateData.owposbx}
+			, OWPOSCD = #{updateData.owposcd}
+			, OWREPNM = #{updateData.owrepnm}
+			, OWREPTL = #{updateData.owreptl}
+			, OWREPEM = #{updateData.owrepem}
+			, OWBLCTC = #{updateData.owblctc}
+			, OWNEORD = #{updateData.owneord}
+			, OWUSEYN = #{updateData.owuseyn}
+			, LMODATE = to_char(NOW() ,'YYYYMMDD')
+			, LMOTIME = to_char(NOW() ,'hh24miss')
+			, LMOUSER = #{userData.useract}
+			, UPDTCHK = #{updateData.updtchk} + 1
+		WHERE UPDTCHK = #{updateData.updtchk}
+		<choose>
+			<when test='updateData.oldOwnerky != null and updateData.oldOwnerky != ""'>
+				AND OWNERKY = #{updateData.oldOwnerky}
+			</when>
+			<otherwise>
+				AND OWNERKY = #{updateData.ownerky}
+			</otherwise>
+		</choose>
+	</update>
+
+	<!-- 판매계약사 셀렉트박스 조회 -->
+	<select id="selectMowrmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMowrmaSelectBox */
+		SELECT OWNERKY AS combovl, OWNAMLC AS combonm
+		FROM ${userData.schema}.MOWRMA
+		WHERE OWUSEYN = 'Y'
+		<if test='params.ownerky != null and params.ownerky != ""'>
+			AND OWNERKY = #{params.ownerky}
+		</if>
+		GROUP BY OWNERKY, OWNAMLC
+		ORDER BY OWNEORD, OWNERKY, OWNAMLC
+	</select>
+
+	<update id="updateMvhcmaIfprsts" parameterType="com.kbph.logistics.md.domain.MvhcmaDTO">
+		UPDATE ${userData.commonSchema}.MVHCMA
+		SET IFPRSTS = #{updateData.ifprsts},
+			LMODATE = to_char(NOW() ,'YYYYMMDD'),
+			LMOTIME = to_char(NOW() ,'hh24miss'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			UPDTCHK = #{updateData.updtchk}
+		AND VOWNKEY = #{updateData.vownkey}
+		AND VEHICKY = #{updateData.vehicky}
+	</update>
+</mapper>

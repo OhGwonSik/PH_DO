@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Language" content="ko">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+		<meta http-equiv="Pragma" content="no-cache">
+		<meta http-equiv="Expires" content="-1">
+		
+		<script th:src="@{/js/scripts/jquery-3.6.0.min.js}"></script>
+		
+		<link id="rPath" th:data-contextPath="${contextPath}" />
+		<link rel="apple-touch-icon" sizes="57x57" th:href="@{/design/assets/favicon/apple-icon-57x57.png}">
+		<link rel="apple-touch-icon" sizes="60x60" th:href="@{/design/assets/favicon/apple-icon-60x60.png}">
+		<link rel="apple-touch-icon" sizes="72x72" th:href="@{/design/assets/favicon/apple-icon-72x72.png}">
+		<link rel="apple-touch-icon" sizes="76x76" th:href="@{/design/assets/favicon/apple-icon-76x76.png}">
+		<link rel="apple-touch-icon" sizes="114x114" th:href="@{/design/assets/favicon/apple-icon-114x114.png}">
+		<link rel="apple-touch-icon" sizes="120x120" th:href="@{/design/assets/favicon/apple-icon-120x120.png}">
+		<link rel="apple-touch-icon" sizes="144x144" th:href="@{/design/assets/favicon/apple-icon-144x144.png}">
+		<link rel="apple-touch-icon" sizes="152x152" th:href="@{/design/assets/favicon/apple-icon-152x152.png}">
+		<link rel="apple-touch-icon" sizes="180x180" th:href="@{/design/assets/favicon/apple-icon-180x180.png}">
+		<link rel="icon" type="image/png" sizes="192x192" th:href="@{/design/assets/favicon/android-icon-192x192.png}">
+		<link rel="icon" type="image/png" sizes="32x32" th:href="@{/design/assets/favicon/favicon-32x32.png}">
+		<link rel="icon" type="image/png" sizes="96x96" th:href="@{/design/assets/favicon/favicon-96x96.png}">
+		<link rel="icon" type="image/png" sizes="16x16" th:href="@{/design/assets/favicon/favicon-16x16.png}">
+		<meta name="msapplication-TileColor" content="#ffffff">
+		<meta name="msapplication-TileImage" th:content="@{/design/assets/favicon/ms-icon-144x144.png}">
+		<meta name="theme-color" content="#ffffff">
+	
+		<title>스마트물류플랫폼</title>
+	    <!-- CSS -->
+		<link rel="stylesheet" th:href="@{/design/css/main.css}">
+		<link rel="stylesheet" th:href="@{/design/css/common.css}">
+	
+		<script th:src="@{/js/scripts/jquery-3.6.0.min.js}"></script>
+		<script th:src="@{/js/scripts/jquery-ui.min.js}"></script>
+		<script th:src="@{/js/scripts/script.js}"></script>
+		<style>
+			.downloadDiv {
+				padding-top: 10px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 10px;
+			}
+			
+			.downloadBtn {
+				border: solid 2px #4375DB;
+				padding: 10px;
+				width: 300px;
+				text-align: center;
+				font-size: large;
+				color: #0D3FA5;
+			}
+			
+			.downloadDescription {
+				text-align: center;
+			}
+			
+			.downloadDescription p{
+				font-size: medium;
+				padding: 20px 10px 10px 10px;
+			}
+			
+			body {
+				background-color: white;
+			}
+			
+			.imgDiv {
+				display: flex;
+				text-align: center;
+				flex-direction: column;
+				align-items: center;
+				padding: 5px 15px 5px 15px;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="downloadDiv">
+			<div class="downloadBtn" th:onclick="|location.href='@{/appapk/PH_APP_1.1.8.apk}';|">포항 스마트 물류 플랫폼 앱 다운로드<br>클릭</div>
+		</div>
+		
+		<div class="downloadDiv">
+			<div class="downloadDescription">
+				<p>1. 다운로드 버튼을 클릭합니다.</p>
+				<div class="imgDiv">
+					<img th:src="@{/img/app/downloadClick.png}">
+				</div>
+				<p>2. 내 파일 > 다운로드에서 다운로드 받은 APK 파일을 확인합니다.</p>
+				<div class="imgDiv" style="flex-direction: row;">
+					<img th:src="@{/img/app/myFile.png}" style="width: 50%;">
+					<img th:src="@{/img/app/myFileDownload.png}" style="width: 50%;">
+				</div>
+				<div class="imgDiv">
+					<img th:src="@{/img/app/downloadHistory.png}">
+				</div>
+				<p>3. 다운로드 받은 APK 파일을 설치합니다.</p>
+				<div class="imgDiv" style="flex-direction: row;">
+					<img th:src="@{/img/app/appInstall.png}" style="width: 50%;">
+					<img th:src="@{/img/app/appInstallWarning.png}" style="width: 50%;">
+				</div>
+				<p style="color: blue; padding-top: 30px;">※ APK 설치가 차단이 되었다면<br> 설정을 변경해주세요. ※</p>
+				<p>1. 아래와 같은 문구가 나온다면 설정버튼을 클릭합니다.</p>
+				<div class="imgDiv">
+					<img th:src="@{/img/app/appInstallBlockWarning.png}">
+				</div>
+				<p>2. 권한을 클릭해서 허용해주세요.</p>
+				<div class="imgDiv">
+					<img th:src="@{/img/app/appRightSettingBefore.png}">
+					<img th:src="@{/img/app/appRightSettingAfter.png}">
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

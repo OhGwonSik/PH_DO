@@ -1,0 +1,972 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="syu04Useract" class="setting-grid-title">[[#{sy.susrma.useract}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('sy.susrma.useract')}"
+							id="syu04Useract" name="syu04Useract">
+						</div>
+					</div>
+					<label for="syu04Usernam" class="setting-grid-title">[[#{sy.susrma.usernam}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('sy.susrma.usernam')}"
+							id="syu04Usernam" name="syu04Usernam">
+						</div>
+					</div>
+					<label for="syu04Usertyp" class="setting-grid-title">[[#{sy.susrsh.usertyp}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="syu04Usertyp" name="syu04Usertyp"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=usertyp"
+							data-cb-select="" data-cb-variable="usertypList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="syu04Rolgkey" class="setting-grid-title">[[#{sy.susrsh.rolgkey}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="syu04Rolgkey" name="syu04Rolgkey"
+							data-cb-val="rolgkey" data-cb-name="rolgnam" data-cb-url="/sy/syu03/grid/role"
+							data-cb-select="" data-cb-variable="rolgkeyList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="syu04Apuseyn" class="setting-grid-title">[[#{sy.susrma.activyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="syu04Activyn">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="syu04BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="syu04BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{sy.syu04.info}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-white" id="syu04BtnResetPwd"><img class="ic-bt-reset">[[#{sy.syu04.reset}]]</button>
+	                	<button class="btn-white" id="syu04BtnAdd"><img class="ic-line-plus">[[#{sy.syu04.add}]]</button>
+						<button class="btn-navy" id="syu04BtnApprove">[[#{sy.syu04.approve}]]</button>
+	                    <button class="btn-navy" id="syu04BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<!-- 개발 작업시 그리드 들어갈 부분 -->
+				<div class="list-grid-wrapper con-box">
+					<div id="syu04Grid"></div>
+				</div>
+			</div>
+			<div id="modal-background"></div>
+
+			<!------------------------------ 가입 승인 모달창 ------------------------------>
+			<div class="popup-reg-user modal-con approvePage">
+				<div class="modal-top">
+					<div class="box-title"></div>
+		      		<button type="button" class="close bt-popup-close" id="btnApproveCloseTop"></button>
+				</div>
+				<div class="modal-body">
+					<div class="search-list">
+						<div class="list-top">
+							<div class="list-title ic-title-mark">
+								<span>[[#{sy.syu04.approve}]]</span>
+							</div>
+							<div class="edit-btn-wrapper">
+								<span>총 <span id="approveCnt"></span>건</span>
+								<!-- <button class="btn-navy" id="btnApproveSearch">조회</button>  -->
+							</div>
+						</div>
+						<div class="list-grid-wrapper con-box">
+							<div id="syu04ApproveGrid"></div>
+						</div>
+					</div>
+				</div>
+				<div class="modal-bottom">
+					<button class="btn-save btn-navy" id="syu04ApproveSave">[[#{sy.syu04.save}]]</button>
+					<button class="close btn-white" id="btnApproveCloseBottom" style="height: 25.17px;">[[#{bt.cancel}]]</button>
+				</div>
+			</div>
+
+			<!------------------------------ 사용자 추가 모달창 ------------------------------>
+
+			<div class="popup-reg-user modal-con userPage">
+				<div class="modal-top">
+		    		<div class="box-title">[[#{sy.syu04.add}]]</div>
+		      		<button type="button" class="close bt-popup-close" id="btnUserCloseTop"></button>
+		    	</div>
+		    	<div class="modal-body search-edit">
+		    		<div class="setting-grid con-box">
+		        		<label for="modalUseract" class="setting-grid-title ic-title-nece">[[#{sy.susrma.useract}]]</label>
+		        		<div class="setting-grid-content">
+							<div class="input-wrapper">
+		              			<input type="text" class="required val" id="modalUseract">
+		              			<div class="edit-btn-wrapper"><button id="checkUseract" class="btn-white val">[[#{sy.syu04.checkId}]]</button></div>
+		              		</div>
+		              		<div id="modalUseractErr"><span>&nbsp;</span></div>
+		        		</div>
+
+			        	<label for="modalPasswrd" class="setting-grid-title ic-title-nece">[[#{sy.susrma.passwrd}]]</label>
+			        	<div class="setting-grid-content">
+			          		<div class="input-wrapper">
+			              		<input type="password" id="modalPasswrd" class="val" style="width: 100%;">
+			          		</div>
+			          		<div id="modalPasswrdErr"><span>&nbsp;</span></div>
+			        	</div>
+
+			        	<label for="confirmPasswrd" class="setting-grid-title ic-title-nece">[[#{sy.syu04.confrmPwd}]]</label>
+			        	<div class="setting-grid-content">
+			          		<div class="input-wrapper">
+			              		<input type="password" id="confirmPasswrd" class="val" style="width: 100%;">
+			          		</div>
+			          		<div id="confirmPasswrdErr"><span>&nbsp;</span></div>
+			        	</div>
+
+			        	<label for="modalUsernam" class="setting-grid-title ic-title-nece">[[#{sy.susrma.usernam}]]</label>
+			        	<div class="setting-grid-content">
+			          		<div class="input-wrapper">
+			              		<input type="text" id="modalUsernam" class="val">
+			          		</div>
+			          		<div id="modalUsernamErr"><span>&nbsp;</span></div>
+			        	</div>
+
+				        <label for="modalEmailad" class="setting-grid-title ic-title-nece">[[#{sy.susrma.emailad}]]</label>
+			        	<div class="setting-grid-content">
+			          		<div class="input-wrapper">
+			              		<input type="text" id="modalEmailad" class="val">
+			          		</div>
+			          		<div id="modalEmailadErr"><span>&nbsp;</span></div>
+			        	</div>
+
+			        	<label for="modalTelphnm" class="setting-grid-title ic-title-nece">[[#{sy.susrma.telphnm}]]</label>
+			        	<div class="setting-grid-content">
+			          		<div class="input-wrapper">
+			              		<input type="text" id="modalTelphnm" class="val">
+			          		</div>
+			          		<div id="modalTelphnmErr"><span >&nbsp;</span></div>
+			        	</div>
+
+			        	<label class="setting-grid-title">[[#{sy.susrma.usrmemo}]]</label>
+			        	<div class="setting-grid-content">
+			          		<div class="input-wrapper" style="border: solid 1px #c2c5c8;">
+			              		<textarea id="modalUsrmemo"></textarea>
+			          		</div>
+				          	<div id="modalUsrmemoErr"><span>&nbsp;</span></div>
+			        	</div>
+
+	            		<label class="setting-grid-title ic-title-nece">[[#{sy.susrma.apuseyn}]]</label>
+						<div class="setting-grid-content">
+							<div class="check-box" style="height: 40%;">
+	           					<input type="checkbox" id="modalApuseyn">
+	           				</div>
+	           				<div id="modalApuseynErr" style="top:20px;"><span></span></div>
+	            		</div>
+
+				        <label for="modalUsertyp" class="setting-grid-title">[[#{sy.susrsh.usertyp}]]</label>
+				        <div class="setting-grid-content">
+				          	<div class="input-group">
+				          		<select id="modalUsertyp" class="web-val" name="modalUsertyp">
+				          		</select>
+				          	</div>
+				          	<div id="modalUsertypErr"><span>&nbsp;</span></div>
+				        </div>
+
+			        	<label for="modalRolgkey" class="setting-grid-title">[[#{sy.susrsh.rolgkey}]]</label>
+				        <div class="setting-grid-content">
+				          	<div class="input-group">
+				          		<select id="modalRolgkey" class="web-val" name="modalRolgkey"></select>
+				          	</div>
+				          	<div id="modalRolgkeyErr"><span>&nbsp;</span></div>
+				        </div>
+		      		</div>
+		    	</div>
+				<div class="modal-bottom">
+			      	<button type="button" class="btn-save btn-navy" id="btnPopSave">[[#{bt.save}]]</button>
+			      	<button type="button" class="close btn-white" id="btnUserCloseBottom" style="height: 25.17px;">[[#{sy.syu04.close}]]</button>
+			    </div>
+			</div>
+		<script>
+		!function(){
+			// 전역변수
+			const pageId = '[[${tabPage}]]';
+			const saveData = {};
+			let syu04InitData;
+
+			// validation 통과여부
+			const validation = {
+					modalUseract : false, // 아이디 입력
+					checkUseract : false, // 아이디 중복확인
+					modalPasswrd : false, // 패스워드 입력
+					confirmPasswrd : false, // 비밀번호 확인 입력
+					modalUsernam : false, // 사용자명 입력
+					modalTelphnm : false, // 연락처 입력
+					modalEmailad : false // 이메일 입력
+			};
+
+			// validation 에러메시지
+			const errorMsg = {
+					modalUseract : '[[#{sy.error.useract}]]',
+					checkUseract : '[[#{sy.error.checkId}]]',
+					modalPasswrd : '[[#{sy.error.passwrd}]]',
+					confirmPasswrd : '[[#{sy.error.confrmPwd}]]',
+					modalUsernam : '[[#{sy.error.usernam}]]',
+					modalTelphnm : '[[#{sy.error.telphnm}]]',
+					modalEmailad : '[[#{sy.error.emailad}]]',
+					modalUsertyp : '[[#{sy.error.usertyp}]]',
+					modalRolgkey : '[[#{sy.error.rolgkey}]]'
+			};
+
+			// 칼럼
+			const syu04GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '', dataType: 'string', dataIndx: 'userkey', editable: false, hidden:true},
+				{ title: '[[#{sy.susrma.useract}]]', dataType: 'string', dataIndx: 'useract', editable: false},
+				{ title: '[[#{sy.susrma.usernam}]]', dataType: 'string', dataIndx: 'usernam', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{sy.susrma.apuseyn}]]', dataType: 'string', dataIndx: 'apuseyn', styleHead: { 'background-color':'[[#{grid.styleHead03}]]'}, editable: false
+				, type: 'checkbox', editor: false, align: 'center', cb: { check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{sy.susrsh.usertyp}]]', dataType: 'string', dataIndx: 'usertyp', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editable: function (ui) {
+		    			return editable = ui.rowData.apuseyn === 'Y' ? false : true
+		    		},
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render: function(ui){
+						return ui.rowData.apuseyn === 'Y' ? '[[#{sy.susrma.apuseyn}]]' : gridRenderAndValue(ui)
+					}
+				},
+				{ title: '[[#{sy.susrsh.rolgkey}]]', dataType: 'string', dataIndx: 'rolgkey', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editable: function (ui) {
+		    			return editable = ui.rowData.apuseyn === 'Y' ? false : true
+		    		},
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render: function(ui){
+						return ui.rowData.apuseyn === 'Y' ? '[[#{sy.susrma.apuseyn}]]' : gridRenderAndValue(ui)
+					}
+				},
+				{ title: '[[#{sy.susrma.usrmemo}]]', dataType: 'string', dataIndx: 'usrmemo', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{sy.susrma.telphnm}]]', dataType: 'string', dataIndx: 'telphnm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{sy.susrma.emailad}]]', dataType: 'string', dataIndx: 'emailad', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{sy.susrma.activyn}]]', dataType: 'string', dataIndx: 'activyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]'}
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{sy.susrma.sigupyn}]]', dataType: 'string', dataIndx: 'sigupyn', styleHead: { 'background-color':'[[#{grid.styleHead03}]]'}, editable: false
+					, type: 'checkbox', editor: false, align: 'center', cb: { check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true },
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk2', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const syu04Grid = new GridUtil(syu04GridCM, pageId, pageId + 'Grid');
+			syu04Grid.setReset();
+
+			// Grid 생성시 이벤트
+			syu04Grid.setCreate(async function(evt, ui) {
+				await _commonInit(pageId);
+				comboCreateData(pageId + 'Grid', 'usertyp', usertypList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'rolgkey', rolgkeyList, { combovl : 'rolgkey', combonm : 'rolgnam' });
+				this.option('freezeCols', 1);
+			});
+
+			// 그리드 데이터 변경
+			syu04Grid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {state: true};
+
+		           		if(updateData.newRow.hasOwnProperty('activyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	} else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+		    		let usertypData, rolgkeyData;
+		    		for(const updateData of ui.updateList){
+
+		    			if(updateData.newRow.hasOwnProperty('usertyp') && updateData.oldRow.hasOwnProperty('usertyp')){
+		    				usertypData = usertypList.find(function(data){
+	    						return(data.combonm === updateData.newRow['usertyp'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('rolgkey') && updateData.oldRow.hasOwnProperty('rolgkey')){
+		    				rolgkeyData = rolgkeyList.find(function(data){
+	    						return(data.rolgnam === updateData.newRow['rolgkey'])
+	    					})
+	    				}
+
+			    		this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								usertyp: usertypData ? usertypData.combovl : updateData.rowData.usertyp,
+								rolgkey: rolgkeyData ? rolgkeyData.rolgkey : updateData.rowData.rolgkey,
+								activyn: updateData.rowData.activyn,
+							},
+							checkEditable : false
+			    		})
+		    		}
+		    		for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.usertyp = usertypData ? usertypData.combovl : addData.rowData.usertyp;
+		    			addData.rowData.rolgkey = rolgkeyData ? rolgkeyData.combovl : addData.rowData.rolgkey;
+		    			addData.rowData.activyn = addData?.newRow?.activyn || 'Y';
+		    		}
+		    	}
+				syu04Grid.getGrid().refresh();
+			});
+
+			// Grid 객체 생성
+			syu04Grid.open();
+
+			// 검색 조회 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', function(){
+				getSyu04List();
+			})
+
+			// 검색 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', function(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+				resetSearchConditions(pageId);
+				makeEmptyGrid(syu04Grid);
+			})
+
+			// 그리드 저장 버튼
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(syu04Grid, ['userkey', 'useract', 'usernam'])
+									&& syu04validateEssential(syu04Grid, ['usertyp', 'rolgkey']);
+				if( !validation || (!confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(syu04Grid, refineGridUtilSaveList(syu04Grid), '/sy/' + pageId + '/grid');
+				await getSyu04List();
+			})
+
+			// 비밀번호 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnResetPwd').addEventListener('click', function(){
+				const gridCheck = pq.grid('#' + pageId + 'Grid').Checkbox('state').getCheckedNodes();
+
+				if(gridCheck.length === 0){
+					alert('[[#{ms.choiceRowZero}]]'); // 선택된 Row가 없습니다
+					return false;
+				}
+				if((!confirm('[[#{sy.confirm.reset}]]'))){
+					return;
+				}
+				saveGridUtil(syu04Grid, refineGridUtilSaveList(syu04Grid), '/sy/' + pageId + '/init/passwrd');
+				getSyu04List();
+				alert('[[#{sy.alert.reset}]]');
+			})
+
+			/* ******************* 가입 승인요청 모달창 ******************* */
+
+			// 가입승인 버튼 클릭시 승인요청 모달창 오픈, 초기화 (제이쿼리 사용)
+			document.querySelector('#' + pageId + 'BtnApprove').addEventListener('click', async function(){
+				openModal("approvePage");
+				getApproveList();
+				const syu04InitRes = await fetchUtil('GET','/sy/' + pageId + '/init');
+				syu04InitItem = await syu04InitRes.json();
+				syu04InitData = syu04InitItem.item;
+				comboCreateData(pageId + 'ApproveGrid', 'vownkey', syu04InitData.vownkeyList, { combovl: 'vownkey', combonm: 'vonamlc' });
+                comboCreateData(pageId + 'ApproveGrid', 'vehicky', syu04InitData.vehickyList, { combovl: 'combovl', combonm: 'combonm' });
+			})
+
+			// 닫기 버튼 클릭시
+			document.querySelector('#btnApproveCloseTop').addEventListener('click', function(){
+				closeModal("approvePage");
+			});
+			document.querySelector('#btnApproveCloseBottom').addEventListener('click', function(){
+				closeModal("approvePage");
+			});
+
+			// 승인요청 모달창 그리드
+			const syu04ApproveGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+					, sortable: false, editor: false, cb: {all: false,	header: true}, hidden:true},
+				{ title: '', dataType: 'string', dataIndx: 'approyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{sy.susrma.useract}]]', dataType: 'string', dataIndx: 'useract', editable: false},
+				{ title: '[[#{sy.susrma.usernam}]]', dataType: 'string', dataIndx: 'usernam', editable: false},
+				{ title: '[[#{sy.mvowma.vownkey}]]', dataType: 'string', dataIndx: 'vownkey', styleHead: { 'background-color':'[[#{grid.styleHead02}]]'},
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: true, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: [],
+					    prepend: { '': ' ' }
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{sy.mvhcma.vehicky}]]', dataType: 'string', dataIndx: 'vehicky', styleHead: { 'background-color':'[[#{grid.styleHead02}]]'},
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: true, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: [],
+					    prepend: { '': ' ' }
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{sy.susrma.telphnm}]]', dataType: 'string', dataIndx: 'telphnm', editable: false},
+				{ title: '[[#{sy.susrma.emailad}]]', dataType: 'string', dataIndx: 'emailad', editable: false},
+				{ title: '[[#{sy.susrma.usrmemo}]]', dataType: 'string', dataIndx: 'usrmemo', editable: false},
+				{ title: '[[#{sy.susrma.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{sy.susrma.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true },
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk2', editable: false, hidden: true }
+			]
+
+			const syu04ApproveGrid = new GridUtil(syu04ApproveGridCM, pageId, pageId + 'ApproveGrid');
+
+			// 그리드 데이터 변경
+			syu04ApproveGrid.setChange(async function(evt, ui) {
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {};
+
+		           		if(updateData.newRow.hasOwnProperty('approyn')){
+		           			newRow['state'] = updateData.newRow['approyn'] == 'Y' ? true : false;
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+					const updateRowList = [];
+
+			        for(const updateData of ui.updateList){
+		    			const newRow = { state: true };
+
+		    			// 차주키 또는 차량키 둘 중 하나만 입력 가능
+			        	if(updateData.newRow.hasOwnProperty('vownkey') && updateData.oldRow.hasOwnProperty('vownkey')){
+			        		updateData.newRow['vownkey'] === null ? newRow['vownkey'] = '' : newRow['vehicky'] = '';
+			        		updateData.newRow['vownkey'] === null && newRow['vehicky'] === null ? newRow['approyn'] = 'N' : newRow['approyn'] = 'Y';
+			        		if(updateData.newRow['vownkey'] !== null && updateData.newRow['vownkey'] !== ''){
+			        			const vownkeyIdx = syu04InitData.vownkeyList.findIndex(item => item['vownkey'] === updateData.newRow['vownkey']);
+			        			newRow['updtchk2'] = syu04InitData.vownkeyList[vownkeyIdx]['updtchk'];
+			        		}
+			            }
+
+			        	if(updateData.newRow.hasOwnProperty('vehicky') && updateData.oldRow.hasOwnProperty('vehicky')){
+			        		updateData.newRow['vehicky'] === null ? newRow['vehicky'] = '' : newRow['vownkey'] = '';
+			        		updateData.newRow['vehicky'] === null && newRow['vownkey'] === null ? newRow['approyn'] = 'N' : newRow['approyn'] = 'Y';
+			            }
+
+			        	updateRowList.push({
+							rowIndx: updateData.rowIndx,
+							newRow: newRow
+						});
+
+			            this.updateRow({
+			                rowIndx : updateData.rowIndx,
+							rowList: updateRowList,
+			                newRow : {
+			                    state: true,
+			                    approyn: updateData.rowData.approyn
+			                },
+			                checkEditable : false
+			            });
+			        }
+			        for(const addData of ui.addList){
+			            addData.rowData.state = true;
+		    			addData.rowData.approyn = addData?.newRow?.approyn || 'Y';
+			        }
+			    }
+			    syu04ApproveGrid.getGrid().refresh();
+			});
+
+			syu04ApproveGrid.open();
+
+			// 그리드 저장 버튼
+			document.querySelector('#' + pageId + 'ApproveSave').addEventListener('click', async function(){
+				const grid = pq.grid('#' + pageId + 'ApproveGrid');
+				const gridCheck = grid.Checkbox('state').getCheckedNodes();
+
+				if(gridCheck.length === 0){
+					alert('[[#{ms.choiceRowZero}]]'); // 선택된 Row가 없습니다
+					return false;
+				}
+				const validation = syu04ValidateDuplication(syu04ApproveGrid); // 차주키 중복확인
+				if(!validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(syu04ApproveGrid, refineGridUtilSaveList(syu04ApproveGrid), '/sy/' + pageId + '/modal/1');
+				alert('[[#{sy.alert.approve}]]');
+				closeModal('approvePage');
+				getSyu04List();
+			})
+
+			/* ******************* 사용자 추가 모달창 ******************* */
+
+			// 사용자 추가 버튼 클릭시 모달창 오픈, 초기화 (제이쿼리 사용)
+			document.querySelector('#' + pageId + 'BtnAdd').addEventListener('click', function(){
+				openModal("userPage");
+				const modal = document.querySelector('.popup-reg-user.userPage');
+				modal.querySelectorAll('input, radio, textarea, select').forEach(element => { element.value = ''; });
+				modal.querySelectorAll('span').forEach(span => {span.innerHTML = '&nbsp';});
+				document.querySelector('#modalApuseyn').checked = false;
+				document.querySelector('#checkUseract').disabled = true;
+				document.querySelector('#modalUseract').focus();
+				getModalSelectbox("modalUsertyp", usertypList);
+				getModalSelectbox("modalRolgkey", rolgkeyList);
+			})
+
+			// 닫기 버튼 클릭시
+			document.querySelector('#btnUserCloseTop').addEventListener('click', function(){
+				closeModal("userPage");
+			});
+			document.querySelector('#btnUserCloseBottom').addEventListener('click', function(){
+				closeModal("userPage");
+			});
+
+			// 아이디 입력 validation
+			document.querySelector('#modalUseract').addEventListener('input', function(event){
+				const modalUseract = document.querySelector('#modalUseract').value;
+				let msgText = '[[#{sy.message.useract}]]'; // 4~20자리를 입력하세요.
+				validation.modalUseract = false;
+				if(!modalUseract){
+					msgText = '&nbsp;';
+				}else if(4 <= modalUseract.length && modalUseract.length <= 20){
+					msgText = '&nbsp;';
+					validation.modalUseract = true;
+				}
+				document.querySelector('#checkUseract').disabled = validation.modalUseract ? false : true; // 정상 입력했다면 중복확인 버튼 활성화
+				validation.checkUseract = false;
+				document.querySelector('#modalUseractErr span').innerHTML = msgText;
+			})
+
+			// 아이디 중복확인
+			document.querySelector('#checkUseract').addEventListener('click', async function(){
+				const modalUseract = document.querySelector('#modalUseract').value;
+				let msgText = '[[#{sy.message.imposId}]]'; // 사용 불가능한 아이디입니다.
+				validation.checkUseract = false;
+
+				try{const res = await fetch(`/platform/signup/check?useract=${modalUseract}`);
+					if(res.status !== 200){
+						msgText = '&nbsp;';
+						return;
+					}else{
+						const resData = await res.json();
+						if(resData === 0){
+							msgText = '[[#{sy.message.posId}]]'; // 사용 가능한 아이디입니다.
+							validation.checkUseract = true;
+						}
+					}
+				}catch(err){
+					alert(err);
+				}
+				document.querySelector('#modalUseractErr span').innerHTML = msgText;
+			})
+
+			// 비밀번호 입력 validation
+			document.querySelector('#modalPasswrd').addEventListener('input', function(event){
+				const passwrdReg = /^(?=.*?[a-z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,20}$/;
+				const confirmPwdVal = document.querySelector('#confirmPasswrd').value;
+				let msgText = '[[#{sy.message.passwrd}]]';
+
+				// 입력여부 및 정규식 체크
+				validation.modalPasswrd = false;
+				if(!event.target.value.length){
+					msgText = '&nbsp;';
+				}else if(passwrdReg.test(event.target.value.toLowerCase())){
+					msgText = '&nbsp;';
+					validation.modalPasswrd = true;
+				}
+				document.querySelector('#modalPasswrdErr span').innerHTML = msgText;
+
+				// 비밀번호 확인 입력 내용과 일치하는지 체크
+				if(validation.modalPasswrd && confirmPwdVal){
+					if(event.target.value === confirmPwdVal){
+						document.querySelector('#confirmPasswrdErr span').innerHTML = '[[#{sy.message.equal}]]';
+						validation.confirmPasswrd = true;
+					}else{
+						document.querySelector('#confirmPasswrdErr span').innerHTML = '[[#{sy.message.unequal}]]';
+						validation.confirmPasswrd = false;
+					}
+				}else{
+					document.querySelector('#confirmPasswrdErr span').innerHTML = '&nbsp;';
+				}
+			})
+
+			// 비밀번호 확인 입력 validation
+			document.querySelector('#confirmPasswrd').addEventListener('input', function(event){
+				const passwrdVal = document.querySelector('#modalPasswrd').value;
+				const confirmPwdVal = event.target.value;
+				let msgText = '[[#{sy.message.unequal}]]';
+
+				// 비밀번호 입력 내용과 일치하는지 체크
+				validation.confirmPasswrd = false;
+				if(confirmPwdVal){
+					if(confirmPwdVal === passwrdVal){
+						msgText = '[[#{sy.message.equal}]]';
+						validation.confirmPasswrd = true;
+					}
+				}else{
+					msgText = '&nbsp;';
+				}
+				document.querySelector('#confirmPasswrdErr span').innerHTML = msgText;
+			})
+
+			// 이름 입력 validation
+			document.querySelector('#modalUsernam').addEventListener('input', function(event){
+				const modalUsernam = document.querySelector('#modalUsernam').value;
+				let msgText = '[[#{sy.message.usernam}]]'; // 2~20자리
+				validation.modalUsernam = false;
+				if(!modalUsernam){
+					msgText = '&nbsp;';
+				}else if(2 <= modalUsernam.length && modalUsernam.length <= 20){
+					msgText = '&nbsp;';
+					validation.modalUsernam = true;
+				}
+				document.querySelector('#modalUsernamErr span').innerHTML = msgText;
+			})
+
+			// 연락처 입력 validation
+			document.querySelector('#modalTelphnm').addEventListener('input', function(event){
+				const telphnmVal = event.target.value;
+				const telphnmReg = /^\d{2,3}-?\d{3,4}-?\d{4}$/;
+				let msgText = '[[#{sy.message.telphnm}]]';
+
+				// 입력시 하이픈 포맷 설정
+				event.target.value = telphnmVal.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`);
+
+				// 입력여부 및 정규식 체크
+				validation.modalTelphnm = false;
+				let filterTelphnm = telphnmVal.replace(/[^\d]/g, '');
+				if(!filterTelphnm){
+					msgText = '&nbsp;';
+				}else if(telphnmReg.test(filterTelphnm)){
+					msgText = '&nbsp;';
+					validation.modalTelphnm = true;
+				}
+				document.querySelector('#modalTelphnmErr span').innerHTML = msgText;
+			})
+
+			// 이메일 입력 validation
+			document.querySelector('#modalEmailad').addEventListener('input', function(event){
+				const emailadReg = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/; // 이메일 정규식
+				let msgText = '[[#{sy.message.emailad}]]';
+
+				// 입력여부 및 정규식 체크
+				validation.modalEmailad = false;
+				if(!event.target.value){
+					msgText = '&nbsp;';
+				}else if(emailadReg.test(event.target.value)){
+					msgText = '&nbsp;';
+					validation.modalEmailad = true;
+				}
+				document.querySelector('#modalEmailadErr span').innerHTML = msgText;
+			})
+
+			// 앱사용자 여부 체크시
+			document.querySelector('#modalApuseyn').addEventListener('change', function(){
+				const selectbox = document.querySelector('.popup-reg-user.userPage').querySelectorAll('select');
+				let msgText = '[[#{sy.message.apuseyn}]]';
+
+				if(document.querySelector('#modalApuseyn').checked){
+					selectbox.forEach(element => {
+						element.innerHTML = '';
+						element.setAttribute('disabled', 'true');
+					});
+				}else{
+					selectbox.forEach(element => { element.removeAttribute('disabled'); });
+					getModalSelectbox("modalUsertyp", usertypList);
+					getModalSelectbox("modalRolgkey", rolgkeyList);
+					msgText = '&nbsp;';
+				}
+				document.querySelector('#modalApuseynErr span').innerHTML = msgText;
+			})
+
+			// 모달창 저장 클릭시
+			document.querySelector('#btnPopSave').addEventListener('click', async function(){
+				const inputInfos = document.querySelectorAll('.val');
+				let param = {};
+
+				// validation 통과 여부 확인, 에러메시지 출력
+				for(const inputInfo of inputInfos){
+					if(!validation[inputInfo.id]){
+						const target = inputInfo.id === 'checkUseract' ? '#modalUseractErr span' : '#' + inputInfo.id + 'Err span';
+						document.querySelector(target).innerHTML = errorMsg[inputInfo.id];
+						inputInfo.focus();
+						return;
+					}
+
+					// 파라미터 적용
+					if(inputInfo.id.startsWith('modal')){
+						let column = inputInfo.id.replace('modal', '');
+						column = column.charAt(0).toLowerCase() + column.slice(1);
+						param[column] = document.querySelector('#' + inputInfo.id).value;
+					}
+				}
+
+				// 사용자유형, 권한 선택 필수체크
+				if(!document.querySelector('#modalApuseyn').checked){
+					const inputInfos = document.querySelectorAll('.web-val');
+					for(const inputInfo of inputInfos){
+						if(!inputInfo.value){
+							const target = '#' + inputInfo.id + 'Err span';
+							document.querySelector(target).innerHTML = errorMsg[inputInfo.id];
+							inputInfo.focus();
+							return;
+						}
+					}
+					param['usertyp'] = document.querySelector('#modalUsertyp').value;
+					param['rolgkey'] = document.querySelector('#modalRolgkey').value;
+				}
+				param['usrmemo'] = document.querySelector('#modalUsrmemo').value;
+				param['approyn'] = document.querySelector('#modalApuseyn').checked ? 'Y' : 'N';
+
+				// NN 동의여부 칼럼 'Y'로 임시 지정
+				param['polpryn'] = 'Y';
+				param['polsvyn'] = 'Y';
+				param['polsmyn'] = 'Y';
+				param['polemyn'] = 'Y';
+
+				saveData.addList = [param];
+
+				// 신규회원 저장
+				if(confirm('[[#{sy.confirm.newuser}]]')){ // 신규 사용자의 정보를 저장 하시겠습니까?
+					try{ const res = await fetchUtil('POST', '/sy/' + pageId + '/modal/2', saveData);
+						if(res.ok){
+							const resData = await res.json();
+							if (resData) {
+								alert('[[#{sy.alert.newuser}]]'); // 신규 사용자를 등록 하였습니다.
+								closeModal("userPage");
+								await getSyu04List();
+							}
+						}
+					}catch(err){
+						alert(err);
+					}
+				}
+			})
+
+			// Grid 데이터 조회 함수
+			async function getSyu04List(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				const data = {
+					useract : document.querySelector('#' + pageId + 'Useract').value.toUpperCase(), // 아이디
+					usernam : document.querySelector('#' + pageId + 'Usernam').value.toUpperCase(), // 사용자명
+					usertyp : document.querySelector('#' + pageId + 'Usertyp').value, // 사용자유형
+					rolgkey : document.querySelector('#' + pageId + 'Rolgkey').value, // 권한그룹
+					activyn : document.querySelector('#' + pageId + 'Activyn').value // 사용여부
+				};
+
+				grid.showLoading();
+				const res = await fetchUtil('GET', '/sy/' + pageId + '/grid', data);
+
+				if(res.status===200){
+					const syu04List = await res.json();
+					grid.option( 'dataModel', {
+						data: syu04List,
+						recIndx: 'rowkey'
+					});
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+
+			// 가입 승인 모달 데이터 조회 함수
+			async function getApproveList(){
+				const grid = pq.grid('#' + pageId + 'ApproveGrid');
+				grid.showLoading();
+				const res = await fetchUtil('GET', '/sy/' + pageId + '/modal/1');
+				if(res.status===200){
+					const syu04List = await res.json();
+					document.querySelector('#approveCnt').innerText = syu04List.length;
+					grid.option( 'dataModel', {
+						data: syu04List,
+						recIndx: 'rowkey'
+					});
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+
+			// 모달 열기 (불가피한 제이쿼리 사용)
+			function openModal(page){
+				$("#modal-background").fadeIn(100);
+				$(".popup-reg-user." + page).css("display", "flex").hide().fadeIn();
+				document.body.style.overflow = 'hidden';
+			}
+
+			// 모달 닫기 (불가피한 제이쿼리 사용)
+			function closeModal(page){
+				const selectbox = document.querySelector('.popup-reg-user.userPage').querySelectorAll('select');
+
+				$("#modal-background").fadeOut();
+				$(".popup-reg-user." + page).css("display", "flex").show().fadeOut();
+				selectbox.forEach(element => { element.removeAttribute('disabled'); });
+			}
+
+			// 모달창 셀렉트박스
+			function getModalSelectbox(element, list){
+				const select = document.querySelector("#" + element);
+				select.innerHTML = '';
+				for(let data of list){
+					const option = document.createElement("option");
+					option.value = element === 'modalRolgkey' ? data.rolgkey : data.combovl;
+					option.text = element === 'modalRolgkey' ? data.rolgnam : data.combonm;
+					select.appendChild(option);
+				}
+				select.selectedIndex = 0;
+			}
+
+			// Enter로 검색
+			const searchEnterList = document.querySelectorAll('.search-conditions input');
+			searchEnterList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			})
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getSyu04List();
+			    }
+			}
+
+			// 스페이스바 입력 금지
+			const checkSpaceList = document.querySelectorAll('.userPage input');
+			checkSpaceList.forEach(function(item){
+				item.addEventListener('keydown', checkSpacebar);
+			})
+			function checkSpacebar(event){
+				let kcode = event.keyCode;
+				if(kcode == 32){
+					event.returnValue = false;
+				}
+			}
+
+			// 중복확인 공통코드 커스텀
+			function syu04ValidateDuplication(grid){
+				let pqGrid = getPqGrid(grid);
+
+				const gridCheck = pqGrid.Checkbox('state').getCheckedNodes();
+
+				for(let gCheck of gridCheck){
+					for(let gData of pqGrid.getData()){
+						if(gCheck.pq_ri !== gData.pq_ri && isVownkeyDuplication(gCheck, gData)){
+							const alertTxt = makeDuplicateRowText(['vownkey'], pqGrid, gCheck, gData)
+												+ ' [[#{ms.DuplicateKeyErr}]]' + '( ' + (gData.pq_ri+1) + '[[#{ms.row}]] & ' + (gCheck.pq_ri+1) + '[[#{ms.row}]] )';
+
+							alert(alertTxt);
+							pqGrid.focus({
+								rowIndxPage: (gCheck.pq_ri),
+								colIndx: pqGrid.getColIndx({ dataIndx: 'vownkey' } )
+							});
+
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+			function isVownkeyDuplication(gridCheck, gridData){
+				if(!gridCheck['vownkey'].length || !gridData['vownkey'].length || gridCheck['vownkey'] !== gridData['vownkey']){
+					return false;
+				}
+				return true;
+			}
+
+			// 공통 필수값 체크 함수 커스텀
+			function syu04validateEssential(grid, essentialCols){
+				let pqGrid = getPqGrid(grid);
+				const gridCheck = pqGrid.Checkbox('state').getCheckedNodes();
+
+
+				for(let gCheck of gridCheck){
+		    		for(let checkCol of essentialCols){
+		    			if(gCheck['apuseyn'] === 'N' && (null === gCheck[checkCol] || undefined === gCheck[checkCol] || '' === gCheck[checkCol])){
+			    	  		alert((gCheck.pq_ri+1)+' [[#{ms.row}]] '+'[[#{ms.requiredValue}]]' + '(' + pqGrid.getColModel().find(e => e.dataIndx === checkCol).title + ')'); // 필수입력 값을 입력해주세요
+			    	  		pqGrid.focus({
+								rowIndxPage: gCheck.pq_ri,
+								colIndx: pqGrid.getColIndx( { dataIndx: checkCol } )
+							});
+			    	  		return false;
+		    			}
+		    		}
+				}
+				return true;
+			}
+			function getPqGrid(grid){
+				let pqGrid;
+				if(grid.__proto__.constructor.hasOwnProperty('name') && 'GridUtil' === grid.__proto__.constructor.name){
+			    	pqGrid = grid.getGrid();
+				} else if (grid.__proto__.hasOwnProperty('namespace') && 'paramquery' === grid.__proto__.namespace){
+					pqGrid = grid;
+				} else {
+					alert('Input pqGrid Object');
+					return false;
+				}
+				return pqGrid;
+			}
+		}();
+		</script>
+	</div>
+</html>

@@ -1,0 +1,1806 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="doe058Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe058Warekey" name="doe058Warekey"
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+						data-cb-variable="warekeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe058Regikey" class="setting-grid-title">[[#{search.renamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe058Regikey" multiple="multiple" data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/partner/region">
+						</select>
+					</div>
+				</div>
+				<label for="doe058Wpldate" class="setting-grid-title">[[#{tm.wplnhd.wpldate}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-date-group">
+						<input type="date" id="doe058WpldateFrom">
+						<span>~</span>
+						<input type="date" id="doe058WpldateTo">
+					</div>
+				</div>
+				<label for="doe058Doctype" class="setting-grid-title">[[#{tm.common.doctype}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe058Doctype" name="doe058Doctype"></select>
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe058Search"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe058Reset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.tm.doe058}]]</span>
+				</div>
+				<div class="edit-btn-wrapper">
+					<button class="btn-navy btn-green" id="doe058Dispatch" data-bs-toggle="modal" data-bs-target="#doe058DispatchModal">[[#{tm.common.dispatch}]]</button>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box">
+				<div id="doe058HeadGrid"></div>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-grid-wrapper con-box">
+				<div id="doe058ItemGrid"></div>
+			</div>
+		</div>
+		<!-- 배차모달 -->
+		<div class="modal fade modalTm" id="doe058DispatchModal" tabindex="-1" role="dialog" aria-labelledby="doe058DispatchModal" aria-hidden="true">
+			<div class="modal-dialog" role="document" style="max-width: 1000px;">
+				<div class="modal-content">
+					<div class="modal-top">
+						<button type="button" class="close" id="doe058DispatchMdClose" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<div class="search-list">
+							<div class="list-top">
+								<div class="list-title ic-title-mark">
+									<span>[[#{tm.doe058.vehicle}]]</span>
+								</div>
+                                <div class="edit-btn-wrapper">
+                                    <span>[[#{tm.doe058.remainWeight}]] : </span>
+                                    <span id="modalRemweig"></span>
+                                </div>
+							</div>
+							<div class="list-grid-wrapper con-box">
+								<div id="doe058VehicleGrid"></div>
+							</div>
+						</div>
+						<div class="search-list">
+							<div class="list-top">
+								<div class="list-title ic-title-mark">
+									<span>[[#{tm.doe058.orderList}]]</span>
+								</div>
+								<div class="edit-btn-wrapper">
+                                    <span>[[#{tm.common.orderPossibleWeight}]] </span>
+                                    <span id="doe058MinWeight"></span>
+                                    <span> ~ </span>
+                                    <span id="doe058MaxWeight"></span>
+                                    <span>(t)</span>
+                                </div>
+							</div>
+							<div class="list-grid-wrapper con-box">
+								<div id="doe058OrderGrid"></div>
+							</div>
+						</div>
+						<div class="search-list" style="display: none" id="emerOrderListGrid">
+							<div class="list-top">
+								<div class="list-title ic-title-mark">
+									<span>[[#{tm.doe058.emerOrderList}]]</span>
+								</div>
+							</div>
+							<div class="list-grid-wrapper con-box">
+								<div id="doe058EmerOrderGrid"></div>
+							</div>
+							<div class="setting-grid con-box" style="display: flex; flex-direction: row;">
+								<div>
+	                                <span>[[#{tm.doe058.emerOrderWeight}]] : </span>
+	                                <span id="doe058Emodweig"></span>
+	                            </div>
+	                            <div style="margin-left: auto;">
+	                            	<button class="btn-save btn-navy btn-green" style="padding: 3px 10px 2px; border: solid 1px #9aa6b8; font-size: 12px; font-weight: bold;" id="doe058ModalEmergencyAuto">[[#{tm.common.filling}]]</button>
+	                            </div>
+							</div>
+							<div class="modal-bottom">
+								<button class="btn-save btn-navy btn-green" id="doe058EmerOrderSave">[[#{bt.save}]]</button>
+								<button class="btn-white" id="doe058EmerOrderClose">[[#{bt.close}]]</button>
+							</div>
+						</div>
+						<div class="edit-btn-wrapper" style="justify-content: left">
+							<span>[[#{tm.doe058.allOrderWeight}]] </span>
+							<span id="doe058TotalOrderWeight"></span>
+							<span> [[#{tm.common.ton}]]</span>
+                        </div>
+						<div class="setting-grid con-box" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;">
+                            <label for="doe058Tpriloc" class="setting-grid-title ic-title-nece">[[#{tm.doe058.tpriloc}]]</label>
+                            <div class="input-group" style="grid-column: span 2;">
+                                <select id="doe058Tpriloc" name="doe058Tpriloc">
+                                </select>
+                            </div>
+                            <label for="doe058Spriloc" class="setting-grid-title ic-title-nece">[[#{tm.doe058.spriloc}]]</label>
+                            <div class="input-group" style="grid-column: span 2;">
+                                <select id="doe058Spriloc" name="doe058Spriloc">
+                                </select>
+                            </div>
+                            <label for="doe058Trnmemo" class="setting-grid-title">[[#{tm.tplnhd.trnmemo}]]</label>
+							<div class="input-wrapper" style="grid-column: span 5; padding-right: 46px;">
+								<input type="text" th:placeholder="${#messages.msg('tm.tplnhd.trnmemo')}" id="doe058Trnmemo" name="doe058Trnmemo" style="width: 100%">
+							</div>
+						</div>
+						<div class="edit-btn-wrapper" style="justify-content: center">
+							<label class="check-box">
+								<input type="checkbox" style="border: 1px solid #5c7099;" id="doe058NotAlarmCheck">
+								<span>[[#{tm.doe058.notSendAlarm}]]</span>
+							</label>
+                        </div>
+					</div>
+					<div class="modal-bottom">
+						<button class="btn-save btn-navy btn-green" id="doe058DispatchMdSave">[[#{bt.save}]]</button>
+						<button class="btn-white" id="doe058DispatchMdCancel">[[#{bt.cancel}]]</button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+		!function() {
+			//전역변수
+			const pageId = 'doe058';
+			const dispatchModalId = document.getElementById(pageId + 'DispatchModal');
+			//모달 키보드와 마우스로 안닫히게끔 설정
+			const dispatchModal = new bootstrap.Modal(dispatchModalId, {
+				backdrop: 'static',
+				keyboard: false
+			});
+
+			let emergencyList = [];	//저장한 긴급재 리스트
+			let plnsizeList = [];
+
+			//날짜셋팅
+			const yesterday = moment().subtract(1, 'd').format('YYYY-MM-DD');
+			const today = moment().format('YYYY-MM-DD');
+			const wpldateFrom = document.querySelector('#' + pageId + 'WpldateFrom');
+			const wpldateTo = document.querySelector('#' + pageId + 'WpldateTo')
+			wpldateFrom.value = yesterday;
+			wpldateTo.value = today;
+
+			dateValidation(wpldateFrom, wpldateTo, 'doe058Wpldate', 'd', 1);
+
+			//========================================================
+			//DOE058 HeadGrid (헤드그리드)
+			//========================================================
+			//헤드 그리드 Column Model
+			const doe058HeadGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center',
+					type: 'checkbox', cls:'ui-state-default', sortable: false, editor: false,
+					cb: { all: false, header: true },
+					editable: function(ui) {
+						return ui.rowData.chkdisp !== 'Y';
+					},
+					nodrag: true, nodrop: true
+				},
+				{ title: '[[#{tm.common.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false },
+				{ title: '[[#{tm.common.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{grid.renamlc}]]', dataType: 'string', dataIndx: 'renamlc', editable: false},
+				{ title: '[[#{grid.destkey}]]', dataType: 'string', dataIndx: 'destkey', editable: false },
+				{ title: '[[#{grid.denamlc}]]', dataType: 'string', dataIndx: 'denamlc', editable: false },
+				{ title: '[[#{md.mdesma.desaddr}]]', dataType: 'string', dataIndx: 'desaddr', editable: false },
+				{ title: '[[#{tm.wplnhd.shpweig}]]', dataType: 'integer', dataIndx: 'shpweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.common.remweig}]]', dataType: 'integer', dataIndx: 'remweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.wplnhd.skugrky}]]', dataType: 'string', dataIndx: 'grpkynm', editable: false },
+				{ title: '[[#{tm.wplnhd.wplstat}]]', dataType: 'string', dataIndx: 'wplamlc', editable: false },
+				{ title: '[[#{tm.wplnhd.wpldate}]]', dataType: 'string', dataIndx: 'wpldate', format:'yy-mm-dd', editable: false},
+				{ title: '[[#{tm.wplnhd.wpltime}]]', dataType: 'string', dataIndx: 'wpltime', editable: false},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe058HeadGrid = new GridUtil(doe058HeadGridCM, pageId, pageId + 'HeadGrid');
+
+			//헤드 그리드 찾기 기능
+			doe058HeadGrid.setFind();
+
+			doe058HeadGrid.setHeight(300);
+
+			//헤드 그리드 create 이벤트
+			doe058HeadGrid.setCreate(async function() {
+				await _commonInit(pageId);
+				await doe058InitData();
+
+				//검색조건 내 목적지 pqSelect(multi)
+				$('#' + pageId + 'Regikey').pqSelect({
+					searchId: pageId + 'Regikey',
+					multiplePlaceholder: '[[#{ms.chooseAll}]]',//전체
+					displayText: '{0}개 선택',
+					checkbox: true,
+					deselect: false,
+					selectallText: '[[#{ms.chooseAll}]]',//전체
+					width: '100%'
+				});
+
+				//그리드 내 고정 할 열의 갯수
+				this.option('freezeCols', 1);
+			});
+
+			//헤드 그리드 로우 더블클릭 이벤트
+			//체크박스 체크, 아이템 그리드 데이터 표시
+			doe058HeadGrid.setRowDblClick(async function(evt, ui) {
+				//grid updateRow
+				gridUpdateRowEvt(this, 'state', true, ui.rowIndx);
+
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+
+				const data = {
+						shpplky: ui.rowData.shpplky,
+						warekey: ui.rowData.warekey
+				}
+
+				itemGrid.showLoading();
+
+				const itemData = await fetchUtil('GET', '/tm/dispatch/doe058/itemgrid', data);
+
+				if(itemData.status !== 200) {
+					itemGrid.option('dataModel', {data: []});
+				}else {
+					const itemList = await itemData.json();
+
+					itemGrid.option('dataModel', {
+						data: itemList,
+						recIndx: 'rowkey'
+					});
+				}
+
+				itemGrid.refreshDataAndView();
+				itemGrid.hideLoading();
+			});
+
+			doe058HeadGrid.open();
+
+			//========================================================
+			//DOE058 Item Grid(아이템 그리드)
+			//========================================================
+			//아이템 그리드 Column Model
+			const doe058ItemGridCM = [
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{tm.wplnit.shpplit}]]', dataType: 'integer', dataIndx: 'shpplit', editable: false, format: '#,###' },
+				{ title: '[[#{tm.tplnit.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+				{ title: '[[#{tm.tplnit.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, format: '#,###.000', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{grid.grossth}]]', dataType: 'float', dataIndx: 'grossth', editable: false, format: '#,###.000', summary: { type: 'max' }},
+				{ title: '[[#{grid.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editalbe: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{grid.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{grid.grosswg}]]', dataType: 'grosswg', dataIndx: 'grosswg', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{grid.addcoky}]]', dataType: 'string', dataIndx: 'addnaml', editable: false },
+				{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+				{ title: '[[#{grid.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false },
+				{ title: '[[#{grid.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+				{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false },
+				{ title: '[[#{grid.rgorgnm}]]', dataType: 'string', dataIndx: 'ronamlc', editable: false },
+				{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false },
+				{ title: '[[#{grid.remodnm}]]', dataType: 'string', dataIndx: 'rmnamlc', editable: false },
+				{ title: '[[#{grid.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false },
+				{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },
+				{ title: '[[#{grid.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false },
+				{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+				{ title: '[[#{tm.tplnit.demdadr}]]', dataType: 'string', dataIndx: 'stockaddr', editable: false	},
+				{ title: '[[#{tm.tplnit.demdnam}]]', dataType: 'string', dataIndx: 'demdman', editable: false },
+				{ title: '[[#{tm.tplnit.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false },
+				{ title: '[[#{tm.wplnit.wplitst}]]', dataType: 'string', dataIndx: 'wplnamc', editable: false },
+				{ title: '[[#{grid.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false },
+				{ title: '[[#{grid.ownamlc}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+				{ title: '[[#{tm.wplnit.skugrky}]]', dataType: 'string', dataIndx: 'grpkynm', editable: false },
+				{ title: '[[#{tm.common.stkmemo}]]', dataType: 'string', dataIndx: 'stkmemo', editable: false },
+				{ title: '[[#{tm.tplnit.itemcod}]]', dataType: 'string', dataIndx: 'itemmlc', editable: false },
+				{ title: '[[#{tm.wplnit.planqty}]]', dataType: 'integer', dataIndx: 'planqty', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{im.wasnit.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+				{ title: '[[#{im.wasnit.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+				{ title: '[[#{im.wasnit.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+				{ title: '[[#{grid.shplimt}]]', dataType: 'string', dataIndx: 'shplimt', editable: false },
+				{ title: '[[#{grid.delvdsr}]]', dataType: 'string', dataIndx: 'delvdsr', editable: false },
+				{ title: '[[#{tm.tplnit.purcnum}]]', dataType: 'string', dataIndx: 'purcnum', editable: false },
+				{ title: '[[#{tm.tplnit.orderln}]]', dataType: 'string', dataIndx: 'orderln', editable: false },
+				{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+				{ title: '[[#{tm.tplnit.emskuyn}]]', dataType: 'string', dataIndx: 'emskuyn', editable: false,
+					type: 'checkbox', align: 'center',
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N' }
+				},
+				{ title: '[[#{om.wplnit.chkdisp}]]', dataType: 'string', dataIndx: 'chkdisp', editable: false,
+					type: 'checkbox', align: 'center',
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N'}
+				},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe058ItemGrid = new GridUtil(doe058ItemGridCM, pageId, pageId + 'ItemGrid');
+
+			//아이템 그리드 찾기 기능
+			doe058ItemGrid.setFind();
+
+			doe058ItemGrid.setHeight(300);
+
+			//아이템 그리드 Row Init 이벤트
+			//긴급재여부에 Y로 체크되어있으면 백그라운드 색 변경, 폰트 굵기 변경 (강조 표시)
+			doe058ItemGrid.setRowInit(function(ui) {
+				if(ui.rowData.emskuyn === 'Y'){
+					return {
+						style: ui.rowData.emskuyn === 'Y' ? 'background-color: #FAED7D; font-weight: bold;' : ''
+					}
+				}
+			});
+
+			doe058ItemGrid.open();
+
+			//========================================================
+			//DOE058 Vehicle Grid (차량정보 그리드)
+			//========================================================
+			//차량정보 그리드 Column Model
+			const doe058VehicleGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center',
+					type: 'checkbox', cls:'ui-state-default', sortable: false, editor: false,
+					cb: { all: false, header: true, maxCheck: 1 },
+					nodrag: true, nodrop: true, paste: false
+				},
+				{ title: '[[#{grid.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+				{ title: '[[#{grid.vhcsnam}]]', dataType: 'string', dataIndx: 'vhcsnam', editable: false },
+				{ title: '[[#{grid.vonamlc}]]', dataType: 'string', dataIndx: 'vonamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.dlvtype}]]', dataType: 'string', dataIndx: 'dlnamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhcopty}]]', dataType: 'string', dataIndx: 'conamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhctype}]]', dataType: 'string', dataIndx: 'vtnamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhctncd}]]', dataType: 'string', dataIndx: 'cdnamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhcmaxw}]]', dataType: 'integer', dataIndx: 'vhcmaxw', format: '#,###',
+					styleHead: { 'background-color': '[[#{grid.styleHead02}]]'}
+				},
+				{ title: '[[#{md.mvhcma.drvernm}]]', dataType: 'string', dataIndx: 'drvernm', editable: true,
+					styleHead: { 'background-color': '[[#{grid.styleHead02}]]'}
+				},
+				{ title: '[[#{md.mvhcma.drverph}]]', dataType: 'string', dataIndx: 'drverph', editable: true,
+					styleHead: { 'background-color': '[[#{grid.styleHead02}]]'}
+				},
+				{ title: '[[#{tm.mvhcma.vhcmemo}]]', dataType: 'string', dataIndx: 'vhcmemo', editable: false },
+				{ title: '[[#{tm.mvhcma.vhcstat}]]', dataType: 'string', dataIndx: 'stnamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhcvryn}]]', dataType: 'string', dataIndx: 'vhcvryn', editable: false },
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editbale: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'string', dataIndx: 'updtchk', editable: false }
+			]
+
+			const doe058VehicleGrid = new GridUtil(doe058VehicleGridCM, pageId, pageId + 'VehicleGrid');
+
+			//차량정보 그리드 찾기 기능
+			doe058VehicleGrid.setFind();
+
+			//차량정보 그리드 create 이벤트
+			doe058VehicleGrid.setCreate(function(evt, ui) {
+
+				//그리드 내 고정할 열의 갯수
+				this.option('freezeCols', 1);
+			});
+
+			//차량정보 그리드 Change 이벤트
+			doe058VehicleGrid.setChange(function(evt, ui) {
+				const updateList = ui.updateList[0];
+
+				//source가 edit일 때(편집 기능)
+				if(ui.source === 'edit') {
+					//최대중량을 편집했을 때(vhcmaxw)
+					if(updateList.newRow.hasOwnProperty('vhcmaxw')) {
+						//현재 선택되어 있는 차량의 최대톤수보다 작으면 안된다.
+						if(Number(updateList.rowData.cdnamlc.replace(/톤/g, '').trim()) > updateList.newRow.vhcmaxw) {
+							//최대 중량은 차량 톤수보다 작을 수 없습니다.
+							alert('[[#{tm.doe058.checkVehicleWeight}]]');
+
+							//grid updateRow
+							//최대중량을 변경하기 전 데이터로 변경
+							gridUpdateRowEvt(this, 'vhcmaxw', updateList.oldRow.vhcmaxw, updateList.rowIndx);
+							return;
+						}
+					}
+
+					//체크박스에 체크되어있을 때만 최대중량 반영
+					//체크안되어있으면 변수값만 변경
+					//추후 체크시 반영
+					if(updateList.rowData.state === true) {
+						document.querySelector('#doe058MaxWeight').innerText = updateList.rowData.vhcmaxw;
+						document.querySelector('#doe058MinWeight').innerText = Number(updateList.rowData.cdnamlc.replace(/톤/g, '').trim());
+					}
+				}
+			});
+
+			//차량정보 그리드 Check 이벤트
+			doe058VehicleGrid.setCheck(function(evt, ui) {
+				//긴급재 그리드가 열려있다면 닫아줌
+				if(document.querySelector('#emerOrderListGrid').style.display === 'block') {
+					makeEmptyGrid(doe058EmerOrderGrid);
+					document.querySelector('#emerOrderListGrid').style.display = 'none';
+				}
+
+				//중량 초기화
+				document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+				if(ui.check === true) {
+					//체크한 차량 최소중량, 최대중량 셋팅
+					document.querySelector('#doe058MinWeight').innerText = Number(ui.rowData.cdnamlc.replace(/톤/g, '').trim());
+					document.querySelector('#doe058MaxWeight').innerText = ui.rowData.vhcmaxw;
+
+				}else if(ui.check === false) {
+					//지시가능한 중량 초기값 셋팅
+					document.querySelector('#doe058MinWeight').innerText = 0;
+					document.querySelector('#doe058MaxWeight').innerText = 0;
+				}
+			});
+
+			doe058VehicleGrid.open();
+
+			//========================================================
+			//DOE058 Order Grid(출고예정정보 그리드)
+			//========================================================
+			//출고예정정보 그리드 Column Model
+			const doe058OrderGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center',
+					type: 'checkbox', cls:'ui-state-default', sortable: false, editor: false,
+					nodrag: true, nodrop: true
+				},
+				{ title: '[[#{grid.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{grid.regikey}]]', dataType: 'string', dataIndx: 'regikey', editable: false },
+				{ title: '[[#{grid.renamlc}]]', dataType: 'string', dataIndx: 'renamlc', editable: false },
+				{ title: '[[#{grid.destkey}]]', dataType: 'string', dataIndx: 'destkey', editable: false },
+				{ title: '[[#{grid.denamlc}]]', dataType: 'string', dataIndx: 'denamlc', editable: false },
+				{ title: '[[#{md.mdesma.desaddr}]]', dataType: 'string', dataIndx: 'desaddr', editable: false },
+				{ title: '[[#{tm.wplnhd.wpldate}]]', dataType: 'string', dataIndx: 'wpldate', editable: false },
+				{ title: '[[#{tm.wplnhd.wpltime}]]', dataType: 'string', dataIndx: 'wpltime', editable: false },
+				{ title: '[[#{tm.wplnhd.shpweig}]]', dataType: 'integer', dataIndx: 'shpweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.common.remweig}]]', dataType: 'integer', dataIndx: 'remweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.doe058.odweig}]]', dataType: 'integer', dataIndx: 'odweig', format: '#,###', summary: { type: 'sum' },
+					styleHead: { 'background-color': '[[#{grid.styleHead01}]]'},
+					editable: function(ui) {
+						return ui.rowData.remweig > 0;
+					}
+				},
+				{ title: '[[#{tm.doe058.emerweig}]]', dataType: 'integer', dataIndx: 'emerweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.doe058.emodweig}]]', dataType: 'integer', dataIndx: 'emodweig', editable: false, format: '#,###', summary: { type: 'sum' },
+					styleHead: { 'background-color': '[[#{grid.styleHead02}]]'}
+				},
+				{ title: '[[#{tm.tplnit.plnsize}]]', dataType: 'string', dataIndx: 'plnsize',
+					styleHead: { 'background-color': '[[#{grid.styleHead01}]]'},
+					editor: {
+						type: 'select',
+						prepend: { '' : '' },
+						init: function(ui) {
+							ui.$cell.find('select').pqSelect();
+							setTimeout(function() {
+								ui.$cell.find('select').pqSelect('open');
+							}, 250);
+						},
+						options: []
+					},
+					render: function(ui) {
+						//render
+						//현재 입력한 plnsize가 plnsizeList에 있는 값과 동일한지 확인 => 있으면 그거에 해당하는 값을 보여줌.
+						//selectBox가 row마다 달라지기때문에 render 추가
+						let renderName;
+						if(ui.cellData !== undefined && ui.cellData !== null) {
+							renderName = plnsizeList.find(function(obj) {
+								return obj.skugrky === ui.rowData.plnsize
+							});
+						}
+						return renderName ? renderName.grpkynm : '';
+					}
+				},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe058OrderGrid = new GridUtil(doe058OrderGridCM, pageId, pageId + 'OrderGrid');
+
+			//출고예정정보 그리드 찾기 기능
+			doe058OrderGrid.setFind();
+
+			//출고예정정보 그리드 create 이벤트
+			doe058OrderGrid.setCreate(function(evt, ui) {
+
+				//그리드 내 고정 할 열의 갯수
+				this.option('freezeCols', 1);
+			});
+
+			//출고예정정보 그리드 셀 더블클릭 이벤트
+			doe058OrderGrid.setCellDblClick(async function(evt, ui) {
+				//dataIndx = plnsize (배차사이즈)
+				if(ui.dataIndx === 'plnsize') {
+					plnsizeSelectBoxSetting(ui);
+
+				//dataIndx = emodweig (긴급재 지시중량)
+				}else if(ui.dataIndx === 'emodweig') {
+
+					//선택한 배차사이즈로 긴급재 리스트를 구성함.
+					//그렇기때문에 배차사이즈가 없으면 alert
+					if(ui.rowData.plnsize == null || ui.rowData.plnsize == '') {
+						//배차 사이즈를 먼저 선택해 주세요.
+						alert('[[#{tm.doe058.choicePlnsize}]]');
+						plnsizeSelectBoxSetting(ui);
+						this.editCell({
+							rowIndx: ui.rowIndx,
+							dataIndx: 'plnsize'
+						});
+						return;
+					}
+
+					//지시중량이 0이거나 긴급재 중량이 0일경우 alert
+					if(ui.rowData.odweig <= 0 || ui.rowData.emerweig <= 0) {
+						//지시할 수 있는 중량이 없습니다.
+						alert('[[#{tm.doe058.remweigZero}]]');
+						return;
+					}
+
+					//긴급재 리스트 그리드 style block
+					//긴급재 그리드 내 중량 0
+					document.querySelector('#emerOrderListGrid').style.display = 'block';
+					document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+					//긴급재 그리드 호출(확장기능 제거)
+					const emerGrid = pq.grid('#' + pageId + 'EmerOrderGrid', { collapsible: { on: false, toggled: false } } );
+
+					//높이설정 => 안해주면 높이가 없음
+					emerGrid.option('height', 200);
+
+					const data = {
+							shpplky: ui.rowData.shpplky,
+							warekey: ui.rowData.warekey,
+							chkdisp: 'N',
+							szgubun: plnsizeList.find(item => item.skugrky === ui.rowData.plnsize).szgubun,
+							wplitst: 'CANCEL'
+					}
+
+					emerGrid.showLoading();
+
+					//긴급재 리스트 가져오기
+					const emerOrderList = await fetchUtil('GET', '/tm/dispatch/doe058/itemgrid', data);
+
+					if(emerOrderList.status !== 200) {
+						emerGrid.option('dataModel', {data: []});
+					}else {
+						const emerGridData = await emerOrderList.json();
+
+						emerGrid.option('dataModel', {
+							data: emerGridData,
+							recIndx: 'rowkey'
+						});
+
+						//그리드 처음 위로 올리려고
+						emerGrid.scrollY(0);
+					}
+
+					emerGrid.refreshDataAndView();
+					emerGrid.hideLoading();
+
+					//긴급재 체크된 중량은 현재 0
+					document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+				//dataIndx = odweig (지시중량)
+				}else if(ui.dataIndx === 'odweig') {
+					//잔여중량이 0일 경우
+					if(ui.rowData.remweig <= 0) {
+						//지시할 수 있는 중량이 없습니다.
+						alert('[[#{tm.doe058.remweigZero}]]');
+						return;
+					}
+				}
+
+				//grid updateRow
+				//더블클릭시 체크박스 체크
+				gridUpdateRowEvt(this, 'state', true, ui.rowIndx);
+			});
+
+			//출고예정정보 그리드 change evt
+			doe058OrderGrid.setChange(async function (evt, ui) {
+				const updateList = ui.updateList[0];
+
+				if(ui.source === 'edit') {
+					//newRow에 odweig가 있다면
+					if(updateList.newRow.hasOwnProperty('odweig')) {
+						//잔여중량보다 입력한 지시중량이 더 크다면 alert 후 지시중량 0으로 update
+						if(updateList.rowData.remweig < updateList.newRow.odweig) {
+							//지시하신 중량이 오더 잔여 중량보다 많습니다.
+							alert('[[#{tm.doe058.overOrderWeight}]]');
+
+							updateList.newRow.odweig = 0;
+
+							//grid updateRow
+							//지시중량(odweig) 0으로 변경
+							gridUpdateRowEvt(this, 'odweig', 0, updateList.rowIndx);
+						}
+
+						//출고예정정보 그리드 중량관련 validation 호출
+						orderGridWeightValidation(updateList, 'odweig');
+
+					//newRow에 plnsize가 포함이 되어있다면
+					}else if(updateList.newRow.hasOwnProperty('plnsize')) {
+						//배차 사이즈에 편집이 일어날 경우 긴급재 리스트 자체를 재구성해야하므로 그리드를 비움.
+						//해당 그리드가 노출되어있다면 none 시킴
+						makeEmptyGrid(doe058EmerOrderGrid);
+
+						if(document.querySelector('#emerOrderListGrid').style.display === 'block') {
+							document.querySelector('#emerOrderListGrid').style.display = 'none'
+						}
+
+						//긴급재 그리드 내 중량 0
+						document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+						//긴급재 리스트를 담는 전역변수에서도 해당 출고키 데이터를 지움
+						emergencyList = emergencyList.filter(item => item.shpplky !== updateList.rowData.shpplky);
+
+						if(emergencyList.length > 0) {
+							await selectFilterLocationSelectBox(emergencyList);
+						}else {
+							await selectLocationList();
+						}
+
+						//grid updateRow
+						//긴급재지시중량(emodweig) null로 변경
+						gridUpdateRowEvt(this, 'emodweig', null, updateList.rowIndx);
+					}
+				}else if(ui.source === 'clear') {
+					//데이터를 지울 때 동작하는 코드라 oldRow에 odweig가 있을 때 => 즉 odweig의 값을 지웠을 때
+					if(updateList.oldRow.hasOwnProperty('odweig')) {
+						//총 지시중량 계산을 위해서 newRow의 지시중량을 0으로 바꿈
+						//그리드 내의 지시중량 컬럼값을 0으로 바꿈
+						updateList.newRow.odweig = 0;
+
+						//grid updateRow
+						gridUpdateRowEvt(this, 'odweig', 0, updateList.rowIndx);
+
+						//출고예정정보 그리드 중량관련 validation 호출
+						orderGridWeightValidation(updateList, 'odweig');
+					}
+				}
+			});
+
+			//출고예정정보 그리드 check 이벤트
+			doe058OrderGrid.setCheck(async function(evt, ui) {
+				let totalOrderWeight = 0;
+
+				const gridCheckList = this.Checkbox('state').getCheckedNodes();
+
+				for(const gridCheck of gridCheckList){
+					totalOrderWeight += Number(gridCheck.odweig ? gridCheck.odweig : 0);
+				}
+
+				document.querySelector('#doe058TotalOrderWeight').innerText = totalOrderWeight;
+
+
+				if(ui.check === false) {
+					//긴급재는 다시 구성해야하므로 긴급재 그리드를 다음
+					if(document.querySelector('#emerOrderListGrid').style.display === 'block') {
+						document.querySelector('#emerOrderListGrid').style.display = 'none';
+					}
+
+					//지시중량 초기화
+					//긴급재지시중량 초기화
+					this.updateRow({
+						rowIndx: ui.rowIndx,
+						newRow: {
+							emodweig: null,
+							odweig: 0,
+							plnsize: null
+						},
+						checkEditable: false
+					});
+
+					this.refreshDataAndView();
+
+					//지시중량이 변경되면 긴급재 리스트 전역변수에 값을 재할당.
+					//해당 전역변수에 담겨있는 값에서 해당 출고번호 데이터들을 지움.
+					emergencyList = emergencyList.filter(item => item.shpplky !== ui.rowData.shpplky);
+
+					if(emergencyList.length > 0) {
+						await selectFilterLocationSelectBox(emergencyList);
+					}else {
+						await selectLocationList();
+					}
+				}
+			});
+
+			doe058OrderGrid.open();
+
+			//========================================================
+			//DOE058 EmerOrderGrid(긴급재 아이템 그리드)
+			//========================================================
+			//긴급재 아이템 그리드 Column Model
+			const doe058EmerOrderGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center',
+					type: 'checkbox', cls:'ui-state-default', sortable: false, editor: false,
+					cb: { all: false, header: true },
+					nodrag: true, nodrop: true
+				},
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{tm.wplnit.shpplit}]]', dataType: 'integer', dataIndx: 'shpplit', editable: false, format: '#,###' },
+				{ title: '[[#{grid.locakey}]]', dataType: 'string', dataIndx: 'locakey', editable: false },
+				{ title: '[[#{grid.locanam}]]', dataType: 'string', dataIndx: 'locanam', editable: false },
+				{ title: '[[#{grid.lolayer}]]', dataType: 'integer', dataIndx: 'lolayer', editable: false },
+				{ title: '[[#{tm.tplnit.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+				{ title: '[[#{tm.tplnit.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, format: '#,###.000', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{grid.grossth}]]', dataType: 'float', dataIndx: 'grossth', editable :false, format: '#,###.000', summary: { type: 'max' } },
+				{ title: '[[#{grid.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editable: false, format: '#,###.0', summary: { type: 'max' }},
+				{ title: '[[#{grid.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, format: '#,###', summary: { type: 'max' }},
+				{ title: '[[#{grid.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg', editable: false, format: '#,###', summary: { type: 'sum' }},
+				{ title: '[[#{grid.addcoky}]]', dataType: 'string', dataIndx: 'addnaml', editable: false },
+				{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+				{ title: '[[#{grid.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false },
+				{ title: '[[#{grid.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+				{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false },
+				{ title: '[[#{grid.rgorgnm}]]', dataType: 'string', dataIndx: 'ronamlc', editable: false },
+				{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false },
+				{ title: '[[#{grid.remodnm}]]', dataType: 'string', dataIndx: 'rmnamlc', editable: false },
+				{ title: '[[#{grid.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false },
+				{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },
+				{ title: '[[#{grid.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false },
+				{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+				{ title: '[[#{tm.tplnit.demdadr}]]', dataType: 'string', dataIndx: 'stockaddr', editable: false	},
+				{ title: '[[#{tm.tplnit.demdnam}]]', dataType: 'string', dataIndx: 'demdman', editable: false },
+				{ title: '[[#{tm.tplnit.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false },
+				{ title: '[[#{grid.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false },
+				{ title: '[[#{grid.ownamlc}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+				{ title: '[[#{tm.wplnit.skugrky}]]', dataType: 'string', dataIndx: 'grpkynm', editable: false },
+				{ title: '[[#{tm.common.stkmemo}]]', dataType: 'string', dataIndx: 'stkmemo', editable: false },
+				{ title: '[[#{tm.tplnit.itemcod}]]', dataType: 'string', dataIndx: 'itemmlc', editable: false },
+				{ title: '[[#{tm.wplnit.planqty}]]', dataType: 'integer', dataIndx: 'planqty', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{im.wasnit.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+				{ title: '[[#{im.wasnit.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+				{ title: '[[#{im.wasnit.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+				{ title: '[[#{grid.shplimt}]]', dataType: 'string', dataIndx: 'shplimt', editable: false },
+				{ title: '[[#{grid.delvdsr}]]', dataType: 'string', dataIndx: 'delvdsr', editable: false },
+				{ title: '[[#{tm.tplnit.purcnum}]]', dataType: 'string', dataIndx: 'purcnum', editable: false },
+				{ title: '[[#{tm.tplnit.orderln}]]', dataType: 'string', dataIndx: 'orderln', editable: false },
+				{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+				{ title: '[[#{tm.tplnit.emskuyn}]]', dataType: 'string', dataIndx: 'emskuyn', editable: false,
+					type: 'checkbox', align: 'center',
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N' }
+				},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe058EmerOrderGrid = new GridUtil(doe058EmerOrderGridCM, pageId, pageId + 'EmerOrderGrid');
+
+			//긴급재 아이템 그리드 찾기 기능
+			doe058EmerOrderGrid.setFind();
+
+			//긴급재 아이템 그리드 create 이벤트
+			doe058EmerOrderGrid.setCreate(function(evt, ui) {
+
+				//그리드 내 고정 할 열의 갯수
+				this.option('freezeCols', 1);
+			});
+
+			//긴급재 아이템 그리드 RowInt
+			//긴급재 여부에 Y체크가 되어있으면 백그라운드 색 변경, 폰트 굵기 변경 (강조표시)
+			doe058EmerOrderGrid.setRowInit(function(ui) {
+				if(ui.rowData.emskuyn === 'Y'){
+					return {
+						style: ui.rowData.emskuyn === 'Y' ? 'background-color: #FAED7D; font-weight: bold;' : ''
+					}
+				}
+			});
+
+			//긴급재 아이템 그리드 로우 더블클릭 이벤트
+			doe058EmerOrderGrid.setRowDblClick(function(evt, ui) {
+				//더블클릭시 체크박스 체크 => 해제
+				if(ui.rowData.state === true) {
+					gridUpdateRowEvt(this, 'state', false, ui.rowIndx);
+				}else if(ui.rowData.state === false){
+					gridUpdateRowEvt(this, 'state', true, ui.rowIndx);
+				}
+			});
+
+			//긴급재 아이템 그리드 체크 이벤트
+			doe058EmerOrderGrid.setCheck(function(evt, ui) {
+				let emodweig = 0;
+
+				const gridCheckList = this.Checkbox('state').getCheckedNodes();
+
+				for(const gridCheck of gridCheckList){
+					emodweig += Number(gridCheck.skuweig);
+				}
+
+				emodweig = emodweig / 1000;
+
+				document.querySelector('#' + pageId + 'Emodweig').innerText = emodweig  + '(t)';
+			});
+
+			//긴급재 아이템 그리드 자동 체크
+			doe058EmerOrderGrid.setSelectEnd(function(evt, ui){
+				if(ui.selection._areas[0].type === 'cell'){
+					return;
+				}
+
+				const checkMap = new Map();
+
+				this.Selection().getSelection().forEach(function(data){
+					if(!checkMap.has(data.rowIndx)){
+						checkMap.set(data.rowIndx, data);
+						return true;
+					}
+					return false;
+				});
+
+				for(const [rowIndx, data] of checkMap){
+					this.updateRow({
+						rowIndx : rowIndx,
+						newRow : {
+							state : data.rowData.state === true ? false : true
+						}
+					});
+				}
+			});
+
+			doe058EmerOrderGrid.open();
+
+			gridSetPaste();
+
+			function gridSetPaste() {
+				const vehicleGrid = pq.grid('#' + pageId + 'VehicleGrid');
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const emerGrid = pq.grid('#' + pageId + 'EmerOrderGrid');
+
+				vehicleGrid.option('pasteModel.on', false);
+				orderGrid.option('pasteModel.on', false);
+				emerGrid.option('pasteModel.on', false);
+			}
+
+			//========================================================
+			//배차 모달
+			//========================================================
+			//배차 버튼 클릭했을 때 실행되는 이벤트
+			//배차 모달 오픈 이벤트
+			document.querySelector('#' + pageId + 'Dispatch').addEventListener('click', async function() {
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const headGridCheck = headGrid.Checkbox('state').getCheckedNodes();
+
+				emergencyList = [];
+
+				//지시 가능한 톤 수 (최소중량, 최대중량 초기값 셋팅)
+				document.querySelector('#doe058MinWeight').innerText = 0;
+				document.querySelector('#doe058MaxWeight').innerText = 0;
+
+				//총 지시중량 (초기값 셋팅)
+				document.querySelector('#doe058TotalOrderWeight').innerText = 0;
+				document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+				document.querySelector('#doe058NotAlarmCheck').checked = false;
+
+				if(headGridCheck.length > 0) {
+					dispatchModal.show();
+				}else {
+					alert('[[#{ms.choiceRowZero}]]');
+				}
+			});
+
+			//배차 모달 오픈할 때 실행되는 이벤트
+			//자바스크립트로는 구현이 되지가 않아 불가피하게 제이쿼리 사용
+			$('#' + pageId + 'DispatchModal').on('shown.bs.modal', async function() {
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const headGridCheck = headGrid.Checkbox('state').getCheckedNodes();
+
+				//기존 headGrid 체크값은 유지하고 오더 그리드에 넣는 체크는 지우게하기위해 체크리스트를 따로 저장 (깊은 복사)
+				//이런식으로 따로 저장 안하면 헤드그리드 값이랑 동시에 변경
+				const orderGridList = JSON.parse(JSON.stringify(headGridCheck));
+
+				let remweig = 0;
+
+				for(const grid of orderGridList) {
+
+					//체크박스 해제
+					grid.state = false;
+
+					//잔여중량
+					remweig += grid.remweig;
+				}
+
+				//남은잔여중량 값 셋팅
+				document.querySelector('#modalRemweig').innerText = remweig + ' (t)';
+
+				//출고예정정보 그리드
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid', { collapsible: { on: false, toggled: false } } );
+				//헤드그리드 체크데이터 배차모달 출고예정오더그리드에 넣어줌
+				orderGrid.option('dataModel', {
+					data: orderGridList,
+					recIndx: 'rowkey'
+				});
+				modalGridOptionSetting(orderGrid);
+
+				//그리드가 뜨질 않아서 그리드 초기화
+				const vehicleGrid = pq.grid('#' + pageId + 'VehicleGrid', { collapsible: { on: false, toggled: false } } );
+				modalGridOptionSetting(vehicleGrid);
+
+				//차량조회
+				await showVehicleGrid(headGridCheck);
+
+				await selectLocationList();
+			});
+
+			//그리드 옵션 셋팅
+			function modalGridOptionSetting(grid) {
+				grid.option('height', 200);
+				grid.scrollX(0);
+				grid.refreshDataAndView();
+			}
+
+			//배차모달 닫기
+			document.querySelector('#' + pageId + 'DispatchMdClose').addEventListener('click', async function() {
+				dispatchModalReset();
+				await dispatchModalHide();
+			});
+			document.querySelector('#' + pageId + 'DispatchMdCancel').addEventListener('click', async function() {
+				dispatchModalReset();
+				await dispatchModalHide();
+			});
+
+			async function dispatchModalHide() {
+				//그리드 비우기
+				makeEmptyGrid(doe058VehicleGrid);
+				makeEmptyGrid(doe058OrderGrid);
+				makeEmptyGrid(doe058ItemGrid);
+				makeEmptyGrid(doe058EmerOrderGrid);
+
+				//재조회
+				const regikeyList = [];
+
+				const regikeyOptions = document.querySelector('#' + pageId + 'Regikey').selectedOptions;
+
+				for(const option of regikeyOptions) {
+					regikeyList.push(option.value);
+				}
+
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value,
+						regikeySelectedList: regikeyList,
+						wpldateFrom: document.querySelector('#' + pageId + 'WpldateFrom').value.replaceAll('-', ''),
+						wpldateTo: document.querySelector('#' + pageId + 'WpldateTo').value.replaceAll('-', ''),
+						doctype: document.querySelector('#' + pageId + 'Doctype').value
+				}
+
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+
+				await doe058WplnhdData(headGrid, data);
+
+				dispatchModal.hide();
+			}
+
+			//배차모달 닫기 이벤트
+			async function dispatchModalReset() {
+				document.querySelectorAll('.modal-body select[id*="' + pageId + '"]').forEach(function(select) {
+					select.options[0].selected = true;
+				});
+
+				await selectLocationList();
+
+				document.querySelectorAll('.modal-body input[type="text"][id*="' + pageId + '"]').forEach(function(element) {
+					element.value = '';
+				});
+
+				//출고키, 선택한 긴급재 담은 리스트 초기화
+				emergencyList = [];
+
+				document.querySelector('#emerOrderListGrid').style.display = 'none';
+
+				//총 지시중량 (초기값 셋팅)
+				document.querySelector('#doe058TotalOrderWeight').innerText = 0;
+				document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+				document.querySelector('#doe058MinWeight').innerText = 0;
+				document.querySelector('#doe058MaxWeight').innerText = 0;
+			}
+
+			//긴급재 리스트 저장
+			document.querySelector('#' + pageId + 'EmerOrderSave').addEventListener('click', async function() {
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const emerOrderGrid = pq.grid('#' + pageId + 'EmerOrderGrid');
+				const eoGridCheck = emerOrderGrid.Checkbox('state').getCheckedNodes();
+				let emodweigValue = Number(document.querySelector('#' + pageId + 'Emodweig').innerText.replace(/\(t\)/, '').trim());
+				const totalOrderWeight = Number(document.querySelector('#' + pageId + 'TotalOrderWeight').innerText);
+
+				const orderGridFilterList = orderGrid.pdata.find(item => item.shpplky === emerOrderGrid.pdata[0].shpplky);
+
+				if(orderGridFilterList.remweig === orderGridFilterList.emerweig) {
+					if(orderGridFilterList.odweig > parseInt(emodweigValue)) {
+						if(confirm(`[[#{tm.common.checkAlert}]]`)) {
+							let weight = totalOrderWeight - orderGridFilterList.odweig;
+
+							orderGrid.updateRow({
+								rowIndx: orderGridFilterList.pq_ri,
+								newRow: {
+									odweig: emodweigValue < 1 ? Math.round(emodweigValue) : parseInt(emodweigValue)
+								}
+							});
+
+							weight = weight + parseInt(emodweigValue);
+							document.querySelector('#' + pageId + 'TotalOrderWeight').innerText = weight;
+						}else {
+							return;
+						}
+					}
+				}
+
+				//해당 출고번호 긴급재관련 리스트를 한 번 날린 후 다시 담기 => 재조정할 수 있어서
+				emergencyList = emergencyList.filter(item => item.shpplky !== emerOrderGrid.pdata[0].shpplky);
+
+				let plnsize = '';
+
+				//배차사이즈
+				const grid = orderGrid.pdata.find(grid => grid.shpplky === emerOrderGrid.pdata[0].shpplky);
+				if (grid) {
+					plnsize = grid.plnsize;
+				}
+
+				for(const emergency of eoGridCheck) {
+					emergency.plnsize = plnsize;
+					emergencyList.push(emergency);
+				}
+
+				//지시중량보다 긴급재 중량이 더 클 경우
+				if(orderGridFilterList.odweig < parseInt(emodweigValue)) {
+					//입력하신 긴급재 중량이 지시 중량보다 많습니다.
+					alert('[[#{tm.doe058.overEmerWeight}]]');
+					return false;
+				}
+
+				if(emodweigValue < 1) {
+					emodweigValue = Math.round(emodweigValue);
+				}
+
+				//grid updateRow
+				gridUpdateRowEvt(orderGrid, 'emodweig', emodweigValue, orderGridFilterList.pq_ri);
+
+				document.querySelector('#emerOrderListGrid').style.display = 'none';
+
+				if(emergencyList.length > 0) {
+					await selectFilterLocationSelectBox(emergencyList);
+				}else {
+					await selectLocationList();
+				}
+
+				//그리드 초기화
+				makeEmptyGrid(doe058EmerOrderGrid);
+			});
+
+			//긴급재 리스트 닫기
+			document.querySelector('#' + pageId + 'EmerOrderClose').addEventListener('click', async function() {
+				document.querySelector('#emerOrderListGrid').style.display = 'none';
+				document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const emerGrid = pq.grid('#' + pageId + 'EmerOrderGrid');
+				const orderGridFilterList = orderGrid.pdata.find(item => item.shpplky === emerGrid.pdata[0].shpplky);
+
+				//grid updateRow
+				//긴급재지시중량(emodweig) null로 변경
+				gridUpdateRowEvt(orderGrid, 'emodweig', null, orderGridFilterList.pq_ri);
+
+				//해당 긴급재 데이터 제거
+				emergencyList = emergencyList.filter(item => item.shpplky !== orderGridFilterList.shpplky);
+
+				if(emergencyList.length > 0) {
+					await selectFilterLocationSelectBox(emergencyList);
+				}else {
+					await selectLocationList();
+				}
+
+				//그리드 초기화
+				makeEmptyGrid(doe058EmerOrderGrid);
+			});
+
+
+			//========================================================
+			//이벤트(event)
+			//========================================================
+			//검색
+			document.querySelector('#' + pageId + 'Search').addEventListener('click', async function() {
+				await doe058SearchData();
+			});
+
+			let previousWarekey;
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('focus', function() {
+				previousWarekey = this.value;
+			});
+
+			//창고 change evt
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+
+				if(headGrid.pdata.length > 0 || itemGrid.pdata.length > 0) {
+					if(!confirm('[[#{ms.listViewRollback}]]')) {
+						document.querySelector('#' + pageId + 'Warekey').value = previousWarekey;
+						return;
+					}
+				}
+
+				await doe058SearchData();
+			});
+
+			//우선 change 이벤트
+			document.querySelector('#' + pageId + 'Tpriloc').addEventListener('change', function() {
+				document.querySelector('#' + pageId + 'Spriloc').value = this.value;
+			});
+
+			//긴급재 채우기 버튼 클릭 이벤트
+			document.querySelector('#' + pageId + 'ModalEmergencyAuto').addEventListener('click', function() {
+				const emergencyGrid = pq.grid('#' + pageId + 'EmerOrderGrid');
+				const emergencyCheckList = emergencyGrid.Checkbox('state').getCheckedNodes();
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const orderGridFilterList = orderGrid.pdata.find(item => item.shpplky === emergencyGrid.pdata[0].shpplky);
+				let weight = 0;
+
+				if(emergencyCheckList.length > 0) {
+					for(const check of emergencyCheckList) {
+						weight += check.skuweig;
+					}
+				}
+
+				for(const grid of emergencyGrid.pdata) {
+
+					if(grid.state === false && grid.emskuyn === 'Y') {
+						weight += grid.skuweig;
+
+						if(parseInt(weight / 1000) <= orderGridFilterList.odweig) {
+							emergencyGrid.updateRow({
+								rowIndx: grid.pq_ri,
+								newRow: {
+									state: true
+								}
+							});
+						}else {
+							break;
+						}
+					}
+				}
+
+				if(parseInt(weight / 1000) <= orderGridFilterList.odweig) {
+					for(const grid of emergencyGrid.pdata) {
+
+						if(grid.state === false) {
+							weight += grid.skuweig;
+
+							if(parseInt(weight / 1000) <= orderGridFilterList.odweig) {
+								emergencyGrid.updateRow({
+									rowIndx: grid.pq_ri,
+									newRow: {
+										state: true
+									}
+								});
+							}else {
+								break;
+							}
+						}
+					}
+				}
+			});
+
+			//초기화
+			document.querySelector('#' + pageId + 'Reset').addEventListener('click', function () {
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+
+				if(headGrid.pdata.length > 0 || itemGrid.pdata.length > 0) {
+					if(!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+
+				resetSearchConditions(pageId);
+
+				makeEmptyGrid(doe058HeadGrid);
+				makeEmptyGrid(doe058ItemGrid);
+
+				$('#' + pageId + 'Regikey').val('').pqSelect('refreshData');
+			});
+
+			//그리드 로우 업데이트 이벤트
+			function gridUpdateRowEvt(grid, dataIndx, value, rowIndx) {
+				grid.updateRow({
+					rowIndx: rowIndx,
+					newRow: {
+						[dataIndx]: value
+					},
+					checkEditable: false
+				});
+
+				//?
+				grid.refreshDataAndView();
+			}
+
+
+			//========================================================
+			//Init Data
+			//========================================================
+			//배차사이즈 selectBox 셋팅
+			function plnsizeSelectBoxSetting(ui) {
+				//szgubun 0이 제일 큰 데이터
+				//0이면 전체 plnsizeList를 보여줌
+				//1이면 1과 그 이후 데이터
+				//2면 2과 그 이후 데이터 이런식으로 구성
+				let vehiclePlnsize = [];
+
+				if(ui.rowData.szgubun === 0) {
+					vehiclePlnsize = plnsizeList;
+				}else {
+					vehiclePlnsize = plnsizeList.filter(item => item.szgubun >= ui.rowData.szgubun);
+				}
+
+				comboCreateData(pageId + 'OrderGrid', 'plnsize', vehiclePlnsize, { combovl: 'skugrky', combonm: 'grpkynm' });
+			}
+
+			//initData
+			async function doe058InitData() {
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value
+				}
+
+				let responseData = await fetchUtil('GET', '/tm/dispatch/doe058/init', data);
+				responseData = await responseData.json();
+
+				//배차 아시즈
+				plnsizeList = responseData.plnsizeList;
+
+				//doctype 구성
+				let option = document.createElement('option');
+				option.value = '';
+				option.text = '[[#{tm.common.all}]]';
+				document.querySelector('#' + pageId + 'Doctype').appendChild(option);
+
+				for(const doctype of responseData.doctypeList) {
+					let option = document.createElement('option');
+					option.value = doctype.combovl;
+					option.text = doctype.combonm;
+					document.querySelector('#' + pageId + 'Doctype').appendChild(option);
+				}
+			}
+
+			//정차포인트 selectBox
+			async function selectLocationList() {
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value
+				}
+				const responseData = await fetchUtil('GET', '/tm/dispatch/common/location/list', data);
+				const locationList = await responseData.json();
+
+				settingLocationSelectBox(locationList);
+			}
+
+			async function selectFilterLocationSelectBox(listData) {
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value,
+						stockkyList: listData
+				}
+				const responseData = await fetchUtil('POST', '/tm/dispatch/common/location/filter-list', data);
+				const filterLocationList = await responseData.json();
+
+				settingLocationSelectBox(filterLocationList);
+			}
+
+			function settingLocationSelectBox(locationList) {
+				const tprilocSelectBox = document.querySelector('#' + pageId + 'Tpriloc');
+				const sprilocSelectBox = document.querySelector('#' + pageId + 'Spriloc');
+
+				tprilocSelectBox.innerHTML = '';
+			    sprilocSelectBox.innerHTML = '';
+
+				const tprilocChoic= document.createElement('option');
+				tprilocChoic.value = '';
+				tprilocChoic.text = '[[#{tm.doe058.choice}]]';
+				tprilocSelectBox.appendChild(tprilocChoic);
+
+				const sprilocChoice = document.createElement('option');
+				sprilocChoice.value = '';
+				sprilocChoice.text = '[[#{tm.doe058.choice}]]';
+				sprilocSelectBox.appendChild(sprilocChoice);
+
+				for(const riloc of locationList) {
+					const tprilocOption = document.createElement('option');
+					tprilocOption.value = riloc.locakey;
+					tprilocOption.text = riloc.locanam;
+					tprilocSelectBox.appendChild(tprilocOption);
+
+					const sprilocOption = document.createElement('option');
+					sprilocOption.value = riloc.locakey;
+					sprilocOption.text = riloc.locanam;
+					sprilocSelectBox.appendChild(sprilocOption);
+				}
+			}
+
+
+			//========================================================
+			//검색 데이터
+			//========================================================
+			//헤더검색
+			async function doe058SearchData() {
+				const regikeyList = [];
+
+				const regikeyOptions = document.querySelector('#' + pageId + 'Regikey').selectedOptions;
+
+				for(const option of regikeyOptions) {
+					regikeyList.push(option.value);
+				}
+
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value,
+						regikeySelectedList: regikeyList,
+						wpldateFrom: document.querySelector('#' + pageId + 'WpldateFrom').value.replaceAll('-', ''),
+						wpldateTo: document.querySelector('#' + pageId + 'WpldateTo').value.replaceAll('-', ''),
+						doctype: document.querySelector('#' + pageId + 'Doctype').value
+				}
+
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+
+				await doe058WplnhdData(headGrid, data);
+
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+
+				itemGrid.showLoading();
+
+				itemGrid.option('dataModel', {data: []});
+
+				itemGrid.refreshDataAndView();
+				itemGrid.hideLoading();
+			}
+
+			//차량정보 그리드 데이터
+			async function showVehicleGrid(gridCheckList) {
+				const vehicleGrid = pq.grid('#' + pageId + 'VehicleGrid');
+
+				//0이 제일 큼
+				//0이면 바로 plnsize 반영
+				//제일 큰 배차 사이즈 (사이즈구분은 제일 작은 숫자) 찾아서 반영
+				let szgubun = gridCheckList[0].szgubun;
+				let plnsize = gridCheckList[0].skugrky;
+
+				if(szgubun !== 0) {
+					for(const gridCheck of gridCheckList) {
+						if(gridCheck.szgubun === 0) {
+							plnsize = gridCheck.skugrky;
+							break;
+						}
+
+						if(szgubun < gridCheck.szgubun) {
+							continue;
+						}else if(szgubun > gridCheck.szgubun) {
+							szgubun = gridCheck.szgubun;
+							plnsize = gridCheck.skugrky;
+						}
+					}
+				}
+
+				const data = {
+						skugrky: plnsize
+				}
+
+				vehicleGrid.showLoading();
+
+				const vehicleList = await fetchUtil('GET', '/tm/dispatch/doe058/vehiclegrid', data);
+
+				if(vehicleList.status !== 200) {
+					vehicleGrid.option('dataModel', {data: []});
+				}else {
+					const vehicleGridData = await vehicleList.json();
+
+					vehicleGrid.option('dataModel', {
+						data: vehicleGridData
+					});
+					vehicleGrid.scrollY(0);
+				}
+
+				vehicleGrid.refreshDataAndView();
+				vehicleGrid.hideLoading();
+			}
+
+			async function doe058WplnhdData(grid, data) {
+				grid.showLoading();
+
+				const searchData = await fetchUtil('GET', '/tm/dispatch/doe058/headgrid', data);
+
+				if(searchData.status !== 200) {
+					grid.option('dataModel', {data: []});
+					grid.refreshDataAndView();
+					grid.hideLoading();
+				}else {
+					const wplnhdData = await searchData.json();
+
+					grid.option('dataModel', {
+						data: wplnhdData,
+						recIndx: 'rowkey'
+					});
+
+					grid.scrollY(0);
+					grid.refreshDataAndView();
+					grid.hideLoading();
+
+					return wplnhdData;
+				}
+			}
+
+			//========================================================
+			//저장
+			//========================================================
+			//배차모달 저장
+			document.querySelector('#' + pageId + 'DispatchMdSave').addEventListener('click', async function() {
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const orderGridChecked = orderGrid.Checkbox('state').getCheckedNodes();
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const headGridCheckList = headGrid.Checkbox('state').getCheckedNodes();
+				const totalWeight = Number(document.querySelector('#doe058TotalOrderWeight').innerText);
+
+				//doe058 저장 validation
+				if(!doe058SaveValidation(orderGrid, orderGridChecked)) {
+					return false;
+				}
+
+				//차량 데이터 validation
+				let vehicleData = doe058VehicleDataValidation();
+
+				if(!vehicleData) {
+					return false;
+				}
+
+				//합짐 validation
+				const mixcuyn = doe058MixcuynValidation();
+				//긴급재 중량 validation
+				const emerweig = emergencyListWeight();
+
+				const { isValid, vehicleData: updatedVehicleData, corEmerWeig } = corweigValidation(emerweig, totalWeight, vehicleData);
+
+				if(!isValid) {
+					return false;
+				}
+
+				vehicleData = updatedVehicleData;
+
+				const data = {
+						tpriloc: document.querySelector('#' + pageId + 'Tpriloc').value,
+						spriloc: document.querySelector('#' + pageId + 'Spriloc').value,
+						trnmemo: document.querySelector('#' + pageId + 'Trnmemo').value,
+						warekey: document.querySelector('#' + pageId + 'Warekey').value,
+						orderGridCheckedList: orderGridChecked,
+						emergencyList: emergencyList,
+						vehicky: vehicleData.vehicky,
+						vownkey: vehicleData.vownkey,
+						vhcmaxw: vehicleData.vhcmaxw,
+						drvernm: vehicleData.drvernm,
+						drverph: vehicleData.drverph,
+						mixcuyn: mixcuyn,
+						totalWeight: totalWeight,
+						emerweig: corEmerWeig,
+						...(document.querySelector('#doe058NotAlarmCheck').checked === true && {aprovyn: 'APPROVAL'})
+				}
+
+				let remweig = 0;
+
+   				const response = await fetchUtil('POST', '/tm/dispatch/doe058/insert', data);
+
+				if(response.status === 200) {
+					const shpplkyList = headGridCheckList.map(head => head.shpplky);
+
+					const searchParam = {
+							shpplkyList: shpplkyList,
+							warekey: document.querySelector('#' + pageId + 'Warekey').value
+					}
+
+					const searchData = await doe058WplnhdData(orderGrid, searchParam);
+
+					if(searchData.length > 0) {
+						//모달 내 상단 오더 가능한 잔여중량 셋팅
+						for(const order of searchData) {
+							remweig += order.remweig;
+						}
+					}
+
+					document.querySelector('#modalRemweig').innerText = remweig + ' (t)';
+
+					await doe058FcmAlaram(vehicleData);
+
+					if(remweig == 0) {
+						dispatchModalHide();
+					}else {
+						await showVehicleGrid(searchData);
+					}
+
+					dispatchModalReset();
+				}else {
+					//저장 실패하였습니다.
+					alert('[[#{ms.saveErr}]]');
+				}
+
+			});
+
+			async function doe058FcmAlaram(vehicleData) {
+				//체크박스 체크하면 알림x
+				//체크박스 체크안하면 알림o => 그래서 false
+				if(document.querySelector('#doe058NotAlarmCheck').checked === false) {
+					const fcmParam = {
+							warekey: document.querySelector('#' + pageId + 'Warekey').value,
+							vehicky: vehicleData.vehicky,
+							vownkey: vehicleData.vownkey,
+							type: 'tm'
+					}
+
+					const fcmResponse = await fetchUtil('POST', '/fcm/api', fcmParam);
+
+					if(fcmResponse.status !== 200) {
+						//차주에게 알림을 보내는 과정에서 오류가 발생했습니다.
+						alert('[[#{tm.doe058.fcmFail}]]');
+					}
+				}
+
+				document.querySelector('#doe058NotAlarmCheck').checked = false;
+			}
+
+
+			//========================================================
+			//Validation들
+			//========================================================
+			//보정중량 validation
+			function corweigValidation(emerweig, totalweig, vehicleData) {
+				const corEmerWeig = Math.trunc(emerweig / 1000);
+
+				let isValid = true;
+
+				if(corEmerWeig > totalweig) {
+					if(corEmerWeig > vehicleData.vhcmaxw) {
+						const message = `[[#{tm.doe061.changeVhcmaxw}]]`;
+						const confirmMessage = message.replace('{0}', totalweig)
+													  .replace('{1}', corEmerWeig)
+													  .replace('{2}', vehicleData.vhcmaxw);
+
+						if(!confirm(confirmMessage)) {
+							isValid = false;
+						}else {
+							vehicleData.vhcmaxw = corEmerWeig;
+						}
+					}
+				}
+
+				return { isValid, vehicleData, corEmerWeig };
+			}
+
+			//긴급재 중량 validation
+			function emergencyListWeight() {
+				let emerweig = 0;
+
+				if(emergencyList.length > 0) {
+					for(const emergency of emergencyList) {
+						emerweig += emergency.skuweig;
+					}
+				}
+
+				return emerweig;
+			}
+
+			//출고예정정보 그리드 중량관련 validation
+			async function orderGridWeightValidation(updateList, column) {
+				//해당 코드가 호출되는 경우
+				//지시중량 값을 수정했거나, 지웠거나
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+
+				//지시중량 값 수정이 일어나면 긴급재는 다시 구성해야하므로 긴급재 그리드를 다음
+				if(document.querySelector('#emerOrderListGrid').style.display === 'block') {
+					document.querySelector('#emerOrderListGrid').style.display = 'none';
+				}
+
+				//모달 내 표시되는 지시 총 중량
+				const totalWeight = Number(document.querySelector('#doe058TotalOrderWeight').innerText);
+
+				//현재 입력한 지시중량 값
+				let weight = Number(updateList.newRow[column]);
+
+				//총 중량의 값이 존재할 경우 (0보다 크다면)
+				//총 중량에서 지시중량이 변경되기 전의 값을 뺌.
+				//변경된 중량에서 현 지시중량을 더해줌.
+				if(totalWeight > 0) {
+					const beforeWeight = totalWeight - Number(updateList.oldRow[column]);
+					weight = beforeWeight + weight;
+				}else {
+					//총 중량이 없을 경우 (0일 경우)
+					//총 중량에 현 지시중량 더해줌.
+					weight = totalWeight + weight;
+				}
+
+				//총 중량 업데이트
+				document.querySelector('#doe058TotalOrderWeight').innerText = weight;
+
+				if(updateList.newRow[column] < updateList.rowData.emodweig) {
+					//지시중량이 변경되면 긴급재 리스트 전역변수에 값을 재할당.
+					//해당 전역변수에 담겨있는 값에서 해당 출고번호 데이터들을 지움.
+					emergencyList = emergencyList.filter(item => item.shpplky !== updateList.rowData.shpplky);
+
+					//grid updateRow
+					gridUpdateRowEvt(orderGrid, 'emodweig', null, updateList.rowIndx);
+				}
+
+				if(emergencyList.length > 0) {
+					await selectFilterLocationSelectBox(emergencyList);
+				}else {
+					await selectLocationList();
+				}
+			}
+			//vehicleData관련 validation
+			function doe058VehicleDataValidation() {
+				const vehicleGrid = pq.grid('#' + pageId + 'VehicleGrid');
+				const vehicleGridCheckList = vehicleGrid.Checkbox('state').getCheckedNodes();
+
+				if(vehicleGridCheckList.length === 1) {
+					return vehicleGridCheckList[0];
+				}else {
+					//차량을 선택해 주세요.
+					alert('[[#{tm.doe058.vehicleChoice}]]');
+					return false;
+				}
+			}
+
+			//합짐여부 관련 validation
+			function doe058MixcuynValidation() {
+				let mixcuyn = 'N';
+
+				//상세착지명이 다르면 Y 체크
+				if(emergencyList.length > 0) {
+					const firstDemodnm = emergencyList[0].demodnm;
+
+					for(const emergency of emergencyList) {
+						if(firstDemodnm !== emergency.demodnm) {
+							mixcuyn = 'Y';
+							break;
+						}
+					}
+				}
+
+				return mixcuyn;
+			}
+
+			//doe058 저장 validation
+			function doe058SaveValidation(orderGrid, orderGridChecked) {
+				const tpriloc = document.querySelector('#' + pageId + 'Tpriloc').value;
+				const spriloc = document.querySelector('#' + pageId + 'Spriloc').value;
+				const totalWeight = Number(document.querySelector('#doe058TotalOrderWeight').innerText);
+
+				const vehicleGrid = pq.grid('#' + pageId + 'VehicleGrid');
+				const vehicleGridChecked = vehicleGrid.Checkbox('state').getCheckedNodes();
+
+				const minWeight = Number(document.querySelector('#doe058MinWeight').innerText);
+				const maxWeight = Number(document.querySelector('#doe058MaxWeight').innerText);
+
+				//차량 선택 안했을 때
+				if(vehicleGridChecked.length === 0) {
+					//차량을 선택해 주세요.
+					alert('[[#{tm.doe058.vehicleChoice}]]');
+					return false;
+				}
+
+				//오더 선택 안했을 때
+ 				if(orderGridChecked.length === 0) {
+ 					//배차를 진행할 오더를 선택해 주세요.
+					alert('[[#{tm.doe058.orderChoice}]]');
+					return false;
+				}else {
+					if(!orderGridSaveValidation(orderGrid, orderGridChecked)) {
+						return false;
+					}
+				}
+
+				if(minWeight > totalWeight) {
+					//지시하신 중량이 지시 가능한 최소 중량보다 적어 부적 운임이 발생할 수 있습니다.
+					if(!confirm('[[#{tm.doe058.deadFreight}]]')) {
+						return false;
+					}
+
+				}
+
+				if(maxWeight < totalWeight) {
+					//지시하신 중량이 지시 가능한 최대 중량보다 초과되어 배차가 불가합니다.
+					alert('[[#{tm.doe058.overTotalWeight}]]');
+					return false;
+				}
+
+				//값이 하나라도 비어있을 경우
+				if(tpriloc === '' || spriloc === '') {
+					//필수 값을 선택해 주세요.
+					alert('[[#{tm.doe058.mustChoice}]]');
+					return false;
+				}
+
+				return true;
+			}
+
+			//orderGrid 관련 저장 validation
+			function orderGridSaveValidation(orderGrid, orderGridChecked) {
+				for(const order of orderGridChecked) {
+					//지시중량 입력 안했을 때
+					if(!order.hasOwnProperty('odweig') || order.odweig <= 0) {
+						//지시 중량이 없습니다.
+						alert('[[#{tm.doe058.notOrderWeight}]]');
+						orderGrid.editCell({
+							rowIndx: order.pq_ri,
+							dataIndx: 'odweig'
+						});
+						return false;
+					}
+
+					//배차사이즈가 없을 때
+					if(!order.hasOwnProperty('plnsize') || order.plnsize === "" || order.plnsize === null || order.plnsize === undefined) {
+						//필수 값을 선택해 주세요.
+						alert('[[#{tm.doe058.mustChoice}]]');
+						orderGrid.editCell({
+							rowIndx: order.pq_ri,
+							dataIndx: 'plnsize'
+						});
+						return false;
+					}
+
+					//잔여중량에서 지시중량 뺀 중량이 긴급재 지시 잔여중량(긴급재 중량에서 긴급재 지시중량 뺀 중량) 보다 적으면 안된다.
+					//소수점으로 들어오는건 우선 parseInt로 강제 정수 만들어서 짜르고있음
+					if(order.emodweig == null) {
+						order.emodweig = 0;
+					}
+
+					if(order.odweig > 0 && order.emerweig > 0) {
+						if(order.remweig - order.odweig < order.emerweig - parseInt(order.emodweig)) {
+							//출고예정번호
+							//의 긴급재 중량을 확인해주세요.
+							alert('[[#{tm.doe061.shpplky}]] ' + order.shpplky + '[[#{tm.doe058.checkEmerWeight}]]');
+							return false;
+						}
+					}
+				}
+
+				return true;
+			}
+
+		}();
+		</script>
+	</div>
+</html>

@@ -1,0 +1,454 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="doe037Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe037Warekey" name="doe037Warekey"
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+						data-cb-select="" data-cb-variable="warekeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe037Skumkey" class="setting-grid-title">[[#{search.skuCode}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.skuCode')}" id="doe037Skumkey" name="doe037Skumkey" onkeyup="doe037KeyupEvt()"/>
+					</div>
+				</div>
+				<label for="doe037Taskoky" class="setting-grid-title">[[#{sm.wstkky.taskoky}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('sm.wstkky.taskoky')}" id="doe037Taskoky" name="doe037Taskoky" onkeyup="doe037KeyupEvt()"/>
+					</div>
+				</div>
+				<label for="doe037Equipky" class="setting-grid-title">[[#{grid.equinam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe037Equipky" name="doe037Equipky"
+						data-cb-val="equipky" data-cb-name="equinam" data-cb-url="/md/wae-relations"
+						data-cb-select="" data-cb-variable="equipkyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe037Custnam" class="setting-grid-title">[[#{search.cunamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.cunamlc')}" id="doe037Custnam" name="doe037Custnam" onkeyup="doe037KeyupEvt()"/>
+					</div>
+				</div>
+				<label for="doe037Regikey" class="setting-grid-title">[[#{search.renamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe037Regikey"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/partner/region"
+							data-cb-select="" data-cb-variable="regionList">
+						</select>
+					</div>
+				</div>
+				<label for="doe037Tasksts" class="setting-grid-title">[[#{sm.doe037.tasksts}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe037Tasksts" name="doe037Tasksts"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=TASKSTS"
+							data-cb-select="" data-cb-variable="taskstsList">
+						</select>
+					</div>
+				</div>
+				<label for="doe037Taskdat" class="setting-grid-title ic-title-nece">[[#{sm.doe037.taskdat}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-date-group">
+						<input type="date" id="doe037TaskdatFrom" />
+						<span>~</span>
+						<input type="date" id="doe037TaskdatTo" />
+					</div>
+				</div>
+				<label for="doe037Demodnm" class="setting-grid-title">[[#{search.denamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.denamlc')}" id="doe037Demodnm" name="doe037Demodnm" onkeyup="doe037KeyupEvt()">
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe037BtnSearch"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe037BtnReset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.sm.doe037}]]</span>
+				</div>
+				<div class="edit-btn-wrapper">
+					<button class="btn-white btn-green" id="doe037BtnCancel"><img class="ic-bt-cancel">[[#{bt.selectionCancel}]]</button>
+					<button class="btn-navy btn-green" id="doe037BtnSave"><img class="ic-bt-save">[[#{bt.selectionConfirm}]]</button>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box">
+				<div id="doe037Grid"></div>
+			</div>
+		</div>
+	<script>
+	!function(){
+		console.log('doe037 :: 선별완료확정')
+		let doe037CurrentWarekey;
+		const pageId = '[[${tabPage}]]';
+
+		// 날짜 세팅
+		const yesterday = moment().subtract(1, 'd').format('YYYY-MM-DD');
+		const today = moment().format('YYYY-MM-DD');
+		const taskdatFrom = document.querySelector('#' + pageId + 'TaskdatFrom');
+		const taskdatTo = document.querySelector('#' + pageId + 'TaskdatTo');
+		taskdatFrom.value = yesterday;
+		taskdatTo.value = today;
+		dateValidation(taskdatFrom, taskdatTo, pageId + 'Taskdat', 'd', 1);
+
+		const doe037GridCM = [
+			{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+				, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+				nodrag: true, nodrop: true,
+				cb: { all: false, header: true, check: 'Y', uncheck: 'N' },
+				editable: ui => {
+					return 'NEW' === ui.rowData.tasksts;
+				},
+				render: ui => {
+						return {
+							cls: ui?.column?.editable(ui) ? '' : 'color-gray pq-cell-disable'
+						};
+				}
+			},
+			{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+			{ title: '[[#{sm.doe037.taskoky}]]', dataType: 'string', dataIndx: 'taskoky', editable: false},
+			{ title: '[[#{sm.doe037.taskoit}]]', dataType: 'string', dataIndx: 'taskoit', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{sm.wstkky.stockky}]]', dataType: 'string', dataIndx: 'stockky', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+			{ title: '[[#{sm.doe037.taskdat}]]', dataType: 'string', dataIndx: 'taskdat', editable: false}, // hidden 처리
+			{ title: '[[#{sm.doe037.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{sm.doe037.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false}, // hidden 처리
+			{ title: '[[#{sm.doe037.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{sm.doe037.doccate}]]', dataType: 'string', dataIndx: 'doctynm', editable: false}, // hidden 처리
+			{ title: '[[#{sm.doe037.tasksts}]]', dataType: 'string', dataIndx: 'tasksts', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{sm.doe037.tasksts}]]', dataType: 'string', dataIndx: 'tstsnam', editable: false}, // hidden 처리
+			{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcate', editable: false, hidden : true },
+			{ title: '[[#{grid.btrcnam}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+			{ title: '[[#{bm.baddco.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false, hidden : true},
+			{ title: '[[#{bm.baddco.addconm}]]', dataType: 'string', dataIndx: 'addconm', editable: false },
+			{ title: '[[#{sm.doe037.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+			{ title: '[[#{sm.wstkky.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.ownrnam}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+			{ title: '[[#{sm.wstkky.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.custnam}]]', dataType: 'string', dataIndx: 'custnam', editable: false},
+			{ title: '[[#{sm.wstkky.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false},
+			{ title: '[[#{sm.wstkky.renamlc}]]', dataType: 'string', dataIndx: 'rgorgnm', editable: false },
+			{ title: '[[#{sm.wstkky.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false},
+			{ title: '[[#{sm.wstkky.remodnm}]]', dataType: 'string', dataIndx: 'rgmodnm', editable: false },
+			{ title: '[[#{sm.wstkky.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },
+			{ title: '[[#{sm.wstkky.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+			{ title: '[[#{sm.doe037.frareky}]]', dataType: 'string', dataIndx: 'frareky', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{sm.doe037.frareky}]]', dataType: 'string', dataIndx: 'fraranm', editable: false },
+			{ title: '[[#{sm.doe037.frlocky}]]', dataType: 'string', dataIndx: 'frlocky', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{sm.doe037.frlocky}]]', dataType: 'string', dataIndx: 'frlocnm', editable: false },
+			{ title: '[[#{sm.doe037.frlayer}]]', dataType: 'integer', dataIndx: 'frlayer', editable: false },
+			{ title: '[[#{sm.doe037.toareky}]]', dataType: 'string', dataIndx: 'toareky', editable: false, hidden: true},
+			{ title: '[[#{sm.doe037.toareky}]]', dataType: 'string', dataIndx: 'toaranm', editable: false },
+			{ title: '[[#{sm.doe037.tolocky}]]', dataType: 'string', dataIndx: 'tolocky', editable: false, hidden: true},
+			{ title: '[[#{sm.doe037.tolocky}]]', dataType: 'string', dataIndx: 'tolocnm', editable: false },
+			{ title: '[[#{sm.doe037.tolayer}]]', dataType: 'integer', dataIndx: 'tolayer', editable: false},
+			{ title: '[[#{sm.wstkky.stotqty}]]', dataType: 'integer', dataIndx: 'stotqty', editable: false, hidden: true, format: '#,###', summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.sallqty}]]', dataType: 'integer', dataIndx: 'sallqty', editable: false, hidden: true, format: '#,###', summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.sbloqty}]]', dataType: 'integer', dataIndx: 'sbloqty', editable: false, hidden: true, format: '#,###', summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.planqty}]]', dataType: 'integer', dataIndx: 'planqty', editable: false, hidden: true, format: '#,###', summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.plcmqty}]]', dataType: 'integer', dataIndx: 'plcmqty', editable: false, hidden: true, format: '#,###', summary: { type : 'sum' } },
+			{ title: '[[#{grid.equipky}]]', dataType: 'string', dataIndx: 'equipky', editable: false, hidden : true },
+			{ title: '[[#{grid.equinam}]]', dataType: 'string', dataIndx: 'equinam', editable: false },
+			{ title: '[[#{sm.doe037.lotnmky}]]', dataType: 'string', dataIndx: 'lotnmky', editable: false },
+			{ title: '[[#{sm.doe037.skudesc}]]', dataType: 'string', dataIndx: 'skudesc', editable: false },
+			{ title: '[[#{sm.doe037.parsncd}]]', dataType: 'string', dataIndx: 'parsncd', editable: false },
+			{ title: '[[#{sm.doe037.parsnnm}]]', dataType: 'string', dataIndx: 'parsnnm', editable: false },
+			{ title: '[[#{sm.doe037.parsncd}]]', dataType: 'string', dataIndx: 'rsncdnm', editable: false },
+			{ title: '[[#{sm.doe037.fordqty}]]', dataType: 'integer', dataIndx: 'fordqty', editable: false, hidden : true, format: '#,###', summary: { type : 'sum' } },
+			{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },										// 생성일자
+			{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },										// 생성일시
+			{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },										// 생성사용자
+			{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },										// 수정일자
+			{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },										// 수정일시
+			{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },										// 수정사용자
+			{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+		];
+
+		const doe037GridObject = new GridUtil(doe037GridCM, 'doe037', 'doe037Grid');
+
+		doe037GridObject.setCreate(async function(){
+			await _commonInit(pageId);
+
+			$('#doe037Equipky').val('').attr('multiple', 'multiple')
+			.pqSelect({
+				searchId: 'doe037Equipky',
+				multiplePlaceholder: '[[#{ms.chooseAll}]]',
+				selectallText: '[[#{ms.chooseAll}]]',
+				displayText : '{0}개 선택',
+				checkbox: true,
+				width: '100%'
+			}).pqSelect('refreshData');
+
+			$('#doe037Equipky').pqSelect({ deselect : false });
+
+			$('#doe037Regikey').val('').attr('multiple', 'multiple')
+			.pqSelect({
+				searchId: 'doe037Regikey',
+				multiplePlaceholder: '[[#{ms.chooseAll}]]',
+				selectallText: '[[#{ms.chooseAll}]]',
+				displayText : '{0}개 선택',
+				checkbox: true,
+				width: '100%'
+			}).pqSelect('refreshData');
+
+		    $('#doe037Regikey').pqSelect({ deselect : false });
+
+			$('#doe037Tasksts').val('').attr('multiple', 'multiple')
+			.pqSelect({
+				searchId: 'doe037Tasksts',
+				multiplePlaceholder: '[[#{ms.chooseAll}]]',
+				selectallText: '[[#{ms.chooseAll}]]',
+				displayText : '{0}개 선택',
+				checkbox: true,
+				width: '100%'
+			}).pqSelect('refreshData');
+
+		    $('#doe037Tasksts').pqSelect({ deselect : false });
+
+		    const equpikyFilter = equipkyList.filter(e=>{
+		    	return e.warekey === document.querySelector('#doe037Warekey').value;
+		    });
+
+		    await makeOptionEquipky(equpikyFilter);
+		    this.option('freezeCols', 1);
+		});
+
+		doe037GridObject.setRowInit(function(ui){
+			if(ui.rowData.planqty){
+				return {
+					style : 'background-color: #d6fff6; font-weight: bold;'
+				}
+			}else if(ui.rowData.sbloqty){
+				return {
+					style: 'background-color: #90EE90; font-weight: bold;'
+				}
+			}else if(ui.rowData.emskuyn === 'Y'){
+				return {
+					style: 'background-color: #FAED7D; font-weight: bold;'
+
+				}
+			}
+		});
+
+		doe037GridObject.setCheck(function(evt, ui){
+			const sameTaskokyList = this.getData().filter(e=> e.taskoky === ui.rowData.taskoky);
+
+			for(const sameTaskokyData of sameTaskokyList){
+				this.updateRow({
+					rowIndx : sameTaskokyData.pq_ri,
+					newRow : {
+						state : ui.check ? 'Y' : 'N'
+					},
+					checkEditable : false
+				});
+			}
+		});
+
+		doe037GridObject.setFind();
+		doe037GridObject.open();
+
+		async function makeOptionEquipky(filterList){
+			let html = '';
+			for(const equpikyData of filterList){
+				html += '<option value="'+ equpikyData.equipky +'">'+ equpikyData.equinam +'</option>';
+			}
+			document.querySelector('#doe037Equipky').innerHTML = html;
+			$('#doe037Equipky').pqSelect('refreshData');
+		}
+
+		//조회버튼 클릭 시
+		document.querySelector('#doe037BtnSearch').addEventListener('click', function(){
+			getDoe037List();
+		});
+
+
+		async function getDoe037List(){
+			const grid = pq.grid('#doe037Grid');
+			const searchParams = document.querySelectorAll('input[id*="doe037"], select[id*="doe037"]');
+
+			const taskstsList = Array.from(document.querySelector('#doe037Tasksts').selectedOptions, function(option){
+				return option.value;
+			});
+
+			const equipkyList = Array.from(document.querySelector('#doe037Equipky').selectedOptions, function(option){
+				return option.value;
+			});
+
+			const regikeyList = Array.from(document.querySelector('#doe037Regikey').selectedOptions, function(option){
+				return option.value;
+			});
+
+			const params = {};
+
+			//asnstat 및 doctype을 제외한 검색 조건 params.
+			for(const searchParam of searchParams) {
+				const key = searchParam.id.substring(6).toLowerCase();
+				params[key] = searchParam.value;
+			}
+
+			params.equipkyList = equipkyList;
+			params.taskstsList = taskstsList;
+			params.regikeyList = regikeyList;
+			params.skumkeyList = params.skumkey.split(' ');
+
+			doe037CurrentWarekey = params.warekey;
+			grid.showLoading();
+
+			const doe037Response = await fetchUtil('GET', '/sm/inventory/doe037/grid', params);
+			if(doe037Response.status === 200) {
+				const stockList = await doe037Response.json();
+				grid.option('dataModel', { data: stockList, recIndx: 'rowkey' });
+			}
+
+			grid.refreshDataAndView();
+			grid.hideLoading();
+		}
+
+		//초기화 버튼 클릭 시
+		document.querySelector('#doe037BtnReset').addEventListener('click', async function(){
+			const grid = pq.grid('#' + pageId + 'Grid');
+			if(grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					return;
+				}
+			}
+			resetSearchConditions(pageId); //공통 초기화함수
+
+		    const equpikyFilter = equipkyList.filter(e=>{
+		    	return e.warekey === document.querySelector('#doe037Warekey').value;
+		    });
+
+		    await makeOptionEquipky(equpikyFilter);
+
+			makeEmptyGrid(doe037GridObject);
+
+			$('#doe037Regikey').val('').pqSelect('refreshData');
+			$('#doe037Tasksts').val('').pqSelect('refreshData');
+			$('#doe037Equipky').val('').pqSelect('refreshData');
+		});
+
+		//선별확정 버튼 클릭
+		document.querySelector('#doe037BtnSave').addEventListener('click', function(){
+			saveDoe037();
+		});
+
+		//선별취소 버튼 클릭
+		document.querySelector('#doe037BtnCancel').addEventListener('click', function(){
+			saveDoe037Cancel();
+		});
+
+		// 선별확정 저장함수
+		async function saveDoe037(){
+			const grid = pq.grid('#doe037Grid');
+			const params = makeSaveData(grid);
+
+			if(!params){
+				return;
+			}
+
+			//조건이 만족하지 않으면 바로 중단 return false
+			const isNotStatusOpercmp = params.updateList.every(e=>{
+				return e.tasksts === 'OPERCMP';
+			});
+
+			if(!isNotStatusOpercmp){
+				alert('[[#{ms.confirmOnlyIfComplete}]]');
+				return;
+			}
+
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+
+				const rData = await fetchUtil('POST','/sm/inventory/doe037/save', params);
+
+				if(rData.status === 200){
+					await getDoe037List();
+					grid.refreshDataAndView();
+				}
+
+				grid.hideLoading();
+			}
+		}
+
+		//선별 취소
+		async function saveDoe037Cancel(){
+			const grid = pq.grid('#doe037Grid');
+			const params = makeSaveData(grid);
+
+			if(!params){
+				return;
+			}
+
+			//조건이 만족하지 않으면 바로 중단 return false
+			const isNotStatusOpercmp = params.updateList.every(e=>{
+				return e.tasksts === 'NEW';
+			});
+
+			if(!isNotStatusOpercmp){
+				alert('[[#{ms.cancelBeforeStart}]]'); // 조업시작 전까지만 취소가 가능합니다.
+				return;
+			}
+
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+
+				const rData = await fetchUtil('POST','/sm/inventory/doe037/cancel', params);
+
+				if(rData.status === 200){
+					alert('[[#{ms.saveSuccess}]]');
+					await getDoe037List();
+					grid.refreshDataAndView();
+				}
+
+				grid.hideLoading();
+			}
+		}
+
+		//keyup
+		doe037KeyupEvt = async function (){
+			const key = this.event.key || this.event.keyCode;
+			if(key === 'Enter' || key === 13) {
+				await getDoe037List();
+			}
+		}
+
+		// 창고 변경시 자동조회
+		document.querySelector('#doe037Warekey').addEventListener('change', async function() {
+
+		    const equpikyFilter = equipkyList.filter(e=>{
+		    	return e.warekey === document.querySelector('#doe037Warekey').value;
+		    });
+
+		    await makeOptionEquipky(equpikyFilter);
+			const grid = pq.grid('#' + pageId + 'Grid');
+			if(doe037CurrentWarekey && grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					this.value = doe037CurrentWarekey;
+					return;
+				}
+			}
+			await getDoe037List();
+		});
+	}();
+	</script>
+</div>
+</html>

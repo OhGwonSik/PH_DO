@@ -1,0 +1,447 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents Ptype06" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="syu05Useract" class="setting-grid-title">[[#{sy.susrma.useract}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('sy.susrma.useract')}" id="syu05Useract" />
+					</div>
+				</div>
+				<label for="syu05Usernam" class="setting-grid-title">[[#{sy.susrma.usernam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('sy.susrma.usernam')}" id="syu05Usernam" />
+					</div>
+				</div>
+			</div>
+            <div class="search-btn-group">
+            	<div class="btn-search btn-navy" id="syu05BtnSearch"><img alt="">[[#{bt.search}]]</div>
+             	<div class="btn-clear btn-white" id="syu05BtnReset"><img alt="">[[#{bt.reset}]]</div>
+            </div>
+        </div>
+        <div class="list-wrapper">
+        	<div class="search-list">
+        		<div class="list-top">
+        			<div class="list-title ic-title-mark">
+        				<span>[[#{ms.user}]]</span>
+        			</div>
+            	</div>
+            	<!-- 개발 작업시 그리드 들어갈 부분 -->
+            	<div class="list-grid-wrapper con-box">
+            		<div id="syu05Grid"></div>
+	            </div>
+            </div>
+            <div class="search-list">
+            	<div class="list-top">
+            		<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.dom005}]]</span>
+            		</div>
+               		<div class="edit-btn-wrapper">
+		                <button id="syu05ItemBtnAddRow" class="btn-white"><img class="ic-line-plus">[[#{bt.add}]]</button>
+                 		<button id="syu05ItemBtnSave" class="btn-navy"><img class="ic-bt-save" alt="">[[#{bt.save}]]</button>
+               		</div>
+             	</div>
+             	<!-- 개발 작업시 그리드 들어갈 부분 -->
+             	<div class="list-grid-wrapper con-box">
+               		<div id="syu05ItemGrid"></div>
+             	</div>
+           	</div>
+        </div>
+    <script>
+    !function() {
+    	let syu05GridColModel;
+    	let syu05GridObject;
+    	let syu05ItemGridColModel;
+    	let syu05ItemGridObject;
+    	let initList;
+    	let userVehicleList;
+    	let availableVehicleList;
+    	const pageId = 'syu05';
+
+    	document.querySelectorAll('input[id*="' + pageId +'"]').forEach(function(element) {
+    		element.addEventListener('keyup', function() {
+    			syu05KeyupEvt();
+    		});
+    	});
+
+    	document.querySelector('#syu05BtnSearch').addEventListener('click', function() {
+    		getSyu05List();
+    	});
+
+    	syu05GridColModel = [
+    		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+    		{ title: '', dataType: 'string', dataIndx: 'userkey', editable: false, hidden:true},
+    		{ title: '[[#{sy.susrma.useract}]]', dataType: 'string', dataIndx: 'useract', editable: false },
+			{ title: '[[#{sy.susrma.usernam}]]', dataType: 'string', dataIndx: 'usernam', editable: false },
+			{ title: '[[#{sy.susrma.telphnm}]]', dataType: 'string', dataIndx: 'telphnm', editable: false },
+			{ title: '[[#{sy.susrma.usrmemo}]]', dataType: 'string', dataIndx: 'usrmemo', editable: false },
+			{ title: '[[#{sy.susrma.emailad}]]', dataType: 'string', dataIndx: 'emailad', editable: false },
+			{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+			{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },
+			{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+			{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+			{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+			{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+			{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+    	];
+
+    	syu05ItemGridColModel = [
+			{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+				, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+				cb: { all: true, header: true, check: 'Y', uncheck: 'N' },
+				nodrag: true, nodrop: true
+			},
+			{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+			{ title: '', dataType: 'string', dataIndx: 'userkey', editable: false, hidden:true},
+			{ title: '[[#{sy.susrma.useract}]]', dataType: 'string', dataIndx: 'useract', editable: false, hidden : true},
+			{ title: '[[#{grid.vownkey}]]', dataType: 'string', dataIndx: 'vownkey', editable: false},
+			{ title: '[[#{grid.vownkey}]]', dataType: 'string', dataIndx: 'oldvoky', editable: false, hidden : true},
+			{ title: '[[#{grid.vonamlc}]]', dataType: 'string', dataIndx: 'vonamlc', editable: false},
+			{ title: '[[#{grid.vehicky}]]', dataType: 'string', dataIndx: 'oldveky', editable: false, hidden : true},
+	        { title: '[[#{grid.vehicky}]]', dataType: 'string', dataIndx: 'vehicky',
+				styleHead : { 'background-color' : '[[#{grid.styleHead01}]]' },
+				editor : {
+					type: 'select',
+	                attr: function(ui) {
+	                	return ui.rowData.rowkey && ui.rowData.vehicky? '' : 'multiple="multiple"';
+	                },
+		            init: function (ui) {
+		            	ui.$cell.find('select').pqSelect({ checkbox : true });
+		                setTimeout(function () {
+		                	ui.$cell.find('select').pqSelect('open');
+			        	}, 250);
+					},
+				    options: []
+				},
+				render : function (ui) {
+					let option = initList.find(function (obj) {
+						return (obj.vehicky === ui.cellData);
+					});
+
+					ui.rowData.vehicky = option ? ui.cellData : '';
+					return option ? option.vhcfnam : '';
+				}
+			},
+			{ title: '[[#{md.susrvh.vhuseyn}]]', dataType: 'string', dataIndx: 'vhuseyn',
+				styleHead: { 'background-color':'[[#{grid.styleHead02}]]'},
+				type: 'checkbox', align: 'center',
+				cb: { all: false, header: false, check: 'Y', uncheck: 'N' }
+			},
+			{ title: '[[#{grid.vhcsnam}]]', dataType: 'string', dataIndx: 'vhcsnam', editable: false },
+			{ title: '[[#{md.mvhcma.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+			{ title: '[[#{md.mvhcma.dlvtype}]]', dataType: 'string', dataIndx: 'dlvtype', editable: false },
+			{ title: '[[#{md.mvhcma.vhcopty}]]', dataType: 'string', dataIndx: 'vhcopty', editable: false },
+			{ title: '[[#{md.mvhcma.vhctype}]]', dataType: 'string', dataIndx: 'vhctype', editable: false },
+			{ title: '[[#{md.mvhcma.vhcstat}]]', dataType: 'string', dataIndx: 'vhcstat', editable: false },
+			{ title: '[[#{md.mvhcma.vhctncd}]]', dataType: 'string', dataIndx: 'vhctncd', editable: false },
+			{ title: '[[#{md.mvhcma.vhcmaxw}]]', dataType: 'Integer', dataIndx: 'vhcmaxw', format: '#,###', editable: false, hidden: true },
+			{ title: '[[#{md.mvhcma.vhccapa}]]', dataType: 'double', dataIndx: 'vhccapa', format: '#,###.000', editable: false, hidden: true },
+			{ title: '[[#{md.mvhcma.drvernm}]]', dataType: 'string', dataIndx: 'drvernm', editable: false },
+			{ title: '[[#{md.mvhcma.drverph}]]', dataType: 'string', dataIndx: 'drverph', editable: false },
+			{ title: '[[#{md.mvhcma.inbvhyn}]]', dataType: 'string', dataIndx: 'inbvhyn', editable: false
+				, type: 'checkbox', editor: false, align: 'center', cb: { check: 'Y', uncheck: 'N' }},
+			{ title: '[[#{md.mvhcma.oubvhyn}]]', dataType: 'string', dataIndx: 'oubvhyn', editable: false
+				, type: 'checkbox', editor: false, align: 'center', cb: { check: 'Y', uncheck: 'N' }},
+			{ title: '[[#{sy.susrma.sigupyn}]]', dataType: 'string', dataIndx: 'poscoyn', editable: false
+				, type: 'checkbox', editor: false, align: 'center', cb: { check: 'Y', uncheck: 'N' }},
+			{ title: '[[#{md.mvhcma.vhcvryn}]]', dataType: 'string', dataIndx: 'vhcvryn', editable: false
+				, type: 'checkbox', editor: false, align: 'center', cb: { check: 'Y', uncheck: 'N' }},
+			{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+			{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },
+			{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+			{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+			{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+			{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+			{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+    	];
+
+    	syu05GridObject = new GridUtil(syu05GridColModel, pageId, pageId + 'Grid');
+    	syu05ItemGridObject = new GridUtil(syu05ItemGridColModel, pageId, pageId + 'ItemGrid');
+    	syu05GridObject.setSelectionModel({type: 'row', mode: 'single'});
+
+    	syu05GridObject.setRowDblClick(function(event, ui) {
+    		getVehicleByAppUser(ui.rowData.userkey, ui.rowData.useract);
+    	});
+
+	    syu05ItemGridObject.setCreate(async function(event, ui) {
+	    	const initData = await fetchUtil('GET', '/sy/syu05/init');
+			if(initData.status !== 200) {
+				return;
+			}
+			initList = await initData.json();
+
+			comboCreateData('syu05ItemGrid', 'vehicky', initList, { combovl : 'vehicky', combonm : 'vhcfnam' });
+			this.option('freezeCols', 1);
+	    });
+
+	    //복붙시 복붙 가능한 데이터 추출
+	    syu05ItemGridObject.setBeforeValidate(function(event, ui){
+	    	if(ui.source === 'paste'){
+
+	    		availableVehicleList = initList.filter(function(data){
+	    			return !userVehicleList.some(function(item){
+	    				return data.vehicky === item.vehicky;
+	    			});
+	    		})
+	    	}
+	    });
+
+	    syu05ItemGridObject.setChange(function(event, ui) {
+	    	const headSelectRow = syu05GridObject.getGrid().SelectRow().getSelection();
+	    	if(ui.source === 'edit') {
+    			let matchedVehicles = [];
+	    		let isFirstRowUpdate = false;
+				for(const updateData of ui.updateList){
+					if(updateData.newRow.hasOwnProperty('vehicky') && updateData.newRow.vehicky){
+		    			const selectVehickyList = updateData.newRow.vehicky?.split(',');
+
+		    			for(const selectVehickyData of selectVehickyList){
+		    				const findVehicle = initList.find(function(data){
+								return data.vehicky === selectVehickyData;
+		    				});
+
+		    				//null , undifined 방지
+		    				if(findVehicle){
+		    					matchedVehicles.push(findVehicle);
+		    				}
+		    			}
+
+		    			for(const matchedVehicle of matchedVehicles){
+
+							const newRow = {
+									state : 'Y',
+									vhuseyn : 'Y',
+									...matchedVehicle,
+									userkey : headSelectRow[0].rowData.userkey,
+									useract : headSelectRow[0].rowData.useract
+							}
+
+							if(!isFirstRowUpdate){
+								this.updateRow({
+									rowIndx : updateData.rowIndx,
+									newRow : newRow,
+									checkEditable : false
+								});
+
+								isFirstRowUpdate = true;
+							}else{
+								syu05ItemGridObject.getGrid().addRow({
+									newRow : newRow,
+									checkEditable : false
+								});
+							}
+						}
+		    		}else{
+						//cellClick 이벤트 안에 comboCreateData 때문에 셀렉트 박스 열고 바로 닫으면 실행이 되어서 코드 추가
+						this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								vehicky : updateData.oldRow.vehicky
+							},
+							checkEditable : false
+						});
+		    		}
+				}
+	    	}else if(ui.source === 'paste'){
+
+	    		gridPasteRow(ui.addList, headSelectRow);
+	    		gridPasteRow(ui.updateList, headSelectRow);
+
+	    	}else if(ui.source === 'checkbox'){
+	    		//체크박스 직접 체크했을떄 or 사용여부 체크했을때
+	    		let stateFlag = 'Y';
+	    		for(const updateData of ui.updateList){
+	    			if(updateData.newRow.hasOwnProperty('state')){
+	    				stateFlag = updateData.newRow.state === 'Y' ? 'Y' : 'N';
+		    		}
+
+					this.updateRow({
+						rowIndx : updateData.rowIndx,
+						newRow :{
+							state : stateFlag
+						},
+						checkEditable : false
+					})
+	    		}
+	    	}
+	    });
+
+	    syu05ItemGridObject.setCellClick(function(event, ui){
+
+			//차량코드 option 동적으로 변경 ex : ['VE00000003', 'VE00000004']
+			const vehicleSet = new Set(userVehicleList.map(function(data){
+				return data.vehicky;
+			}));
+
+			const filterVehicle = initList.filter(function(data){
+				return !vehicleSet.has(data.vehicky);
+			});
+			comboCreateData('syu05ItemGrid', 'vehicky', filterVehicle, { combovl : 'vehicky', combonm : 'vhcfnam' });
+	    });
+
+    	syu05GridObject.open();
+    	syu05ItemGridObject.open();
+
+    	async function getSyu05List() {
+    		const headGrid = pq.grid('#syu05Grid');
+    		const itemGrid = pq.grid('#syu05ItemGrid');
+    		const params = makeSearchData(pageId);
+    		headGrid.showLoading();
+    		const appUserData = await fetchUtil('GET', '/sy/syu05/susrma', params);
+    		if(appUserData.status === 200) {
+    			const appUserList = await appUserData.json();
+    			headGrid.option('dataModel', { data: appUserList, recIndx: 'rowkey' });
+    			itemGrid.option('dataModel', {data: []});
+    		}
+    		headGrid.hideLoading();
+    		headGrid.refreshDataAndView();
+    		itemGrid.refreshDataAndView();
+    	}
+
+    	async function getVehicleByAppUser(userkey, useract) {
+    		const grid = pq.grid('#syu05ItemGrid');
+    		grid.showLoading();
+    		const vehicleData = await fetchUtil('GET', '/sy/syu05/susrvh', { userkey : userkey, useract: useract });
+    		if(vehicleData.status === 200) {
+    			userVehicleList = await vehicleData.json();
+    			grid.option('dataModel', { data: userVehicleList, recIndx: 'rowkey' });
+    		}
+    		grid.hideLoading();
+    		grid.refreshDataAndView();
+    	}
+
+    	function syu05KeyupEvt(){
+    		const key = this.event.key || this.event.keyCode;
+    		if(key === 'Enter' || key === 13){
+    			getSyu05List();
+    		}
+    	}
+
+    	async function syu05Save(){
+    		const itemGrid = pq.grid('#syu05ItemGrid');
+    		const itemParams = makeSaveData(itemGrid);
+
+			if(!itemParams){
+				return;
+			}
+
+    		itemGrid.showLoading();
+			const response = await fetchUtil('POST','/sy/syu05/save', itemParams);
+
+			if(response.status === 200){
+				await resetSearchConditions(pageId);
+
+				await getSyu05List();
+
+				//options 전체 리스트이어야 안보이는 데이터 없어서 추가
+				comboCreateData('syu05ItemGrid', 'vehicky', initList, { combovl : 'vehicky', combonm : 'vhcfnam' });
+			}
+			itemGrid.hideLoading();
+			itemGrid.refreshDataAndView();
+    	}
+
+    	document.querySelector('#syu05BtnReset').addEventListener('click', function() {
+    		const grid = pq.grid('#syu05Grid');
+    		if(grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					return;
+				}
+    		}
+    		resetSearchConditions(pageId); //공통 초기화함수
+			makeEmptyGrid(syu05GridObject);
+			makeEmptyGrid(syu05ItemGridObject);
+    	});
+
+    	//추가버튼 클릭
+    	document.querySelector('#syu05ItemBtnAddRow').addEventListener('click', function(){
+			const headSelectRow = syu05GridObject.getGrid().SelectRow().getSelection();
+
+			if(!headSelectRow.length){
+				alert('[[#{ms.noSearchError}]]');
+				return;
+			}
+
+			const rowIndx = syu05ItemGridObject.getGrid().addRow({
+				newRow : {
+					state : 'Y',
+					vhuseyn : 'Y',
+					userkey : headSelectRow[0].rowData.userkey,
+					useract : headSelectRow[0].rowData.useract
+				},
+				checkEditable : false
+			});
+
+			syu05ItemGridObject.getGrid().goToPage({ rowIndx: rowIndx });
+			syu05ItemGridObject.getGrid().editFirstCellInRow({ rowIndx: rowIndx });
+    	});
+
+    	//저장버튼 클릭
+    	document.querySelector('#syu05ItemBtnSave').addEventListener('click', function(){
+    		const validation = validateDuplicationFieldBeforeSaveGridUtil(syu05ItemGridObject , ['vehicky']);
+    		if(!validation){
+    			return;
+    		}
+    		syu05Save();
+    	});
+
+    	function gridPasteRow(gridDataList, headSelectRow){
+    		let updateOrDeleteRow = false;
+    		for(const gridData of gridDataList){
+    			if(gridData.newRow.hasOwnProperty('vehicky') && gridData.newRow.vehicky){
+
+    				const findVehicle = availableVehicleList.find(function(data){
+    					return data.vehicky === gridData.newRow.vehicky;
+    				});
+
+					const newRow = {};
+
+					if(findVehicle){
+
+    					Object.assign(newRow, {
+							state : 'Y',
+							vhuseyn : 'Y',
+							...findVehicle,
+							userkey : headSelectRow[0].rowData.userkey,
+							useract : headSelectRow[0].rowData.useract
+    					});
+    					updateOrDeleteRow = true;
+					}else{
+						let vehickyValue = gridData.newRow.vehicky;
+
+						if(gridData.oldRow?.vehicky || gridData.oldRow?.vehicky === ''){
+							vehickyValue = gridData.oldRow.vehicky;
+						}
+
+    					Object.assign(newRow,{
+    						vehicky : vehickyValue
+    					});
+					}
+
+					syu05ItemGridObject.getGrid().updateRow({
+  						rowIndx : gridData.rowIndx,
+  						newRow : newRow,
+  						checkEditable : false
+  					});
+
+					if(!updateOrDeleteRow){
+						const noDataIndex = syu05ItemGridObject.getGrid().pdata.findIndex(function(item){
+							return !item.rowkey
+						});
+
+						if(noDataIndex !== -1 && syu05ItemGridObject.getGrid().pdata.length - 1 !== noDataIndex){
+							syu05ItemGridObject.getGrid().deleteRow({ rowIndx : syu05ItemGridObject.getGrid().pdata[noDataIndex].pq_ri});
+						}
+					}
+
+					availableVehicleList = availableVehicleList.filter(function(data){
+						return data.vehicky !== gridData.newRow.vehicky;
+					});
+    			}
+    		}
+    	}
+    }();
+    </script>
+</div>

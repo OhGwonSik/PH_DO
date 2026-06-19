@@ -1,0 +1,260 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doe012Skugrky" class="setting-grid-title">[[#{md.mgrpma.skugrky}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mgrpma.skugrky')}"
+							id="doe012Skugrky" name="doe012Skugrky">
+						</div>
+					</div>
+					<label for="doe012Grpkynm" class="setting-grid-title">[[#{md.mgrpma.grpkynm}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mgrpma.grpkynm')}"
+							id="doe012Grpkynm" name="doe012Grpkynm">
+						</div>
+					</div>
+					<label for="doe012Vhctype" class="setting-grid-title">[[#{md.mvhcma.vhctype}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe012Vhctype" name="doe012Vhctype"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=vhctype"
+							data-cb-select="" data-cb-variable="vhctypeList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe012Gruseyn" class="setting-grid-title">[[#{md.useyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe012Gruseyn" class="pq-select">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doe012BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doe012BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe012}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe012BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe012Grid"></div>
+				</div>
+			</div>
+		<script>
+		!function(){
+			const pageId = '[[${tabPage}]]';
+
+			// 칼럼
+			const doe012GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{md.mgrpma.skugrky}]]', dataType: 'string', dataIndx: 'skugrky', editable: false},
+				{ title: '[[#{md.mgrpma.grpkynm}]]', dataType: 'string', dataIndx: 'grpkynm', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'gruseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mgrpma.minleng}]]', dataType: 'integer', dataIndx: 'minleng', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mgrpma.minwidt}]]', dataType: 'integer', dataIndx: 'minwidt', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mgrpma.maxleng}]]', dataType: 'integer', dataIndx: 'maxleng', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mgrpma.maxwidt}]]', dataType: 'integer', dataIndx: 'maxwidt', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mvhcma.vhctype}]]', dataType: 'string', dataIndx: 'vhctype', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.order}]]', dataType: 'integer', dataIndx: 'skugror', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '사이즈 구분', dataType: 'string', dataIndx: 'szgubun', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const doe012Grid = new GridUtil(doe012GridCM, pageId, pageId + 'Grid');
+			doe012Grid.setFind();
+			doe012Grid.setReset();
+
+			// Grid 생성시 이벤트
+			doe012Grid.setCreate(async function(evt, ui) {
+				await _commonInit(pageId);
+				comboCreateData(pageId + 'Grid', 'vhctype', vhctypeList, { combovl : 'combovl', combonm : 'combonm' });
+				this.option('freezeCols', 1);
+			});
+
+			// 그리드 행 추가
+			doe012Grid.setAdd(function(evt, ui){
+				const rowData = {
+					state: true,
+					minleng: 0,
+					minwidt: 0,
+					maxleng: 0,
+					maxwidt: 0,
+					skugror: 0,
+					gruseyn: 'Y'
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'Grid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe012Grid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {state: true};
+
+		           		if(updateData.newRow.hasOwnProperty('gruseyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+		    		let vhctypeData;
+					for(const updateData of ui.updateList){
+
+						if(updateData.newRow.hasOwnProperty('vhctype') && updateData.oldRow.hasOwnProperty('vhctype')){
+							vhctypeData = vhctypeList.find(function(data){
+	    						return(data.combonm === updateData.newRow['vhctype'])
+	    					})
+	    				}
+
+						this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								gruseyn: updateData.rowData.gruseyn,
+								minleng: updateData.rowData.minleng,
+								minwidt: updateData.rowData.minwidt,
+								maxleng: updateData.rowData.maxleng,
+								maxwidt: updateData.rowData.maxwidt,
+								vhctype: vhctypeData ? vhctypeData.combovl : updateData.rowData.vhctype,
+								skugror: updateData.rowData.skugror
+							},
+							checkEditable : false
+						})
+					}
+					for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.gruseyn = addData?.newRow?.gruseyn || 'Y';
+		    			addData.rowData.minleng = addData?.newRow?.minleng || 0;
+		    			addData.rowData.minwidt = addData?.newRow?.minwidt || 0;
+		    			addData.rowData.maxleng = addData?.newRow?.maxleng || 0;
+		    			addData.rowData.maxwidt = addData?.newRow?.maxwidt || 0;
+		    			adddata.rowData.vhctype = vhctypeData ? vhctypeData.combovl : addData.rowData.vhctype;
+		    			addData.rowData.skugror = addData?.newRow?.skugror || 0;
+					}
+		    	}
+				doe012Grid.getGrid().refresh();
+			});
+
+			// Grid 객체 생성
+			doe012Grid.open();
+
+			// 검색 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+				await getDoe012List();
+			})
+
+			// 저장 버튼
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe012Grid, ['grpkynm', 'vhctype']);
+				if(!validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doe012Grid, refineGridUtilSaveList(doe012Grid), '/md/' + pageId + '/grid');
+				getDoe012List();
+			})
+
+			// 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+				resetSearchConditions(pageId);
+				makeEmptyGrid(doe012Grid);
+			})
+
+			// Grid 데이터 조회 함수
+			async function getDoe012List(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				const data = {
+						skugrky : document.querySelector('#' + pageId + 'Skugrky').value.toUpperCase(),
+						grpkynm : document.querySelector('#' + pageId + 'Grpkynm').value.toUpperCase(),
+						vhctype : document.querySelector('#' + pageId + 'Vhctype').value,
+			  			gruseyn : document.querySelector('#' + pageId + 'Gruseyn').value
+				};
+
+				grid.showLoading();
+				const res = await fetchUtil('GET', '/md/' + pageId + '/grid', data);
+
+				if(res.status===200){
+					const doe012List = await res.json();
+					grid.option( 'dataModel', {
+						data: doe012List,
+						recIndx: 'rowkey'
+					});
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+
+			const itemList = document.querySelectorAll('.setting-grid input');
+			itemList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			})
+
+			// Enter로 검색
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getDoe012List();
+			    }
+			}
+		}();
+		</script>
+	</div>
+</html>

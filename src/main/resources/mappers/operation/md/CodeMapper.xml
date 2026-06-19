@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.md.mapper.CodeMapper">
+	<!-- *************** MCODEM : 공통코드 마스터 *************** -->
+	<!-- 공통코드 리스트 조회 -->
+	<select id="selectMcodemList" resultType="com.kbph.logistics.md.domain.McodemDTO">
+		/* selectMcodemList */
+		SELECT CONCAT(COMCDKY, COMCDVL) AS rowkey
+			 , COMCDKY, COMCDVL, COMKYTX, COMCDTX, COMCDOR
+			 , COMCDSY, COMMEMO, CDCATE1, CDCATE2, CDCATE3
+			 , CDATTR1, CDATTR2, CDATTR3, COUSEYN, UPDTCHK
+			 , DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+         	 , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+         	 , ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+         	 , DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+         	 , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+         	 , ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+		  FROM ${userData.schema}.MCODEM
+		  <where>
+		      <if test='param.comcdky != null and param.comcdky != ""'>
+		          AND UPPER(COMCDKY) LIKE UPPER(CONCAT('%', #{param.comcdky}, '%'))
+		      </if>
+		      <if test='param.comcdvl != null and param.comcdvl != ""'>
+		          AND UPPER(COMCDVL) LIKE UPPER(CONCAT('%', #{param.comcdvl}, '%'))
+		      </if>
+		      <if test='param.comkytx != null and param.comkytx != ""'>
+		          AND UPPER(COMKYTX) LIKE UPPER(CONCAT('%', #{param.comkytx}, '%'))
+		      </if>
+		      <if test='param.comcdtx != null and param.comcdtx != ""'>
+		          AND UPPER(COMCDTX) LIKE UPPER(CONCAT('%', #{param.comcdtx}, '%'))
+		      </if>
+		      <if test='param.couseyn != null and param.couseyn != ""'>
+		          AND COUSEYN = #{param.couseyn}
+		      </if>
+		  </where>
+	      ORDER BY COMCDKY, COMCDOR ASC
+	</select>
+
+	<!-- 공통코드 조회 -->
+	<select id="selectMcodem" resultType="com.kbph.logistics.md.domain.McodemDTO">
+		/* selectMcodem */
+		SELECT COMCDVL, COMCDTX, COMCDKY, COMCDVL, COMCDOR
+			 , COMCDSY, COMMEMO, CDCATE1, CDCATE2, CDCATE3
+			 , CDATTR1, CDATTR2, CDATTR3
+		  FROM ${userData.schema}.MCODEM
+		 WHERE COUSEYN = 'Y'
+		 <choose>
+		     <when test='params.comcdsy != null and params.comcdsy != "" and params.comcdsy.equals("Y")'>
+		         AND COMCDSY IN ('Y', 'N')
+		     </when>
+			 <otherwise>
+			     AND COMCDSY = 'N'
+			 </otherwise>
+		 </choose>
+		 <if test='params.comcdky != null and params.comcdky != ""'>
+		     AND COMCDKY = #{params.comcdky}
+		 </if>
+		 ORDER BY COMCDKY, COMCDOR ASC
+	</select>
+
+	<!-- 공통코드 단건 조회 -->
+	<select id="selectCode" resultType="com.kbph.logistics.md.domain.McodemDTO">
+		/* selectCode */
+		SELECT COMCDVL, COMCDTX, COMCDKY, COMCDVL, COMCDOR
+			 , COMCDSY, COMMEMO, CDCATE1, CDCATE2, CDCATE3
+			 , CDATTR1, CDATTR2, CDATTR3
+		  FROM ${userData.schema}.MCODEM
+		 WHERE COUSEYN = 'Y'
+		 <choose>
+		     <when test='param.comcdsy != null and param.comcdsy != "" and param.comcdsy.equals("Y")'>
+		         AND COMCDSY IN ('Y', 'N')
+		     </when>
+			 <otherwise>
+			     AND COMCDSY = 'N'
+			 </otherwise>
+		 </choose>
+		 <if test='param.comcdky != null and param.comcdky != ""'>
+		     AND COMCDKY = #{param.comcdky}
+		 </if>
+		 <if test='param.comcdvl != null and param.comcdvl != ""'>
+		     AND COMCDVL = #{param.comcdvl}
+		 </if>
+	</select>
+
+	<!-- 공통코드 등록 -->
+	<insert id="insertMcodem" parameterType="com.kbph.logistics.md.domain.McodemDTO">
+		/* insertMcodem */
+		INSERT INTO ${userData.schema}.MCODEM(
+			   COMCDKY, COMCDVL, COMKYTX, COMCDTX, COMCDOR
+			 , COMCDSY, COMMEMO, CDCATE1, CDCATE2, CDCATE3
+			 , CDATTR1, CDATTR2, CDATTR3, COUSEYN, CREDATE
+			 , CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER
+	  ) VALUES (
+	  		   UPPER(#{addData.comcdky}), UPPER(#{addData.comcdvl}), #{addData.comkytx}
+			 , #{addData.comcdtx}, #{addData.comcdor}, #{addData.comcdsy}
+			 , #{addData.commemo}, #{addData.cdcate1}, #{addData.cdcate2}
+			 , #{addData.cdcate3}, #{addData.cdattr1}, #{addData.cdattr2}
+			 , #{addData.cdattr3}, #{addData.couseyn}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+	  )
+	</insert>
+
+	<!-- 공통코드 수정 -->
+	<update id="updateMcodem" parameterType="com.kbph.logistics.md.domain.McodemDTO">
+		/* updateMcodem */
+		UPDATE ${userData.schema}.MCODEM SET
+			   COMCDKY = #{updateData.comcdky}
+			 , COMCDVL = #{updateData.comcdvl}
+			 , COMKYTX = #{updateData.comkytx}
+			 , COMCDTX = #{updateData.comcdtx}
+			 , COMCDOR = #{updateData.comcdor}
+			 , COMCDSY = #{updateData.comcdsy}
+			 , COMMEMO = #{updateData.commemo}
+			 , CDCATE1 = #{updateData.cdcate1}
+			 , CDCATE2 = #{updateData.cdcate2}
+			 , CDCATE3 = #{updateData.cdcate3}
+			 , CDATTR1 = #{updateData.cdattr1}
+			 , CDATTR2 = #{updateData.cdattr2}
+			 , CDATTR3 = #{updateData.cdattr3}
+			 , COUSEYN = #{updateData.couseyn}
+			 , LMODATE = to_char(NOW() ,'YYYYMMDD')
+			 , LMOTIME = to_char(NOW() ,'hh24miss')
+			 , LMOUSER = #{userData.useract}
+			 , UPDTCHK = #{updateData.updtchk} + 1
+		 WHERE UPDTCHK = #{updateData.updtchk}
+		 <choose>
+		     <when test="updateData.oldComcdky != null and updateData.oldComcdky !=''">
+				 AND COMCDKY = #{updateData.oldComcdky}
+			 </when>
+			 <otherwise>
+				 AND COMCDKY = #{updateData.comcdky}
+			 </otherwise>
+		 </choose>
+		 <choose>
+			 <when test="updateData.oldComcdvl != null and updateData.oldComcdvl !=''">
+				 AND COMCDVL = #{updateData.oldComcdvl}
+			 </when>
+			 <otherwise>
+				 AND COMCDVL = #{updateData.comcdvl}
+			 </otherwise>
+		 </choose>
+	 </update>
+
+	<!-- 공통코드 셀렉트박스 조회 -->
+	<select id="selectMcodemSelectBox" resultType="com.kbph.logistics.md.domain.McodemDTO">
+		/* selectMcodemSelectBox */
+		SELECT COMCDVL as COMBOVL, COMCDTX as COMBONM
+		  FROM ${userData.schema}.MCODEM
+		 WHERE COUSEYN = 'Y'
+		 <choose>
+		     <when test='params.comcdsy != null and params.comcdsy != "" and params.comcdsy.equals("Y")'>
+		         AND COMCDSY IN ('Y', 'N')
+		     </when>
+			 <otherwise>
+				 AND COMCDSY = 'N'
+			 </otherwise>
+	  	 </choose>
+		 <!-- comcdky 하나만 필요할 때 -->
+		 <if test='params.comcdky != null and params.comcdky != ""'>
+		     AND COMCDKY = #{params.comcdky}
+		 </if>
+		 <!-- comcdky 여러개 필요할 때 -->
+		 <if test="params.comcdkys != null and params.comcdkys.size != 0">
+		     AND COMCDKY IN
+		     <foreach collection="params.comcdkys" item="item" index="index" open="(" close=")" separator=",">
+		         #{item}
+			 </foreach>
+		 </if>
+		 <!-- comcdvl 하나만 필요할 때 -->
+		 <if test='params.comcdvl != null and params.comcdvl != ""'>
+			 AND COMCDVL = #{params.comcdvl}
+		 </if>
+		 <!-- comcdvl 여러개 필요할 때 -->
+		 <if test="params.comcdvls != null and params.comcdvls.size != 0">
+			 AND COMCDVL IN
+			 <foreach collection="params.comcdvls" item="item" index="index" open="(" close=")" separator=",">
+				 #{item}
+			 </foreach>
+		 </if>
+		 <if test='params.cdcate1 != null and params.cdcate1 != ""'>
+			 AND CDCATE1 = #{params.cdcate1}
+		 </if>
+		 <if test='params.cdcate2 != null and params.cdcate2 != ""'>
+			 AND CDCATE2 = #{params.cdcate2}
+		 </if>
+		 <if test='params.cdcate3 != null and params.cdcate3 != ""'>
+			 AND CDCATE3 = #{params.cdcate3}
+		 </if>
+		 GROUP BY COMCDVL, COMCDTX
+		 ORDER BY COMCDOR ASC
+	</select>
+
+	<!-- *************** MRSCMA : 사유코드 마스터 *************** -->
+	<!-- 사유코드 리스트 조회 -->
+	<select id="selectMrscmaList" resultType="com.kbph.logistics.md.domain.MrscmaDTO">
+		/* selectMrscmaList */
+		SELECT CONCAT(MR.WAREKEY, MR.DOCCATE, MR.DOCCATE, MR.RSNCODE) AS rowkey
+			 , MR.WAREKEY, MR.DOCCATE, MD.DOCCTNM AS DOCCTNM, MR.DOCTYPE
+			 , MD.DOCTYNM AS DOCTYNM, MR.RSNCODE, MR.RSNCDNM, MR.RSNCDOD
+			 , MR.RSCATE1, MR.RSCATE2, MR.RSCATE3, MR.RSATTR1, MR.RSATTR2
+			 , MR.RSATTR3, MR.RSUSEYN, MR.UPDTCHK
+			 , DATE_FORMAT(MR.CREDATE,'%Y-%m-%d') AS CREDATE
+         	 , DATE_FORMAT(STR_TO_DATE(MR.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+         	 , ${userData.schema}.FN_SY_USERNAM(MR.CREUSER) AS CREUSER
+         	 , DATE_FORMAT(MR.LMODATE,'%Y-%m-%d') AS LMODATE
+         	 , DATE_FORMAT(STR_TO_DATE(MR.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+         	 , ${userData.schema}.FN_SY_USERNAM(MR.LMOUSER) AS LMOUSER
+		  FROM ${userData.schema}.MRSCMA MR
+		 INNER JOIN ${userData.schema}.MDOCMA MD
+		 		 ON MR.WAREKEY = MD.WAREKEY
+				AND MR.DOCCATE = MD.DOCCATE
+				AND MR.DOCTYPE = MD.DOCTYPE
+				AND DOUSEYN = 'Y'
+		<where>
+			<if test='params.warekey != null and params.warekey != ""'>
+			 	AND MR.WAREKEY = #{params.warekey}
+			</if>
+			<if test='params.docctnm != null and params.docctnm != ""'>
+			 	AND UPPER(MD.DOCCTNM) LIKE CONCAT('%' , UPPER(#{params.docctnm}) , '%')
+			</if>
+			<if test='params.doctynm != null and params.doctynm != ""'>
+			 	AND UPPER(MD.DOCTYNM) LIKE CONCAT('%' , UPPER(#{params.doctynm}) , '%')
+			</if>
+			<if test='params.rsncdnm != null and params.rsncdnm != ""'>
+			 	AND UPPER(MR.RSNCDNM) LIKE CONCAT('%' , UPPER(#{params.rsncdnm}) , '%')
+			</if>
+			<if test='params.rsuseyn != null and params.rsuseyn != ""'>
+				AND MR.RSUSEYN = #{params.rsuseyn}
+			</if>
+		</where>
+		ORDER BY MR.DOCCATE, MR.DOCTYPE, MR.RSNCDOD
+	</select>
+
+	<!-- 사유코드 등록 -->
+	<insert id="insertMrscma" parameterType="com.kbph.logistics.md.domain.MrscmaDTO">
+		/* insertMrscma */
+		INSERT INTO ${userData.schema}.MRSCMA(
+			WAREKEY, DOCCATE, DOCTYPE, RSNCODE, RSNCDNM
+			, RSNCDOD, RSCATE1, RSCATE2, RSCATE3, RSATTR1
+			, RSATTR2, RSATTR3, RSUSEYN, CREDATE, CRETIME
+			, CREUSER, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			#{addData.warekey}, #{addData.doccate}, #{addData.doctype}
+			, #{addData.rsncode}, #{addData.rsncdnm}, #{addData.rsncdod}
+			, #{addData.rscate1}, #{addData.rscate2}, #{addData.rscate3}
+			, #{addData.rsattr1}, #{addData.rsattr2}, #{addData.rsattr3}, #{addData.rsuseyn}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 사유코드 수정 -->
+	<update id="updateMrscma" parameterType="com.kbph.logistics.md.domain.MrscmaDTO">
+		/* updateMrscma */
+		UPDATE ${userData.schema}.MRSCMA SET
+			DOCCATE = #{updateData.doccate}
+			, DOCTYPE = #{updateData.doctype}
+			, RSNCODE = #{updateData.rsncode}
+			, RSNCDNM = #{updateData.rsncdnm}
+			, RSNCDOD = #{updateData.rsncdod}
+			, RSCATE1 = #{updateData.rscate1}
+			, RSCATE2 = #{updateData.rscate2}
+			, RSCATE3 = #{updateData.rscate3}
+			, RSATTR1 = #{updateData.rsattr1}
+			, RSATTR2 = #{updateData.rsattr2}
+			, RSATTR3 = #{updateData.rsattr3}
+			, RSUSEYN = #{updateData.rsuseyn}
+			, LMODATE = to_char(NOW() ,'YYYYMMDD')
+			, LMOTIME = to_char(NOW() ,'hh24miss')
+			, LMOUSER = #{userData.useract}
+			, UPDTCHK = #{updateData.updtchk} + 1
+		WHERE UPDTCHK = #{updateData.updtchk}
+		<choose>
+			<when test='updateData.oldWarekey != null and updateData.oldWarekey != ""'>
+				AND WAREKEY = #{updateData.oldWarekey}
+			</when>
+			<otherwise>
+				AND WAREKEY = #{updateData.warekey}
+			</otherwise>
+		</choose>
+		<choose>
+			<when test='updateData.oldDoccate != null and updateData.oldDoccate != ""'>
+				AND DOCCATE = #{updateData.oldDoccate}
+			</when>
+			<otherwise>
+				AND DOCCATE = #{updateData.doccate}
+			</otherwise>
+		</choose>
+		<choose>
+			<when test='updateData.oldDoctype != null and updateData.oldDoctype != ""'>
+				AND DOCTYPE = #{updateData.oldDoctype}
+			</when>
+			<otherwise>
+				AND DOCTYPE = #{updateData.doctype}
+			</otherwise>
+		</choose>
+		<choose>
+			<when test='updateData.oldRsncode != null and updateData.oldRsncode != ""'>
+				AND RSNCODE = #{updateData.oldRsncode}
+			</when>
+			<otherwise>
+				AND RSNCODE = #{updateData.rsncode}
+			</otherwise>
+		</choose>
+	</update>
+
+	<!-- 사유코드 셀렉트박스 조회 -->
+	<select id="selectMrscmaSelectBox" resultType="com.kbph.logistics.md.domain.MrscmaDTO">
+		/* selectMrscmaSelectBox */
+		SELECT RSNCODE AS COMBOVL, RSNCDNM AS COMBONM, RSCATE1
+		  FROM ${userData.schema}.MRSCMA
+		 WHERE RSUSEYN = 'Y'
+		 <if test='params.warekey != null and params.warekey != ""'>
+		 	 and WAREKEY = #{params.warekey}
+		 </if>
+		 <if test='params.doccate != null and params.doccate != ""'>
+		 	 and DOCCATE = #{params.doccate}
+		 </if>
+		 <if test='params.doctype != null and params.doctype != ""'>
+		 	 and DOCTYPE = #{params.doctype}
+		 </if>
+	</select>
+
+	<!-- 사유코드 관계리스트 조회 -->
+	<select id="selectMrscmaRelationList" resultType="com.kbph.logistics.md.domain.MrscmaDTO">
+		/* selectMrscmaRelationList */
+		SELECT MRS.WAREKEY, MRS.DOCCATE, MRS.DOCTYPE
+			 , MRS.RSNCODE, MRS.RSNCDNM, MRS.RSCATE1
+		  FROM ${userData.schema}.MRSCMA MRS
+		 INNER JOIN ${userData.schema}.MDOCMA MDO
+		 		 ON (MDO.WAREKEY = MRS.WAREKEY AND MDO.DOCCATE = MRS.DOCCATE AND MDO.DOCTYPE = MRS.DOCTYPE)
+		 <where>
+		     <if test="param.warekey != null and param.warekey !=''">
+		         MRS.WAREKEY = #{param.warekey}
+		     </if>
+		 <if test="param.rsuseyn != null and param.rsuseyn !=''">
+			 MRS.RSUSEYN = #{param.rsuseyn}
+		 </if>
+		 </where>
+		 ORDER BY MRS.RSNCDOD
+	</select>
+</mapper>

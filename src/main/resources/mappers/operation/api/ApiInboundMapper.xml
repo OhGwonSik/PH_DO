@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.api.mapper.ApiInboundMapper">
+	<select id="selectConversionInfo" resultType="com.kbph.logistics.api.domain.ConversionWasnifDTO">
+		SELECT IK.OWNERKY AS OWNRNAM, IK.FNCUSKY, IK.REGIKEY, IF(TRIM(IK.BFDESKY) = '' OR IK.BFDESKY IS NULL, '', IK.BFDESKY) AS DEORGNM
+		     , IK.DENAMLC AS DEMODNM, IF(TRIM(IK.DESTTRG) = '' OR IK.DESTTRG IS NULL, 'N', 'Y') AS DEMODYN, IK.SKUMKEY, WS.WAREKEY
+		     , B.BTRCATE
+		  FROM ${apiCommon.schema}.IFKSURE IK
+		 INNER JOIN ${apiCommon.schema}.WSTKKY WS
+		    ON WS.SKUMKEY = IK.SKUMKEY
+         INNER JOIN ${apiCommon.schema}.BTRCAT B
+            ON B.KSGBUN1 = IK.KSGUBUN
+            OR B.KSGBUN2 = IK.KSGUBUN
+            OR B.KSGBUN3 = IK.KSGUBUN
+		 <where>
+		 	AND IK.IFPRSTS = 'U'
+		 </where>
+	</select>
+
+	<insert id="insertConversionAdjustment" parameterType="com.kbph.logistics.api.domain.ConversionWasnifDTO">
+		INSERT
+		  INTO ${schema}.WADJIT
+		  (
+		  		ADJSOKY, ADJSOIT, WAREKEY, DOCCATE
+		  	  , DOCTYPE, ADJDCST, ADJITST, ADJMODE
+		  	  , ADJGRKY, PARSNCD, ADJSRMK, STOCKKY
+		  	  , AREAKEY, LOCAKEY, LOLAYER, LOTNMKY
+		  	  , STLOTNB, CUSTCOD, CUSTNAM, OWNERKY
+		  	  , OWNRNAM, SKUGRKY, SKUMKEY, SKUDESC
+		  	  , SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+		  	  , PURCNUM, ADDCOKY, ORDERLN, REGIORG
+		  	  , REGIMOD, DESTORG, DEORGNM, DESTMOD
+		  	  , DEMODNM, ITEMCOD
+		  	  , STOTQTY, SALLQTY, SBLOQTY, SUOMKEY
+		  	  , RCVDCDT, LOTAT01, LOTAT02, LOTAT03
+		  	  , STKSTAT, EMSKUYN, BLOCKID, RCVDCKY
+			  , RCVDCIT, PHYSOKY, PHYSOIT, SHPDCKY
+			  , SHPDCIT, TASKOKY, TASKOIT, REGIKEY
+			  , DESTKEY, STKMEMO
+			  , CREDATE
+			  , CRETIME
+			  , CREUSER
+			  , LMODATE
+			  , LMOTIME
+			  , LMOUSER
+		  )
+		  SELECT #{param.adjsoky} AS ADJSOKY, #{param.adjsoit} AS ADJSOIT, WS.WAREKEY, #{param.doccate}
+		       , #{param.doctype}, #{param.adjdcst}, #{param.adjitst}, #{param.adjmode}
+		       , #{param.adjgrky}, 'CONVERSION' AS PARSNCD, '이송입고 => 정품입고 전환', WS.STOCKKY
+		       , WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER, WS.LOTNMKY
+		       , WS.STLOTNB, WS.CUSTCOD, WS.CUSTNAM, WS.OWNERKY
+		       , WS.OWNRNAM, WS.SKUGRKY, WS.SKUMKEY, WS.SKUDESC
+		       , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+		       , WS.PURCNUM, WS.ADDCOKY, WS.ORDERLN, WS.REGIORG
+		       , WS.REGIMOD, WS.DESTORG, WS.DEORGNM, WS.DESTMOD
+		       , WS.DEMODNM, WS.ITEMCOD
+		       , WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY, WS.SUOMKEY
+		       , WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02, WS.LOTAT03
+		       , WS.STKSTAT, WS.EMSKUYN, WS.BLOCKID, WS.RCVDCKY
+		       , WS.RCVDCIT, WS.PHYSOKY, WS.PHYSOIT, WS.SHPDCKY
+		       , WS.SHPDCIT, WS.TASKOKY, WS.TASKOIT, WS.REGIKEY
+		       , WS.DESTKEY, WS.STKMEMO
+		       , TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		       , TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		       , #{param.useract}
+		       , TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		       , TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		       , #{param.useract}
+		    FROM ${schema}.WSTKKY WS
+		   INNER JOIN ${schema}.IFKSURE IK
+		      ON IK.SKUMKEY = WS.SKUMKEY
+		     AND IK.IFPRSTS = 'U'
+		   <where>
+		   		AND WS.SKUMKEY = #{param.skumkey}
+		   </where>
+	</insert>
+
+	<update id="updateConversionInfo" parameterType="com.kbph.logistics.api.domain.ConversionWasnifDTO">
+		UPDATE ${schema}.WSTKKY
+		   SET OWNRNAM = #{param.ownrnam}
+             , FNCUSKY = #{param.fncusky}
+             , BTRCATE = #{param.btrcate}
+             , STKMEMO = CONCAT(STKMEMO, ' // [전환]')
+             , REGIMOD = #{param.regikey}
+             <if test='param.deorgnm != null and param.deorgnm != ""'>
+             	, DEORGNM = #{param.deorgnm}
+             </if>
+             , DEMODNM = #{param.demodnm}
+             , DEMODYN = #{param.demodyn}
+             , LMODATE = TO_CHAR(current_timestamp(),'YYYYMMDD')
+             , LMOTIME = TO_CHAR(current_timestamp(),'HH24MISS')
+             , LMOUSER = 'SYS'
+             , UPDTCHK = UPDTCHK + 1
+         WHERE SKUMKEY = #{param.skumkey}
+           AND UPDTCHK = (
+           					SELECT UPDTCHK
+           					  FROM ${schema}.WSTKKY
+           					 WHERE SKUMKEY = #{param.skumkey}
+           )
+	</update>
+
+	<update id="updateTempTableFlags" parameterType="com.kbph.logistics.api.domain.ConversionWasnifDTO">
+		UPDATE ${schema}.IFKSURE
+		   SET IFPRSTS = #{param.ifprsts}
+		     <if test='param.iferrnm != null and param.iferrnm != ""'>
+		     	, IFERRNM = #{param.iferrnm}
+		     </if>
+		 WHERE SKUMKEY = #{param.skumkey}
+		   AND IFPRSTS = 'U'
+	</update>
+
+	<sql id="getAddcoky">
+		(
+           		CASE
+				 WHEN (SELECT CDCATE3 FROM MCODEM WHERE COMCDKY = 'ITEMCOD' AND COMCDVL = #{item.itemcod}) = 'PLATE'
+			 	 	THEN (
+				        SELECT BA.ADDCOKY
+				          FROM ${item.schema}.BADDCO BA
+				         WHERE ((BA.MINLENG = 0 OR BA.MINLENG <![CDATA[<=]]> #{item.skuleng})
+				           AND (BA.MAXLENG = 0 OR #{item.skuleng} <![CDATA[<]]> BA.MAXLENG))
+				           AND (    CASE
+									    WHEN (SELECT ORWIDYN FROM BTRCAT WHERE BTRCATE = #{item.btrcate}) = 'Y'
+									        THEN (BA.MINWIDT = 0 OR BA.MINWIDT <![CDATA[<=]]> #{item.grosswd})
+									              AND (BA.MAXWIDT = 0 OR #{item.grosswd} <![CDATA[<]]> BA.MAXWIDT)
+									              OR (BA.MAXLENG = 0 AND BA.MINLENG <![CDATA[<=]]> #{item.skuleng})
+									              OR (BA.MAXWIDT = 0 AND BA.MINWIDT <![CDATA[<=]]> #{item.grosswd})
+					           			ELSE (BA.MINWIDT = 0 OR BA.MINWIDT <![CDATA[<=]]> #{item.skuwidt})
+									         AND (BA.MAXWIDT = 0 OR #{item.skuwidt} <![CDATA[<]]> BA.MAXWIDT)
+									         OR (BA.MAXLENG = 0 AND BA.MINLENG <![CDATA[<=]]> #{item.skuleng})
+                                             OR (BA.MAXWIDT = 0 AND BA.MINWIDT <![CDATA[<=]]> #{item.skuwidt})
+									 END
+							   )
+						    AND BA.SYSCDYN = 'N'
+				    )
+	    	 ELSE (
+    	 			SELECT BAD.ADDCOKY
+    	 			  FROM BADDCO BAD
+    	 			WHERE BAD.SYSCDYN = 'Y'
+	    	 )
+		 	END
+	  	)
+	</sql>
+
+	<!-- 입차정보검증 -->
+	<select id="checkEntranceCar" resultType="int">
+		/* checkEntranceCar */
+		SELECT
+		    COUNT(1)
+		FROM
+		    ${apiCommon.schema}.WASNHD
+		WHERE
+		    EOASNKY = #{param.eoasnky}
+		    AND VHCFNAM = #{param.vhcfnam}
+		    AND (ENTDATE IS NOT NULL AND ENTDATE != '')
+		    AND (ENTTIME IS NOT NULL AND ENTTIME != '')
+	</select>
+
+	<!-- 입차정보 -->
+	<update id="updateEntranceCar" parameterType="com.kbph.logistics.api.domain.InbEntranceCarDTO">
+		/* updateEntranceCar */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+			UPDATE ${apiCommon.schema}.WASNHD
+				SET
+					ENTDATE = DATE_FORMAT(STR_TO_DATE(#{data.entdttm}, '%y%m%d %H%i%s'), '%Y%m%d'),
+					ENTTIME = DATE_FORMAT(STR_TO_DATE(#{data.entdttm}, '%y%m%d %H%i%s'), '%H%i%s'),
+					ASNITYN = 'Y',
+					LMODATE = DATE_FORMAT(NOW(), '%Y%m%d'),
+					LMOTIME = DATE_FORMAT(NOW(), '%H%i%s'),
+					LMOUSER = #{apiCommon.useract},
+					UPDTCHK = UPDTCHK + 1
+				WHERE
+					EOASNKY = #{data.eoasnky}
+					AND VHCFNAM = #{data.vhcfnam}
+		</foreach>
+	</update>
+
+	<!-- 입동지시여부 update -->
+	<update id="updateEntranceDong" parameterType="com.kbph.logistics.api.domain.InbEntranceDongDTO">
+		/* updateEntranceDong */
+		UPDATE ${apiCommon.schema}.WASNHD
+			SET
+				ENTDOYN = 'Y',
+				LMODATE = DATE_FORMAT(NOW(), '%Y%m%d'),
+				LMOTIME = DATE_FORMAT(NOW(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				EOASNKY = #{param.eoasnky}
+				AND VHCFNAM = #{param.vhcfnam}
+	</update>
+
+	<!-- 검수완료실적=> wasnit 조회 컬럼 간소화-->
+	<select id="selectWasnitStateList" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* selectWasnitStateList */
+		SELECT
+			EOASNKY, EOASNIT,
+			WAREKEY, ASNITST,
+			SKUMKEY, ULLOCKY, COSTRKY, COSTRIT,
+			UPDTCHK
+		FROM
+			${apiCommon.schema}.WASNIT
+		WHERE
+			EOASNKY = #{data.eoasnky}
+			<if test='data.asnitst != null and data.asnitst != ""'>
+				AND ASNITST = #{data.asnitst}
+			</if>
+	</select>
+
+	<!-- 검수완료실적 검증 -->
+	<select id="checkItemInspection" resultType="int">
+		/* checkItemInspection */
+		SELECT
+		    COUNT(1)
+		FROM
+		    ${apiCommon.schema}.WTAKIT WT
+		INNER JOIN ${apiCommon.schema}.WASNIT WAS
+		    ON WAS.EOASNKY = WT.EOASNKY
+		    AND WAS.SKUMKEY = WT.SKUMKEY
+		WHERE
+		    WT.EOASNKY = #{param.eoasnky}
+		    AND WT.SKUMKEY = #{param.skumkey}
+	</select>
+
+	<!-- 검수완료실적 Y, N 상태값 전달 받아서 사용 -->
+	<update id="updateItemInspection" parameterType="com.kbph.logistics.api.domain.InspectionDTO">
+		/* updateItemInspection */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE ${apiCommon.schema}.WASNIT
+			SET
+				ASNITST = IF(UPPER(#{data.asnitst}) = 'Y', 'ING', 'CANCEL'),
+				STLAYER = #{data.stlayer},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				EOASNKY = #{data.eoasnky}
+				AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</update>
+
+	<!-- 검수완료실적 Y, N 상태값 전달 받아서 사용 -->
+	<update id="updateHeadInspection" parameterType="com.kbph.logistics.api.domain.InspectionDTO">
+		/* updateHeadInspection */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE ${apiCommon.schema}.WASNHD
+			SET
+				ASNSTAT = #{data.asnstat},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				EOASNKY = #{data.eoasnky}
+				AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</update>
+
+	<!-- 입고예정 - 불합격 아이템 취소 MSKUWC -->
+	<delete id="deleteInspectionFailMskuwc" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* deleteInspectionFailMskuwc */
+		DELETE
+		  FROM ${apiCommon.schema}.MSKUWC
+		 <where>
+	  	   AND WAREKEY = #{param.warekey}
+	  	   AND SKUMKEY = #{param.skumkey}
+		 </where>
+	</delete>
+
+	<!-- 검수완료실적 ostrit -->
+	<update id="updateOstritStat" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* updateOstritStat */
+		UPDATE ${apiCommon.schema}.OSTRIT
+			SET
+				STRITST = #{param.stritst},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				COSTRKY = #{param.costrky}
+				AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<!-- 검수완료실적 ostrhd -->
+	<update id="updateOstrhdStat" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* updateOstrhdStat */
+		UPDATE ${apiCommon.schema}.OSTRHD
+			SET
+				STRSTAT = #{param.strstat},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				COSTRKY = #{param.costrky}
+	</update>
+
+	<!-- 검수완료실적 wasnhd -->
+	<update id="updateWasnhdStat" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* updateWasnhdStat */
+		UPDATE ${apiCommon.schema}.WASNHD
+			SET
+				ASNSTAT = #{data.asnstat},
+				<if test='data.rsncode != null and data.rsncode != ""'>
+					RSNCODE = #{data.rsncode},
+				</if>
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				EOASNKY = #{data.eoasnky}
+	</update>
+
+	<!-- 입고조업,작업 벨리데이션 -->
+	<select id="checkInboundStart" resultType="int">
+		/* checkInboundStart */
+		SELECT
+		    COUNT(1)
+		FROM
+		    ${apiCommon.schema}.WTAKIT WT
+		INNER JOIN ${apiCommon.schema}.WASNIT WA
+		    ON WA.EOASNKY = WT.EOASNKY
+		    AND WA.EOASNIT = WT.EOASNIT
+		WHERE
+		    WT.EOASNKY = #{param.eoasnky}
+		    AND WT.TASKOKY = #{param.taskoky}
+		    <if test='param.tasksts != null and param.tasksts != ""'>
+		    	AND WT.TASKSTS = #{param.tasksts}
+		    </if>
+	</select>
+
+	<!-- 입고조업시작 -->
+	<update id="updateInboundStart" parameterType="com.kbph.logistics.api.domain.ApiCommonDTO">
+		/* updateInboundStart */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE ${apiCommon.schema}.WTAKIT
+			SET
+				TASKSTS = 'OPERSTR',
+				MVSTDAT = date_format(now(), '%Y%m%d'),
+				MVSTTIM = date_format(now(), '%H%i%s'),
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{data.taskoky}
+				AND EOASNKY = #{data.eoasnky}
+		</foreach>
+	</update>
+
+	<!-- 입고문서 헤더 상태변경-->
+	<update id="updateApiWrcvhdStatus">
+		/* updateApiWrcvhdStatus */
+		UPDATE ${userData.schema}.WRCVHD
+		SET
+			RCVDCST = #{status},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			RCVDCKY = #{param.rcvdcky}
+	</update>
+
+		<!-- 입고문서아이템 상태 변경 -->
+	<update id="updateApiWrcvitStatus">
+		/* updateApiWrcvitStatus */
+		<foreach collection="updateList" item="data" separator=";">
+		UPDATE ${userData.schema}.WRCVIT
+		SET
+			RCVITST = #{status},
+			<if test='data.rchsqty != null'>
+			RCHSQTY = #{data.rchsqty},
+			</if>
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			RCVDCKY = #{data.rcvdcky}
+			<if test = 'data.rcvdcit != null'>
+			AND RCVDCIT = #{data.rcvdcit}
+			</if>
+			<if test="withoutCancel == true">
+			AND RCVITST != 'CANCEL'
+			</if>
+		</foreach>
+	</update>
+
+	<select id="selectApiTaskRcvkeyList" resultType="com.kbph.logistics.im.domain.WrcvitDTO">
+		/* selectApiTaskRcvdckyList */
+		SELECT
+			RCVDCKY, RCVDCIT
+		FROM
+			WTAKIT
+		WHERE
+			EOASNKY = #{data.eoasnky}
+			AND TASKOKY = #{data.taskoky}
+	</select>
+
+		<select id="selectApiWasnitList" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* selectApiWasnitList */
+			SELECT
+				EOASNKY, EOASNIT
+				, WAREKEY, POSHPDT, POSHPTM, POSHPDY
+				, INVOICE, DOCCATE, DOCTYPE, BTRCATE
+				, OWNERKY, OWNRNAM, ASNITST, SKUGRKY
+				, SKUMKEY, SKUDESC, STLAYER
+				, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+				, GROSSWD, GROSSLN, GROSSWG, GROSSTH
+				, SKUSTRD, ULLOCKY, EQUIPKY, TOAREKY, TOLOCKY, TOLAYER
+				, SUOMKEY, ADDCOKY, ASNDQTY, RCHSQTY
+				, CUSTCOD, CUSTNAM, FNCUSKY, FCNAMLC
+				, REGIORG, REGIMOD, DESTORG, DEORGNM, DESTMOD, DEMODNM
+				, DEMODYN, DEMDMAN, DEMDADR, DEMPOCD, DEMDTLN
+				, ITEMCOD, PURCNUM, ORDERLN, BTRFSTC, STLOTNB
+				, SHPLIMT, STKMEMO, DELVDSR, RESTKYN, SKUSTAT
+				, RSNCODE, PARSNNM, COSTRKY, COSTRIT, SERINUM
+				, SAVEPOS, SCHDATE, MIXLOAD, DESTTRG, YARDTRG
+				, INBDATE, INBVHNM, OUBVHNM, SHPDRNM, PRSALDT
+				, CMPDATE, SHPPERS, OUBDATE, PREPRDE, ARVDATE
+				, SHPODAT, TRSODAT, INDIMET, OUTDIMT
+			FROM
+				${apiCommon.schema}.WASNIT
+			WHERE
+				EOASNKY = #{data.eoasnky}
+				AND ASNITST != 'CANCEL'
+	</select>
+
+	<select id="selectApiWasnitCancelList" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* selectApiWasnitCancelList */
+			SELECT
+				EOASNKY, EOASNIT
+				, WAREKEY, POSHPDT, POSHPTM, POSHPDY
+				, INVOICE, DOCCATE, DOCTYPE, BTRCATE
+				, OWNERKY, OWNRNAM, ASNITST, SKUGRKY
+				, SKUMKEY, SKUDESC, STLAYER
+				, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+				, GROSSWD, GROSSLN, GROSSWG, GROSSTH
+				, SKUSTRD, ULLOCKY, EQUIPKY, TOAREKY, TOLOCKY, TOLAYER
+				, SUOMKEY, ADDCOKY, ASNDQTY, RCHSQTY
+				, CUSTCOD, CUSTNAM, FNCUSKY, FCNAMLC
+				, REGIORG, REGIMOD, DESTORG, DEORGNM, DESTMOD, DEMODNM
+				, DEMODYN, DEMDMAN, DEMDADR, DEMPOCD, DEMDTLN
+				, ITEMCOD, PURCNUM, ORDERLN, BTRFSTC, STLOTNB
+				, SHPLIMT, STKMEMO, DELVDSR, RESTKYN, SKUSTAT
+				, RSNCODE, PARSNNM, COSTRKY, COSTRIT, SERINUM
+				, SAVEPOS, SCHDATE, MIXLOAD, DESTTRG, YARDTRG
+				, INBDATE, INBVHNM, OUBVHNM, SHPDRNM, PRSALDT
+				, CMPDATE, SHPPERS, OUBDATE, PREPRDE, ARVDATE
+				, SHPODAT, TRSODAT, INDIMET, OUTDIMT
+			FROM
+				${apiCommon.schema}.WASNIT
+			WHERE
+				EOASNKY = #{data.eoasnky}
+				AND ASNITST = 'CANCEL'
+	</select>
+
+
+	<select id="selectApiWasnitAndTaskData" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* selectApiWasnitAndTaskData */
+		SELECT
+			WA.EOASNKY, WA.EOASNIT
+			, WT.TASKOKY, WT.TASKOIT, WR.RCVDCKY, WR.RCVDCIT
+			, WA.WAREKEY, WA.POSHPDT, WA.POSHPTM, WA.POSHPDY
+			, WA.INVOICE, WA.DOCCATE, WA.DOCTYPE, WA.BTRCATE
+			, WA.OWNERKY, WA.OWNRNAM, WA.ASNITST, WA.SKUGRKY
+			, WA.SKUMKEY, WA.SKUDESC, WA.STLAYER
+			, WA.SKUWEIG, WA.SKUWIDT, WA.SKULENG, WA.SKUTHIC
+			, WA.GROSSWD, WA.GROSSLN, WA.GROSSWG, WA.GROSSTH
+			, WA.SKUSTRD, WA.ULLOCKY, WA.EQUIPKY, WA.TOAREKY, WA.TOLOCKY, WA.TOLAYER
+			, WA.SUOMKEY, WA.ADDCOKY, WA.ASNDQTY, WA.RCHSQTY
+			, WA.CUSTCOD, WA.CUSTNAM, WA.FNCUSKY, WA.FCNAMLC
+			, WA.REGIORG, WA.REGIMOD, WA.DESTORG, WA.DEORGNM, WA.DESTMOD, WA.DEMODNM
+			, WA.DEMODYN, WA.DEMDMAN, WA.DEMDADR, WA.DEMPOCD, WA.DEMDTLN
+			, WA.ITEMCOD, WA.PURCNUM, WA.ORDERLN, WA.BTRFSTC, WA.STLOTNB
+			, WA.SHPLIMT, WA.STKMEMO, WA.DELVDSR, WA.RESTKYN, WA.SKUSTAT
+			, WA.RSNCODE, WA.PARSNNM, WA.COSTRKY, WA.COSTRIT, WA.SERINUM
+			, WA.SAVEPOS, WA.SCHDATE, WA.MIXLOAD, WA.DESTTRG, WA.YARDTRG
+			, WA.INBDATE, WA.INBVHNM, WA.OUBVHNM, WA.SHPDRNM, WA.PRSALDT
+			, WA.CMPDATE, WA.SHPPERS, WA.OUBDATE, WA.PREPRDE, WA.ARVDATE
+			, WA.SHPODAT, WA.TRSODAT, WA.INDIMET, WA.OUTDIMT
+		FROM
+			${data.schema}.WASNIT WA
+        INNER JOIN ${data.schema}.WTAKIT WT
+            ON WT.EOASNKY = WA.EOASNKY
+            AND WT.SKUMKEY = WA.SKUMKEY
+        INNER JOIN ${data.schema}.WRCVIT WR
+            ON WR.EOASNKY = WA.EOASNKY
+            AND WR.SKUMKEY = WA.SKUMKEY
+		WHERE
+			WA.EOASNKY = #{data.eoasnky}
+			AND WA.SKUMKEY = #{data.skumkey}
+	</select>
+
+	<!-- 재고키 채번 -->
+	<select id="getApiStockky" resultType="String">
+		/* getApiStockky */
+		select ${apiCommon.schema}.fn_sm_stockky() as stockky from dual
+	</select>
+
+	<!-- LOTNMKY 채번 -->
+	<select id="getApiLotnmky" resultType="String">
+		/* getApiLotnmky */
+		select ${apiCommon.schema}.fn_sm_lotnmky() as lotnmky from dual
+	</select>
+
+	<!-- 재고 생성 -->
+	<insert id="insertApiWskky" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* insertApiWskky */
+		INSERT INTO ${item.schema}.WSTKKY(
+			STOCKKY
+			, WAREKEY, AREAKEY, LOCAKEY, LOLAYER
+			, LOTNMKY
+			, OWNERKY, OWNRNAM, CUSTCOD, CUSTNAM, FNCUSKY
+			, SKUMKEY, SKUDESC
+			, SKUGRKY
+			, GROSSWG, GROSSWD, GROSSLN, GROSSTH
+			, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+			, BTRCATE, STLOTNB, PURCNUM, ORDERLN
+			, REGIORG, DESTORG, DEORGNM, REGIMOD, DESTMOD, DEMODNM
+			, DEMDMAN, DEMDADR, DEMPOCD, DEMDTLN
+			, ITEMCOD, STOTQTY
+			, SUOMKEY
+			, ADDCOKY, BTRFSTC, STKMEMO
+			, POSHPDT, POSHPTM, POSHPDY
+			, SHPLIMT, DELVDSR
+			, RCVDCDT, RCVDCTM
+			, RCVDCKY, RCVDCIT
+			, TASKOKY, TASKOIT
+			, CREDATE, CRETIME, CREUSER
+			, LMODATE, LMOTIME, LMOUSER
+			, UPINFST
+		)
+		VALUES(
+			#{item.stockky}
+			, #{item.warekey}, #{item.toareky}, #{item.tolocky}, #{item.tolayer}
+			, #{item.lotnmky}
+			, #{item.ownerky}, #{item.ownrnam}, #{item.custcod}, #{item.custnam}, #{item.fncusky}
+			, #{item.skumkey}, #{item.skudesc}
+			,(
+				SELECT MG.SKUGRKY
+		        FROM ${item.schema}.MGRPMA MG
+		        WHERE
+		        	((MG.MINLENG = 0 OR MG.MINLENG <![CDATA[<=]]> #{item.skuleng}) AND (MG.MAXLENG = 0 OR #{item.skuleng} <![CDATA[<]]> MG.MAXLENG))
+		        	AND ((MG.MINWIDT = 0 OR MG.MINWIDT <![CDATA[<=]]> #{item.skuwidt}) AND (MG.MAXWIDT = 0 OR #{item.skuwidt} <![CDATA[<]]> MG.MAXWIDT))
+		        	AND MG.GRUSEYN = 'Y'
+        	)
+			, #{item.grosswg}, #{item.grosswd}, #{item.grossln}, #{item.grossth}
+			, #{item.skuweig}, #{item.skuwidt}, #{item.skuleng}, #{item.skuthic}
+			, #{item.btrcate}, #{item.stlotnb}, #{item.purcnum}, #{item.orderln}
+			, #{item.regiorg}, IFNULL(#{item.destorg},''), #{item.deorgnm}, #{item.regimod}, IFNULL(#{item.destmod},''), #{item.demodnm}
+			, #{item.demdman}, #{item.demdadr}, #{item.dempocd}, #{item.demdtln}
+			, #{item.itemcod}, #{item.asndqty}
+			, #{item.suomkey}
+			, <include refid="getAddcoky"></include>
+			, #{item.btrfstc}, #{item.stkmemo}
+			, REPLACE(#{item.poshpdt},'-',''), REPLACE(#{item.poshptm},':',''), #{item.poshpdy}
+			,CASE
+			    WHEN #{item.shplimt} IS NULL OR #{item.shplimt} = '' THEN ''
+			    ELSE DATE_FORMAT(#{item.shplimt}, '%Y%m%d')
+			END,
+			CASE
+			    WHEN #{item.delvdsr} IS NULL OR #{item.delvdsr} = '' THEN ''
+			    ELSE DATE_FORMAT(#{item.delvdsr}, '%Y%m%d')
+			END
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s')
+			, #{item.rcvdcky}, #{item.rcvdcit}
+			, #{item.taskoky}, #{item.taskoit}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{item.useract}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{item.useract}
+			, 'Y'
+		)
+	</insert>
+
+	<!-- 입고작업완료 -->
+	<update id="updateInboundTask" parameterType="com.kbph.logistics.api.domain.ApiCommonDTO">
+		/* updateInboundTask */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE ${apiCommon.schema}.WTAKIT
+			SET
+				STOCKKY = #{data.stockky},
+				LOTNMKY = #{data.lotnmky},
+				TOAREKY = #{data.toareky},
+				TOLOCKY = #{data.tolocky},
+				TOLAYER = #{data.tolayer},
+				TCMPQTY = 1,
+				TASKSTS = 'TASKCMP',
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{data.taskoky}
+				AND EOASNKY = #{data.eoasnky}
+				AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</update>
+
+	<!-- 조업완료시 재고위치 update -->
+	<update id="updateInboundApiWstkky">
+		/* updateInboundApiWstkky */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+			UPDATE ${apiCommon.schema}.WSTKKY
+				SET AREAKEY = #{data.toareky},
+					LOCAKEY = #{data.tolocky},
+					LOLAYER = #{data.tolayer},
+					LMODATE = date_format(now(), '%Y%m%d'),
+					LMOTIME = date_format(now(), '%H%i%s'),
+					LMOUSER = #{apiCommon.useract},
+					UPDTCHK = UPDTCHK + 1
+				WHERE
+					TASKOKY = #{data.taskoky}
+					AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</update>
+
+	<!-- 조업완료 => wrcvit 조회 컬럼 간소화-->
+	<select id="selectApiWrcvitList" resultType="com.kbph.logistics.im.domain.WrcvhdDTO">
+		/* selectApiWrcvitList */
+		SELECT
+			RCVDCKY, WAREKEY,
+			UPDTCHK
+		FROM
+			${apiCommon.schema}.WRCVIT
+		WHERE
+			EOASNKY = #{data.eoasnky}
+		GROUP BY RCVDCKY, WAREKEY
+	</select>
+
+	<!-- 입고조업완료 -->
+	<insert id="updateInboundComplete" parameterType="com.kbph.logistics.api.domain.ApiCommonDTO">
+		/* updateInboundComplete */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE ${apiCommon.schema}.WTAKIT
+			SET
+				TASKSTS = 'OPERCMP',
+				TOAREKY = #{data.toareky},
+				TOLOCKY = #{data.tolocky},
+				TOLAYER = #{data.tolayer},
+				MVEDDAT = date_format(now(), '%Y%m%d'),
+				MVEDTIM = date_format(now(), '%H%i%s'),
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{data.taskoky}
+				AND EOASNKY = #{data.eoasnky}
+				AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</insert>
+
+	<!-- 베드, 베드단 재고유무 확인 -->
+	<select id="isApiSameLocationAndLayer" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* isApiSameLocationAndLayer */
+		SELECT
+			STOCKKY, SKUMKEY
+		FROM
+			${apiCommon.schema}.WSTKKY
+		WHERE
+			AREAKEY = #{data.toareky}
+			AND LOCAKEY = #{data.tolocky}
+			AND LOLAYER = #{data.tolayer}
+			AND SKUMKEY != #{data.skumkey}
+		LIMIT 1
+	</select>
+
+	<!-- 재고 위치 업데이트 -->
+	<update id="updateApiStockLocAndLayer">
+		/* updateApiStockLocAndLayer */
+		UPDATE ${apiCommon.schema}.WSTKKY
+			SET AREAKEY = #{data.toareky},
+				LOCAKEY = #{data.tolocky},
+				LOLAYER = #{data.tolayer},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract}
+			WHERE
+				SKUMKEY = #{data.skumkey}
+	</update>
+
+	<select id="isApiAsnTaskAllOperCmp" resultType="int">
+		/* isApiAsnTaskAllOperCmp */
+		SELECT COUNT(1)
+			FROM ${apiCommon.schema}.WTAKIT WT
+		INNER JOIN ${apiCommon.schema}.WASNHD WH
+			ON WT.EOASNKY = WH.EOASNKY
+		WHERE WT.TASKSTS IN ('NEW', 'OPERSTR', 'TASKCMP')
+			AND WT.EOASNKY = #{data.eoasnky}
+	</select>
+</mapper>

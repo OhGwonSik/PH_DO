@@ -1,0 +1,536 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents Ptype05" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<div class="setting-grid-title">[[#{menu.md.dos001}]]</div>
+                <div class="setting-grid-content">
+                	<div class="input-group">
+                    	<select id="doe016SystemId"></select>
+                    </div>
+                </div>
+			</div>
+			<div class="search-btn-group">
+				<div id="doe016BtnSearch" class="btn-search btn-navy"><img>[[#{bt.search}]]</div>
+			</div>
+		</div>
+		<div class="list-wrapper">
+			<div class="search-list" style="max-width: 27%">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">[[#{sy.doe016.menuInfo}]]</div>
+					<div class="edit-btn-wrapper">
+		                <button id="doe016BtnAddRowMenu" class="btn-white"><img class="ic-line-plus">[[#{bt.add}]]</button>
+		                <button id="doe016BtnDelRowMenu" class="btn-white"><img class="ic-line-minus">[[#{bt.delete}]]</button>
+		                <button id="doe016BtnSaveMenu" class="btn-navy"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+                </div>
+				<!-- 개발 작업시 그리드 들어갈 부분 -->
+				<div class="list-grid-wrapper con-box">
+					<div id="doe016MenuHeadGrid"></div>
+				</div>
+			</div>
+			<div class="search-list" style="max-width: 73%">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">[[#{sy.doe016.detailMenuInfo}]]</div>
+					<div class="edit-btn-wrapper">
+		                <button id="doe016BtnAddRowDetail" class="btn-white"><img class="ic-line-plus">[[#{bt.add}]]</button>
+		                <button id="doe016BtnDelRowDetail" class="btn-white"><img class="ic-line-minus">[[#{bt.delete}]]</button>
+		                <button id="doe016BtnSaveDetail" class="btn-navy"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+                </div>
+				<!-- 개발 작업시 그리드 들어갈 부분 -->
+				<div class="list-grid-wrapper con-box">
+					<div id="doe016MenuItemGrid"></div>
+				</div>
+			</div>
+		</div>
+	<script>
+	!function(){
+	 	doe016Init();
+	 	let doe016CurrentSystemId;
+
+		const doe016HeadGridCM = [
+				{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+				{
+					title: "[[#{sy.smnuma.progrid}]]",
+					dataType: "string",
+					dataIndx: "progrid",
+					hidden: true
+				},
+				{
+					title: "[[#{sy.smnuma.menufid}]]",
+					dataType: "string",
+					dataIndx: "menufid",
+					hidden: true
+				},
+				{
+					title: "[[#{sy.smnuma.menugbn}]]",
+					dataType: "string",
+					dataIndx: "menugbn",
+					hidden: true
+				},
+				{
+		            title: "[[#{sy.smnuma.mnhdkey}]]",
+					dataType: "string",
+					dataIndx: "mnhdkey",
+		            editor: {
+		                type: 'select',
+		                options: []
+		            },
+		            //render required to display options text corresponding to value stored in the cell.
+		            render: gridRenderAndValue,
+		            styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+		        },
+				{
+					title: "[[#{sy.smnuma.progrid}]]",
+					dataType: "string",
+					dataIndx: "progrid",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{
+					title: "[[#{sy.smnuma.menunam}]]",
+					dataType: "string",
+					dataIndx: "menunam",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{
+					title: "[[#{sy.smnuma.menuseq}]]",
+					dataType: "string",
+					dataIndx: "menuseq",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{
+					title: "[[#{sy.smnuma.menulky}]]",
+					dataType: "string",
+					dataIndx: "menulky",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{
+					title: "[[#{sy.smnuma.prgmurl}]]",
+					dataType: "string",
+					dataIndx: "prgmurl",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					hidden : true
+				},
+				{ title: '[[#{grid.credate}]]',  dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },					// 생성일자
+				{ title: '[[#{grid.cretime}]]',  dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },					// 생성일시
+				{ title: '[[#{grid.creuser}]]',  dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },						// 생성사용자
+				{ title: '[[#{grid.lmodate}]]',  dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },					// 수정일자
+				{ title: '[[#{grid.lmotime}]]',  dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },					// 수정일시
+				{ title: '[[#{grid.lmouser}]]',  dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },						// 수정사용자
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }					// Update Check
+		];
+
+		const doe016ItemGridCM = [
+				{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+				{
+					title: "[[#{sy.srolmn.menukey}]]",
+					dataType: "string",
+					dataIndx: "menukey",
+					hidden: true
+				},
+				{
+					title: "[[#{sy.smnuma.mnhdkey}]]",
+					dataType: "string",
+					dataIndx: "mnhdkey",
+					hidden: true
+				},
+				{
+					title: "[[#{sy.smnuma.menufid}]]",
+					dataType: "string",
+					dataIndx: "menufid",
+					hidden: true
+				},
+				{
+					title: "[[#{sy.smnuma.menugbn}]]",
+					dataType: "string",
+					dataIndx: "menugbn",
+					hidden: true
+				},
+				{
+					title: "[[#{sy.smnuma.menunam}]]",
+					dataType: "string",
+					dataIndx: "menunam",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{
+					title: "[[#{sy.smnuma.progrid}]]",
+					dataType: "string",
+					dataIndx: "progrid",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{
+					title: "[[#{sy.smnuma.menuseq}]]",
+					dataType: "string",
+					dataIndx: "menuseq",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{
+					title: "[[#{sy.smnuma.menulky}]]",
+					dataType: "string",
+					dataIndx: "menulky",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{
+					title: "[[#{sy.smnuma.prgmurl}]]",
+					dataType: "string",
+					dataIndx: "prgmurl",
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }
+				},
+				{ title: '[[#{grid.credate}]]',  dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },					// 생성일자
+				{ title: '[[#{grid.cretime}]]',  dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },					// 생성일시
+				{ title: '[[#{grid.creuser}]]',  dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },						// 생성사용자
+				{ title: '[[#{grid.lmodate}]]',  dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },					// 수정일자
+				{ title: '[[#{grid.lmotime}]]',  dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },					// 수정일시
+				{ title: '[[#{grid.lmouser}]]',  dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },						// 수정사용자
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }					// Update Check
+			];
+
+		const doe016HeadGrid = new GridUtil(doe016HeadGridCM, '[[${tabPage}]]', 'doe016MenuHeadGrid');
+		const doe016ItemGrid = new GridUtil(doe016ItemGridCM, '[[${tabPage}]]', 'doe016MenuItemGrid');
+
+		doe016HeadGrid.setSelectionModel({type: 'row', mode: 'single'});
+		doe016HeadGrid.setCellClick(async function(event, ui) {
+
+			doe016ItemGrid.getGrid().showLoading();
+
+			const param = {
+					mnhdkey : ui.rowData.mnhdkey,
+					menufid : ui.rowData.menukey
+			}
+
+			const response = await fetchUtil('GET', '/sy/doe016/grid', param);
+
+			if(response.status === 200) {
+				const doe016MenuDetailList = await response.json();
+				doe016ItemGrid.getGrid().option('dataModel', { data: doe016MenuDetailList, recIndx: 'rowkey' });
+				doe016ItemGrid.getGrid().refreshDataAndView();
+			}
+
+			doe016ItemGrid.getGrid().hideLoading();
+
+		});
+
+		doe016HeadGrid.open();
+
+		doe016ItemGrid.setSelectionModel({type: 'row', mode: 'single'});
+		doe016ItemGrid.open();
+
+		async function doe016Init(){
+
+			const response = await fetchUtil('GET', '/sy/menu/grid/header');
+
+			const systemMenuList = await response.json();
+			let html = '';
+
+			for(const systemMenuData of systemMenuList){
+				html += '<option value = "'+ systemMenuData.mnhdkey +'">'+ systemMenuData.mnhdnam +'</option>';
+			}
+			document.querySelector('#doe016SystemId').innerHTML = html;
+
+			comboCreateData('doe016MenuHeadGrid', 'mnhdkey', systemMenuList, { combovl : 'mnhdkey', combonm : 'mnhdnam' });
+		}
+
+		//조회 버튼 클릭
+		async function getMenu(){
+
+			const menuHeadGrid = pq.grid('#doe016MenuHeadGrid');
+			const menuItemGrid = pq.grid('#doe016MenuItemGrid');
+
+			menuItemGrid.option('dataModel', {data : []});
+			menuItemGrid.refreshDataAndView();
+
+			menuHeadGrid.showLoading();
+
+			const param = {
+					menufid : '',
+					mnhdkey : document.querySelector('#doe016SystemId').value
+			}
+
+			doe016CurrentSystemId = param.mnhdkey;
+
+			const response = await fetchUtil('GET', '/sy/doe016/grid', param);
+			if(response.status === 200) {
+				const doe016MenuList = await response.json();
+				menuHeadGrid.option('dataModel', { data: doe016MenuList, recIndx: 'rowkey' });
+				menuHeadGrid.refreshDataAndView();
+			}
+
+			menuHeadGrid.hideLoading();
+		}
+
+		//조회 버튼 클릭
+		document.querySelector('#doe016BtnSearch').addEventListener('click', async function(){
+			await getMenu();
+		});
+
+		//메뉴정보 추가 버튼 클릭시
+		document.querySelector('#doe016BtnAddRowMenu').addEventListener('click', async function(){
+			pq.grid('#doe016MenuHeadGrid').addRow({
+				newRow:{
+					mnhdkey: document.querySelector('#doe016SystemId').value,
+					progrid: '',
+					menugbn: 'FLD',
+					menunam:'',
+					menuseq:'',
+					prgmurl:'',
+					menufid:''
+				}
+			});
+		});
+		//메뉴정보 삭제 버튼 클릭 시
+		document.querySelector('#doe016BtnDelRowMenu').addEventListener('click', async function(){
+			if(confirm(`[[#{ms.saveAfterDelete}]]`)) {
+				const selrows = pq.grid('#doe016MenuHeadGrid').SelectRow().getSelection();
+				selrows.forEach(function(sel) {
+					const rowCountS = pq.grid('#doe016MenuItemGrid').getData().length;
+					if(rowCountS) {
+						alert("[[#{ms.hasDetailMenu}]]");
+						return;
+					}
+					pq.grid('#doe016MenuHeadGrid').deleteRow({rowIndx: sel.rowIndx});
+				});
+			}
+		});
+		//메뉴정보 저장 버튼 클릭 시
+		document.querySelector('#doe016BtnSaveMenu').addEventListener('click', async function(){
+				const grid = doe016HeadGrid.getGrid();
+				const itemGrid = doe016ItemGrid.getGrid();
+				const gridDataList 	= grid.getData();
+				const gridChangeList = grid.getChanges({all:true});
+
+				const updateList = gridChangeList.updateList;
+				const addList = gridChangeList.addList;
+				const deleteList = gridChangeList.deleteList;
+
+				if(!updateList.length && !addList.length && !deleteList.length){
+					return;
+				}
+
+				//&& e.pq_ri != addData.pq_ri 자기 자신 뺴고 검사
+				for(const addData of addList){
+					const sameProgridCheck = gridDataList.filter(function(e) {
+						return e.progrid === addData.progrid && e.pq_ri != addData.pq_ri;
+					});
+
+					if(sameProgridCheck.length){
+						alert('[[#{sy.smnuma.progrid}]] '+'[[#{ms.DuplicateKeyErr}]]');
+						return;
+					}
+
+					if(!addData.mnhdkey){
+						alert('[[#{sy.smnuma.mnhdkey}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+
+					if(!addData.progrid){
+						alert('[[#{sy.smnuma.progrid}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+
+					if(!addData.menunam){
+						alert('[[#{sy.smnuma.menunam}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+
+					if(!addData.menuseq){
+						alert('[[#{sy.smnuma.menuseq}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+
+					if(!addData.menulky){
+						alert('[[#{sy.smnuma.menulky}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+				}
+
+				for(const updateData of updateList){
+
+					if(!updateData.mnhdkey){
+						alert('[[#{sy.smnuma.mnhdkey}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+
+					if(!updateData.progrid){
+						alert('[[#{sy.smnuma.progrid}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+
+					if(!updateData.menunam){
+						alert('[[#{sy.smnuma.menunam}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+
+					if(!updateData.menuseq){
+						alert('[[#{sy.smnuma.menuseq}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+
+					if(!updateData.menulky){
+						alert('[[#{sy.smnuma.menulky}]]' + '[[#{ms.inputValue}]]');
+						return;
+					}
+				}
+				if(confirm('[[#{ms.checksave}]]')) {
+					grid.showLoading();
+					const param = {
+							addList : addList,
+							updateList : updateList,
+							deleteList : deleteList
+					}
+
+					const response = await fetchUtil('POST' , '/sy/menu/save' , param);
+					if(response.status === 200){
+						await getMenu();
+						itemGrid.option('dataModel', { data: [] });
+						grid.refreshDataAndView();
+					}
+					grid.hideLoading();
+				}
+			});
+
+		//상세메뉴 추가 버튼 클릭 시
+		document.querySelector('#doe016BtnAddRowDetail').addEventListener('click', async function(){
+			const selectRow = pq.grid('#doe016MenuHeadGrid').SelectRow().getSelection();
+
+			if(!selectRow.length || !selectRow[0].rowData.menukey){
+				return;
+			}
+
+			pq.grid('#doe016MenuItemGrid').addRow({
+				newRow:{
+					mnhdkey: document.querySelector('#doe016SystemId').value,
+					menufid: selectRow[0].rowData.menukey,
+					menugbn: 'PGM',
+					progrid: '',
+					menunam:'',
+					menuseq:'',
+					menulky:'',
+					prgmurl:''
+				}
+			});
+		});
+
+		//상세메뉴 삭제 버튼 클릭 시
+		document.querySelector('#doe016BtnDelRowDetail').addEventListener('click', async function(){
+			if(confirm(`[[#{ms.saveAfterDelete}]]`)) {
+				const selectRow = doe016ItemGrid.getGrid().SelectRow().getSelection();
+				selectRow.forEach(function(sel) {
+					doe016ItemGrid.getGrid().deleteRow({rowIndx: sel.rowIndx});
+				}
+			)};
+		});
+
+
+		//상세메뉴 저장 버튼 클릭 시
+		document.querySelector('#doe016BtnSaveDetail').addEventListener('click', async function(){
+
+			const grid = doe016ItemGrid.getGrid();
+			const gridDataList 	= grid.getData();
+			const gridChangeList = grid.getChanges({all:true});
+
+			const updateList = gridChangeList.updateList;
+			const addList = gridChangeList.addList;
+			const deleteList = gridChangeList.deleteList;
+
+			if(!updateList.length && !addList.length && !deleteList.length){
+				return;
+			}
+
+			//&& e.pq_ri != addData.pq_ri 자기 자신 뺴고 검사
+			for(const addData of addList){
+				const sameProgridCheck = gridDataList.filter(function(e) {
+					return e.progrid === addData.progrid && e.pq_ri != addData.pq_ri;
+				});
+
+				if(sameProgridCheck.length){
+					alert('[[#{sy.smnuma.progrid}]] '+'[[#{ms.DuplicateKeyErr}]]');
+					return;
+				}
+
+				if(!addData.menunam){
+					alert('[[#{sy.smnuma.menunam}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+
+				if(!addData.progrid){
+					alert('[[#{sy.smnuma.progrid}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+
+				if(!addData.menuseq){
+					alert('[[#{sy.smnuma.menuseq}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+
+				if(!addData.menulky){
+					alert('[[#{sy.smnuma.menulky}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+
+				if(!addData.prgmurl){
+					alert('[[#{sy.smnuma.prgmurl}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+			}
+
+			for(const updateData of updateList){
+
+				if(!updateData.menunam){
+					alert('[[#{sy.smnuma.menunam}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+
+				if(!updateData.progrid){
+					alert('[[#{sy.smnuma.progrid}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+
+				if(!updateData.menuseq){
+					alert('[[#{sy.smnuma.menuseq}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+
+				if(!updateData.menulky){
+					alert('[[#{sy.smnuma.menulky}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+
+				if(!updateData.prgmurl){
+					alert('[[#{sy.smnuma.prgmurl}]]' + '[[#{ms.inputValue}]]');
+					return;
+				}
+			}
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+				const param = {
+						addList : addList,
+						updateList : updateList,
+						deleteList : deleteList
+				}
+				const response = await fetchUtil('POST' , '/sy/menu/save' , param);
+				if(response.status === 200){
+					grid.option('dataModel', { data: [] });
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+		});
+
+		// 시스템 변경시 자동조회
+		document.querySelector('#doe016SystemId').addEventListener('change', async function() {
+			const headGrid = pq.grid('#doe016MenuHeadGrid');
+			if(doe016CurrentSystemId && headGrid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					this.value = doe016CurrentSystemId;
+					return;
+				}
+			}
+			makeEmptyGrid(doe016ItemGrid);
+			await getMenu();
+		});
+	}();
+	</script>
+</div>
+</html>

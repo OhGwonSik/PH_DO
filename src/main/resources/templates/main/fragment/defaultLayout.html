@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+	<th:block th:replace="~{/main/fragment/comHead.html :: fragments-comHead}"></th:block>
+	<th:block th:replace="~{/main/fragment/comScript.html :: fragments-comScript}"></th:block>
+</head>
+<body>
+<div class="wrapper">
+	<!-- Header  -->
+	<header>
+		<th:block th:replace="~{/main/fragment/mainHeader.html :: fragments-mainHeader}"></th:block>
+	</header>
+	<!-- Header End -->
+	<!-- Page Content  -->
+	<div class="main-wrapper" id="mainContent">
+		<!-- Sidebar -->
+		<th:block th:replace="~{/main/fragment/mainSideBar.html :: fragments-mainSideBar}"></th:block>
+		<!-- Sidebar End -->
+
+		 <!-- Main -->
+		<main id="content" class="main-content">
+			<div class="content-wrapper">
+				<th:block th:replace="${gprogcmd != null } ? ~{${gprogcmd} :: fragments-mainContent} : ~{/main/fragment/mainContent.html :: fragments-mainContent}" ></th:block>
+				<div layout:fragment="content"></div>
+			</div>
+		</main>
+
+		<!-- spinner -->
+		<div class="spinner-wrapper">
+			<div class="spinner-background">
+				<div class="spinner" id="spinner"></div>
+			</div>
+			<div class="spinner-border" role="status"></div>
+		</div>
+		<!-- spinner end -->
+	</div>
+	<!-- Main End -->
+	<!-- Footer -->
+	<th:block th:replace="~{/main/fragment/mainFooter.html :: fragments-mainFooter}"></th:block>
+	<!-- Footer End -->
+	<!-- Page Content End -->
+</div>
+</body>
+</html>

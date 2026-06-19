@@ -1,0 +1,431 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doe004Warekey" class="setting-grid-title ic-title-nece">[[#{menu.md.dom001}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe004Warekey" name="doe004Warekey"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+							data-cb-select="" data-cb-variable="warekeyList">
+							</select>
+						</div>
+					</div>
+					<label for="doe004Areanam" class="setting-grid-title">[[#{search.areanam}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('search.areanam')}"
+							id="doe004Areanam" name="doe004Areanam">
+						</div>
+					</div>
+					<label for="doe004Equipky" class="setting-grid-title">[[#{md.mequma.equipky}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mequma.equipky')}"
+							id="doe004Equipky" name="doe004Equipky">
+						</div>
+					</div>
+					<label for="doe004Equinam" class="setting-grid-title">[[#{md.mequma.equinam}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mequma.equinam')}"
+							id="doe004Equinam" name="doe004Equinam">
+						</div>
+					</div>
+					<label for="doe004Equtype" class="setting-grid-title">[[#{md.mequma.equtype}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe004Equtype" name="doe004Equtype"
+								data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=equtype"
+								data-cb-select="" data-cb-variable="equtypeList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe004Equstat" class="setting-grid-title">[[#{md.mequma.equstat}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe004Equstat" name="doe004Equstat"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=equstat"
+							data-cb-select="" data-cb-variable="equstatList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe004Equseyn" class="setting-grid-title">[[#{md.useyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe004Equseyn" class="pq-select">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doe004BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doe004BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe004}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe004BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe004Grid"></div>
+				</div>
+			</div>
+		<script>
+		!function(){
+			let doe004CurrentWarekey; // 현재 warekey 검색값 저장
+			let doe004warAreaRelArr = []; // 창고와 창고동 관계 조회
+			const pageId = '[[${tabPage}]]';
+			let areaRelList;
+
+			// 칼럼
+			const doe004GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{menu.md.dom001}]]', dataType: 'string', dataIndx: 'warekey', editable: false,
+					editor: { options: [] }, render : gridRenderAndValue
+		        },
+				{ title: '[[#{md.area}]]', dataType: 'string', dataIndx: 'areakey', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+		        	editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+	        			 options: ui => {
+	        				 return window['areaRelList']?.map(e => {
+								if(e.warekey === ui.rowData.warekey){
+									const obj = {};
+									obj[e.areakey] = e.combonm;
+
+									return obj;
+								}
+							}).filter(e => e);
+	        			 }
+					},
+					render: ui => {
+						const target = window['areaRelList']?.find(e => e.areakey === ui.cellData && e.warekey === ui.rowData.warekey);
+ 						return {
+  							text: target ? target['combonm'] : ui.cellData
+ 						};
+					},
+		             editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				},
+				{ title: '[[#{md.mequma.equipky}]]', dataType: 'string', dataIndx: 'equipky', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				},
+				{ title: '[[#{md.mequma.equinam}]]', dataType: 'string', dataIndx: 'equinam', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mequma.equtype}]]', dataType: 'string', dataIndx: 'equtype', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mequma.equstat}]]', dataType: 'string', dataIndx: 'equstat', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.widt}]]', dataType: 'integer', dataIndx: 'equwidt', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.leng}]]', dataType: 'integer', dataIndx: 'equleng', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.heig}]]', dataType: 'integer', dataIndx: 'equheig', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.weig}]]', dataType: 'integer', dataIndx: 'equweig', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.maxwg}]]', dataType: 'integer', dataIndx: 'eqmaxwg', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'equseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.memo}]]', dataType: 'string', dataIndx: 'equmemo', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mequma.equvend}]]', dataType: 'string', dataIndx: 'equvend', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mequma.equpurd}]]', dataType: 'date', dataIndx: 'equpurd', format:'yy-mm-dd', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }, // 설비구매일자
+					editor: {
+			            type: 'textbox',
+			            init: dateEditor,
+			            getData: function (ui) {
+			                let dt = $.datepicker.parseDate(ui.column.format, ui.$cell.find('input').val());
+			                return $.datepicker.formatDate('yy-mm-dd', dt);
+			            }
+			        }
+				},
+				{ title: '[[#{md.mannm}]]', dataType: 'string', dataIndx: 'eqmannm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mantl}]]', dataType: 'string', dataIndx: 'eqmantl', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.manem}]]', dataType: 'string', dataIndx: 'eqmanem', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const doe004Grid = new GridUtil(doe004GridCM, pageId, pageId + 'Grid');
+			doe004Grid.setFind();
+			doe004Grid.setReset();
+
+			// Grid 생성시 이벤트
+			doe004Grid.setCreate(async function(evt, ui) {
+				await _commonInit(pageId);
+				comboCreateData(pageId + 'Grid', 'warekey', warekeyList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'equtype', equtypeList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'equstat', equstatList, { combovl : 'combovl', combonm : 'combonm' });
+
+				const doe004InitRes = await fetchUtil('GET', '/md/' + pageId + '/init');
+				const doe004InitData = await doe004InitRes.json();
+				areaRelList = doe004InitData.item.areaRelList;
+
+				const relationList = await Promise.allSettled([
+					areaRelList
+				]);
+
+				const dataList = [{
+						listName: 'areaRelList'
+					}
+				];
+
+				for(let idx=0; idx < relationList.length; idx++){
+					const target = dataList[idx];
+					target['list'] = relationList[idx].value;
+				}
+
+				setPreloadDataOnWindow(dataList);
+				this.option('freezeCols', 1);
+				resetSearchConditions(pageId);
+			});
+
+			// 그리드 행 추가
+			doe004Grid.setAdd(function(evt, ui){
+				if(!doe004CurrentWarekey){
+					alert('[[#{ms.noSearchError}]]');
+					return;
+				}
+
+				const rowData = {
+					state: true,
+					warekey: doe004CurrentWarekey,
+					equwidt: 0,
+					equleng: 0,
+					equheig: 0,
+					equweig: 0,
+					eqmaxwg: 0,
+					equseyn: 'Y'
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'Grid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe004Grid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {state: true};
+
+		           		if(updateData.newRow.hasOwnProperty('equseyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+		    		let equipkyData, areakeyData, equtypeData, equstatData;
+
+		    		for(const updateData of ui.updateList){
+
+		   				if(updateData.newRow.hasOwnProperty('equipky') && updateData.oldRow.hasOwnProperty('equipky')){
+		   					equipkyData = updateData.newRow['equipky']?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('areakey') && updateData.oldRow.hasOwnProperty('areakey')){
+		    				areakeyData = doe004warAreaRelArr.find(function(data){
+	    						return(data.areanam === updateData.newRow['areakey'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('equtype') && updateData.oldRow.hasOwnProperty('equtype')){
+		    				equtypeData = equtypeList.find(function(data){
+	    						return(data.combonm === updateData.newRow['equtype'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('equstat') && updateData.oldRow.hasOwnProperty('equstat')){
+		    				equstatData = equstatList.find(function(data){
+	    						return(data.combonm === updateData.newRow['equstat'])
+	    					})
+	    				}
+
+			    		this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								warekey: doe004CurrentWarekey,
+								areakey: areakeyData ? areakeyData.areakey : updateData.rowData.areakey,
+								equipky: equipkyData ? equipkyData : updateData.rowData.equipky,
+								equtype: equtypeData ? equtypeData.combovl : updateData.rowData.equtype,
+								equstat: equstatData ? equstatData.combovl : updateData.rowData.equstat,
+								equseyn: updateData.rowData.equseyn,
+								equwidt: updateData.rowData.equwidt,
+								equleng: updateData.rowData.equleng,
+								equheig: updateData.rowData.equheig,
+								equweig: updateData.rowData.equweig,
+								eqmaxwg: updateData.rowData.eqmaxwg
+							},
+							checkEditable : false
+			    		})
+		    		}
+		    		for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.warekey = doe004CurrentWarekey;
+		    			addData.rowData.areakey = areakeyData ? areakeyData.areakey : addData.rowData.areakey;
+		    			addData.rowData.equipky = equipkyData ? equipkyData : addData.rowData.equipky;
+		    			addData.rowData.equtype = equtypeData ? equtypeData.combovl : addData.rowData.equtype;
+		    			addData.rowData.equstat = equstatData ? equstatData.combovl : addData.rowData.equstat;
+		    			addData.rowData.equseyn = addData?.newRow?.equseyn || 'Y';
+		    			addData.rowData.equwidt = addData?.newRow?.equwidt || 0;
+		    			addData.rowData.equleng = addData?.newRow?.equleng || 0;
+		    			addData.rowData.equheig = addData?.newRow?.equheig || 0;
+		    			addData.rowData.equweig = addData?.newRow?.equweig || 0;
+		    			addData.rowData.eqmaxwg = addData?.newRow?.eqmaxwg || 0;
+		    		}
+		    	}
+				doe004Grid.getGrid().refresh();
+			});
+
+			// Grid 객체 생성
+			doe004Grid.open();
+
+			// 검색 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+				await getDoe004List();
+			})
+
+			// 저장 버튼
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe004Grid, ['warekey', 'areakey', 'equipky', 'equinam', 'equtype', 'equstat'])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe004Grid, ['equipky'])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe004Grid, ['areakey', 'equipky'])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe004Grid, ['warekey', 'equipky']);
+				if( !validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doe004Grid, refineGridUtilSaveList(doe004Grid), '/md/' + pageId + '/grid');
+				getDoe004List();
+			})
+
+			// 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+				makeEmptyGrid(doe004Grid);
+				resetSearchConditions(pageId);
+			})
+
+			// 창고 변경시 자동조회
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(doe004CurrentWarekey && grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						this.value = doe004CurrentWarekey;
+						return;
+					}
+				}
+				await getDoe004List();
+			});
+
+
+
+			// Grid 데이터 조회 함수
+			async function getDoe004List(){
+			    const grid = pq.grid('#' + pageId + 'Grid');
+			    const data = {
+			        warekey: document.querySelector('#' + pageId + 'Warekey').value.toUpperCase(),
+			        areanam: document.querySelector('#' + pageId + 'Areanam').value.toUpperCase(),
+			        equipky: document.querySelector('#' + pageId + 'Equipky').value.toUpperCase(),
+			        equinam: document.querySelector('#' + pageId + 'Equinam').value.toUpperCase(),
+			        equtype: document.querySelector('#' + pageId + 'Equtype').value,
+			        equstat: document.querySelector('#' + pageId + 'Equstat').value,
+			        equseyn: document.querySelector('#' + pageId + 'Equseyn').value
+			    };
+
+			    doe004CurrentWarekey = data.warekey;
+
+			    grid.showLoading();
+			    const res = await fetchUtil('GET', '/md/' + pageId + '/grid', data);
+
+			    if (res.status === 200) {
+			        const doe004List = await res.json();
+			        grid.option('dataModel', {
+			            data: doe004List,
+			            recIndx: 'rowkey'
+			        });
+			        grid.refreshDataAndView();
+			    }
+			    grid.hideLoading();
+
+				const itemList = document.querySelectorAll('.setting-grid input');
+				itemList.forEach(function(item){
+					item.addEventListener('keyup', searchEnter);
+				})
+
+				// Enter로 검색
+				async function searchEnter(event) {
+				    const key = event.key || event.keyCode;
+				    if (key === 'Enter' || key === 13) {
+				        await getDoe004List();
+				    }
+				}
+			}
+		}();
+		</script>
+	</div>
+</html>

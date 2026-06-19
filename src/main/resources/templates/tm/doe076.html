@@ -1,0 +1,233 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="doe076Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe076Warekey" name="doe076Warekey"
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+						data-cb-variable="warekeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe076Vhcfnam" class="setting-grid-title">[[#{tm.common.vhcfnam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('tm.common.vhcfnam')}" id="doe076Vhcfnam" name="doe076Vhcfnam" onkeyup="doe076KeyupEvt()">
+					</div>
+				</div>
+				<label for="doe076Trnindt" class="setting-grid-title">[[#{tm.tplnhd.trnindt}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-date-group">
+						<input type="month" max="2999-12" id="doe076Trnindt" name="doe076Trnindt">
+					</div>
+				</div>
+				<label for="doe076Vownkey" class="setting-grid-title">[[#{tm.tplnhd.vownkey}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('tm.tplnhd.vownkey')}" id="doe076Vownkey" name="doe076Vownkey" onkeyup="doe076KeyupEvt()">
+					</div>
+				</div>
+				<label for="doe076Drvernm" class="setting-grid-title">[[#{tm.common.drvernm}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('tm.common.drvernm')}" id="doe076Drvernm" name="doe076Drvernm" onkeyup="doe076KeyupEvt()">
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe076Search"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe076Reset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.tm.doe076}]]</span>
+				</div>
+			</div>
+			<ul class="nav nav-tabs" id="doe076GridTab">
+				<li class="nav-item">
+					<a class="nav-link active" data-toggle="tab" data-tab-type="day" href="#doe076DayTab">일단위</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" data-toggle="tab" data-tab-type="month" href="#doe076MonthTab">월단위</a>
+				</li>
+			</ul>
+			<div class="tab-content">
+				<div class="list-grid-wrapper con-box tab-pane show active" id="doe076DayTab">
+					<div class="grid-container">
+						<div id="doe076DayGrid"></div>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box tab-pane active" id="doe076MonthTab">
+					<div class="grid-container">
+						<div id="doe076MonthGrid"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+		!function() {
+			const pageId = 'doe076';
+			
+			//날짜셋팅
+			const month = moment().format('YYYY-MM');
+			document.querySelector('#' + pageId + 'Trnindt').value = month;
+			
+			//일단위 그리드
+			const doe076DayGridCM = [
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{tm.common.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false },
+				{ title: '[[#{tm.common.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{grid.vhcsnam}]]', dataType: 'string', dataIndx: 'vhcsnam', editable: false },
+				{ title: '[[#{tm.common.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+				{ title: '[[#{tm.tplnhd.vownkey}]]', dataType: 'string', dataIndx: 'vonamlc', editable: false },
+				{ title: '[[#{tm.common.drvernm}]]', dataType: 'string', dataIndx: 'drvernm', editable: false },
+				{ title: '[[#{tm.doe076.total}]]', dataType: 'integer', dataIndx: 'totalTrnindtCnt', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt01}]]', dataType: 'integer', dataIndx: 'trnindt01', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt02}]]', dataType: 'integer', dataIndx: 'trnindt02', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt03}]]', dataType: 'integer', dataIndx: 'trnindt03', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt04}]]', dataType: 'integer', dataIndx: 'trnindt04', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt05}]]', dataType: 'integer', dataIndx: 'trnindt05', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt06}]]', dataType: 'integer', dataIndx: 'trnindt06', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt07}]]', dataType: 'integer', dataIndx: 'trnindt07', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt08}]]', dataType: 'integer', dataIndx: 'trnindt08', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt09}]]', dataType: 'integer', dataIndx: 'trnindt09', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt10}]]', dataType: 'integer', dataIndx: 'trnindt10', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt11}]]', dataType: 'integer', dataIndx: 'trnindt11', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt12}]]', dataType: 'integer', dataIndx: 'trnindt12', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt13}]]', dataType: 'integer', dataIndx: 'trnindt13', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt14}]]', dataType: 'integer', dataIndx: 'trnindt14', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt15}]]', dataType: 'integer', dataIndx: 'trnindt15', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt16}]]', dataType: 'integer', dataIndx: 'trnindt16', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt17}]]', dataType: 'integer', dataIndx: 'trnindt17', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt18}]]', dataType: 'integer', dataIndx: 'trnindt18', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt19}]]', dataType: 'integer', dataIndx: 'trnindt19', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt20}]]', dataType: 'integer', dataIndx: 'trnindt20', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt21}]]', dataType: 'integer', dataIndx: 'trnindt21', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt22}]]', dataType: 'integer', dataIndx: 'trnindt22', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt23}]]', dataType: 'integer', dataIndx: 'trnindt23', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt24}]]', dataType: 'integer', dataIndx: 'trnindt24', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt25}]]', dataType: 'integer', dataIndx: 'trnindt25', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt26}]]', dataType: 'integer', dataIndx: 'trnindt26', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt27}]]', dataType: 'integer', dataIndx: 'trnindt27', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt28}]]', dataType: 'integer', dataIndx: 'trnindt28', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt29}]]', dataType: 'integer', dataIndx: 'trnindt29', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt30}]]', dataType: 'integer', dataIndx: 'trnindt30', editable: false, format: '#,###' },
+				{ title: '[[#{tm.doe076.trnindt31}]]', dataType: 'integer', dataIndx: 'trnindt31', editable: false, format: '#,###' }
+			]
+			
+			const doe076DayGrid = new GridUtil(doe076DayGridCM, pageId, pageId + 'DayGrid');
+			doe076DayGrid.setFind();
+			
+			doe076DayGrid.setCreate(async function() {
+				await _commonInit(pageId);
+				await initTab(pageId);
+			});
+			
+			doe076DayGrid.open();
+			
+			//월단위 그리드
+			const doe076MonthGridCM = [
+				{ title: '[[#{tm.common.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false },
+				{ title: '[[#{tm.common.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{grid.vhcsnam}]]', dataType: 'string', dataIndx: 'vhcsnam', editable: false },
+				{ title: '[[#{tm.common.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+				{ title: '[[#{tm.tplnhd.vownkey}]]', dataType: 'string', dataIndx: 'vonamlc', editable: false },
+				{ title: '[[#{tm.common.drvernm}]]', dataType: 'string', dataIndx: 'drvernm', editable: false },
+				{ title: '[[#{tm.doe076.trnindt}]]', dataType: 'integer', dataIndx: 'trnmont', editable: false, format: '#,###' }
+			]
+			
+			const doe076MonthGrid = new GridUtil(doe076MonthGridCM, pageId, pageId + 'MonthGrid');
+			doe076MonthGrid.setFind();
+			
+			doe076MonthGrid.open();
+			
+			//초기화
+			document.querySelector('#' + pageId + 'Reset').addEventListener('click', function () {
+				resetSearchConditions(pageId);
+
+				makeEmptyGrid(doe076DayGrid);
+				makeEmptyGrid(doe076MonthGrid);
+				
+				$('#' + pageId + 'Regikey').val('').pqSelect('refreshData');
+			});
+			
+			//검색
+			document.querySelector('#' + pageId + 'Search').addEventListener('click', async function() {
+				await doe076SearchData();
+			});
+			
+			//창고 change evt
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				await doe076SearchData();
+			});
+		}();
+		
+		//검색
+		async function doe076SearchData() {
+			const pageId = 'doe076';
+			
+			//일단위 그리드
+			const dayGridParams = {
+					warekey: document.querySelector('#' + pageId + 'Warekey').value,
+					vhcfnam: document.querySelector('#' + pageId + 'Vhcfnam').value,
+					drvernm: document.querySelector('#' + pageId + 'Drvernm').value,
+					vonamlc: document.querySelector('#' + pageId + 'Vownkey').value,
+					targetMonth: document.querySelector('#' + pageId + 'Trnindt').value.replaceAll('-', '')
+			}
+			
+			let dayGridData = await fetchUtil('GET', '/tm/dispatch/doe076/daylog', dayGridParams);
+			dayGridData = await dayGridData.json();
+			
+			const dayGrid = pq.grid('#' + pageId + 'DayGrid');
+			
+			dayGrid.showLoading();
+			
+			dayGrid.option('dataModel', {
+				data: dayGridData,
+				recIndx: 'vehicky'
+			});
+			
+			dayGrid.refreshDataAndView();
+			dayGrid.hideLoading();
+			
+			//월단위 그리드
+			const monthGridParams = {
+					warekey: document.querySelector('#' + pageId + 'Warekey').value,
+					vhcfnam: document.querySelector('#' + pageId + 'Vhcfnam').value,
+					drvernm: document.querySelector('#' + pageId + 'Drvernm').value,
+					vonamlc: document.querySelector('#' + pageId + 'Vownkey').value,
+					targetMonth: document.querySelector('#' + pageId + 'Trnindt').value.replaceAll('-', '')
+			}
+			
+			let monthGridData = await fetchUtil('GET', '/tm/dispatch/doe076/monthlog', monthGridParams);
+			monthGridData = await monthGridData.json();
+			
+			const monthGrid = pq.grid('#' + pageId + 'MonthGrid');
+			
+			monthGrid.showLoading();
+			
+			monthGrid.option('dataModel', {
+				data: monthGridData,
+				recIndx: 'vehicky'
+			});
+			
+			monthGrid.refreshDataAndView();
+			monthGrid.hideLoading();
+		}
+		
+		//keyup
+		async function doe076KeyupEvt() {
+			const key = this.event.key || this.event.keyCode;
+			if(key === 'Enter' || key === 13) {
+				await doe076SearchData();
+			}
+		}
+		</script>
+	</div>
+</html>

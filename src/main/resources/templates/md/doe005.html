@@ -1,0 +1,319 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+   layout:decorate="~{/main/fragment/defaultLayout}">
+   <div class="tab-contents Ptype05" layout:fragment="content">
+      <div class="location"></div>
+      <div class="search-conditions con-box">
+         <div class="setting-grid">
+            <label for="doe005Warekey" class="setting-grid-title ic-title-nece">[[#{menu.md.dom001}]]</label>
+            <div class="setting-grid-content">
+            	<div class="input-group">
+					<select id="doe005Warekey" name="doe005Warekey"
+					data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+					data-cb-select="" data-cb-variable="warekeyList">
+					</select>
+				</div>
+            </div>
+            <label for="doe005Areakey" class="setting-grid-title">[[#{md.area}]]</label>
+            <div class="setting-grid-content">
+               <div class="input-group">
+					<select id="doe005Areakey" name="doe005Areakey"
+					data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/area"
+					data-cb-select="" data-cb-variable="areakeyList">
+						<option value="">[[#{ms.chooseAll}]]</option>
+					</select>
+				</div>
+            </div>
+         </div>
+         <div class="search-btn-group">
+            <button type="button" class="btn-search btn-navy btn-green" id="doe005BtnSearch"><img>[[#{bt.search}]]</button>
+            <button type="button" class="btn-clear btn-white" id="doe005BtnReset"><img>[[#{bt.reset}]]</button>
+         </div>
+      </div>
+      <div class="search-list">
+         <div class="list-top">
+            <div class="list-title ic-title-mark">
+               <span>[[#{md.meqloc.hgridnm}]]</span>
+            </div>
+         </div>
+         <div class="list-grid-wrapper con-box">
+            <div id="doe005HeadGrid"></div>
+         </div>
+      </div>
+      <div class="search-list">
+         <div class="list-top">
+            <div class="list-title ic-title-mark">[[#{menu.md.doe005}]]</div>
+               <div class="edit-btn-wrapper">
+                  <button class="btn-navy btn-green" id="doe005BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+               </div>
+            </div>
+            <div class="list-grid-wrapper con-box">
+               <div id="doe005ItemGrid"></div>
+            </div>
+         </div>
+   <script>
+   !function(){
+      // 전역변수
+      let doe005CurrentWarekey; // 현재 warekey 검색값 저장
+      const pageId = '[[${tabPage}]]';
+
+      // 헤드 칼럼
+      const doe005HeadGridCM = [
+            { title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+            { title: '[[#{menu.md.dom001}]]', dataType: 'string', dataIndx: 'warekey', editable: false,
+            	editor: { options: [] }, render : gridRenderAndValue
+	        },
+            { title: '[[#{md.area}]]', dataType: 'string', dataIndx: 'areakey', editable: false,
+	        	editor: { options: [] }, render : gridRenderAndValue
+            },
+            { title: '[[#{md.mequma.equipky}]]', dataType: 'string', dataIndx: 'equipky', editable: false},
+            { title: '[[#{md.mequma.equinam}]]', dataType: 'string', dataIndx: 'equinam', editable: false},
+            { title: '[[#{md.mequma.equtype}]]', dataType: 'string', dataIndx: 'equtype', editable: false,
+            	editor: { options: [] }, render : gridRenderAndValue
+          	},
+            { title: '[[#{md.mequma.equstat}]]', dataType: 'string', dataIndx: 'equstat', editable: false,
+         		editor: { options: [] }, render : gridRenderAndValue
+         	},
+			{ title: '[[#{md.widt}]]', dataType: 'integer', dataIndx: 'equwidt' , format: '#,###', editable: false},
+			{ title: '[[#{md.leng}]]', dataType: 'integer', dataIndx: 'equleng' , format: '#,###', editable: false},
+			{ title: '[[#{md.heig}]]', dataType: 'integer', dataIndx: 'equheig' , format: '#,###', editable: false},
+			{ title: '[[#{md.weig}]]', dataType: 'integer', dataIndx: 'equweig' , format: '#,###', editable: false},
+			{ title: '[[#{md.maxwg}]]', dataType: 'integer', dataIndx: 'eqmaxwg' , format: '#,###', editable: false},
+            { title: '[[#{md.memo}]]', dataType: 'string', dataIndx: 'equmemo', editable: false},
+			{ title: '[[#{md.mequma.equvend}]]', dataType: 'string', dataIndx: 'equvend', editable: false},
+			{ title: '[[#{md.mequma.equpurd}]]', dataType: 'date', dataIndx: 'equpurd', editable: false},
+			{ title: '[[#{md.mannm}]]', dataType: 'string', dataIndx: 'eqmannm', editable: false},
+			{ title: '[[#{md.mantl}]]', dataType: 'string', dataIndx: 'eqmantl', editable: false},
+			{ title: '[[#{md.manem}]]', dataType: 'string', dataIndx: 'eqmanem', editable: false}
+      ];
+
+      // 아이템 칼럼
+      const doe005ItemGridCM = [
+    	  { title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+    		  , sortable: false, editor: false, hidden: true , cb: {all: false,	header: true}},
+    	  { title: '[[#{md.meqloc.eluseyn}]]', dataType: 'string', dataIndx: 'eluseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+          , type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+          { title: '[[#{md.meqloc.maneqyn}]]', dataType: 'string', dataIndx: 'maneqyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+          , type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+          { title: '[[#{menu.md.dom001}]]', dataType: 'string', dataIndx: 'warekey', editable: false,
+        	  editor: { options: [] }, render : gridRenderAndValue
+          },
+          { title: '[[#{md.area}]]', dataType: 'string', dataIndx: 'areakey', editable: false,
+        	  editor: { options: [] }, render : gridRenderAndValue
+          },
+          { title: '[[#{grid.locakey}]]', dataType: 'string', dataIndx: 'locakey', editable: false},
+          { title: '[[#{grid.locanam}]]', dataType: 'string', dataIndx: 'locanam', editable: false},
+          { title: '[[#{md.mlocma.loctype}]]', dataType: 'string', dataIndx: 'loctype', editable: false, hidden: true },
+          { title: '[[#{md.mlocma.loctype}]]', dataType: 'string', dataIndx: 'comcdtx', editable: false },
+          { title: '[[#{md.mlocma.locstat}]]', dataType: 'string', dataIndx: 'locstat', editable: false,
+        	  editor: { options: [] }, render : gridRenderAndValue
+          },
+          { title: '[[#{md.widt}]]', dataType: 'integer', dataIndx: 'locwidt', format: '#,###', editable: false},
+          { title: '[[#{md.leng}]]', dataType: 'integer', dataIndx: 'locleng', format: '#,###', editable: false},
+          { title: '[[#{md.heig}]]', dataType: 'integer', dataIndx: 'locheig', format: '#,###', editable: false},
+          { title: '[[#{md.cubi}]]', dataType: 'float', dataIndx: 'loccubi', format: '#,###.000', editable: false},
+          { title: '[[#{md.memo}]]', dataType: 'string', dataIndx: 'locmemo', editable: false},
+          { title: '[[#{md.mlocma.sizepri}]]', dataType: 'string', dataIndx: 'sizepri' , editable: false},
+          { title: '[[#{md.mlocma.btrcpri}]]', dataType: 'string', dataIndx: 'btrcpri' , editable: false},
+          { title: '[[#{md.mlocma.itdtpri}]]', dataType: 'string', dataIndx: 'itdtpri' , editable: false},
+          { title: '[[#{md.mlocma.custpri}]]', dataType: 'string', dataIndx: 'custpri' , editable: false},
+          { title: '[[#{md.mlocma.regipri}]]', dataType: 'string', dataIndx: 'regipri' , editable: false},
+          { title: '[[#{md.mlocma.destpri}]]', dataType: 'string', dataIndx: 'destpri' , editable: false},
+          { title: '[[#{md.mlocma.inbopri}]]', dataType: 'integer', dataIndx: 'inbopri' , editable: false},
+		  { title: '[[#{md.mlocma.oubopri}]]', dataType: 'integer', dataIndx: 'oubopri' , editable: false}
+      ];
+
+      // 그리드 기본 설정
+      const doe005HeadGrid = new GridUtil(doe005HeadGridCM, pageId, pageId + 'HeadGrid');
+      const doe005ItemGrid = new GridUtil(doe005ItemGridCM, pageId, pageId + 'ItemGrid');
+      doe005ItemGrid.setFind();
+      doe005ItemGrid.setReset();
+      doe005HeadGrid.setSelectionModel({type: 'row', mode: 'single'});
+
+      // 헤드 그리드 클릭시 아이템 그리드 불러오기
+      doe005HeadGrid.setCellDblClick(async function(event, ui) {
+         const param = {
+               warekey : ui.rowData.warekey,
+               areakey : ui.rowData.areakey,
+               equipky : ui.rowData.equipky
+         }
+         await getLocation(param);
+      });
+
+      // Grid 생성시 이벤트
+      doe005HeadGrid.setCreate(async function(evt, ui) {
+    	  await _commonInit(pageId);
+    	  comboCreateData(pageId + 'HeadGrid', 'warekey', warekeyList, { combovl : 'combovl', combonm : 'combonm' });
+    	  comboCreateData(pageId + 'ItemGrid', 'warekey', warekeyList, { combovl : 'combovl', combonm : 'combonm' });
+    	  comboCreateData(pageId + 'HeadGrid', 'areakey', areakeyList, { combovl : 'combovl', combonm : 'combonm' });
+    	  comboCreateData(pageId + 'ItemGrid', 'areakey', areakeyList, { combovl : 'combovl', combonm : 'combonm' });
+
+    	  const doe005InitRes = await fetchUtil('GET','/md/' + pageId + '/init');
+    	  const doe005InitData = await doe005InitRes.json();
+    	  comboCreateData(pageId + 'HeadGrid', 'equtype', doe005InitData.item.equtypeList, { combovl : 'comcdvl', combonm : 'comcdtx' });
+    	  comboCreateData(pageId + 'HeadGrid', 'equstat', doe005InitData.item.equstatList, { combovl : 'comcdvl', combonm : 'comcdtx' });
+    	  comboCreateData(pageId + 'ItemGrid', 'locstat', doe005InitData.item.locstatList, { combovl : 'comcdvl', combonm : 'comcdtx' });
+
+         // 창고동 셀렉트박스
+         getAreaSelectBox();
+      });
+
+      // 그리드 데이터 변경
+      doe005ItemGrid.setChange(async function(evt, ui){
+    	  if('checkbox' === ui.source){
+    		  let eluseynData, maneqynData;
+
+    		  for(const updateData of ui.updateList){
+
+	    			if(updateData.newRow.hasOwnProperty('eluseyn') && updateData.oldRow.hasOwnProperty('eluseyn')){
+	    				eluseynData = updateData.newRow['eluseyn'];
+	    				if(eluseynData === 'N'){ maneqynData = 'N'; }
+    				}
+
+	    			if(updateData.newRow.hasOwnProperty('maneqyn') && updateData.oldRow.hasOwnProperty('maneqyn')){
+	    				maneqynData = updateData.newRow['maneqyn'];
+	    				if(maneqynData === 'Y'){ eluseynData = 'Y';	}
+   					}
+
+    			  this.updateRow({
+						rowIndx : updateData.rowIndx,
+						newRow : {
+							state: true,
+							eluseyn: eluseynData ? eluseynData : updateData.rowData.eluseyn,
+							maneqyn: maneqynData ? maneqynData : updateData.rowData.maneqyn
+						},
+						checkEditable : false
+		    		})
+    		  }
+   		  }
+    	  doe005ItemGrid.getGrid().refresh();
+   	  });
+
+      doe005HeadGrid.open();
+      doe005ItemGrid.open();
+
+
+      // 헤더 그리드 검색 버튼
+      document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+         await getEquipment();
+      });
+
+      // 아이템 그리드 저장 버튼
+      document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+    	  const grid = doe005ItemGrid.getGrid();
+    	  const gridChangeList = grid.getChanges({all:true});
+    	  const addList = gridChangeList.updateList;
+
+    	  if(!addList.length){
+    		  alert('[[#{ms.syncNo}]]'); // 변경사항이 없습니다.
+    		  return;
+   		  }
+
+    	  if(confirm('[[#{ms.checksave}]]')) {
+    		  grid.showLoading();
+    		  const param = {
+   				  addList : addList
+			  }
+
+    		  const response = await fetchUtil('POST' , '/md/' + pageId + '/grid' , param);
+    		  if(response.status === 200){
+    			  grid.option('dataModel', { data: [] });
+    			  grid.refreshDataAndView();
+   			  }
+    		  grid.hideLoading();
+			  getLocation({
+				  warekey : param.addList[0].warekey,
+				  areakey : param.addList[0].areakey,
+				  equipky : param.addList[0].equipky
+			  });
+   		  }
+   	  });
+
+      // 초기화 버튼
+      document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+    	  const grid = pq.grid('#' + pageId + 'HeadGrid');
+			if(grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					return;
+				}
+			}
+    	  makeEmptyGrid(doe005HeadGrid);
+    	  makeEmptyGrid(doe005ItemGrid);
+    	  resetSearchConditions(pageId);
+    	  await getAreaSelectBox();
+   	  })
+
+      // Head Grid 조회 함수 (설비)
+      async function getEquipment(){
+         const doe005HeadGrid = pq.grid('#' + pageId + 'HeadGrid');
+         const doe005ItemGrid = pq.grid('#' + pageId + 'ItemGrid');
+
+         doe005ItemGrid.option('dataModel', {data : []});
+         doe005ItemGrid.refreshDataAndView();
+         doe005HeadGrid.showLoading();
+
+         const param = {
+               warekey: document.querySelector('#' + pageId + 'Warekey').value.toUpperCase(),
+               areakey: document.querySelector('#' + pageId + 'Areakey').value.toUpperCase(),
+               equseyn : 'Y'
+         };
+         doe005CurrentWarekey = param.warekey;
+         const response = await fetchUtil('GET', '/md/doe004/grid', param);
+         if(response.status === 200) {
+            const doe005EquipList = await response.json();
+            doe005HeadGrid.option('dataModel', { data: doe005EquipList, recIndx: 'rowkey' });
+            doe005HeadGrid.refreshDataAndView();
+         }
+         doe005HeadGrid.hideLoading();
+      }
+
+      // Item Grid 조회 함수 (베드)
+      async function getLocation(param){
+    	  doe005ItemGrid.getGrid().showLoading();
+          const response = await fetchUtil('GET', '/md/' + pageId + '/grid', param);
+          if(response.status === 200) {
+             const doe005LocList = await response.json();
+             doe005ItemGrid.getGrid().option('dataModel', { data: doe005LocList, recIndx: 'rowkey' });
+             doe005ItemGrid.getGrid().refreshDataAndView();
+          }
+          doe005ItemGrid.getGrid().hideLoading();
+      }
+
+      // 창고동 셀렉트박스 조회 함수
+      async function getAreaSelectBox(){
+         const url = '/md/organization/area';
+         const data = {
+            warekey : document.querySelector('#' + pageId + 'Warekey').value.toUpperCase()
+         }
+
+         const res = await fetchUtil('GET', url, data);
+         const areaList = await res.json();
+
+         // 모두 지우기
+         const areaElement = document.querySelector('#' + pageId + 'Areakey');
+         while(areaElement.firstChild) {
+            areaElement.removeChild(areaElement.firstChild);
+         }
+
+         // 전체 선택
+         areaElement.insertAdjacentHTML('beforeend', '<option value="">[[#{ms.chooseAll}]]</option>');
+         for(let data of areaList){
+        	 areaElement.insertAdjacentHTML('beforeend', `<option value="${data['combovl']}">${data['combonm']}</option>`);
+         }
+      }
+
+      // 창고 변경시 해당 창고동 셀렉트박스 조회
+      document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+    	  const grid = pq.grid('#' + pageId + 'HeadGrid');
+			if(doe005CurrentWarekey && grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					this.value = doe005CurrentWarekey;
+					return;
+				}
+			}
+    	  getEquipment();
+    	  await getAreaSelectBox();
+      });
+   }();
+   </script>
+</div>
+</html>

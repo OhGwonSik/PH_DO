@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<!--  mainConten 시작 -->
+<div th:fragment="fragments-mainContent" class="tab-container">
+	<div style="display: flex;">
+		<div class="ic-tab-home-btn-click" id="home_btn_area" style="cursor: pointer;">
+			<div style="margin: 2px 0px 0px 6px;"><img class='ic-tab-home-click' alt=""></div>
+		</div>
+	    <ul class="tab" id="tabs"></ul>
+	</div>
+	<div class="tab-arrow-wrapper">
+	    <div class="btn-tab-clear">⠇</div>
+    	<ul class="tab-clear-list">
+    		<li style="cursor: pointer;">탭 초기화</li>
+	    </ul>   
+		<div class="btn-tab-arrow left">
+			<img src="" alt="">
+		</div>
+		<div class="btn-tab-arrow right on">
+			<img src="" alt="">
+		</div>
+	</div>
+<script>
+	document.querySelector('#home_btn_area').addEventListener('click', async function() { 
+		this.className = 'ic-tab-home-btn-click';
+		document.querySelector('#home_btn_area img').className = 'ic-tab-home-click';
+		window.ggActivPG = 'Home';
+		history.pushState(null, null, rPath + '/main');
+		if(document.querySelector('.tab-contents:not(.main)')) {
+			if(!document.querySelector('.content-wrapper>.tab-contents.main')) { 			// F5시 이후 홈 버튼 클릭 시 메인화면 추가를 위함.
+				const mainHtml = await getPageHtml('/main', 'main');
+				document.querySelector('.content-wrapper').appendChild(mainHtml);
+			    const scripts = mainHtml.querySelectorAll('script'); 
+			    scripts.forEach(script => {
+				    const newScript = document.createElement('script');
+				    if (script.src) {
+				        newScript.src = script.src;
+				    } else {
+				        newScript.textContent = script.textContent;
+				    }
+				    document.body.appendChild(newScript).parentNode.removeChild(newScript);
+				});
+			}
+			document.querySelectorAll('.content-wrapper>.tab-contents:not(.main)').forEach(function(element) {
+				element.style.display = 'none';
+			});
+			document.querySelector('.tab-menu.on')?.classList.remove('on');
+			document.querySelector('details li.active')?.classList.remove('active');
+			const activeProgramList = JSON.parse(sessionStorage.activeProgramList);
+			for(const activeProgram of activeProgramList) {
+				activeProgram.active = false;
+			}
+			setMainContent();
+			sessionStorage.activeProgramList = JSON.stringify(activeProgramList);
+		}
+	});
+	
+	document.querySelector('.tab-clear-list>li').addEventListener('click', async function() { 
+		const ulTab = document.querySelector('ul.tab');
+		if(ulTab.hasChildNodes()) {
+			ulTab.replaceChildren();
+		}
+		document.querySelectorAll('.tab-contents:not(.main)').forEach(function(element) {
+			element.remove();
+		});
+		sessionStorage.activeProgramList = [];
+		document.querySelector('#home_btn_area').className = 'ic-tab-home-btn-click';
+		document.querySelector('#home_btn_area img').className = 'ic-tab-home-click';
+
+		history.pushState(null, null, rPath + '/main');
+		const headerkey = document.querySelector(".main-menu").firstChild.getAttribute('id');
+		headerClickEvent(headerkey);
+		if(!document.querySelector('.tab-contents.main')) {
+			const tabContents = await getPageHtml('/main', 'main');
+			document.querySelector('#content .content-wrapper').appendChild(tabContents);
+		    const scripts = tabContents.querySelectorAll('script');
+		    scripts.forEach(script => {
+			    const newScript = document.createElement('script');
+			    if (script.src) {
+			        newScript.src = script.src;
+			    } else {
+			        newScript.textContent = script.textContent;
+			    }
+			    document.body.appendChild(newScript).parentNode.removeChild(newScript);
+			});
+			return;
+		}
+		window.ggActivPG = 'Home';
+		document.querySelector('.tab-contents.main').style.display = '';
+	    
+		if(window.eventSource) {
+			window.eventSource.close();  // 연결 종료
+			window.eventSource = null;   // 객체를 null로 설정하여 더 이상 사용하지 않도록
+		}
+	});	
+</script>
+</div>
+<!--  mainConten 종료 -->
+</html>
+

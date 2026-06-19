@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.api.mapper.ApiInventoryMapper">
+
+	<!-- 재고엑셀 정보변환 프로시저 -->
+	<select id="spUpdWstkkyExcel" statementType="CALLABLE" parameterType="com.kbph.logistics.api.domain.WstkkyUploadDTO">
+		/* spUpdWstkkyExcel */
+		 CALL ${apiCommon.schema}.UPD_WSTKKY_EXCEL(#{data.omsgkey, mode=OUT, jdbcType=VARCHAR, javaType=String}, #{data.oresult, mode=OUT, jdbcType=INTEGER, javaType=Integer})
+	</select>
+
+	<!-- 재고엑셀 정보변환 후 관제로 인터페이스할 데이터 조회 -->
+	<select id="getApiExcelUploadUpdateList" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getApiExcelUploadUpdateList */
+		SELECT
+			WS.STOCKKY, WS.SKUMKEY, WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER AS STLAYER
+			, WS.SKUGRKY, MGR.GRPKYNM, WS.OWNERKY, WS.SKUDESC, MCO.COMCDTX
+			, WS.ITEMCOD, WS.SKULENG, WS.SKUWEIG, WS.SKUWIDT, WS.SKUTHIC
+			, WS.STKSTAT AS SKUSTAT
+		FROM
+			${apiCommon.schema}.WSTKKY WS
+		INNER JOIN ${apiCommon.schema}.MCODEM MCO
+			ON MCO.COMCDKY='ITEMCOD'
+			AND MCO.COMCDVL = WS.ITEMCOD
+		INNER JOIN ${apiCommon.schema}.MGRPMA MGR
+			ON MGR.SKUGRKY = WS.SKUGRKY
+		WHERE
+			WS.UPINFST = 'U'
+	</select>
+
+	<!-- 인터페이스 후 재고 플래그 U에서 Y로 업데이트 -->
+	<update id="updateStockFlag" parameterType="com.kbph.logistics.api.domain.WstkkyUploadDTO">
+		/* updateStockFlag */
+		UPDATE ${apiCommon.schema}.WSTKKY
+			SET UPINFST = 'Y',
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = 'SYS'
+			WHERE
+				UPINFST = 'U'
+	</update>
+
+	<!-- 선별지시 취소 벨리데이션 -->
+	<select id="checkSelectionCancelVail" resultType="int">
+		/* checkSelectionCancelVail */
+		SELECT
+		    COUNT(1)
+		FROM
+		    ${apiCommon.schema}.WTAKIT
+		WHERE
+		    TASKOKY = #{data.taskoky}
+		    AND TASKSTS IN ('OPERSTR', 'TASKCMP', 'OPERCMP', 'CMP', 'CANCEL')
+	</select>
+
+	<!-- 선별취소 대상 작업수량 0 업데이트 -->
+	<update id="updateApiSelectionCancelForWstkky" parameterType="com.kbph.logistics.api.domain.SelectionOperationCancelDTO">
+		/* updateApiSelectionCancelForWstkky */
+		UPDATE ${apiCommon.schema}.WTAKIT WT
+			INNER JOIN ${apiCommon.schema}.WSTKKY WS
+			ON WS.STOCKKY = WT.STOCKKY
+			AND WS.TASKOKY = WT.TASKOKY
+			AND WS.TASKOIT = WT.TASKOIT
+		SET
+			WS.TASKQTY = 0,
+			WS.LMODATE = date_format(now(), '%Y%m%d'),
+			WS.LMOTIME = date_format(now(), '%H%i%s'),
+			WS.LMOUSER = #{apiCommon.useract},
+			WS.UPDTCHK = WS.UPDTCHK + 1
+		WHERE
+			WT.TASKOKY = #{data.taskoky}
+	</update>
+
+	<!-- 선별취소 상태값 업데이트 -->
+	<update id="updateSelectionStateCancel" parameterType="com.kbph.logistics.api.domain.SelectionOperationCancelDTO">
+		/* updateSelectionStateCancel */
+		UPDATE ${apiCommon.schema}.WTAKIT
+			SET TASKSTS = 'CANCEL',
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+		WHERE
+			TASKOKY = #{data.taskoky}
+	</update>
+
+	<!-- 조업, 작업 벨리데이션 -->
+	<select id="checkSelectionStart" resultType="int">
+		/* checkSelectionStart */
+		SELECT
+		    COUNT(1)
+		FROM
+		    ${apiCommon.schema}.WTAKIT
+		WHERE
+		    TASKOKY = #{data.taskoky}
+		    <if test='data.tasksts != null and data.tasksts != ""'>
+		    	AND TASKSTS = #{data.tasksts}
+		    </if>
+	</select>
+
+	<!-- 조업시작 시점 제품의 LOCAKEY, LOLAYER 조회 -->
+	<select id="getApiSelectionBeforeLocaList" resultType="com.kbph.logistics.api.domain.SelectionOperationDTO">
+		/* getApiSelectionBeforeLocaList */
+		SELECT
+		    WT.TASKOKY, WS.SKUMKEY, WS.AREAKEY as FRAREKY, WS.LOCAKEY as FRLOCKY, WS.LOLAYER as FRLAYER
+		FROM
+		    ${apiCommon.schema}.WTAKIT WT
+		INNER JOIN ${apiCommon.schema}.WSTKKY WS
+		    ON WS.TASKOKY = WT.TASKOKY
+		    AND WS.TASKOIT = WT.TASKOIT
+		    AND WS.SKUMKEY = WT.SKUMKEY
+		WHERE
+		    WT.TASKOKY = #{data.taskoky}
+	</select>
+
+	<!-- 조업 시작 시점 FROM LOCAKEY, FROM LOLAYER 수정 -->
+	<update id="updateApiSelectionBeforeLoca" parameterType="com.kbph.logistics.api.domain.SelectionOperationDTO">
+		/* updateApiSelectionBeforeLoca */
+			UPDATE ${apiCommon.schema}.WTAKIT
+			   	SET FRAREKY = #{data.frareky},
+			   		FRLOCKY = #{data.frlocky},
+			   		FRLAYER = #{data.frlayer},
+					LMODATE = date_format(now(), '%Y%m%d'),
+					LMOTIME = date_format(now(), '%H%i%s'),
+					LMOUSER = #{apiCommon.useract},
+					UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{data.taskoky}
+				AND SKUMKEY = #{data.skumkey}
+	</update>
+
+	<!-- 조업 시작 -->
+	<update id="updateSelectionStart" parameterType="com.kbph.logistics.api.domain.SelectionOperationDTO">
+		/* updateSelectionStart */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+			UPDATE ${apiCommon.schema}.WTAKIT
+			   	SET TASKSTS = 'OPERSTR',
+			   	MVSTDAT = date_format(now(), '%Y%m%d'),
+			   	MVSTTIM = date_format(now(), '%H%i%s'),
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{data.taskoky}
+		</foreach>
+	</update>
+
+	<select id="isSameLocAndLayerApi" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* isSameLocAndLayerApi */
+		SELECT
+			STOCKKY, SKUMKEY
+		FROM
+			${apiCommon.schema}.WSTKKY
+		WHERE
+			AREAKEY = #{data.toareky}
+			AND LOCAKEY = #{data.tolocky}
+			AND LOLAYER = #{data.tolayer}
+	</select>
+
+	<!-- FROM 위치 조회 -->
+	<select id="getFromLocStock" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getFromLocStock */
+		SELECT
+		    FRAREKY as AREAKEY, FRLOCKY as LOCAKEY
+		FROM
+		    ${apiCommon.schema}.WTAKIT
+		WHERE
+		    TASKOKY = #{data.taskoky}
+		    AND SKUMKEY = #{data.skumkey}
+	</select>
+
+	<!-- from베드 재고조회 -->
+	<select id="getApiLocationStockInfo" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getApiLocationStockInfo */
+		SELECT
+			STOCKKY, WAREKEY, SKUMKEY, AREAKEY, LOCAKEY, LOLAYER as STLAYER
+			, 'N' as RMSTKYN, 'N' as RETUNYN
+			, DATE_FORMAT(now(), '%y-%m-%d %H:%i:%s') as PHYDTTM
+		FROM
+			${apiCommon.schema}.WSTKKY
+		WHERE
+			AREAKEY = #{data.areakey}
+			AND LOCAKEY = #{data.locakey}
+		ORDER BY LOLAYER ASC
+	</select>
+
+	<!-- 단수 정렬 -->
+	<update id="updateApiStockLayerSort" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* updateApiStockLayerSort */
+		UPDATE ${apiCommon.schema}.WSTKKY
+		SET LOLAYER = #{data.lolayer},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{apiCommon.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{data.warekey}
+			AND STOCKKY = #{data.stockky}
+	</update>
+
+	<!-- 작업완료시 재고위치 update -->
+	<update id="updateApiWstkky">
+		/* updateApiWstkky */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+			UPDATE ${apiCommon.schema}.WSTKKY
+				SET TASKQTY = 0,
+					AREAKEY = #{data.toareky},
+					LOCAKEY = #{data.tolocky},
+					LOLAYER = #{data.tolayer},
+					LMODATE = date_format(now(), '%Y%m%d'),
+					LMOTIME = date_format(now(), '%H%i%s'),
+					LMOUSER = #{apiCommon.useract},
+					UPDTCHK = UPDTCHK + 1
+				WHERE
+					TASKOKY = #{data.taskoky}
+					AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</update>
+
+	<!-- 작업 완료 상태값 update-->
+	<update id="updateSelectionTask" parameterType="com.kbph.logistics.api.domain.SelectionTaskDTO">
+		/* updateSelectionTask */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+			UPDATE ${apiCommon.schema}.WTAKIT
+			   	SET TASKSTS = 'TASKCMP',
+			   		TOAREKY = #{data.toareky},
+			   		TOLOCKY = #{data.tolocky},
+			   		TOLAYER = #{data.tolayer},
+					LMODATE = date_format(now(), '%Y%m%d'),
+					LMOTIME = date_format(now(), '%H%i%s'),
+					LMOUSER = #{apiCommon.useract},
+					UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{data.taskoky}
+				AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</update>
+
+	<!-- 조업 완료 -->
+	<update id="updateSelectionCompl" parameterType="com.kbph.logistics.api.domain.SelectionOperationComplDTO">
+		/* updateSelectionCompl */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+			UPDATE ${apiCommon.schema}.WTAKIT
+			   	SET TASKSTS = 'CMP',
+			   	TCMPQTY = 1,
+			   	TOAREKY = #{data.toareky},
+			   	TOLOCKY = #{data.tolocky},
+			   	TOLAYER = #{data.tolayer},
+			   	MVEDDAT = date_format(now(), '%Y%m%d'),
+			   	MVEDTIM = date_format(now(), '%H%i%s'),
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{data.taskoky}
+				AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</update>
+</mapper>

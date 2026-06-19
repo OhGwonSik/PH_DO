@@ -1,0 +1,729 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doedy006Vownkey" class="setting-grid-title">[[#{search.vownkey}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('search.vownkey')}"
+							id="doedy006Vownkey" name="doedy006Vownkey">
+						</div>
+					</div>
+					<label for="doedy006Vonamlc" class="setting-grid-title">[[#{search.vonamlc}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('search.vonamlc')}"
+							id="doedy006Vonamlc" name="doedy006Vonamlc">
+						</div>
+					</div>
+					<label for="doedy006Vowaffi" class="setting-grid-title">[[#{md.mvowma.vowaffi}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doedy006Vowaffi" name="doedy006Vowaffi"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=vowaffi"
+							data-cb-select="" data-cb-variable="vowaffiList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doedy006Vouseyn" class="setting-grid-title">[[#{md.useyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doedy006Vouseyn" class="pq-select">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+					<!-- 이부분 부터는 하단 Itemgrid에 콤보박스 데이터를 위한 부분  -->
+					<div style="display: none;">
+						<label for="doedy006Dlvtype" class="setting-grid-title" style="display: none;">[[#{md.mvhcma.dlvtype}]]</label>
+						<div class="setting-grid-content">
+							<div class="input-group">
+								<select id="doedy006Dlvtype" name="doedy006Dlvtype"
+								data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=dlvtype"
+								data-cb-select="" data-cb-variable="dlvtypeList">
+									<option value="">[[#{ms.chooseAll}]]</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					<div style="display: none;">
+						<label for="doedy006Vhcopty" class="setting-grid-title">[[#{md.mvhcma.vhcopty}]]</label>
+						<div class="setting-grid-content">
+							<div class="input-group">
+								<select id="doedy006Vhcopty" name="doedy006Vhcopty"
+								data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=vhcopty"
+								data-cb-select="" data-cb-variable="vhcoptyList">
+									<option value="">[[#{ms.chooseAll}]]</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					<div style="display: none;">
+						<label for="doedy006Vhctype" class="setting-grid-title">차량종류</label>
+						<div class="setting-grid-content">
+							<div class="input-group">
+								<select id="doedy006Vhctype" name="doedy006Vhctype"
+								data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=vhctype&comcdsy=Y"
+								data-cb-select="" data-cb-variable="vhctypeList">
+									<option value="">[[#{ms.chooseAll}]]</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					<div style="display: none;">
+						<label for="doedy006Vhcstat" class="setting-grid-title">[[#{md.mvhcma.vhcstat}]]</label>
+						<div class="setting-grid-content">
+							<div class="input-group">
+								<select id="doedy006Vhcstat" name="doedy006Vhcstat"
+								data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=vhcstat"
+								data-cb-select="" data-cb-variable="vhcstatList">
+									<option value="">[[#{ms.chooseAll}]]</option>
+								</select>
+							</div>
+						</div>
+					</div>
+					<!--이 부분 까지  -->
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doedy006BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doedy006BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe006}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doedy006HeadBtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doedy006HeadGrid"></div>
+				</div>
+
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe007}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doedy006ItemBtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doedy006ItemGrid"></div>
+				</div>
+			</div>
+		<script>
+		!function(){
+			const pageId = '[[${tabPage}]]';
+			let doedy006ItemGridData;
+			let subDomain;
+			let selectedVownkey = '';
+
+			// 차주등록 칼럼
+			const doedy006HeadGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{grid.vownkey}]]', dataType: 'string', dataIndx: 'vownkey', editable: false},	// 차주코드
+				{ title: '[[#{grid.vonamlc}]]', dataType: 'string', dataIndx: 'vonamlc', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }}, // 차량명
+				{ title: '[[#{md.mvowma.vowaffi}]]', dataType: 'string', dataIndx: 'vowaffi', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },	// 차량소속
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.regno}]]', dataType: 'string', dataIndx: 'voregno', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.bank}]]', dataType: 'string', dataIndx: 'vowbank', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.acnm}]]', dataType: 'string', dataIndx: 'vowacnm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.teln}]]', dataType: 'string', dataIndx: 'vowteln', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.addr}]]', dataType: 'string', dataIndx: 'vowaddr', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mannm}]]', dataType: 'string', dataIndx: 'vomannm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mantl}]]', dataType: 'string', dataIndx: 'vomantl', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.manem}]]', dataType: 'string', dataIndx: 'vomanem', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '공용여부', dataType: 'string', dataIndx: 'publcyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, check: 'Y', uncheck: 'N' }},
+				{ title: '도메인 사업자명', dataType: 'string', dataIndx: 'dmwplnm', editable: false, hidden: true },
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'vouseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mvowma.sigupyn}]]', dataType: 'string', dataIndx: 'sigupyn', editable: false
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.memo}]]', dataType: 'string', dataIndx: 'vowmemo', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 차량코드 칼럼
+			const doedy006ItemGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+		        { title: '[[#{grid.vehicky}]]', dataType: 'string', dataIndx: 'vehicky', editable: false, hidden:true},
+				{ title: '[[#{grid.vhcsnam}]]', dataType: 'string', dataIndx: 'vhcsnam', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }, hidden:true},
+				{ title: '[[#{md.mvhcma.drvernm}]]', dataType: 'string', dataIndx: 'drvernm' ,styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mvhcma.drverph}]]', dataType: 'string', dataIndx: 'drverph' ,styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mvhcma.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+
+				{ title: '[[#{search.vonamlc}]]', dataType: 'string', dataIndx: 'vonamlc', editable : false, hidden: true }, //차량코드//
+				{ title: '[[#{md.mvhcma.dlvtype}]]', dataType: 'string', dataIndx: 'dlvtype', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		init: function (ui) {
+
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mvhcma.vhcopty}]]', dataType: 'string', dataIndx: 'vhcopty', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mvhcma.vhctype}]]', dataType: 'string', dataIndx: 'vhctype', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mvhcma.vhcstat}]]', dataType: 'string', dataIndx: 'vhcstat', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue, hidden : true
+				},
+				{ title: '[[#{md.mvhcma.vhctncd}]]', dataType: 'string', dataIndx: 'vhctncd', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue, hidden : true
+				},
+				{ title: '[[#{md.mvhcma.vhcmaxw}]]', dataType: 'Integer', dataIndx: 'vhcmaxw', format: '#,###', hidden: true},
+				{ title: '[[#{md.mvhcma.vhccapa}]]', dataType: 'double', dataIndx: 'vhccapa', format: '#,###.000', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }, hidden: true},
+				{ title: '공용여부', dataType: 'string', dataIndx: 'publcyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '도메인 사업장명', dataType: 'string', dataIndx: 'dmwplnm' , editable: false, hidden: true },
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'vhuseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mvhcma.vhcvryn}]]', dataType: 'string', dataIndx: 'vhcvryn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mvhcma.inbvhyn}]]', dataType: 'string', dataIndx: 'inbvhyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mvhcma.oubvhyn}]]', dataType: 'string', dataIndx: 'oubvhyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mvhcma.poscoyn}]]', dataType: 'tring', dataIndx: 'poscoyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.memo}]]', dataType: 'string', dataIndx: 'vhcmemo' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true },
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'voudtck', editable: false, hidden: true },
+
+				{ title: '[[#{menu.md.dom004}]]', dataType: 'string', dataIndx: 'vownkey',
+		        	editor: {
+		        		type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, width: 180 });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250 );
+	        			 },
+					    options: []
+					},
+					render : function(ui) {
+				        const option = ui.column.editor.options.find(function(obj) {
+				            return (obj[ui.cellData] != null);
+				        });
+				        let cellData = option ? option[ui.cellData] : '';
+				        cellData = cellData.replace(/\[.*?\]/g, '');
+				        ui.rowData.vonamlc = option ? cellData : '';
+				        ui.rowData[ui.dataIndx] = option ? ui.cellData : '';
+				        return option ? option[ui.cellData] : '';
+					},
+					editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				}
+			]
+
+			// 그리드 기본 설정
+			const doedy006HeadGrid = new GridUtil(doedy006HeadGridCM, pageId, pageId + 'HeadGrid');	// HeadGrid
+			const doedy006ItemGrid = new GridUtil(doedy006ItemGridCM, pageId, pageId + 'ItemGrid');	// ItemGrid
+
+			doedy006HeadGrid.setReset();
+			// doedy006HeadGrid.setFreezeCols(1);
+			doedy006ItemGrid.setFreezeCols(1);
+
+			// HeadGrid 생성 시 이벤트
+			doedy006HeadGrid.setCreate(async function(evt, ui) {
+            await _commonInit(pageId);
+            comboCreateData(pageId + 'HeadGrid', 'vowaffi', vowaffiList, { combovl : 'combovl', combonm : 'combonm' });
+            this.option('freezeCols', 1);
+         	});
+
+			// HeadGrid 더블 클릭 시 조회
+			doedy006HeadGrid.setRowDblClick(async function(evt, ui){
+				const data = {
+						vownkey : ui.rowData.vownkey,// 차주코드
+			  			vonamlc : ui.rowData.vonamlc,// 차주명
+				};
+				selectedVownkey = ui.rowData.vownkey;	// 선택된 차주코드 저장
+				await getdoedy006ItemGridList(data);
+			});
+
+			// HeadGrid 행 추가
+			doedy006HeadGrid.setAdd(function(evt, ui){
+				const rowData = {
+					state: true,
+					vouseyn: 'Y',
+					sigupyn: 'N',
+					publcyn: 'N'
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'HeadGrid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// HeadGrid 데이터 변경
+			doedy006HeadGrid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {state: true};
+
+		           		if(updateData.newRow.hasOwnProperty('vouseyn') || updateData.newRow.hasOwnProperty('publcyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	} else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+		    		let vowaffiData;
+		    		for(const updateData of ui.updateList){
+
+		    			if(updateData.newRow.hasOwnProperty('vowaffi') && updateData.oldRow.hasOwnProperty('vowaffi')){
+		    				vowaffiData = vowaffiList.find(function(data){
+	    						return(data.combonm === updateData.newRow['vowaffi'])
+	    					})
+	    				}
+
+			    		this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								vowaffi: vowaffiData ? vowaffiData.combovl : updateData.rowData.vowaffi,
+								vouseyn: updateData.rowData.vouseyn,
+								sigupyn: updateData.rowData.sigupyn,
+								publcyn: updateData.rowData.publcyn
+							},
+							checkEditable : false
+			    		})
+		    		}
+		    		for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.vowaffi = vowaffiData ? vowaffiData.combovl : addData.rowData.vowaffi;
+		    			addData.rowData.vouseyn = addData?.newRow?.vouseyn || 'Y';
+		    			addData.rowData.sigupyn = addData?.newRow?.sigupyn || 'N';
+		    			addData.rowData.publcyn = addData?.newRow?.publcyn || 'N';
+		    		}
+		    	}
+				doedy006HeadGrid.getGrid().refresh();
+			});
+
+			initFunc();
+			// Grid 객체 생성
+			doedy006HeadGrid.open();
+
+			// initFunc() 함수 작성
+			 async function initFunc(){
+				const relationList = await Promise.allSettled([
+			        getReasonCodeRelationList(),
+			        getVehicelRelationList(),
+			        getAreaRelationList(),
+			        getLocationRelationList(),
+			        getRegistrationRelationList(),
+			        getDestinationRelationList(),
+			        getBtrcateList(),
+			        getMeqlocList()
+			    ]);
+				await _commonInit(pageId);
+
+				const dataList = [
+					{
+						listName: 'rsncodeRelationList'
+					}, {
+						listName: 'vehickyRelationList'
+					}, {
+						listName: 'areaRelationList'
+					}, {
+						listName: 'locationRelationList'
+					}, {
+						listName: 'registrationRelationList'
+					}, {
+						listName: 'destinationRelationList'
+					}, {
+						listName: 'btrcateList'
+					},{
+						listName: 'meqlocList',
+					}];
+
+				for (let idx = 0; idx < relationList.length; idx++) {
+			        const target = dataList[idx];
+			        target['list'] = relationList[idx].value;  // API 응답 값 저장
+			    }
+
+				setPreloadDataOnWindow(dataList);
+				resetSearchConditions(pageId, 0, 0, 1);
+			}
+
+			// 조회 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+				await getdoedy006HeadGridList();
+			})
+
+			// HeadGrid 저장 버튼
+			document.querySelector('#' + pageId + 'HeadBtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doedy006HeadGrid, ['vonamlc', 'vowaffi', 'voregno']) // 차주명, 차량소속, 사업자등록번호
+								&& validateDuplicationFieldBeforeSaveGridUtil(doedy006HeadGrid, ['voregno']); // 사업자등록번호
+				if( !validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doedy006HeadGrid, refineGridUtilSaveList(doedy006HeadGrid), '/md/doe006/grid');
+				await getdoedy006HeadGridList();
+			})
+
+			// HeadGrid 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+				resetSearchConditions(pageId);
+				makeEmptyGrid(doedy006HeadGrid);
+			})
+
+			 // HeadGrid 데이터 조회 함수
+			 async function getdoedy006HeadGridList(){
+				const data = {
+						vownkey : document.querySelector('#' + pageId + 'Vownkey').value.toUpperCase(),
+			  			vonamlc : document.querySelector('#' + pageId + 'Vonamlc').value.toUpperCase(),
+			  			vowaffi : document.querySelector('#' + pageId + 'Vowaffi').value,
+			  			vouseyn : document.querySelector('#' + pageId + 'Vouseyn').value
+				};
+
+				const grid = pq.grid('#' + pageId + 'HeadGrid');
+				grid.showLoading();
+
+				const res = await fetchUtil('GET', '/md/doe006/grid', data);
+
+				if(res.status===200){
+					const getdoedy006HeadGridList = await res.json();
+
+					grid.option( 'dataModel', {
+						data: getdoedy006HeadGridList,
+						recIndx: 'rowkey'
+					});
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+
+			// ItemGrid 저장 버튼
+			document.querySelector('#' + pageId + 'ItemBtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doedy006ItemGrid, ['drverph', 'vhcfnam', 'dlvtype', 'vhcopty', 'vhctype', 'drvernm'])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doedy006ItemGrid, ['vhcfnam']) // 차량번호
+				if(!validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doedy006ItemGrid, refineGridUtilSaveList(doedy006ItemGrid), '/md/doe007/grid');
+				getDoeDy006ItemList();
+			})
+
+			// ItemGrid 생성 시 이벤트
+			doedy006ItemGrid.setCreate(async function(evt, ui) {
+				await _commonInit(pageId);
+
+				comboCreateData(pageId + 'ItemGrid', 'dlvtype', dlvtypeList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'ItemGrid', 'vhcopty', vhcoptyList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'ItemGrid', 'vhcstat', vhcstatList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'ItemGrid', 'vhctype', vhctypeList, { combovl : 'combovl', combonm : 'combonm' });
+
+				const doe006InitRes = await fetchUtil('GET', '/md/doe007/init');
+				doedy006ItemGridData = await doe006InitRes.json();
+				subDomain = doedy006ItemGridData.item.subDomain;
+				comboCreateData(pageId + 'ItemGrid', 'vownkey', doedy006ItemGridData.item.vownkeyList, { combovl : 'combovl', combonm : 'combonm' });
+
+				this.option('freezeCols', 1);
+			});
+
+			// ItemGrid 행 추가
+			doedy006ItemGrid.setAdd(function(evt, ui){
+				const rowData = {
+					vownkey: selectedVownkey,
+					state: true,
+					vhcmaxw: '30', // 두루 요청
+					vhccapa: 0.000,
+					inbvhyn: 'N',
+					oubvhyn: 'N',
+					poscoyn: 'N',
+					publcyn: 'N',
+					vhcvryn: subDomain == 'do-dr' ? 'Y' : 'N', // 두루 요청
+					vhuseyn: 'Y',
+				};
+
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'ItemGrid').pqGrid( 'getColIndx', { dataIndx: 'vownkey' } )
+				});
+			});
+
+			doedy006ItemGrid.open();
+
+
+			// Grid 데이터 조회 함수
+			 async function getDoeDy006ItemList(){
+			    const grid = pq.grid('#' + pageId + 'ItemGrid');
+
+			    const data = {
+			        vonamlc: document.querySelector('#' + pageId + 'Vonamlc').value.toUpperCase(),
+			        vhcsnam: document.querySelector('#' + pageId + 'Vhcsnam').value.toUpperCase(),
+			        dlvtype: document.querySelector('#' + pageId + 'Dlvtype').value, // 차량타입
+			        vhcopty: document.querySelector('#' + pageId + 'Vhcopty').value, // 차량운영형태
+			        vhctype: document.querySelector('#' + pageId + 'Vhctype').value, // 차량종류
+			        vhcstat: document.querySelector('#' + pageId + 'Vhcstat').value, // 차량상태
+			        vhctncd: document.querySelector('#' + pageId + 'Vhctncd').value, // 차량톤수
+			        vhuseyn: document.querySelector('#' + pageId + 'Vhuseyn').value,
+
+			        // 수정 필요
+			        vownkey: document.querySelector('#' + pageId + 'Vownkey').value
+			    };
+
+			    grid.showLoading();
+			    const res = await fetchUtil('GET', '/md/doe007/grid', data);
+
+			    if (res.status === 200) {
+			        const doe007List = await res.json();
+			        grid.option('dataModel', {
+			            data: doe007List,
+			            recIndx: 'rowkey'
+			        });
+			        grid.refreshDataAndView();
+			    }
+			    grid.hideLoading();
+			}
+
+			// ItemGrid 데이터 변경
+			doedy006ItemGrid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+		    		const updateRowList = [];
+
+					for(let updateData of ui.updateList) {
+		        		const newRow = { state: true }
+		    			const checkboxCols = ['inbvhyn', 'oubvhyn', 'poscoyn', 'vhcvryn', 'vhuseyn', 'publcyn'];
+
+		    			for(let checkboxCol of checkboxCols){
+		    				if(updateData.newRow.hasOwnProperty(checkboxCol)){
+		            			updateRowList.push({
+									rowIndx: updateData.rowIndx,
+									newRow: newRow
+								});
+		           			}
+		    			}
+		    		}
+
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+
+		    		let vownkeyData, dlvtypeData, vhcoptyData, vhcstatData, vhctncdData, vhctypeData;
+
+		    		for(const updateData of ui.updateList){
+
+		    			if(updateData.newRow.hasOwnProperty('vownkey') && updateData.oldRow.hasOwnProperty('vownkey')){
+		    				vownkeyData = doe007InitData.item.vownkeyList.find(function(data){
+	    						return(data.combonm === updateData.newRow['vownkey'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('dlvtype') && updateData.oldRow.hasOwnProperty('dlvtype')){
+		    				dlvtypeData = dlvtypeList.find(function(data){
+	    						return(data.combonm === updateData.newRow['dlvtype'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('vhcopty') && updateData.oldRow.hasOwnProperty('vhcopty')){
+		    				vhcoptyData = vhcoptyList.find(function(data){
+	    						return(data.combonm === updateData.newRow['vhcopty'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('vhcstat') && updateData.oldRow.hasOwnProperty('vhcstat')){
+		    				vhcstatData = vhcstatList.find(function(data){
+	    						return(data.combonm === updateData.newRow['vhcstat'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('vhctncd') && updateData.oldRow.hasOwnProperty('vhctncd')){
+		    				vhctncdData = doe007InitData?.item?.vhctncdList?.find(function(data){
+	    						return(data.comcdtx === updateData.newRow['vhctncd'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('vhctype') && updateData.oldRow.hasOwnProperty('vhctype')){
+		    				vhctypeData = doe007InitData?.item?.vhctypeList?.find(function(data){
+	    						return(data.comcdtx === updateData.newRow['vhctype'])
+	    					})
+	    				}
+
+		    			this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								vownkey: vownkeyData ? vownkeyData.combovl : updateData.rowData.vownkey,
+								dlvtype: dlvtypeData ? dlvtypeData.combovl : updateData.rowData.dlvtype,
+								vhcopty: vhcoptyData ? vhcoptyData.combovl : updateData.rowData.vhcopty,
+								vhcstat: vhcstatData ? vhcstatData.combovl : updateData.rowData.vhcstat,
+								vhctncd: vhctncdData ? vhctncdData.comcdvl : updateData.rowData.vhctncd,
+								vhctype: vhctypeData ? vhctypeData.comcdvl : updateData.rowData.vhctype,
+								inbvhyn: updateData.rowData.inbvhyn,
+								oubvhyn: updateData.rowData.oubvhyn,
+								poscoyn: updateData.rowData.poscoyn,
+								publcyn: updateData.rowData.publcyn,
+								vhcvryn: updateData.rowData.vhcvryn,
+								vhuseyn: updateData.rowData.vhuseyn,
+								vhcmaxw: updateData.rowData.vhcmaxw,
+								vhccapa: updateData.rowData.vhccapa
+							},
+							checkEditable : false
+			    		})
+		    		}
+
+		    		for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.vownkey = vownkeyData ? vownkeyData.combovl : addData.rowData.vownkey;
+		    			addData.rowData.dlvtype = dlvtypeData ? dlvtypeData.combovl : addData.rowData.dlvtype;
+		    			addData.rowData.vhcopty = vhcoptyData ? vhcoptyData.combovl : addData.rowData.vhcopty;
+		    			addData.rowData.vhcstat = vhcstatData ? vhcstatData.combovl : addData.rowData.vhcstat;
+		    			addData.rowData.vhctncd = vhctncdData ? vhctncdData.comcdvl : addData.rowData.vhctncd;
+		    			addData.rowData.vhctype = vhctypeData ? vhctypeData.comcdvl : addData.rowData.vhctype;
+		    			addData.rowData.inbvhyn = addData?.newRow?.inbvhyn || 'N';
+		    			addData.rowData.oubvhyn = addData?.newRow?.oubvhyn || 'N';
+		    			addData.rowData.poscoyn = addData?.newRow?.poscoyn || 'N';
+		    			addData.rowData.publcyn = addData?.newRow?.publcyn || 'N';
+		    			addData.rowData.vhcvryn = addData?.newRow?.vhcvryn || (subDomain == 'do-dr' ? 'Y' : 'N');
+		    			addData.rowData.vhuseyn = addData?.newRow?.vhuseyn || 'Y';
+		    			addData.rowData.vhcmaxw = addData?.newRow?.vhcmaxw || (subDomain == 'do-dr' ? 30 : 0);
+		    			addData.rowData.vhccapa = addData?.newRow?.vhccapa || 0.000;
+		    		}
+		    	}
+				doedy006ItemGrid.getGrid().refresh();
+			});
+
+			// ItemGrid 데이터 조회 함수
+			async function getdoedy006ItemGridList(data) {
+
+				const res = await fetchUtil('GET', '/md/doe007/grid', data);
+				const result = await res.json();
+
+					// 데이터 설정
+					doedy006ItemGrid.getGrid().option('dataModel', {
+						data: result,
+						recIndx: 'rowkey' // 또는 'vhcfnam' 등 유일 값
+					});
+					doedy006ItemGrid.getGrid().refreshDataAndView();
+
+			}
+
+			const itemList = document.querySelectorAll('.setting-grid input');
+			itemList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			});
+
+			// Enter로 검색
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getdoedy006HeadGridList();
+			    }
+			}
+
+		}();
+		</script>
+	</div>
+</html>

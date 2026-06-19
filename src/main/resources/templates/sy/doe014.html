@@ -1,0 +1,251 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doe014Comcdky" class="setting-grid-title">[[#{md.mcodem.comcdky}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mcodem.comcdky')}"
+							id="doe014Comcdky" name="doe014Comcdky">
+						</div>
+					</div>
+					<label for="doe014Comcdvl" class="setting-grid-title">[[#{md.mcodem.comcdvl}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mcodem.comcdvl')}"
+							id="doe014Comcdvl" name="doe014Comcdvl">
+						</div>
+					</div>
+					<label for="doe014Comkytx" class="setting-grid-title">[[#{md.mcodem.comkytx}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mcodem.comkytx')}"
+							id="doe014Comkytx" name="doe014Comkytx">
+						</div>
+					</div>
+					<label for="doe014Comcdtx" class="setting-grid-title">[[#{md.mcodem.comcdtx}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mcodem.comcdtx')}"
+							id="doe014Comcdtx" name="doe014Comcdtx">
+						</div>
+					</div>
+					<label for="doe014Couseyn" class="setting-grid-title">[[#{md.useyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe014Couseyn">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doe014BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doe014BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe014}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe014BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe014Grid"></div>
+				</div>
+			</div>
+		<script>
+		!function(){
+			const pageId = '[[${tabPage}]]';
+
+			// 칼럼
+			const doe014GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{md.mcodem.comcdky}]]', dataType: 'string', dataIndx: 'comcdky', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mcodem.comcdvl}]]', dataType: 'string', dataIndx: 'comcdvl', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mcodem.comkytx}]]', dataType: 'string', dataIndx: 'comkytx', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mcodem.comcdtx}]]', dataType: 'string', dataIndx: 'comcdtx', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.order}]]', dataType: 'integer', dataIndx: 'comcdor', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mcodem.comcdsy}]]', dataType: 'string', dataIndx: 'comcdsy', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'couseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.memo}]]', dataType: 'string', dataIndx: 'commemo', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mcodem.cdcate1}]]', dataType: 'string', dataIndx: 'cdcate1', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mcodem.cdcate2}]]', dataType: 'string', dataIndx: 'cdcate2', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mcodem.cdcate3}]]', dataType: 'string', dataIndx: 'cdcate3', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mcodem.cdattr1}]]', dataType: 'string', dataIndx: 'cdattr1', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mcodem.cdattr2}]]', dataType: 'string', dataIndx: 'cdattr2', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mcodem.cdattr3}]]', dataType: 'string', dataIndx: 'cdattr3', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const doe014Grid = new GridUtil(doe014GridCM, 'doe014', pageId + 'Grid');
+			doe014Grid.setFind();
+			doe014Grid.setReset();
+
+			// Grid 생성시 이벤트
+			doe014Grid.setCreate(async function(evt, ui) {
+				this.option('freezeCols', 1);
+			});
+
+			// 그리드 행 추가
+			doe014Grid.setAdd(function(evt, ui){
+				const rowData = {
+					state: true,
+					comcdor: 0,
+					comcdsy: 'N',
+					couseyn: 'Y'
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'Grid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe014Grid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {state: true};
+
+		           		if(updateData.newRow.hasOwnProperty('comcdsy') || updateData.newRow.hasOwnProperty('couseyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}else if('checkbox' === ui.source || 'edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+		    		let comcdkyData, comcdvlData;
+					for(const updateData of ui.updateList){
+
+		    			if(updateData.newRow.hasOwnProperty('comcdky') && updateData.oldRow.hasOwnProperty('comcdky')){
+		    				comcdkyData = updateData?.newRow?.comcdky?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('comcdvl') && updateData.oldRow.hasOwnProperty('comcdvl')){
+		    				comcdvlData = updateData?.newRow?.comcdvl?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+						this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								comcdky : comcdkyData ? comcdkyData : updateData.rowData.comcdky,
+								comcdvl : comcdvlData ? comcdvlData : updateData.rowData.comcdvl,
+								comcdsy: updateData.rowData.comcdsy,
+								couseyn: updateData.rowData.couseyn,
+								comcdor: updateData.rowData.comcdor
+							},
+							checkEditable : false
+						})
+					}
+					for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.comcdky = comcdkyData ? comcdkyData : addData.rowData.comcdky;
+		    			addData.rowData.comcdvl = comcdvlData ? comcdvlData : addData.rowData.comcdvl;
+		    			addData.rowData.comcdsy = addData?.newRow?.comcdsy || 'N';
+		    			addData.rowData.couseyn = addData?.newRow?.couseyn || 'Y';
+		    			addData.rowData.comcdor = addData?.newRow?.comcdor || 0;
+					}
+		    	}
+			});
+
+			// Grid 객체 생성
+			doe014Grid.open();
+
+			// 검색 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+				await getDoe014List();
+			})
+
+			// 저장 버튼
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe014Grid, [ 'comcdky', 'comcdvl', 'comkytx', 'comcdtx' ])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe014Grid, [ 'comcdky', 'comcdvl' ]);
+				if(!validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doe014Grid, refineGridUtilSaveList(doe014Grid), '/md/' + pageId + '/grid');
+				getDoe014List();
+			})
+
+			// 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+				resetSearchConditions(pageId);
+				makeEmptyGrid(doe014Grid);
+			})
+
+			// Grid 데이터 조회 함수
+			async function getDoe014List(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				const data = {
+						comcdky : document.querySelector('#' + pageId + 'Comcdky').value.toUpperCase(),
+						comcdvl : document.querySelector('#' + pageId + 'Comcdvl').value.toUpperCase(),
+						comkytx : document.querySelector('#' + pageId + 'Comkytx').value.toUpperCase(),
+						comcdtx : document.querySelector('#' + pageId + 'Comcdtx').value.toUpperCase(),
+						couseyn : document.querySelector('#' + pageId + 'Couseyn').value
+				};
+
+				grid.showLoading();
+				const res = await fetchUtil('GET', '/md/' + pageId + '/grid', data);
+
+				if(res.status===200){
+					const doe014List = await res.json();
+					grid.option( 'dataModel', {
+						data: doe014List,
+						recIndx: 'rowkey'
+					});
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+
+			const itemList = document.querySelectorAll('.setting-grid input');
+			itemList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			})
+
+			// Enter로 검색
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getDoe014List();
+			    }
+			}
+		}();
+		</script>
+	</div>
+</html>

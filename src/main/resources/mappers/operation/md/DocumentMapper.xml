@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.md.mapper.DocumentMapper">
+	<!-- MDOCMA : 문서타입 마스터 -->
+	<!-- 문서 유형 리스트 조회 -->
+	<select id="selectMdocmaDoccateList" resultType="com.kbph.logistics.md.domain.MdocmaDTO">
+		/* selectMdocmaDoccateList */
+		SELECT WAREKEY, DOCCATE, DOCCTNM
+		  FROM ${userData.schema}.MDOCMA
+		 WHERE DOUSEYN = 'Y'
+		 <if test='params.warekey != null and params.warekey != ""'>
+		   	 AND WAREKEY = #{params.warekey}
+		 </if>
+		 GROUP BY WAREKEY, DOCCATE, DOCCTNM
+		 ORDER BY WAREKEY, DOCCATE, DOCCTNM
+	</select>
+
+	<!-- 문서 관계 리스트 조회 (창고-문서유형-문서타입)-->
+	<select id="selectWareCateTypeRelations" resultType="com.kbph.logistics.md.domain.MdocmaDTO">
+		/* selectWareCateTypeRelations */
+		SELECT WAREKEY, DOCCATE, DOCTYPE, DOCCTNM, DOCTYNM
+		  FROM ${userData.schema}.MDOCMA
+		 WHERE DOUSEYN = 'Y'
+		 <if test='params.warekey != null and params.warekey != ""'>
+			 AND WAREKEY = #{params.warekey}
+		 </if>
+		 GROUP BY WAREKEY, DOCCATE, DOCTYPE
+		 ORDER BY WAREKEY, DOCCATE, DOCTYPE
+	</select>
+
+	<!-- 문서 유형 셀렉트박스 조회 -->
+	<select id="selectDoccateSelectBox" resultType="com.kbph.logistics.md.domain.MdocmaDTO">
+		/* selectDoccateSelectBox */
+		SELECT DOCCATE AS COMBOVL, DOCCTNM AS COMBONM
+		  FROM ${userData.schema}.MDOCMA
+		 WHERE DOUSEYN = 'Y'
+		 <if test='params.warekey != null and params.warekey != ""'>
+			 AND WAREKEY = #{params.warekey}
+		 </if>
+		 <if test='params.doccate != null and params.doccate != ""'>
+			 AND DOCCATE = #{params.doccate}
+		 </if>
+		 <if test='params.doccates != null and params.doccates.size != 0'>
+			 AND DOCCATE IN
+			 <foreach collection="params.doccates" item="item" index="index" open="(" close=")" separator=",">
+				 #{item}
+			 </foreach>
+		 </if>
+		 GROUP BY DOCCATE, DOCCTNM
+		 ORDER BY DOCCATE, DOCCTNM
+	</select>
+
+	<!-- 문서 타입 셀렉트박스 조회 -->
+	<select id="selectDoctypeSelectBox" resultType="com.kbph.logistics.md.domain.MdocmaDTO">
+		/* selectDoctypeSelectBox */
+		SELECT DOCTYPE AS COMBOVL, DOCTYNM AS COMBONM
+			, DOCCATE, DOCCTNM, WAREKEY
+			, DOCTAT1, DOCTAT2, DOCTAT3
+		FROM ${userData.schema}.MDOCMA
+		WHERE DOUSEYN = 'Y'
+			<!-- 클레임입고, 기타입고만 필요함 추후 수정 필요시 해당 조건 삭제 필요 -->
+			AND DOCTYPE NOT IN ('140', '110')
+		<if test='params.warekey != null and params.warekey != ""'>
+			AND WAREKEY = #{params.warekey}
+		</if>
+		<!-- doccate 하나만 필요할 때 -->
+		<if test='params.doccate != null and params.doccate != ""'>
+			AND DOCCATE = #{params.doccate}
+		</if>
+		<!-- doccate 여러개 필요할 때 -->
+		<if test='params.doccates != null and params.doccates.size != 0'>
+			AND DOCCATE IN
+			<foreach collection="params.doccates" item="item" index="index" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+		</if>
+		<!-- doctype 하나만 필요할 때 -->
+		<!-- <if test='params.doctype != null and params.doctype != ""'>
+			AND DOCTYPE = #{params.doctype}
+			AND DOCTYPE NOT IN ('140', '110')
+		</if> -->
+		<!-- doctypes 여러개 필요할 때 -->
+		<!-- <if test='params.doctypes != null and params.doctypes.size != 0'>
+			AND DOCTYPE IN
+			<foreach collection="params.doctypes" item="item" index="index" open="(" close=")" separator=",">
+				#{item}
+			</foreach>
+		</if> -->
+		group by WAREKEY, DOCTYPE, DOCTYNM, DOCCATE, DOCCTNM
+		order by DOCTYPE, DOCTYNM
+	</select>
+</mapper>

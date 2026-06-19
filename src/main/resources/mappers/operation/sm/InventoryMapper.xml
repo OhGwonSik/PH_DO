@@ -1,0 +1,3241 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.sm.mapper.InventoryMapper">
+
+	<sql id="getAddcoky">
+		(
+           		CASE
+				 WHEN (SELECT CDCATE3 FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ITEMCOD' AND COMCDVL = #{param.itemcod}) = 'PLATE'
+			 	 	THEN (
+				        SELECT BA.ADDCOKY
+				          FROM ${userData.schema}.BADDCO BA
+				         WHERE ((BA.MINLENG = 0 OR BA.MINLENG <![CDATA[<=]]> #{param.skuleng})
+				           AND (BA.MAXLENG = 0 OR #{param.skuleng} <![CDATA[<]]> BA.MAXLENG))
+				           AND (    CASE
+									    WHEN (SELECT ORWIDYN FROM ${userData.schema}.BTRCAT WHERE BTRCATE = #{param.btrcate}) = 'Y'
+									        THEN (BA.MINWIDT = 0 OR BA.MINWIDT <![CDATA[<=]]> #{param.grosswd})
+									              AND (BA.MAXWIDT = 0 OR #{param.grosswd} <![CDATA[<]]> BA.MAXWIDT)
+									              OR (BA.MAXLENG = 0 AND BA.MINLENG <![CDATA[<=]]> #{param.skuleng})
+									              OR (BA.MAXWIDT = 0 AND BA.MINWIDT <![CDATA[<=]]> #{param.grosswd})
+					           			ELSE (BA.MINWIDT = 0 OR BA.MINWIDT <![CDATA[<=]]> #{param.skuwidt})
+									         AND (BA.MAXWIDT = 0 OR #{param.skuwidt} <![CDATA[<]]> BA.MAXWIDT)
+									         OR (BA.MAXLENG = 0 AND BA.MINLENG <![CDATA[<=]]> #{param.skuleng})
+                                             OR (BA.MAXWIDT = 0 AND BA.MINWIDT <![CDATA[<=]]> #{param.skuwidt})
+									 END
+							   )
+						    AND BA.SYSCDYN = 'N'
+				    )
+	    	 ELSE (
+    	 			SELECT BAD.ADDCOKY
+    	 			  FROM ${userData.schema}.BADDCO BAD
+    	 			WHERE BAD.SYSCDYN = 'Y'
+	    	 )
+		 	END
+	  	)
+	</sql>
+
+	<sql id="getSkugrky">
+		(SELECT MG.SKUGRKY
+			FROM ${userData.schema}.MGRPMA MG
+			WHERE ((MG.MINLENG = 0 OR MG.MINLENG <![CDATA[<=]]> #{param.skuleng}) AND (MG.MAXLENG = 0 OR #{param.skuleng} <![CDATA[<]]> MG.MAXLENG))
+			AND((MG.MINWIDT = 0 OR MG.MINWIDT <![CDATA[<=]]> #{param.skuwidt}) AND (MG.MAXWIDT = 0 OR #{param.skuwidt} <![CDATA[<]]> MG.MAXWIDT))
+			AND MG.GRUSEYN = 'Y')
+	</sql>
+
+	<select id="getFromLocationStockInfo" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getFromLocationStockInfo */
+		SELECT
+			STOCKKY, WAREKEY, SKUMKEY, AREAKEY, LOCAKEY, LOLAYER
+		FROM
+			${userData.schema}.WSTKKY
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND AREAKEY = #{param.frareky}
+			AND LOCAKEY = #{param.frlocky}
+		ORDER BY LOLAYER ASC
+	</select>
+
+	<select id="getToLocationStockInfo" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getToLocationStockInfo */
+		SELECT
+			STOCKKY, WAREKEY, SKUMKEY, AREAKEY, LOCAKEY, LOLAYER
+		FROM
+			${userData.schema}.WSTKKY
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND AREAKEY = #{param.toareky}
+			AND LOCAKEY = #{param.tolocky}
+		ORDER BY LOLAYER ASC
+	</select>
+
+	<select id="getLocationStockInfo" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getLocationStockInfo */
+		SELECT
+			STOCKKY, WAREKEY, SKUMKEY, AREAKEY, LOCAKEY, LOLAYER as STLAYER
+			, 'N' as RMSTKYN, 'N' as RETUNYN
+			, DATE_FORMAT(now(), '%y-%m-%d %H:%i:%s') as PHYDTTM
+		FROM
+			${userData.schema}.WSTKKY
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND AREAKEY = #{param.areakey}
+			AND LOCAKEY = #{param.locakey}
+		ORDER BY LOLAYER ASC
+	</select>
+
+	<!-- 단수 정렬 -->
+	<update id="updateStockLayerSort" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* updateStockLayerSort */
+		UPDATE ${userData.schema}.WSTKKY
+		SET LOLAYER = #{param.lolayer},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+	</update>
+
+	<select id="getEquipky" resultType="String">
+		/* getEquipky */
+		SELECT
+			EQUIPKY
+		FROM
+			${userData.schema}.MEQLOC
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND AREAKEY = #{param.toareky}
+			AND LOCAKEY = #{param.tolocky}
+		ORDER BY MANEQYN DESC
+<!-- 			AND MANEQYN = 'Y' -->
+		LIMIT 1
+	</select>
+
+	<select id="getDoe035Layer" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getDoe035Layer */
+		SELECT
+		    IFNULL(
+		        (SELECT
+		            MAX(CASE
+		                WHEN LOLAYER IS NULL OR LOLAYER = 0 OR LOLAYER = '' THEN 0
+		                ELSE LOLAYER
+		            END)
+		         FROM ${userData.schema}.WSTKKY
+		         WHERE
+		         	WAREKEY = #{param.warekey}
+		         AND AREAKEY = #{param.areakey}
+		         AND LOCAKEY = #{param.locakey} LIMIT 1), 0) AS LOLAYER
+	</select>
+
+	<select id="getWstkkyList" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getWstkkyList */
+        SELECT
+            CONCAT(WS.STOCKKY, WS.WAREKEY) as ROWKEY
+            , WS.STOCKKY, WS.WAREKEY, MW.WHNAMLC
+            , WS.AREAKEY, MA.AREANAM
+            , WS.LOCAKEY, ML.LOCANAM
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY, WS.OWNRNAM
+            , WS.CUSTCOD, WS.CUSTNAM
+            , WS.SKUGRKY, MGR.GRPKYNM, WS.SKUMKEY, WS.SKUDESC, WS.BTRFSTC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.GROSSWG, WS.GROSSWD, WS.GROSSLN, WS.GROSSTH
+            , WS.BTRCATE, BC.BTRCNAM, WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIORG, MR1.RENAMLC, WS.DESTORG, WS.DEORGNM
+            , WS.REGIMOD, MR2.RENAMLC as REMODNM, WS.DESTMOD, WS.DEMODNM
+            , WS.ITEMCOD, WS.STOTQTY, WS.TASKQTY, WS.SALLQTY, WS.SBLOQTY, WS.PLANQTY, WS.PLCMQTY
+            , WS.SUOMKEY, WS.ADDCOKY, MC02.COMCDTX as ADDCONM, DATE_FORMAT(WS.RCVDCDT,'%Y-%m-%d') as RCVDCDT, DATE_FORMAT(STR_TO_DATE(WS.RCVDCTM,'%H%i%s'),'%H:%i:%s') as RCVDCTM
+            , DATE_FORMAT(WS.SHPLIMT,'%Y-%m-%d') as SHPLIMT, DATE_FORMAT(WS.DELVDSR, '%Y-%m-%d') as DELVDSR
+            , DATE_FORMAT(WS.POSHPDT,'%Y-%m-%d') as POSHPDT, DATE_FORMAT(STR_TO_DATE(WS.POSHPTM,'%H%i%s'),'%H:%i:%s') as POSHPTM, WS.POSHPDY
+            , WS.DEMDMAN, WS.DEMDADR, WS.DEMDTLN
+            , WS.LOTAT01, WS.LOTAT02, WS.LOTAT03
+            , WS.STKSTAT, MCO.COMCDTX as STATNAM, WS.STKMEMO, WS.EMSKUYN
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT
+            , DATE_FORMAT(WS.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM( WS.CREUSER) AS CREUSER
+            , DATE_FORMAT(WS.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WS.LMOUSER) AS LMOUSER
+            , WS.UPDTCHK
+            , WS.DEMODNM, WS.DEMDMAN, WS.DEMDTLN, WS.DEMPOCD
+            , WS.DEMDADR
+        FROM
+            ${userData.schema}.WSTKKY WS
+        INNER JOIN ${userData.schema}.MWARMA MW
+            ON MW.WAREKEY = WS.WAREKEY
+            AND MW.WHUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MAREMA MA
+            ON MA.WAREKEY = WS.WAREKEY
+            AND MA.AREAKEY = WS.AREAKEY
+            AND MA.ARUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MLOCMA ML
+            ON ML.WAREKEY = WS.WAREKEY
+            AND ML.AREAKEY = WS.AREAKEY
+            AND ML.LOCAKEY = WS.LOCAKEY
+            AND ML.LOUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WS.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WS.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MCODEM MCO
+            ON MCO.COMCDVL = WS.STKSTAT
+            AND MCO.COMCDKY = 'STKSTAT'
+            AND MCO.COUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MGRPMA MGR
+        	ON MGR.SKUGRKY = WS.SKUGRKY
+		INNER JOIN ${userData.schema}.BADDCO BA
+		   ON BA.ADDCOKY = WS.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC02
+		   ON BA.ADDSIKY = MC02.COMCDVL
+		  AND MC02.COMCDKY = 'ADDSIKY'
+		  AND MC02.COUSEYN = 'Y'
+  		INNER JOIN ${userData.schema}.BTRCAT BC
+		   ON BC.BTRCATE = WS.BTRCATE
+        WHERE
+            WS.WAREKEY = #{param.warekey}
+            AND WS.STOTQTY > 0
+            AND WS.TASKQTY = 0
+            AND WS.SALLQTY = 0
+            AND WS.PLANQTY = 0
+            AND WS.PLCMQTY = 0
+            <if test='param.areakey != null and param.areakey != ""'>
+            	AND WS.AREAKEY = #{param.areakey}
+            </if>
+			<if test='param.locakeyList != null and param.locakeyList.size() > 0'>
+		  		AND WS.LOCAKEY IN
+			  	<foreach collection="param.locakeyList" item="locakey" index="index" open="(" close=")" separator=",">
+			  		#{locakey}
+			  	</foreach>
+		  	</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WS.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WS.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WS.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test='param.orderln != null and param.orderln != ""'>
+					AND WS.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+			<if test='param.purcnum != null and param.purcnum != ""'>
+		  		AND WS.PURCNUM LIKE CONCAT('%',#{param.purcnum},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WS.REGIMOD IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+			<if test='param.demodnm != null and param.demodnm != ""'>
+		  		AND WS.DEMODNM LIKE CONCAT('%',#{param.demodnm},'%')
+		  	</if>
+            ORDER BY  WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER DESC, WS.EMSKUYN DESC
+	</select>
+
+	<!-- WTAKIT TASKOKY 채번 -->
+    <select id="selectTaskoky" resultType="String">
+     	/* selectTaskoky */
+     	select ${userData.schema}.fn_sm_taskoky() as taskoky from dual
+    </select>
+
+    <!-- WTAKIT TASKOIT 채번 -->
+    <select id="selectTaskoit" resultType="Integer">
+     	/* selectTaskoit */
+     	select ${userData.schema}.fn_sm_taskoit(#{taskoky}) as taskoit from dual
+    </select>
+
+	<!-- 선별지시 재고검증 -->
+	<select id="checkDoe035StockVail" resultType="int">
+		/* checkDoe035StockVail */
+		SELECT
+			COUNT(1)
+		FROM
+			${userData.schema}.WSTKKY
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND UPDTCHK = #{param.updtchk}
+	</select>
+
+	<!-- 선별지시 대상의 위에 있는 제품 확인 -->
+	<select id="checkDoe035AboveStockExist" resultType="int">
+		/* checkDoe035AboveStockExist */
+		SELECT
+			COUNT(1)
+		FROM
+			${userData.schema}.WSTKKY WS
+		<if test='param.lolayerList != null and param.lolayerList.size > 0'>
+			LEFT JOIN (
+				SELECT
+					STOCKKY, LOLAYER
+				FROM
+					${userData.schema}.WSTKKY
+				WHERE
+					WAREKEY = #{param.warekey}
+					AND AREAKEY = #{param.areakey}
+					AND LOCAKEY = #{param.locakey}
+					AND LOLAYER IN
+	                <foreach item="layer" collection="param.lolayerList" open="(" separator="," close=")">
+	                    #{layer}
+	                </foreach>
+			) WST
+			ON WST.STOCKKY = WS.STOCKKY
+		</if>
+		WHERE
+			WS.WAREKEY = #{param.warekey}
+			AND WS.AREAKEY = #{param.areakey}
+			AND WS.LOCAKEY = #{param.locakey}
+			AND WS.LOLAYER >  #{param.lolayer}
+			<if test='param.lolayerList != null and param.lolayerList.size > 0'>
+				AND WST.LOLAYER IS NULL
+			</if>
+	</select>
+
+	<!-- 선별지시 대상의 위에 있는 제품 작업지시 유무 확인 -->
+	<select id="checkDoe035AboveTaskExist" resultType="int">
+		/* checkDoe035AboveTaskExist */
+		SELECT
+			COUNT(1)
+		FROM
+			${userData.schema}.WSTKKY WS
+		INNER JOIN ${userData.schema}.WTAKIT WT
+			ON WT.TASKOKY = WS.TASKOKY
+			AND WT.TASKOIT = WS.TASKOIT
+			AND WT.DOCCATE = '500'
+			AND WT.TASKSTS NOT IN ('CMP', 'CANCEL')
+		<if test='param.lolayerList != null and param.lolayerList.size > 0'>
+			LEFT JOIN (
+				SELECT
+					STOCKKY, LOLAYER
+				FROM
+					${userData.schema}.WSTKKY
+				WHERE
+					WAREKEY = #{param.warekey}
+					AND AREAKEY = #{param.areakey}
+					AND LOCAKEY = #{param.locakey}
+					AND LOLAYER IN
+	                <foreach item="layer" collection="param.lolayerList" open="(" separator="," close=")">
+	                    #{layer}
+	                </foreach>
+			) WST
+			ON WST.STOCKKY = WS.STOCKKY
+		</if>
+		WHERE
+			WS.WAREKEY = #{param.warekey}
+			AND WS.AREAKEY = #{param.areakey}
+			AND WS.LOCAKEY = #{param.locakey}
+			AND WS.LOLAYER >  #{param.lolayer}
+			<if test='param.lolayerList != null and param.lolayerList.size > 0'>
+				AND WST.LOLAYER IS NULL
+			</if>
+	</select>
+
+	<!-- 선별지시 대상 위에 제품 출고예정확정 여부 확인 -->
+	<select id="checkDoe035StockAboveOutExist" resultType="int">
+		/* checkDoe035StockAboveOutExist */
+		SELECT
+			COUNT(1)
+		FROM
+			${userData.schema}.WPLNIT
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND WPLITST = 'ING'
+	</select>
+
+    <select id="getDoe035WstkkyList" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getDoe035WstkkyList */
+        SELECT
+            CONCAT(WS.STOCKKY, WS.WAREKEY) as ROWKEY
+            , WS.STOCKKY, WS.WAREKEY, MW.WHNAMLC
+            , WS.AREAKEY, MA.AREANAM
+            , WS.LOCAKEY, ML.LOCANAM
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY, WS.OWNRNAM
+            , WS.CUSTCOD, WS.CUSTNAM
+            , WS.SKUGRKY, MGR.GRPKYNM, WS.SKUMKEY, WS.SKUDESC, WS.BTRFSTC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.GROSSWG, WS.GROSSWD, WS.GROSSLN, WS.GROSSTH
+            , WS.BTRCATE, BC.BTRCNAM, WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIORG, MR1.RENAMLC, WS.DESTORG, WS.DEORGNM
+            , WS.REGIMOD, MR2.RENAMLC as REMODNM, WS.DESTMOD, WS.DEMODNM
+            , WS.ITEMCOD, WS.STOTQTY, WS.TASKQTY, WS.SALLQTY, WS.SBLOQTY, WS.PLANQTY, WS.PLCMQTY
+            , WS.SUOMKEY, WS.ADDCOKY, MC02.COMCDTX as ADDCONM, DATE_FORMAT(WS.RCVDCDT,'%Y-%m-%d') as RCVDCDT
+            , WS.LOTAT01, WS.LOTAT02, WS.LOTAT03
+            , WS.STKSTAT, MCO.COMCDTX as STATNAM, WS.STKMEMO, WS.EMSKUYN
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT
+            , DATE_FORMAT(WS.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM( WS.CREUSER) AS CREUSER
+            , DATE_FORMAT(WS.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WS.LMOUSER) AS LMOUSER
+            , WS.UPDTCHK
+            , WS.DEMODNM, WS.DEMDMAN, WS.DEMDTLN
+            , CASE
+            	  WHEN (WS.DEMDADR IS NULL OR WS.DEMDADR = '') AND
+            	       (WS.DEMPOCD IS NULL OR WS.DEMPOCD = '') THEN ''
+            	  WHEN (WS.DEMPOCD IS NULL OR WS.DEMPOCD = '') AND
+            	       (WS.DEMDADR IS NOT NULL OR WS.DEMDADR != '') THEN WS.DEMDADR
+            	  ELSE CONCAT('(', WS.DEMPOCD, ') ', WS.DEMDADR)
+           	  END AS DEMDADR
+        FROM
+            ${userData.schema}.WSTKKY WS
+        INNER JOIN ${userData.schema}.MWARMA MW
+            ON MW.WAREKEY = WS.WAREKEY
+            AND MW.WHUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MAREMA MA
+            ON MA.WAREKEY = WS.WAREKEY
+            AND MA.AREAKEY = WS.AREAKEY
+            AND MA.ARUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MLOCMA ML
+            ON ML.WAREKEY = WS.WAREKEY
+            AND ML.AREAKEY = WS.AREAKEY
+            AND ML.LOCAKEY = WS.LOCAKEY
+            AND ML.LOUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WS.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WS.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MCODEM MCO
+            ON MCO.COMCDVL = WS.STKSTAT
+            AND MCO.COMCDKY = 'STKSTAT'
+            AND MCO.COUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MGRPMA MGR
+        	ON MGR.SKUGRKY = WS.SKUGRKY
+		INNER JOIN ${userData.schema}.BADDCO BA
+		   ON BA.ADDCOKY = WS.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC02
+		   ON BA.ADDSIKY = MC02.COMCDVL
+		  AND MC02.COMCDKY = 'ADDSIKY'
+		  AND MC02.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.BTRCAT BC
+		    ON BC.BTRCATE = WS.BTRCATE
+        WHERE
+            WS.WAREKEY = #{param.warekey}
+            AND WS.STOTQTY > 0
+            AND WS.TASKQTY = 0
+               AND WS.PLCMQTY = 0
+            <if test='param.areakey != null and param.areakey != ""'>
+            	AND WS.AREAKEY = #{param.areakey}
+            </if>
+			<if test='param.locakeyList != null and param.locakeyList.size() > 0'>
+		  		AND WS.LOCAKEY IN
+			  	<foreach collection="param.locakeyList" item="locakey" index="index" open="(" close=")" separator=",">
+			  		#{locakey}
+			  	</foreach>
+		  	</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WS.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WS.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WS.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test='param.orderln != null and param.orderln != ""'>
+					AND WS.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+		  	<if test='param.purcnum != null and param.purcnum != ""'>
+		  		AND WS.PURCNUM LIKE CONCAT('%',#{param.purcnum},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WS.REGIMOD IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+		  	<if test='param.demodnm != null and param.demodnm != ""'>
+		  		AND WS.DEMODNM LIKE CONCAT('%',#{param.demodnm},'%')
+		  	</if>
+            ORDER BY WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER DESC, WS.EMSKUYN DESC
+	</select>
+
+	<!-- doe035 선별지시 -->
+    <insert id="saveDoe035List" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		INSERT INTO ${userData.schema}.WTAKIT(
+			TASKOKY, TASKOIT, WAREKEY
+			, TASKDAT, DOCCATE, DOCTYPE, TASKSTS
+			, LOTNMKY, OWNERKY, OWNRNAM, CUSTCOD, CUSTNAM
+			, SKUMKEY, SKUDESC
+			, FRAREKY, FRLOCKY, FRLAYER
+			, TOAREKY, TOLOCKY, TOLAYER
+			, EQUIPKY
+			, FORDQTY
+			, STOCKKY
+			, PARSNCD, PARSNNM
+			, CREDATE, CRETIME, CREUSER
+			, LMODATE, LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{param.taskoky}, #{param.taskoit}, #{param.warekey}
+			, date_format(now(), '%Y%m%d'), #{param.doccate}, #{param.doctype}, #{param.tasksts}
+			, #{param.lotnmky}, #{param.ownerky}, #{param.ownrnam}, #{param.custcod}, #{param.custnam}
+			, #{param.skumkey}, #{param.skudesc}
+			, #{param.areakey}, #{param.locakey}, #{param.lolayer}
+			, #{param.toareky}, #{param.tolocky}, #{param.tolayer}
+			, #{param.equipky}
+			, #{param.stotqty}
+			, #{param.stockky}
+			, #{param.parsncd}, #{param.parsnnm}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+    </insert>
+
+	<!-- doe035 선별지시 -> 선별수량 할당수량으로 옮김 -->
+	<update id="updateTaskToSallqty" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		UPDATE ${userData.schema}.WSTKKY
+		SET TASKQTY = #{param.stotqty},
+			TASKOKY = #{param.taskoky},
+			TASKOIT = #{param.taskoit},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doe035 선별지시 -> wtakit 작업시간, 작업상태 NEW -> TASK로 변경 -->
+	<update id="updateTasksts" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		UPDATE ${userData.schema}.WTAKIT
+		SET TASKSTS = #{param.tasksts},
+			MVSTDAT = date_format(now(), '%Y%m%d'),
+			MVSTTIM = date_format(now(), '%H%i%s'),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND TASKOKY = #{param.taskoky}
+			AND TASKOIT = #{param.taskoit}
+	</update>
+
+	<select id="checkLayerExists" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		SELECT
+            CONCAT(WS.STOCKKY, WS.WAREKEY) as ROWKEY
+            , WS.STOCKKY, WS.WAREKEY
+            , WS.AREAKEY ,WS.LOCAKEY, WS.LOLAYER
+            , WS.LOTNMKY, WS.OWNERKY
+            , WS.CUSTCOD, WS.SKUMKEY, WS.SKUDESC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.DEORGNM, WS.DEMODNM
+            , WS.ITEMCOD, WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY
+            , WS.SUOMKEY, WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02
+            , WS.LOTAT03, WS.STKSTAT
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT, WS.CREDATE, WS.CRETIME, WS.CREUSER
+            , WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WS.UPDTCHK
+        FROM
+            ${userData.schema}.WSTKKY WS
+        WHERE
+            WS.WAREKEY = #{param.warekey}
+            AND WS.STOTQTY > 0
+            AND WS.AREAKEY = #{param.toareky}
+            AND WS.LOCAKEY = #{param.tolocky}
+            AND WS.LOLAYER = #{param.tolayer}
+	</select>
+
+	<!-- doedy035 선별지시 -->
+	<select id="getDoeDy035WstkkyList" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getDoeDy035WstkkyList */
+        SELECT
+            CONCAT(WS.STOCKKY, WS.WAREKEY) as ROWKEY
+            , WS.STOCKKY, WS.WAREKEY, MW.WHNAMLC
+            , WS.AREAKEY, MA.AREANAM
+            , WS.LOCAKEY, ML.LOCANAM
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY, WS.OWNRNAM
+            , WS.CUSTCOD, WS.CUSTNAM
+            , WS.SKUGRKY, MGR.GRPKYNM, WS.SKUMKEY, WS.SKUDESC, WS.BTRFSTC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.GROSSWG, WS.GROSSWD, WS.GROSSLN, WS.GROSSTH
+            , WS.BTRCATE, BC.BTRCNAM, WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIORG, MR1.RENAMLC, WS.DESTORG, WS.DEORGNM
+            , WS.REGIMOD, MR2.RENAMLC as REMODNM, WS.DESTMOD, WS.DEMODNM
+            , WS.ITEMCOD, WS.STOTQTY, WS.TASKQTY, WS.SALLQTY, WS.SBLOQTY, WS.PLANQTY, WS.PLCMQTY
+            , WS.SUOMKEY, WS.ADDCOKY, MC02.COMCDTX as ADDCONM, DATE_FORMAT(WS.RCVDCDT,'%Y-%m-%d') as RCVDCDT
+            , WS.LOTAT01, WS.LOTAT02, WS.LOTAT03
+            , WS.STKSTAT, MCO.COMCDTX as STATNAM, WS.STKMEMO, WS.EMSKUYN
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT
+            , DATE_FORMAT(WS.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM( WS.CREUSER) AS CREUSER
+            , DATE_FORMAT(WS.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WS.LMOUSER) AS LMOUSER
+            , WS.UPDTCHK
+            , WS.DEMODNM, WS.DEMDMAN, WS.DEMDTLN
+            , CASE
+            	  WHEN (WS.DEMDADR IS NULL OR WS.DEMDADR = '') AND
+            	       (WS.DEMPOCD IS NULL OR WS.DEMPOCD = '') THEN ''
+            	  WHEN (WS.DEMPOCD IS NULL OR WS.DEMPOCD = '') AND
+            	       (WS.DEMDADR IS NOT NULL OR WS.DEMDADR != '') THEN WS.DEMDADR
+            	  ELSE CONCAT('(', WS.DEMPOCD, ') ', WS.DEMDADR)
+           	  END AS DEMDADR
+        FROM
+            ${userData.schema}.WSTKKY WS
+        INNER JOIN ${userData.schema}.MWARMA MW
+            ON MW.WAREKEY = WS.WAREKEY
+            AND MW.WHUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MAREMA MA
+            ON MA.WAREKEY = WS.WAREKEY
+            AND MA.AREAKEY = WS.AREAKEY
+            AND MA.ARUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MLOCMA ML
+            ON ML.WAREKEY = WS.WAREKEY
+            AND ML.AREAKEY = WS.AREAKEY
+            AND ML.LOCAKEY = WS.LOCAKEY
+            AND ML.LOUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WS.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WS.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MCODEM MCO
+            ON MCO.COMCDVL = WS.STKSTAT
+            AND MCO.COMCDKY = 'STKSTAT'
+            AND MCO.COUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MGRPMA MGR
+        	ON MGR.SKUGRKY = WS.SKUGRKY
+		INNER JOIN ${userData.schema}.BADDCO BA
+		   ON BA.ADDCOKY = WS.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC02
+		   ON BA.ADDSIKY = MC02.COMCDVL
+		  AND MC02.COMCDKY = 'ADDSIKY'
+		  AND MC02.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.BTRCAT BC
+		    ON BC.BTRCATE = WS.BTRCATE
+        WHERE
+            WS.WAREKEY = #{param.warekey}
+            <!-- AND WS.STOTQTY > 0
+            AND WS.TASKQTY = 0 -->
+               AND WS.PLCMQTY = 0
+            <if test='param.areakey != null and param.areakey != ""'>
+            	AND WS.AREAKEY = #{param.areakey}
+            </if>
+			<if test='param.locakeyList != null and param.locakeyList.size() > 0'>
+		  		AND WS.LOCAKEY IN
+			  	<foreach collection="param.locakeyList" item="locakey" index="index" open="(" close=")" separator=",">
+			  		#{locakey}
+			  	</foreach>
+		  	</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WS.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WS.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WS.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test='param.orderln != null and param.orderln != ""'>
+					AND WS.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+		  	<if test='param.purcnum != null and param.purcnum != ""'>
+		  		AND WS.PURCNUM LIKE CONCAT('%',#{param.purcnum},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WS.REGIMOD IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+		  	<if test='param.demodnm != null and param.demodnm != ""'>
+		  		AND WS.DEMODNM LIKE CONCAT('%',#{param.demodnm},'%')
+		  	</if>
+            ORDER BY WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER DESC, WS.EMSKUYN DESC
+	</select>
+
+
+	<!-- doe036 head grid -->
+	<select id="getDoe036HeadList" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* getDoe036HeadList */
+		SELECT
+		    CONCAT(WT.TASKOKY, WT.TASKOIT) as ROWKEY
+		    , WT.TASKOKY, COUNT(WT.TASKOIT) as TSITCNT
+		    , WT.WAREKEY, MW.WHNAMLC
+		    , DATE_FORMAT(WT.TASKDAT,'%Y-%m-%d') as TASKDAT
+		    , WT.DOCCATE, MD.DOCCTNM, WT.DOCTYPE, MD.DOCTYNM
+		    , MIN(WT.TASKSTS) as TASKSTS, MC.COMCDTX as TSTSNAM
+		    , WT.EQUIPKY, MEQ.EQUINAM, MEQ.AREAKEY, MA.AREANAM
+		    , DATE_FORMAT( WT.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.CREUSER) AS CREUSER
+		    , DATE_FORMAT(WT.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.LMOUSER) AS LMOUSER
+		    , WT.UPDTCHK
+		FROM
+		    ${userData.schema}.WTAKIT WT
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WT.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD
+		    ON MD.WAREKEY = WT.WAREKEY
+		    AND MD.DOCCATE = WT.DOCCATE
+		    AND MD.DOCTYPE = WT.DOCTYPE
+		    AND MD.DOUSEYN = 'Y'
+		INNER JOIN (
+		    SELECT TASKOKY, MIN(TASKSTS) as TASKSTS
+		    FROM ${userData.schema}.WTAKIT
+		    GROUP BY TASKOKY
+		) T ON T.TASKOKY = WT.TASKOKY
+		INNER JOIN ${userData.schema}.MCODEM MC ON
+		    MC.COMCDVL = T.TASKSTS
+		    AND MC.COMCDKY = 'TASKSTS'
+		    AND MC.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MRSCMA MR
+		    ON MR.WAREKEY = WT.WAREKEY
+		    AND MR.DOCCATE = WT.DOCCATE
+		    AND MR.DOCTYPE = WT.DOCTYPE
+		    AND MR.RSNCODE = WT.PARSNCD
+		    AND MR.RSUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MEQUMA MEQ
+			ON MEQ.WAREKEY = WT.WAREKEY
+			AND MEQ.AREAKEY = WT.TOAREKY
+			AND MEQ.EQUIPKY = WT.EQUIPKY
+		INNER JOIN ${userData.schema}.MAREMA MA ON
+		    MA.WAREKEY = MEQ.WAREKEY
+		    AND MA.AREAKEY = MEQ.AREAKEY
+		WHERE
+		    WT.WAREKEY = #{param.warekey}
+		    <if test='param.doctype != null and param.doctype != ""'>
+		    	AND WT.DOCTYPE = #{param.doctype}
+		    </if>
+		    <if test='param.taskstsList != null and param.taskstsList.size != 0'>
+		    	AND WT.TASKSTS IN
+		    	<foreach collection="param.taskstsList" item="tasksts" open="(" close=")" separator=",">
+		    	 	#{tasksts}
+	    	 	</foreach>
+		    </if>
+		    <if test='param.equipky != null and param.equipky != ""'>
+		    	AND WT.EQUIPKY = #{param.equipky}
+		    </if>
+		    <if test='param.skumkey != null and param.skumkey != ""'>
+		    	AND WT.SKUMKEY = #{param.skumkey}
+		    </if>
+		    <if test='param.taskoky != null and param.taskoky != ""'>
+		    	AND WT.TASKOKY LIKE CONCAT('%',#{param.taskoky},'%')
+		    </if>
+		    <if test='param.custnam != null and param.custnam != ""'>
+		    	AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		    </if>
+		    GROUP BY
+		    	WT.TASKOKY, WT.WAREKEY, MW.WHNAMLC, WT.DOCCATE, WT.EQUIPKY, MEQ.EQUINAM
+		    	, MD.DOCCTNM, WT.DOCTYPE, MD.DOCTYNM, MEQ.AREAKEY, MA.AREANAM
+		    ORDER BY WT.TASKOKY DESC
+	</select>
+
+	<select id="getDoe036ItemList" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* getDoe036ItemList */
+		SELECT
+		    CONCAT(WT.TASKOKY, WT.TASKOIT) as ROWKEY
+		    , WT.TASKOKY, WT.TASKOIT
+		    , WT.WAREKEY, MW.WHNAMLC
+		    , DATE_FORMAT(WT.TASKDAT,'%Y-%m-%d') as TASKDAT
+		    , WT.DOCCATE, MD.DOCCTNM, WT.DOCTYPE, MD.DOCTYNM
+		    , WT.TASKSTS, MC.COMCDTX as TSTSNAM, WT.LOTNMKY
+		    , WT.OWNERKY, WT.OWNRNAM, WT.CUSTCOD, WT.CUSTNAM
+		    , WT.SKUMKEY, WT.SKUDESC, WT.EQUIPKY, ME.EQUINAM
+		    , WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY, WS.PLANQTY, WS.PLCMQTY
+		    , WT.FRAREKY, MA1.AREANAM as FRARANM, WT.FRLOCKY, ML1.LOCANAM as FRLOCNM, WT.FRLAYER
+		    , WT.TOAREKY, MA2.AREANAM as TOARANM, WT.TOLOCKY, ML2.LOCANAM as TOLOCNM
+		    , WS.REGIORG, MR1.RENAMLC AS RGORGNM, WS.DESTORG, WS.DEORGNM
+		    , WS.REGIMOD, MR2.RENAMLC AS RGMODNM, WS.DESTMOD, WS.DEMODNM
+		    , WT.FORDQTY, WT.TCMPQTY, WT.ALLGRKY
+		    , WT.MVSTDAT, WT.MVSTTIM
+		    , WT.MVEDDAT, WT.MVEDTIM
+		    , WT.PARSNCD, MR.RSNCDNM, WT.PARSNNM
+		    , WT.PKRSNCD, WT.PKRSNNM
+		    , WT.STOCKKY, WS.EMSKUYN, WS.STKMEMO
+		    , WT.EOASNKY, WT.EOASNIT
+		    , WT.COSTRKY, WT.COSTRIT
+		    , WT.RCVDCKY, WT.RCVDCIT
+		    , WT.OUTBOKY, WT.OUTBOIT
+		    , WT.SHPDCKY, WT.SHPDCIT
+		    , DATE_FORMAT( WT.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.CREUSER) AS CREUSER
+		    , DATE_FORMAT(WT.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.LMOUSER) AS LMOUSER
+		    , WT.UPDTCHK
+		FROM
+		    ${userData.schema}.WTAKIT WT
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WT.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD
+		    ON MD.WAREKEY = WT.WAREKEY
+		    AND MD.DOCCATE = WT.DOCCATE
+		    AND MD.DOCTYPE = WT.DOCTYPE
+		    AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MCODEM MC
+		    ON MC.COMCDVL = WT.TASKSTS
+		    AND MC.COMCDKY = 'TASKSTS'
+		    AND MC.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MAREMA MA1
+		    ON MA1.WAREKEY = WT.WAREKEY
+		    AND MA1.AREAKEY = WT.FRAREKY
+		    AND MA1.ARUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MAREMA MA2
+		    ON MA2.WAREKEY = WT.WAREKEY
+		    AND MA2.AREAKEY = WT.TOAREKY
+		    AND MA2.ARUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MLOCMA ML1
+		    ON ML1.WAREKEY = WT.WAREKEY
+		    AND ML1.AREAKEY = WT.FRAREKY
+		    AND ML1.LOCAKEY = WT.FRLOCKY
+		    AND ML1.LOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MLOCMA ML2
+		    ON ML2.WAREKEY = WT.WAREKEY
+		    AND ML2.AREAKEY = WT.TOAREKY
+		    AND ML2.LOCAKEY = WT.TOLOCKY
+			AND ML2.LOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MRSCMA MR
+		    ON MR.WAREKEY = WT.WAREKEY
+		    AND MR.DOCCATE = WT.DOCCATE
+		    AND MR.DOCTYPE = WT.DOCTYPE
+		    AND MR.RSNCODE = WT.PARSNCD
+		    AND MR.RSUSEYN = 'Y'
+		 INNER JOIN ${userData.schema}.WSTKKY WS
+		 	ON WS.WAREKEY = WT.WAREKEY
+		 	AND WS.STOCKKY = WT.STOCKKY
+		 INNER JOIN ${userData.schema}.MEQUMA ME
+		 	ON ME.EQUIPKY = WT.EQUIPKY
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WS.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WS.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+		WHERE
+		    WT.WAREKEY = #{param.warekey}
+			<if test='param.equipkyList != null and param.equipkyList.size() > 0'>
+		  		AND WT.EQUIPKY IN
+			  	<foreach collection="param.equipkyList" item="equipky" index="index" open="(" close=")" separator=",">
+			  		#{equipky}
+			  	</foreach>
+		  	</if>
+			<if test='param.taskstsList != null and param.taskstsList.size() > 0'>
+		  		AND WT.TASKSTS IN
+			  	<foreach collection="param.taskstsList" item="tasksts" index="index" open="(" close=")" separator=",">
+			  		#{tasksts}
+			  	</foreach>
+		  	</if>
+		    <if test='param.taskoky != null and param.taskoky != ""'>
+		    	AND WT.TASKOKY LIKE CONCAT('%',#{param.taskoky},'%')
+		    </if>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WS.REGIMOD IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+		  	ORDER BY WT.TASKOKY DESC, WT.FRAREKY, WT.FRLAYER DESC
+	</select>
+
+	<!-- 조업시작 시점 제품의 LOCAKEY, LOLAYER 조회 -->
+	<select id="getSelectionBeforeLocaList" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* getSelectionBeforeLocaList */
+		SELECT
+		    WT.TASKOKY, WS.SKUMKEY, WS.AREAKEY as FRAREKY, WS.LOCAKEY as FRLOCKY, WS.LOLAYER as FRLAYER
+		FROM
+		    ${userData.schema}.WTAKIT WT
+		INNER JOIN ${userData.schema}.WSTKKY WS
+		    ON WS.TASKOKY = WT.TASKOKY
+		    AND WS.TASKOIT = WT.TASKOIT
+		    AND WS.SKUMKEY = WT.SKUMKEY
+		WHERE
+		    WT.TASKOKY = #{param.taskoky}
+	</select>
+
+	<!-- 조업 시작 시점 FROM LOCAKEY, FROM LOLAYER 수정 -->
+	<update id="updateSelectionBeforeLoca" parameterType="com.kbph.logistics.api.domain.SelectionOperationDTO">
+		/* updateSelectionBeforeLoca */
+			UPDATE ${userData.schema}.WTAKIT
+			   	SET FRAREKY = #{param.frareky},
+			   		FRLOCKY = #{param.frlocky},
+			   		FRLAYER = #{param.frlayer},
+					LMODATE = date_format(now(), '%Y%m%d'),
+					LMOTIME = date_format(now(), '%H%i%s'),
+					LMOUSER = #{userData.useract},
+					UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{param.taskoky}
+				AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<!-- 선별정보등록(doe036) - 조업시작 -->
+	<update id="updateDoe036WtakitOperStart" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateDoe036WtakitOperStart */
+		UPDATE ${userData.schema}.WTAKIT
+			SET
+				TASKSTS = #{param.tasksts},
+				MVSTDAT = date_format(now(), '%Y%m%d'),
+				MVSTTIM = date_format(now(), '%H%i%s'),
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{userData.useract},
+				UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND TASKOKY = #{param.taskoky}
+	</update>
+
+	<!-- 선별정보등록(doe036) - 작업완료 -->
+	<update id="updateDoe036Wtakit" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateDoe037Wtakit */
+		UPDATE ${userData.schema}.WTAKIT
+		SET TASKSTS = #{param.tasksts},
+			TOLOCKY = #{param.tolocky},
+			EQUIPKY = #{param.equipky},
+			TOLAYER = #{param.tolayer},
+			TCMPQTY = 1,
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND TASKOKY = #{param.taskoky}
+			<if test='param.taskoit != null and param.taskoit != ""'>
+				AND TASKOIT = #{param.taskoit}
+			</if>
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- 선별정보등록(doe036) - 조업완료 -->
+	<update id="updateDoe036WtakitOperCmp" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateDoe036WtakitOperCmp */
+		UPDATE ${userData.schema}.WTAKIT
+		SET TASKSTS = #{param.tasksts},
+			MVEDDAT = date_format(now(), '%Y%m%d'),
+			MVEDTIM = date_format(now(), '%H%i%s'),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND TASKOKY = #{param.taskoky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doe036 head grid -->
+	<select id="getDoe036WtakitList" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* "getDoe036WtakitList" */
+		SELECT
+		    CONCAT(WT.TASKOKY, WT.TASKOIT) as ROWKEY
+		    , WT.TASKOKY, WT.TASKOIT
+		    , WT.WAREKEY
+		    , DATE_FORMAT(WT.TASKDAT,'%Y-%m-%d') as TASKDAT
+		    , WT.DOCCATE, WT.DOCTYPE
+		    , WT.TASKSTS, WT.LOTNMKY
+		    , WT.OWNERKY, WT.CUSTCOD
+		    , WT.SKUMKEY, WT.SKUDESC
+		    , WT.FRAREKY, WT.FRLOCKY, WT.FRLAYER
+		    , WT.TOAREKY, WT.TOLOCKY, WT.TOLAYER
+		    , WT.FORDQTY, WT.TCMPQTY, WT.ALLGRKY
+		    , WT.MVSTDAT, WT.MVSTTIM
+		    , WT.MVEDDAT, WT.MVEDTIM
+		    , WT.PARSNCD, WT.PARSNNM
+		    , WT.PKRSNCD, WT.PKRSNNM
+		    , WT.STOCKKY
+		    , WT.EOASNKY, WT.EOASNIT
+		    , WT.COSTRKY, WT.COSTRIT
+		    , WT.RCVDCKY, WT.RCVDCIT
+		    , WT.OUTBOKY, WT.OUTBOIT
+		    , WT.SHPDCKY, WT.SHPDCIT
+		    , DATE_FORMAT( WT.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.CREUSER) AS CREUSER
+		    , DATE_FORMAT(WT.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.LMOUSER) AS LMOUSER
+		    , WT.UPDTCHK
+		FROM
+		    ${userData.schema}.WTAKIT WT
+		WHERE
+		    WT.WAREKEY = #{param.warekey}
+		    AND WT.TASKOKY = #{param.taskoky}
+	</select>
+
+	<select id="getDoe036WtakitTaskstsList" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* getDoe036WtakitTaskstsList */
+		SELECT
+		    CONCAT(WT.TASKOKY, WT.TASKOIT) as ROWKEY
+		    , WT.TASKOKY, WT.TASKOIT
+		    , WT.WAREKEY, MW.WHNAMLC
+		    , DATE_FORMAT(WT.TASKDAT,'%Y-%m-%d') as TASKDAT
+		    , WT.DOCCATE, MD.DOCCTNM, WT.DOCTYPE, MD.DOCTYNM
+		    , WT.TASKSTS, MC.COMCDTX as TSTSNAM, WT.LOTNMKY
+		    , WT.OWNERKY, WT.OWNRNAM, WT.CUSTCOD, WT.CUSTNAM
+		    , WT.SKUMKEY, WT.SKUDESC
+		    , WT.FRAREKY, MA1.AREANAM as FRARANM, WT.FRLOCKY, ML1.LOCANAM as FRLOCNM, WT.FRLAYER
+		    , WT.TOAREKY, MA2.AREANAM as TOARANM, WT.TOLOCKY, ML2.LOCANAM as TOLOCNM, WT.TOLAYER
+		    , WT.FORDQTY, WT.TCMPQTY, WT.ALLGRKY
+		    , WT.MVSTDAT, WT.MVSTTIM
+		    , WT.MVEDDAT, WT.MVEDTIM
+		    , WT.PARSNCD, MR.RSNCDNM, WT.PARSNNM
+		    , WT.PKRSNCD, WT.PKRSNNM
+		    , WT.STOCKKY
+		    , WT.EOASNKY, WT.EOASNIT
+		    , WT.COSTRKY, WT.COSTRIT
+		    , WT.RCVDCKY, WT.RCVDCIT
+		    , WT.OUTBOKY, WT.OUTBOIT
+		    , WT.SHPDCKY, WT.SHPDCIT
+		    , DATE_FORMAT( WT.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.CREUSER) AS CREUSER
+		    , DATE_FORMAT(WT.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.LMOUSER) AS LMOUSER
+		    , WT.UPDTCHK
+		FROM
+		    ${userData.schema}.WTAKIT WT
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WT.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD
+		    ON MD.WAREKEY = WT.WAREKEY
+		    AND MD.DOCCATE = WT.DOCCATE
+		    AND MD.DOCTYPE = WT.DOCTYPE
+		    AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MCODEM MC
+		    ON MC.COMCDVL = WT.TASKSTS
+		    AND MC.COMCDKY = 'TASKSTS'
+		    AND MC.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MAREMA MA1
+		    ON MA1.WAREKEY = WT.WAREKEY
+		    AND MA1.AREAKEY = WT.FRAREKY
+		    AND MA1.ARUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MAREMA MA2
+		    ON MA2.WAREKEY = WT.WAREKEY
+		    AND MA2.AREAKEY = WT.TOAREKY
+		    AND MA2.ARUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MLOCMA ML1
+		    ON ML1.WAREKEY = WT.WAREKEY
+		    AND ML1.AREAKEY = WT.FRAREKY
+		    AND ML1.LOCAKEY = WT.FRLOCKY
+		    AND ML1.LOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MLOCMA ML2
+		    ON ML2.WAREKEY = WT.WAREKEY
+		    AND ML2.AREAKEY = WT.TOAREKY
+		    AND ML2.LOCAKEY = WT.TOLOCKY
+		    AND ML2.LOUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MRSCMA MR
+		    ON MR.WAREKEY = WT.WAREKEY
+		    AND MR.DOCCATE = WT.DOCCATE
+		    AND MR.DOCTYPE = WT.DOCTYPE
+		    AND MR.RSNCODE = WT.PARSNCD
+		    AND MR.RSUSEYN = 'Y'
+		 LEFT JOIN ${userData.schema}.WSTKKY WS
+		 	ON WS.WAREKEY = WT.WAREKEY
+		 	AND WS.STOCKKY = WT.STOCKKY
+		WHERE
+		    WT.WAREKEY = #{param.warekey}
+		    AND WT.TASKOKY = #{param.taskoky}
+		    <if test="param.taskstsList != null and param.taskstsList.size != 0">
+		    	AND WT.TASKSTS IN
+		    	<foreach collection="param.taskstsList" item="tasksts" open="(" close=")" separator=",">
+		    	 	#{tasksts}
+	    	 	</foreach>
+		    </if>
+	</select>
+
+	<!-- doe036 선별정보등록 모달 -->
+	<select id="getDoe036StockInfos" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* getDoe036StockInfos */
+		SELECT CONCAT(WS.SKUMKEY, WS.TASKOIT) as ROWKEY
+			 , WS.SKUMKEY, WS.WAREKEY, WS.AREAKEY AS FRAREKY, WS.LOCAKEY AS FRLOCKY
+			 , WS.LOLAYER AS FRLAYER, WT.TASKOKY
+			 <!-- inner join -->
+			 , MW.WHNAMLC AS WHNAMLC
+			 , MA2.AREANAM AS TOARANM, ML2.LOCAKEY AS TOLOCKY, ML2.LOCANAM AS TOLOCNM
+			 , MA1.AREANAM AS FRARANM, ML1.LOCANAM AS FRLOCNM, MA2.AREAKEY AS TOAREKY
+			 , WT.TOAREKY, WT.STOCKKY, WT.TASKOIT, WT.EQUIPKY
+	 		 , WSI.SHPDCKY, WSI.SHPDCIT
+			 <!-- common -->
+			 , WS.CREDATE, WS.CRETIME, WS.CREUSER, WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WT.UPDTCHK
+		  FROM ${userData.schema}.WSTKKY WS
+		  INNER JOIN ${userData.schema}.MWARMA MW
+		  		  ON MW.WAREKEY = WS.WAREKEY
+		  		 AND MW.WHUSEYN = 'Y'
+		  INNER JOIN ${userData.schema}.MAREMA MA1
+		  		  ON MA1.WAREKEY = WS.WAREKEY
+		  		 AND MA1.AREAKEY = WS.AREAKEY
+		  		 AND MA1.ARUSEYN = 'Y'
+		  INNER JOIN ${userData.schema}.MLOCMA ML1
+		  		  ON ML1.WAREKEY = WS.WAREKEY
+		  		 AND ML1.AREAKEY = WS.AREAKEY
+		  		 AND ML1.LOCAKEY = WS.LOCAKEY
+		  		 AND ML1.LOUSEYN = 'Y'
+		  LEFT JOIN ${userData.schema}.WTAKIT WT
+		  		 ON WT.STOCKKY = WS.STOCKKY
+		  		AND WT.SKUMKEY = WS.SKUMKEY
+		  		AND WT.WAREKEY = WS.WAREKEY
+		  		AND WT.FRAREKY = WS.AREAKEY
+		  		AND WT.FRLOCKY = WS.LOCAKEY
+		  		AND WT.TASKSTS NOT IN ('CMP')
+		  LEFT JOIN ${userData.schema}.MAREMA MA2
+		  		 ON MA2.WAREKEY = WT.WAREKEY
+		  		AND MA2.AREAKEY = WT.TOAREKY
+		  		AND MA2.ARUSEYN = 'Y'
+		  LEFT JOIN ${userData.schema}.MLOCMA ML2
+		  		 ON ML2.WAREKEY = WT.WAREKEY
+		  		AND ML2.AREAKEY = WT.TOAREKY
+		  		AND ML2.LOCAKEY = WT.TOLOCKY
+		  		AND ML2.LOUSEYN = 'Y'
+		  LEFT JOIN ${userData.schema}.WSHPIT WSI
+		  		 ON WSI.SKUMKEY = WS.SKUMKEY
+		  		AND WSI.WAREKEY = WS.WAREKEY
+		  		AND WSI.FRAREKY = WS.AREAKEY
+		  		AND WSI.FRLOCKY = WS.LOCAKEY
+		  		AND WSI.SHPITST NOT IN ('CMP')
+		  WHERE WS.WAREKEY = #{param.warekey}
+		   <if test='param.frareky != null and param.frareky != ""'>
+		       AND WS.AREAKEY = #{param.frareky}
+		   </if>
+		   <if test='param.frlocky != null and param.frlocky != ""'>
+		       AND WS.LOCAKEY = #{param.frlocky}
+		   </if>
+		  ORDER BY WS.LOLAYER DESC
+	</select>
+
+	<select id="getDoe037WtakitList" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* getDoe037WtakitList */
+		SELECT
+		    CONCAT(WT.TASKOKY, WT.TASKOIT) as ROWKEY
+		    , WT.TASKOKY, WT.TASKOIT
+		    , WT.WAREKEY, MW.WHNAMLC
+		    , DATE_FORMAT(WT.TASKDAT,'%Y-%m-%d') as TASKDAT
+		    , WT.DOCCATE, MD.DOCCTNM, WT.DOCTYPE, MD.DOCTYNM
+		    , WT.TASKSTS, WT.LOTNMKY
+		    , WT.OWNERKY, WT.OWNRNAM, WT.CUSTCOD, WT.CUSTNAM
+		    , WT.SKUMKEY, WT.SKUDESC, WT.EQUIPKY, ME.EQUINAM
+		    , WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY, WS.PLANQTY, WS.PLCMQTY
+		    , WT.FRAREKY, MA1.AREANAM as FRARANM, WT.FRLOCKY, ML1.LOCANAM as FRLOCNM, WT.FRLAYER
+		    , WT.TOAREKY, MA2.AREANAM as TOARANM, WT.TOLOCKY, ML2.LOCANAM as TOLOCNM, WT.TOLAYER
+		    , WS.REGIORG, MR1.RENAMLC AS RGORGNM, WS.DESTORG, WS.DEORGNM
+		    , WS.REGIMOD, MR2.RENAMLC AS RGMODNM, WS.DESTMOD, WS.DEMODNM
+		    , WT.FORDQTY, WT.TCMPQTY, WT.ALLGRKY
+		    , WT.MVSTDAT, WT.MVSTTIM
+		    , WT.MVEDDAT, WT.MVEDTIM
+		    , WS.ADDCOKY
+		    , WS.BTRCATE, BC.BTRCNAM
+		    , WT.PARSNCD, MR.RSNCDNM, WT.PARSNNM
+		    , WT.PKRSNCD, WT.PKRSNNM
+		    , WT.STOCKKY, WS.EMSKUYN, WS.STKMEMO
+		    , WT.EOASNKY, WT.EOASNIT
+		    , WT.COSTRKY, WT.COSTRIT
+		    , WT.RCVDCKY, WT.RCVDCIT
+		    , WT.OUTBOKY, WT.OUTBOIT
+		    , WT.SHPDCKY, WT.SHPDCIT
+		    , DATE_FORMAT( WT.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.CREUSER) AS CREUSER
+		    , DATE_FORMAT(WT.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WT.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WT.LMOUSER) AS LMOUSER
+		    , WT.UPDTCHK
+		    , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'TASKSTS' AND COMCDVL = WT.TASKSTS AND COUSEYN = 'Y') AS TSTSNAM
+		    , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = BA.ADDSIKY AND COUSEYN = 'Y') AS ADDCONM
+		FROM
+		    ${userData.schema}.WTAKIT WT
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WT.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD
+		    ON MD.WAREKEY = WT.WAREKEY
+		    AND MD.DOCCATE = WT.DOCCATE
+		    AND MD.DOCTYPE = WT.DOCTYPE
+		    AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MAREMA MA1
+		    ON MA1.WAREKEY = WT.WAREKEY
+		    AND MA1.AREAKEY = WT.FRAREKY
+		    AND MA1.ARUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MAREMA MA2
+		    ON MA2.WAREKEY = WT.WAREKEY
+		    AND MA2.AREAKEY = WT.TOAREKY
+		    AND MA2.ARUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MLOCMA ML1
+		    ON ML1.WAREKEY = WT.WAREKEY
+		    AND ML1.AREAKEY = WT.FRAREKY
+		    AND ML1.LOCAKEY = WT.FRLOCKY
+		    AND ML1.LOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MLOCMA ML2
+		    ON ML2.WAREKEY = WT.WAREKEY
+		    AND ML2.AREAKEY = WT.TOAREKY
+		    AND ML2.LOCAKEY = WT.TOLOCKY
+			AND ML2.LOUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MRSCMA MR
+		    ON MR.WAREKEY = WT.WAREKEY
+		    AND MR.DOCCATE = WT.DOCCATE
+		    AND MR.DOCTYPE = WT.DOCTYPE
+		    AND MR.RSNCODE = WT.PARSNCD
+		    AND MR.RSUSEYN = 'Y'
+		 INNER JOIN ${userData.schema}.WSTKKY WS
+		 	ON WS.WAREKEY = WT.WAREKEY
+		 	AND WS.STOCKKY = WT.STOCKKY
+		INNER JOIN ${userData.schema}.BADDCO BA
+		   ON BA.ADDCOKY = WS.ADDCOKY
+		INNER JOIN ${userData.schema}.BTRCAT BC
+		    ON BC.BTRCATE = WS.BTRCATE
+		INNER JOIN ${userData.schema}.MGRPMA MGR
+			ON MGR.SKUGRKY = WS.SKUGRKY
+		INNER JOIN ${userData.schema}.MEQUMA ME
+		 	ON ME.EQUIPKY = WT.EQUIPKY
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WS.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WS.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+		WHERE
+		    WT.WAREKEY = #{param.warekey}
+		    AND WT.DOCCATE = '500'
+			<if test='param.taskstsCheckedList != null and param.taskstsCheckedList.size() > 0'>
+		  		AND WT.TASKSTS IN
+			  	<foreach collection="param.taskstsCheckedList" item="tasksts" index="index" open="(" close=")" separator=",">
+			  		#{tasksts}
+			  	</foreach>
+		  	</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WT.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WT.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<if test='param.equipkyList != null and param.equipkyList.size() > 0'>
+		  		AND WT.EQUIPKY IN
+			  	<foreach collection="param.equipkyList" item="equipky" index="index" open="(" close=")" separator=",">
+			  		#{equipky}
+			  	</foreach>
+		  	</if>
+			<if test='param.taskstsList != null and param.taskstsList.size() > 0'>
+		  		AND WT.TASKSTS IN
+			  	<foreach collection="param.taskstsList" item="tasksts" index="index" open="(" close=")" separator=",">
+			  		#{tasksts}
+			  	</foreach>
+		  	</if>
+		    <if test='param.taskoky != null and param.taskoky != ""'>
+		    	AND WT.TASKOKY LIKE CONCAT('%',#{param.taskoky},'%')
+		    </if>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WS.REGIMOD IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+	       	<if test='param.taskdatfrom != null and param.taskdatfrom != ""'>
+				 AND DATE_FORMAT(STR_TO_DATE(WT.TASKDAT, '%Y%m%d'), '%Y-%m-%d') <![CDATA[>=]]> #{param.taskdatfrom}
+			</if>
+			<if test='param.taskdatto != null and param.taskdatto != ""'>
+				 AND DATE_FORMAT(STR_TO_DATE(WT.TASKDAT, '%Y%m%d'), '%Y-%m-%d') <![CDATA[<=]]> #{param.taskdatto}
+			</if>
+			<if test='param.demodnm != null and param.demodnm != ""'>
+		  		AND WS.DEMODNM LIKE CONCAT('%',#{param.demodnm},'%')
+		  	</if>
+		  	ORDER BY WT.TASKOKY DESC, WT.FRAREKY, WT.FRLAYER DESC
+	</select>
+
+	<!-- 선별확정 - 상태값 존재여부 -->
+	<select id="getDoe037StatusCnt" resultType="int">
+		/* getDoe037StatusCnt */
+		SELECT
+			COUNT(1)
+		FROM
+			${userData.schema}.WTAKIT
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND TASKOKY = #{param.taskoky}
+			AND TASKOIT = #{param.taskoit}
+			AND TASKSTS = #{param.tasksts}
+	</select>
+
+	<!-- 선별확정(doe037)- 선별 취소 재고update -->
+	<update id="updateDoe037CancelWstkky" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateDoe037CancelWstkky */
+		UPDATE ${userData.schema}.WSTKKY
+		SET TASKQTY = 0,
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+	</update>
+
+	<!-- 선별확정(doe037)- 선별지시취소 -->
+	<update id="saveDoe037Cancel" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* saveDoe037Cancel */
+		UPDATE ${userData.schema}.WTAKIT
+			SET TASKSTS = #{param.tasksts},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{userData.useract},
+				UPDTCHK = #{param.updtchk} + 1
+			WHERE
+				WAREKEY = #{param.warekey}
+				AND TASKOKY = #{param.taskoky}
+				AND TASKOIT = #{param.taskoit}
+				AND SKUMKEY = #{param.skumkey}
+				AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- 선별확정(doe037)-재고유무확인(to베드 조회용) -->
+	<select id="hasStockToLoc" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* hasStockToLoc */
+		SELECT
+            WS.STOCKKY, WS.WAREKEY
+            , WS.AREAKEY, WS.LOCAKEY
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY
+            , WS.CUSTCOD, WS.SKUMKEY, WS.SKUDESC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIKEY, WS.DESTKEY
+            , WS.ITEMCOD, WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY
+            , WS.SUOMKEY, WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02
+            , WS.LOTAT03, WS.STKSTAT, WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT, WS.CREDATE, WS.CRETIME, WS.CREUSER
+            , WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WS.UPDTCHK
+        FROM
+            ${userData.schema}.WSTKKY WS
+        WHERE
+           	WS.WAREKEY = #{param.warekey}
+            AND WS.STOCKKY = #{param.stockky}
+            AND WS.SKUMKEY = #{param.skumkey}
+           	<if test='param.toareky != null and param.toareky != ""'>
+           		AND WS.AREAKEY = #{param.toareky}
+           	</if>
+           	<if test='param.tolocky != null and param.tolocky != ""'>
+           		AND WS.LOCAKEY = #{param.tolocky}
+           	</if>
+           	<if test='param.tolayer != null and param.tolayer != ""'>
+           		AND WS.LOLAYER = #{param.tolayer}
+           	</if>
+	</select>
+
+	<!-- 선별확정(doe037)- 재고유무확인 -->
+	<select id="hasStock" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* hasStock */
+		SELECT
+			WS.STOCKKY, WS.WAREKEY, WS.AREAKEY, WS.LOCAKEY,
+			WS.LOLAYER, WS.SAVEPNT, WS.LOTNMKY, WS.OWNERKY,
+			WS.OWNRNAM, WS.CUSTCOD, WS.CUSTNAM, WS.FNCUSKY,
+			WS.FCNAMLC, WS.SKUGRKY, WS.SKUMKEY, WS.SKUDESC,
+			WS.SKUWEIG, WS.SKULENG, WS.SKUWIDT, WS.SKUTHIC,
+			WS.STLOTNB, WS.GROSSWG, WS.GROSSLN, WS.GROSSWD,
+			WS.GROSSTH, WS.BTRCATE, WS.BTRFSTC, WS.PURCNUM,
+			WS.ORDERLN, WS.REGIKEY, WS.DESTKEY, WS.REGIORG,
+			WS.REGIMOD, WS.DESTORG, WS.DEORGNM, WS.DESTMOD,
+			WS.ITEMCOD, WS.DEMODNM, WS.DEMODYN, WS.DEMDMAN,
+			WS.DEMPOCD, WS.DEMDADR, WS.DEMDTLN, WS.STOTQTY,
+			WS.TASKQTY, WS.SALLQTY, WS.SBLOQTY, WS.PLANQTY,
+			WS.PLCMQTY, WS.SUOMKEY, WS.ADDCOKY, WS.POSHPDT,
+			WS.POSHPTM, WS.POSHPDY, WS.SHPLIMT, WS.DELVDSR,
+			WS.STKMEMO, WS.EMSKUYN, WS.RCVDCDT, WS.RCVDCTM,
+			WS.LOTAT01, WS.LOTAT02, WS.LOTAT03, WS.STKSTAT,
+			WS.BLOCKID, WS.RCVDCKY, WS.RCVDCIT, WS.ADJSOKY,
+			WS.ADJSOIT, WS.PHYSOKY, WS.PHYSOIT, WS.SHPDCKY,
+			WS.SHPDCIT, WS.TASKOKY, WS.TASKOIT,
+			WS.CREDATE, WS.CRETIME, WS.CREUSER,
+			WS.LMODATE, WS.LMOTIME, WS.LMOUSER,
+			WS.UPDTCHK
+<!--             WS.STOCKKY, WS.WAREKEY -->
+<!--             , WS.AREAKEY, WS.LOCAKEY -->
+<!--             , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY, WS.OWNRNAM -->
+<!--             , WS.CUSTCOD, WS.CUSTNAM, WS.SKUMKEY, WS.SKUDESC -->
+<!--             , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC -->
+<!--             , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN, WS.SKUGRKY -->
+<!--             , WS.REGIORG, WS.DESTORG, WS.DEORGNM, WS.REGIMOD, WS.DESTMOD, WS.DEMODNM -->
+<!--             , WS.ITEMCOD, WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY -->
+<!--             , WS.SUOMKEY, WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02 -->
+<!--             , WS.LOTAT03, WS.STKSTAT, WS.EMSKUYN -->
+<!--             , WS.GROSSWG, WS.GROSSLN, WS.GROSSWD, WS.GROSSTH -->
+<!--             , WS.BLOCKID, WS.RCVDCKY, WS.ADDCOKY, WS.STKMEMO -->
+<!--             , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY -->
+<!--             , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY -->
+<!--             , WS.TASKOIT, WS.CREDATE, WS.CRETIME, WS.CREUSER -->
+<!--             , WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WS.UPDTCHK -->
+        FROM
+            ${userData.schema}.WSTKKY WS
+        WHERE
+           	WS.WAREKEY = #{param.warekey}
+			AND WS.SKUMKEY = #{param.skumkey}
+			<if test='param.stockky != null and param.stockky != ""'>
+				AND WS.STOCKKY = #{param.stockky}
+			</if>
+           	<if test='param.areakey != null and param.areakey != ""'>
+           		AND WS.AREAKEY = #{param.areakey}
+           	</if>
+           	<if test='param.locakey != null and param.locakey != ""'>
+           		AND WS.LOCAKEY = #{param.locakey}
+           	</if>
+           	<if test='param.lolayer != null and param.lolayer != ""'>
+           		AND WS.LOLAYER = #{param.lolayer}
+           	</if>
+           	<if test='param.frareky != null and param.frareky != ""'>
+           		AND WS.AREAKEY = #{param.frareky}
+           	</if>
+           	<if test='param.frlocky != null and param.frlocky != ""'>
+           		AND WS.LOCAKEY = #{param.frlocky}
+           	</if>
+           	<if test='param.stlayer != null and param.stlayer != ""'>
+           		AND WS.LOLAYER = #{param.stlayer}
+           	</if>
+	</select>
+	<!-- 선별확정(doe037)-재고update -->
+	<update id="updateDoe037Wstkky" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateDoe037Wstkky */
+		UPDATE ${userData.schema}.WSTKKY
+		SET TASKQTY = 0,
+			AREAKEY = #{param.toareky},
+			LOCAKEY = #{param.tolocky},
+			LOLAYER = #{param.tolayer},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.tmpupck} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND UPDTCHK = #{param.tmpupck}
+	</update>
+
+	<!-- 선별확정(doe037)-작업테이블 update -->
+	<update id="updateDoe037Wtakit" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateDoe037Wtakit */
+		UPDATE ${userData.schema}.WTAKIT
+		SET
+			TCMPQTY =
+				<choose>
+					<when test="param.fordqty != null and param.fordqty != ''">
+						#{param.fordqty}
+					</when>
+					<otherwise>
+						1
+					</otherwise>
+				</choose>,
+			TASKSTS = #{param.tasksts},
+			MVEDDAT = date_format(now(), '%Y%m%d'),
+			MVEDTIM = date_format(now(), '%H%i%s'),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND TASKOKY = #{param.taskoky}
+			<if test='param.taskoit != null and param.taskoit != ""'>
+				AND TASKOIT = #{param.taskoit}
+			</if>
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doe038 실사번호 채번 -->
+	<select id="selectPhysoky" resultType="String">
+		/* selectPhysoky */
+		select ${userData.schema}.fn_sm_physoky() as physoky from dual
+	</select>
+
+    <!-- doe038 실사 아이템번호 채번 -->
+    <select id="selectPhysoit" resultType="Integer">
+     	/* selectPhysoit */
+     	select ${userData.schema}.fn_sm_physoit(#{param.physoky}) as physoit from dual
+    </select>
+
+    <!-- doe038 실사그룹키 채번 -->
+    <select id="selectPhygrky" resultType="String">
+     	/* selectPhygrky */
+     	select ${userData.schema}.fn_sm_phygrky() as phygrky from dual
+    </select>
+
+	<!-- 재고실사지시 등록 -->
+	<insert id="saveDoe038List" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* saveDoe038List */
+		INSERT INTO ${userData.schema}.WPHYIT(
+			PHYSOKY, PHYSOIT, WAREKEY
+			, DOCCATE, DOCTYPE, PHYNAME
+			, PHYSTAT, PHYMODE, PHYGRKY
+			, STOCKKY, LOTNMKY
+			, AREAKEY, LOCAKEY, STLAYER
+			, CUSTCOD, CUSTNAM, OWNERKY, OWNRNAM, FNCUSKY
+			, PARSNCD, PARSNNM
+			, BTRCATE, BTRFSTC, SKUGRKY, SKUMKEY, SKUDESC
+			, ADDCOKY, ITEMCOD, PURCNUM, ORDERLN
+			, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+			, GROSSWG, GROSSLN, GROSSWD, GROSSTH
+			, REGIORG, REGIMOD, DESTORG, DEORGNM, DESTMOD, DEMODNM
+			, DEMDMAN, DEMPOCD, DEMDADR, DEMDTLN
+			, POSHPDT, POSHPTM, POSHPDY
+			, SHPLIMT, DELVDSR, STKMEMO, EMSKUYN, RCVDCDT, RCVDCTM
+			, SUOMKEY
+			, RCVDCKY, RCVDCIT
+			, SYSTQTY, PHYSQTY, COMPQTY
+			, CREDATE, CRETIME, CREUSER
+			, LMODATE, LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{param.physoky}, #{param.physoit}, #{param.warekey}
+			, #{param.doccate}, #{param.doctype}, #{param.phyname}
+			, #{param.phystat}, #{param.phymode}, #{param.phygrky}
+			, #{param.stockky}, #{param.lotnmky}
+			, #{param.areakey}, #{param.locakey}, #{param.lolayer}
+			, #{param.custcod}, #{param.custnam}, #{param.ownerky}, #{param.ownrnam}, IFNULL(#{param.fncusky}, '')
+			, #{param.parsncd}, #{param.parsnnm}
+			, #{param.btrcate}, IFNULL(#{param.btrfstc}, ''), #{param.skugrky}, #{param.skumkey}, #{param.skudesc}
+			, #{param.addcoky}, #{param.itemcod}, #{param.purcnum}, #{param.orderln}
+			, #{param.skuweig}, #{param.skuwidt}, #{param.skuleng}, #{param.skuthic}
+			, #{param.grosswg}, #{param.grossln}, #{param.grosswd}, #{param.grossth}
+			, #{param.regiorg}, #{param.regimod}, IFNULL(#{param.destorg}, ''), #{param.deorgnm}, IFNULL(#{param.destmod}, ''), #{param.demodnm}
+			, IFNULL(#{param.demdman}, ''), IFNULL(#{param.dempocd}, ''), IFNULL(#{param.demdadr}, ''), IFNULL(#{param.demdtln}, '')
+			, REPLACE(#{param.poshpdt}, '-', ''), REPLACE(#{param.poshptm}, ':', ''), #{param.poshpdy}
+			, REPLACE(#{param.shplimt}, '-', ''), REPLACE(#{param.delvdsr}, '-', ''), #{param.stkmemo}, #{param.emskuyn}, REPLACE(#{param.rcvdcdt}, '-', ''), REPLACE(#{param.rcvdctm}, ':', '')
+			, #{param.suomkey}
+			, #{param.rcvdcky}, #{param.rcvdcit}
+			, #{param.stotqty}, #{param.physqty}, #{param.compqty}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+	</insert>
+	<!-- doe038 실사지시 -> 선별수량 할당수량으로 옮김 -->
+	<update id="updatePhyToSallqty" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updatePhyToSallqty */
+		UPDATE ${userData.schema}.WSTKKY
+		SET TASKQTY = #{param.stotqty},
+			PHYSOKY = #{param.physoky},
+			PHYSOIT = #{param.physoit},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doe039 실사등록 Head Grid 조회 -->
+	<select id="getDoe039HeadList" resultType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* getDoe039HeadList */
+		SELECT
+		    CONCAT(WP.WAREKEY, WP.PHYSOKY) as ROWKEY
+		    , WP.WAREKEY, MW.WHNAMLC, WP.PHYSOKY
+		    , WP.DOCCATE, MD.DOCCTNM, WP.DOCTYPE, MD.DOCTYNM, WP.PHYNAME
+		    , PHY.PHYSTAT AS PHYSTAT, MC.COMCDTX AS PHYSTNM, WP.PARSNCD, WP.PARSNNM
+		    , DATE_FORMAT(WP.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WP.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(WP.CREUSER) AS CREUSER
+            , DATE_FORMAT(WP.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WP.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WP.LMOUSER) AS LMOUSER
+		FROM
+		    ${userData.schema}.WPHYIT WP
+		INNER JOIN ${userData.schema}.MWARMA MW
+			ON MW.WAREKEY = WP.WAREKEY
+			AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD
+		    ON MD.WAREKEY = WP.WAREKEY
+		    AND MD.DOCCATE = WP.DOCCATE
+		    AND MD.DOCTYPE = WP.DOCTYPE
+		    AND MD.DOUSEYN = 'Y'
+		INNER JOIN (
+			SELECT PHYSOKY, MIN(PHYSTAT) as PHYSTAT
+			FROM ${userData.schema}.WPHYIT
+			WHERE WAREKEY = #{param.warekey}
+			GROUP BY PHYSOKY
+		) PHY
+			ON PHY.PHYSOKY = WP.PHYSOKY
+		INNER JOIN ${userData.schema}.MCODEM MC
+			ON MC.COMCDVL = PHY.PHYSTAT
+			AND COMCDKY='PHYSTAT'
+		WHERE
+		    WP.WAREKEY = #{param.warekey}
+		    <if test='param.physoky != null and param.physoky != ""'>
+		    	AND WP.PHYSOKY LIKE CONCAT('%',#{param.physoky},'%')
+		    </if>
+		    <if test='param.phyname != null and param.phyname != ""'>
+		    	AND WP.PHYNAME LIKE CONCAT('%',#{param.phyname},'%')
+		    </if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WP.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WP.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WP.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test='param.orderln != null and param.orderln != ""'>
+					AND WP.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.purcnum != null and param.purcnum != ""'>
+		  		AND WP.PURCNUM LIKE CONCAT('%',#{param.purcnum},'%')
+		  	</if>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WP.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WP.REGIKEY IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+			<if test='param.phystatList != null and param.phystatList.size() > 0'>
+		  		AND WP.PHYSTAT IN
+			  	<foreach collection="param.phystatList" item="phystat" index="index" open="(" close=")" separator=",">
+			  		#{phystat}
+			  	</foreach>
+		  	</if>
+			<if test='param.demodnm != null and param.demodnm != ""'>
+		  		AND WP.DEMODNM LIKE CONCAT('%',#{param.demodnm},'%')
+		  	</if>
+		GROUP BY
+		    WP.WAREKEY, WP.PHYSOKY, WP.DOCCATE, WP.DOCTYPE, WP.PHYNAME
+		ORDER BY WP.PHYSOKY DESC
+	</select>
+
+	<!-- doe039 실사등록 Item Grid 조회-> 상태값 여러개 조건용 -->
+	<select id="getDoe039ItemStatusList" resultType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* getDoe039ItemStatusList */
+		SELECT
+			CONCAT(WP.PHYSOKY, WP.PHYSOIT) as ROWKEY
+		    , WP.PHYSOKY, WP.PHYSOIT
+		    , WP.WAREKEY, MW.WHNAMLC
+		    , WP.DOCCATE, MD.DOCCTNM, WP.DOCTYPE, MD.DOCTYNM
+		    , WP.PHYNAME, WP.PHYSTAT, MC.COMCDTX as PHYSTNM
+		    , WP.PHYMODE, WP.PHYGRKY
+		    , WP.STOCKKY, WP.LOTNMKY, WP.RMSTKYN, WP.RETUNYN
+		    , WP.AREAKEY as ORGAREA, MA.AREANAM AS ORGARNM, WP.LOCAKEY as ORGLOCA, ML.LOCANAM AS ORGLCNM, WP.STLAYER as ORGSLAY
+		    , WP.AREAKEY, WP.LOCAKEY, WP.STLAYER
+		    , WP.OWNERKY, WP.OWNRNAM, WP.CUSTCOD, WP.CUSTNAM
+		    , WP.PARSNCD, WP.PARSNNM
+		    , WP.BTRCATE, BT.BTRCNAM, WP.BTRFSTC, WP.SKUGRKY, MGR.GRPKYNM, WP.SKUMKEY, WP.SKUDESC
+		    , WP.ADDCOKY, MC2.COMCDTX AS ADDCONM, WP.ITEMCOD
+		    , WP.SKUWEIG, WP.SKUWIDT, WP.SKULENG, WP.SKUTHIC
+		    , WP.GROSSWG, WP.GROSSWD, WP.GROSSLN, WP.GROSSTH
+		    , WP.SUOMKEY, WP.EMSKUYN, WP.STKMEMO
+		    , WP.SYSTQTY, WP.PHYSQTY, WP.COMPQTY
+		    , WP.REGIORG, MR1.RENAMLC AS REORGNM, WP.DESTORG, WP.DEORGNM, WP.REGIMOD, MR1.RENAMLC AS REMODNM, WP.DESTMOD, WP.DEMODNM
+		    , WP.DEMDMAN, WP.DEMPOCD, WP.DEMDADR, WP.DEMDTLN
+		    , WP.PURCNUM, WP.ORDERLN
+            , DATE_FORMAT(WP.POSHPDT,'%Y-%m-%d') as POSHPDT, DATE_FORMAT(STR_TO_DATE(WP.POSHPTM,'%H%i%s'),'%H:%i:%s') as POSHPTM, WP.POSHPDY
+		    , DATE_FORMAT(WP.RCVDCDT,'%Y-%m-%d') as RCVDCDT, DATE_FORMAT(STR_TO_DATE(WP.RCVDCTM,'%H%i%s'),'%H:%i:%s') as RCVDCTM
+		    , DATE_FORMAT(WP.SHPLIMT,'%Y-%m-%d') as SHPLIMT, DATE_FORMAT(WP.DELVDSR,'%Y-%m-%d') as DELVDSR
+		    , WP.RCVDCKY, WP.RCVDCIT
+		    , DATE_FORMAT(WP.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WP.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(WP.CREUSER) AS CREUSER
+		    , DATE_FORMAT(WP.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WP.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WP.LMOUSER) AS LMOUSER
+		    , WP.UPDTCHK
+		FROM
+		    ${userData.schema}.WPHYIT WP
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WP.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD
+		    ON MD.WAREKEY = WP.WAREKEY
+		    AND MD.DOCCATE = WP.DOCCATE
+		    AND MD.DOCTYPE = WP.DOCTYPE
+		    AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MCODEM MC
+		    ON MC.COMCDVL = WP.PHYSTAT
+		    AND MC.COMCDKY = 'PHYSTAT'
+		    AND MC.COUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WP.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WP.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MGRPMA MGR
+        	ON MGR.SKUGRKY = WP.SKUGRKY
+        INNER JOIN ${userData.schema}.MAREMA MA
+        	ON MA.WAREKEY = WP.WAREKEY
+        	AND MA.AREAKEY = WP.AREAKEY
+        INNER JOIN ${userData.schema}.MLOCMA ML
+        	ON ML.WAREKEY = WP.WAREKEY
+        	AND ML.AREAKEY = WP.AREAKEY
+        	AND ML.LOCAKEY = WP.LOCAKEY
+		INNER JOIN ${userData.schema}.BADDCO BA
+				ON BA.ADDCOKY = WP.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC2
+			ON MC2.COMCDVL = BA.ADDSIKY
+			AND MC2.COMCDKY = 'ADDSIKY'
+			AND MC2.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.BTRCAT BT
+			ON BT.BTRCATE = WP.BTRCATE
+		WHERE
+		    WP.WAREKEY = #{param.warekey}
+		    AND WP.PHYSOKY = #{param.physoky}
+		    <if test='param.phymode != null and param.phymode != ""'>
+		    	AND WP.PHYMODE = #{param.phymode}
+		    </if>
+			<if test='param.phystatList != null and param.phystatList.size() > 0'>
+		  		AND WP.PHYSTAT IN
+			  	<foreach collection="param.phystatList" item="phystat" index="index" open="(" close=")" separator=",">
+			  		#{phystat}
+			  	</foreach>
+		  	</if>
+		ORDER BY PHYGRKY
+	</select>
+
+	<!-- doe039 실사등록 Item Grid 조회 외 다른곳에서도 사용-->
+	<select id="getDoe039ItemList" resultType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* getDoe039ItemList */
+		SELECT
+			CONCAT(WP.PHYSOKY, WP.PHYSOIT) as ROWKEY
+		    , WP.PHYSOKY, WP.PHYSOIT
+		    , WP.WAREKEY, MW.WHNAMLC
+		    , WP.DOCCATE, MD.DOCCTNM, WP.DOCTYPE, MD.DOCTYNM
+		    , WP.PHYNAME, WP.PHYSTAT, MC.COMCDTX as PHYSTNM
+		    , WP.PHYMODE, WP.PHYGRKY
+		    , WP.STOCKKY, WP.LOTNMKY, WP.RMSTKYN, WP.RETUNYN
+		    , WP.AREAKEY as ORGAREA, MA.AREANAM AS ORGARNM, WP.LOCAKEY as ORGLOCA, ML.LOCANAM AS ORGLCNM, WP.STLAYER as ORGSLAY
+		    , WP.AREAKEY, WP.LOCAKEY, WP.STLAYER
+		    , WP.OWNERKY, WP.OWNRNAM, WP.CUSTCOD, WP.CUSTNAM
+		    , WP.PARSNCD, WP.PARSNNM
+		    , WP.BTRCATE, WP.BTRFSTC, WP.SKUGRKY, MGR.GRPKYNM, WP.SKUMKEY, WP.SKUDESC
+		    , WP.ADDCOKY, WP.ITEMCOD
+		    , WP.SKUWEIG, WP.SKUWIDT, WP.SKULENG, WP.SKUTHIC
+		    , WP.GROSSWG, WP.GROSSWD, WP.GROSSLN, WP.GROSSTH
+		    , WP.SUOMKEY, WP.EMSKUYN, WP.STKMEMO
+		    , WP.SYSTQTY, WP.PHYSQTY, WP.COMPQTY
+		    , WP.REGIORG, MR1.RENAMLC AS REORGNM, WP.DESTORG, WP.DEORGNM, WP.REGIMOD, MR1.RENAMLC AS REMODNM, WP.DESTMOD, WP.DEMODNM
+		    , WP.DEMDMAN, WP.DEMPOCD, WP.DEMDADR, WP.DEMDTLN
+		    , WP.PURCNUM, WP.ORDERLN
+            , DATE_FORMAT(WP.POSHPDT,'%Y-%m-%d') as POSHPDT, DATE_FORMAT(STR_TO_DATE(WP.POSHPTM,'%H%i%s'),'%H:%i:%s') as POSHPTM, WP.POSHPDY
+		    , DATE_FORMAT(WP.RCVDCDT,'%Y-%m-%d') as RCVDCDT, DATE_FORMAT(STR_TO_DATE(WP.RCVDCTM,'%H%i%s'),'%H:%i:%s') as RCVDCTM
+		    , DATE_FORMAT(WP.SHPLIMT,'%Y-%m-%d') as SHPLIMT, DATE_FORMAT(WP.DELVDSR,'%Y-%m-%d') as DELVDSR
+		    , MC2.COMCDTX AS ADDCONM
+		    , WP.RCVDCKY, WP.RCVDCIT
+		    , WSK.STKSTAT AS SKUSTAT
+		    , MC3.COMCDTX AS COMCDTX
+		    , DATE_FORMAT(WP.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WP.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(WP.CREUSER) AS CREUSER
+		    , DATE_FORMAT(WP.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WP.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WP.LMOUSER) AS LMOUSER
+		    , WP.UPDTCHK
+		FROM
+		    ${userData.schema}.WPHYIT WP
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WP.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD
+		    ON MD.WAREKEY = WP.WAREKEY
+		    AND MD.DOCCATE = WP.DOCCATE
+		    AND MD.DOCTYPE = WP.DOCTYPE
+		    AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MCODEM MC
+		    ON MC.COMCDVL = WP.PHYSTAT
+		    AND MC.COMCDKY = 'PHYSTAT'
+		    AND MC.COUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WP.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WP.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MGRPMA MGR
+        	ON MGR.SKUGRKY = WP.SKUGRKY
+        INNER JOIN ${userData.schema}.MAREMA MA
+        	ON MA.WAREKEY = WP.WAREKEY
+        	AND MA.AREAKEY = WP.AREAKEY
+        INNER JOIN ${userData.schema}.MLOCMA ML
+        	ON ML.WAREKEY = WP.WAREKEY
+        	AND ML.AREAKEY = WP.AREAKEY
+        	AND ML.LOCAKEY = WP.LOCAKEY
+		INNER JOIN ${userData.schema}.BADDCO BA
+				ON BA.ADDCOKY = WP.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC2
+				ON MC2.COMCDVL = BA.ADDSIKY
+			   AND MC2.COMCDKY = 'ADDSIKY'
+			   AND MC2.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MCODEM MC3
+				ON MC3.COMCDKY = 'ITEMCOD'
+			   AND MC3.COMCDVL = WP.ITEMCOD
+			   AND MC3.COUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.WSTKKY WSK
+        	ON WSK.WAREKEY = WP.WAREKEY
+        	AND WSK.SKUMKEY = WP.SKUMKEY
+		WHERE
+		    WP.WAREKEY = #{param.warekey}
+		    AND WP.PHYSOKY = #{param.physoky}
+		    AND WP.PHYSTAT = #{param.phystat}
+		    <if test='param.phymode != null and param.phymode != ""'>
+		    	AND WP.PHYMODE = #{param.phymode}
+		    </if>
+		ORDER BY WP.AREAKEY, WP.LOCAKEY, WP.STLAYER DESC
+	</select>
+
+	<!-- 삭제할 제품의 단 추출 -->
+	<select id="getStkLocationAndLayer" resultType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* getStkLocationAndLayer */
+		SELECT
+			WAREKEY, AREAKEY, LOCAKEY, STLAYER
+		FROM
+			${userData.schema}.WPHYIT
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND PHYSOKY = #{param.physoky}
+			AND PHYGRKY = #{param.phygrky}
+			AND PHYMODE = 'BEFORE'
+	</select>
+
+	<!-- doe039 재고실사등록 -->
+	<insert id="saveDoe039List" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* saveDoe039List */
+		INSERT INTO ${userData.schema}.WPHYIT(
+			PHYSOKY, PHYSOIT, WAREKEY
+			, DOCCATE, DOCTYPE, PHYNAME
+			, PHYSTAT, PHYMODE, PHYGRKY
+			, STOCKKY, LOTNMKY, RMSTKYN, RETUNYN
+			, AREAKEY, LOCAKEY, STLAYER
+			, CUSTCOD, CUSTNAM, OWNERKY, OWNRNAM, FNCUSKY
+			, PARSNCD, PARSNNM
+			, BTRCATE, SKUGRKY, SKUMKEY, SKUDESC
+			, ADDCOKY, ITEMCOD
+			, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+			, GROSSWG, GROSSLN, GROSSWD, GROSSTH
+			, REGIORG, REGIMOD, DESTORG, DEORGNM, DESTMOD, DEMODNM
+			, DEMDMAN, DEMPOCD, DEMDADR, DEMDTLN
+			, BTRFSTC, PURCNUM, ORDERLN, POSHPDT, POSHPTM, POSHPDY
+			, SHPLIMT, DELVDSR, STKMEMO
+			, RCVDCDT, RCVDCTM
+			, SUOMKEY
+			, RCVDCKY, RCVDCIT
+			, SYSTQTY, PHYSQTY, COMPQTY
+			, CREDATE, CRETIME, CREUSER
+			, LMODATE, LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{param.physoky}, #{param.physoit}, #{param.warekey}
+			, #{param.doccate}, #{param.doctype}, #{param.phyname}
+			, #{param.phystat}, #{param.phymode}, #{param.phygrky}
+			, #{param.stockky}, #{param.lotnmky}, #{param.rmstkyn}, #{param.retunyn}
+			, #{param.areakey}, #{param.locakey}, #{param.stlayer}
+			, #{param.custcod}, #{param.custnam}, #{param.ownerky}, #{param.ownrnam}, IFNULL(#{param.fncusky}, '')
+			, #{param.parsncd}, #{param.parsnnm}
+			, #{param.btrcate}, <include refid="getSkugrky"></include>, #{param.skumkey}, #{param.skudesc}
+			, <include refid="getAddcoky"></include>, #{param.itemcod}
+			, #{param.skuweig}, #{param.skuwidt}, #{param.skuleng}, #{param.skuthic}
+			, #{param.grosswg}, #{param.grossln}, #{param.grosswd}, #{param.grossth}
+			, #{param.regiorg}, #{param.regimod}, #{param.destorg}, #{param.deorgnm}, #{param.destmod}, #{param.demodnm}
+			, #{param.demdman}, #{param.dempocd}, #{param.demdadr}, #{param.demdtln}
+			, IFNULL(#{param.btrfstc},''), #{param.purcnum}, #{param.orderln}, REPLACE(#{param.poshpdt}, '-', ''), REPLACE(#{param.poshptm}, ':', ''), #{param.poshpdy}
+			, REPLACE(#{param.shplimt}, '-', ''), REPLACE(#{param.delvdsr}, '-', ''), #{param.stkmemo}
+			, REPLACE(#{param.rcvdcdt}, '-', ''), REPLACE(#{param.rcvdctm}, ':', '')
+			, #{param.suomkey}
+			, #{param.rcvdcky}, #{param.rcvdcit}
+			, #{param.systqty}, IF(#{param.rmstkyn} = 'Y' OR #{param.retunyn} = 'Y', 0, 1), #{param.compqty}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- before, after 데이터 가져오기 -->
+	<select id="getBeforeAfterData" resultType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* getBeforeAfterData */
+		SELECT
+		    PHYSOKY, PHYSOIT, WAREKEY
+		    , DOCCATE, DOCTYPE
+		    , PHYNAME, PHYSTAT, PHYMODE, PHYGRKY
+		    , STOCKKY, LOTNMKY, RMSTKYN
+		    , AREAKEY, LOCAKEY, STLAYER
+		    , CUSTCOD, CUSTNAM, OWNERKY, OWNRNAM
+		    , PARSNCD, PARSNNM
+		    , SKUMKEY, SKUDESC, SUOMKEY
+		    , SYSTQTY, PHYSQTY, COMPQTY
+		    , CREDATE, CRETIME, CREUSER
+		    , LMODATE, LMOTIME, LMOUSER, UPDTCHK
+		FROM
+			${userData.schema}.WPHYIT
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND PHYSOKY = #{param.physoky}
+			AND STOCKKY = #{param.stockky}
+			AND PHYGRKY = #{param.phygrky}
+	</select>
+
+	<!-- phystat update -->
+	<update id="updatePhystat" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* updatePhystat */
+		UPDATE ${userData.schema}.WPHYIT
+		SET	PHYSTAT = #{param.phystat},
+			PHYSQTY = IF(#{param.rmstkyn} = 'Y', 0, 1),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND PHYSOKY = #{param.physoky}
+			AND PHYSOIT = #{param.physoit}
+			AND STOCKKY = #{param.stockky}
+			AND PHYGRKY = #{param.phygrky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- 실사확정(doe040) - 재고유무확인 -->
+	<select id="doe040HasStock" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* doe040HasStock */
+		SELECT
+            WS.STOCKKY, WS.WAREKEY
+            , WS.AREAKEY, WS.LOCAKEY
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY
+            , WS.CUSTCOD, WS.SKUMKEY, WS.SKUDESC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIKEY, WS.DESTKEY
+            , WS.ITEMCOD, WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY
+            , WS.SUOMKEY, WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02
+            , WS.LOTAT03, WS.STKSTAT, WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT, WS.CREDATE, WS.CRETIME, WS.CREUSER
+            , WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WS.UPDTCHK
+        FROM
+            ${userData.schema}.WSTKKY WS
+		INNER JOIN ${userData.schema}.WPHYIT WP
+		    ON WP.WAREKEY = WS.WAREKEY
+		    AND WP.PHYSOKY = WS.PHYSOKY
+		    AND WP.PHYSOIT = WS.PHYSOIT
+		    AND WP.STOCKKY = WS.STOCKKY
+		    AND WP.SKUMKEY = WS.SKUMKEY
+        WHERE
+           	WS.WAREKEY = #{param.warekey}
+            AND WS.STOCKKY = #{param.stockky}
+            AND WS.SKUMKEY = #{param.skumkey}
+            AND WP.PHYMODE = #{param.phymode}
+	</select>
+
+	<!-- 재고실사확정 시 같은 베드에 존재하는 재고들(layer > ) 조회 -->
+	<select id="getSamePlaceStock" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getSamePlaceStock */
+		SELECT
+            WS.STOCKKY, WS.WAREKEY
+            , WS.AREAKEY ,WS.LOCAKEY, WS.LOLAYER
+            , WS.LOTNMKY, WS.OWNERKY
+            , WS.CUSTCOD, WS.SKUMKEY, WS.SKUDESC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIKEY, WS.DESTKEY
+            , WS.ITEMCOD, WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY
+            , WS.SUOMKEY, WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02
+            , WS.LOTAT03, WS.STKSTAT
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT, WS.CREDATE, WS.CRETIME, WS.CREUSER
+            , WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WS.UPDTCHK
+        FROM
+            ${userData.schema}.WSTKKY WS
+        WHERE
+            WS.WAREKEY = #{param.warekey}
+            AND WS.STOTQTY > 0
+<!--             AND WS.SALLQTY = 0 -->
+            AND WS.AREAKEY = #{param.areakey}
+            AND WS.LOCAKEY = #{param.locakey}
+            AND WS.LOLAYER >= #{param.stlayer}
+        GROUP BY WS.LOLAYER
+	</select>
+
+	<!-- 실사이동 지시가 내려진 곳에 재고가 있는지 확인 -->
+	<select id="hasPlaceStock" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* hasPlaceStock */
+		SELECT
+            WS.STOCKKY, WS.WAREKEY
+            , WS.AREAKEY, WS.LOCAKEY
+            , MA.AREANAM, ML.LOCANAM
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY
+            , WS.CUSTCOD, WS.SKUMKEY, WS.SKUDESC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIKEY, WS.DESTKEY
+            , WS.ITEMCOD, WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY
+            , WS.SUOMKEY, WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02
+            , WS.LOTAT03, WS.STKSTAT, WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT, WS.CREDATE, WS.CRETIME, WS.CREUSER
+            , WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WS.UPDTCHK
+        FROM
+            ${userData.schema}.WSTKKY WS
+        INNER JOIN ${userData.schema}.MAREMA MA
+        	ON MA.WAREKEY = WS.WAREKEY
+        	AND MA.AREAKEY = WS.AREAKEY
+        INNER JOIN ${userData.schema}.MLOCMA ML
+        	ON ML.WAREKEY = WS.WAREKEY
+        	AND ML.AREAKEY = WS.AREAKEY
+        	AND ML.LOCAKEY = WS.LOCAKEY
+        WHERE
+           	WS.WAREKEY = #{param.warekey}
+           	<if test='param.areakey != null and param.areakey != ""'>
+           		AND WS.AREAKEY = #{param.areakey}
+           	</if>
+           	<if test='param.locakey != null and param.locakey != ""'>
+           		AND WS.LOCAKEY = #{param.locakey}
+           	</if>
+           	<if test='param.stlayer != null and param.stlayer != ""'>
+           		AND WS.LOLAYER = #{param.stlayer}
+           	</if>
+        LIMIT 1
+	</select>
+
+	<!-- 실사지시확정 재고 위치 정렬 -->
+	<update id="updateLayerSort" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateLayerSort */
+		UPDATE ${userData.schema}.WSTKKY
+		SET	LOLAYER = #{param.lolayer},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- 실사지시확정 -> 단+1 -->
+	<update id="updateSamePlaceStock" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateSamePlaceStock */
+		UPDATE ${userData.schema}.WSTKKY
+		SET	LOLAYER = #{param.lolayer} + 1,
+			TASKOKY = #{param.taskoky},
+			TASKOIT = #{param.taskoit},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND AREAKEY = #{param.areakey}
+			AND LOCAKEY = #{param.locakey}
+			AND LOLAYER = #{param.lolayer}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- 실사확정(doe040)-작업테이블 update -->
+	<update id="updateDoe040Wtakit" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateDoe040Wtakit */
+		UPDATE ${userData.schema}.WTAKIT
+		SET TCMPQTY = #{param.stotqty},
+			TASKSTS = #{param.tasksts},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND TASKOKY = #{param.taskoky}
+			AND TASKOIT = #{param.taskoit}
+	</update>
+
+	<!-- 실사지시확정 저장 재고 업데이트 -->
+	<update id="updateDoe040Wstkky" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* updateDoe040Wstkky */
+		UPDATE ${userData.schema}.WSTKKY
+		SET TASKQTY = 0,
+			AREAKEY = #{param.areakey},
+			LOCAKEY = #{param.locakey},
+			LOLAYER = #{param.stlayer},
+			BTRCATE = #{param.btrcate},
+			SKUGRKY = <include refid="getSkugrky"></include>,
+			ADDCOKY = <include refid="getAddcoky"></include>,
+			SKUWEIG = #{param.skuweig},
+			SKUWIDT = #{param.skuwidt},
+			SKULENG = #{param.skuleng},
+			SKUTHIC = #{param.skuthic},
+<!-- 			ADJSOKY = #{param.adjsoky}, -->
+<!-- 			ADJSOIT = #{param.adjsoit}, -->
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+<!-- 			AND UPDTCHK = #{param.tmpupck} -->
+	</update>
+
+	<!-- 실사확정 wphyit 상태 및 완료수량 update -->
+	<update id="updateDoe040Wphyit" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* updateDoe040Wphyit */
+		UPDATE ${userData.schema}.WPHYIT
+		SET PHYSTAT = #{param.phystat},
+			COMPQTY = #{param.physqty},
+			PARSNCD = #{param.parsncd},
+			PARSNNM = #{param.parsnnm},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND PHYSOKY = #{param.physoky}
+			AND PHYGRKY = #{param.phygrky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doe040 재고 속성변경을 위해 mskuwc에 있는 정보 가져오기 -->
+	<select id="getSkuInfo" resultType="com.kbph.logistics.md.domain.MskuwcDTO">
+		/* getSkuInfo */
+		SELECT
+		    WAREKEY, OWNERKY, SKUMKEY, SKUGRKY
+		    , SKUDESC, ITEMCOD, SKUWEIG, SKUWIDT
+		    , SKULENG, SKUTHIC, SUOMKEY, SKUSTAT
+		    , CREDATE, CRETIME, CREUSER, LMODATE
+		    , LMOTIME, LMOUSER, UPDTCHK
+		FROM
+		    ${userData.schema}.MSKUWC
+		WHERE
+		    WAREKEY = #{param.warekey}
+<!-- 		    <if test='param.ownerky != null and param.ownerky != ""'> -->
+<!-- 		    	AND OWNERKY = #{param.ownerky} -->
+<!-- 		    </if> -->
+		    AND SKUMKEY = #{param.skumkey}
+	</select>
+
+	<!-- doe040 mskuwc 재고 속성변경 -->
+	<update id="updateDoe040Mskuwc" parameterType="Object">
+		/* updateDoe040Mskuwc */
+		UPDATE ${userData.schema}.MSKUWC
+		SET	SKUWEIG = #{param.skuweig},
+			SKUWIDT = #{param.skuwidt},
+			SKULENG = #{param.skuleng},
+			SKUTHIC = #{param.skuthic},
+			SKUGRKY = <include refid="getSkugrky"></include>,
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.tmpupck} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND SKUMKEY = #{param.skumkey}
+			AND UPDTCHK = #{param.tmpupck}
+	</update>
+
+	<!-- doe040 api Info WPHYIT -->
+	<select id="getWpyitApi" resultType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* getWpyitApi */
+		SELECT
+			PHYSOKY, PHYSOIT
+			, WAREKEY, DOCCATE, DOCTYPE
+			, PHYNAME, PHYSTAT, PHYMODE, PHYGRKY
+			, STOCKKY, LOTNMKY, AREAKEY, LOCAKEY, STLAYER
+			, CUSTCOD, OWNERKY, PARSNCD, PARSNNM, RMSTKYN
+			, BTRCATE, SKUGRKY, SKUMKEY, SKUDESC
+			, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+			, SUOMKEY, ADDCOKY, SYSTQTY, PHYSQTY, COMPQTY
+			, DATE_FORMAT(now(), '%y-%m-%d %H:%i:%s') as PHYDTTM
+			, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER, UPDTCHK
+		FROM
+			${userData.schema}.WPHYIT
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND PHYSOKY = #{param.physoky}
+			AND PHYMODE = 'AFTER'
+	</select>
+
+
+	<!-- doe041 WADJIT ADJSOKY 채번 -->
+	<select id="selectAdjsoky" resultType="String">
+		/* selectAdjsoky */
+		select ${userData.schema}.fn_sm_adjsoky() as adjsoky from dual
+	</select>
+
+	<!-- doe041 WADJIT ADJSOIT 채번 -->
+	<select id="selectAdjsoit" resultType="Integer">
+		/* selectAdjsoit */
+		select ${userData.schema}.fn_sm_adjsoit(#{param.adjsoky}) as adjsoit from dual
+	</select>
+
+	<!-- doe041 WADJIT ADJGRKY 채번 -->
+	<select id="selectAdjgrky" resultType="String">
+		/* selectAdjgrky */
+		select ${userData.schema}.fn_sm_adjgrky() as adjgrky from dual
+	</select>
+
+	<!-- api wadjit info -->
+	<select id="getWadjitApi" resultType="com.kbph.logistics.sm.domain.WadjitDTO">
+		SELECT
+			ADJSOKY, ADJSOIT
+			, WAREKEY, DOCCATE, DOCTYPE
+			, ADJDCST, ADJITST
+			, ADJMODE, ADJGRKY
+			, PARSNCD, ADJSRMK
+			, STOCKKY, AREAKEY, LOCAKEY, LOLAYER
+			, LOTNMKY, STLOTNB, CUSTCOD, CUSTNAM
+			, OWNERKY, OWNRNAM
+			, SKUGRKY, SKUMKEY
+			, SKUDESC, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+			, PURCNUM, ORDERLN, EMSKUYN, STKMEMO
+			, REGIORG, DESTORG, DEORGNM
+			, REGIMOD, DESTMOD, DEMODNM
+			, ITEMCOD, STOTQTY, SALLQTY, SBLOQTY
+			, SUOMKEY, ADDCOKY, RCVDCDT
+			, LOTAT01, LOTAT02, LOTAT03
+			, STKSTAT, BLOCKID
+			, RCVDCKY, RCVDCIT, PHYSOKY, PHYSOIT, SHPDCKY, SHPDCIT, TASKOKY, TASKOIT
+			, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER, UPDTCHK
+		FROM
+			${userData.schema}.WADJIT
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND ADJSOKY = #{param.adjsoky}
+			AND ADJMODE = 'AFTER'
+	</select>
+
+	<!-- doe041 wadjit insert -->
+	<insert id="insertWadjit" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* insertWadjit */
+		INSERT INTO ${userData.schema}.WADJIT(
+			ADJSOKY, ADJSOIT, WAREKEY
+			, DOCCATE, DOCTYPE
+			, ADJDCST, ADJITST, ADJMODE, ADJGRKY
+			, PARSNCD, ADJSRMK, STOCKKY
+			, AREAKEY, LOCAKEY, LOLAYER
+			, LOTNMKY, STLOTNB
+			, CUSTCOD, CUSTNAM, OWNERKY, OWNRNAM
+			, SKUGRKY, SKUMKEY, SKUDESC
+			, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+			, PURCNUM, ADDCOKY
+			, ORDERLN
+			, REGIORG, DESTORG, DEORGNM
+			, REGIMOD, DESTMOD, DEMODNM
+			, ITEMCOD, STOTQTY, SALLQTY
+			, SBLOQTY, SUOMKEY, RCVDCDT
+			, LOTAT01, LOTAT02, LOTAT03
+			, STKSTAT, EMSKUYN, STKMEMO, BLOCKID
+			, RCVDCKY
+			, RCVDCIT, PHYSOKY, PHYSOIT
+			, SHPDCKY, SHPDCIT
+			, TASKOKY, TASKOIT
+			, CREDATE
+			, CRETIME
+			, CREUSER
+			, LMODATE
+			, LMOTIME
+			, LMOUSER
+		)
+		VALUES (
+			#{param.adjsoky}, #{param.adjsoit}, #{param.warekey}
+			, #{param.doccate}, #{param.doctype}
+			, #{param.adjdcst}, #{param.adjitst}, #{param.adjmode}, #{param.adjgrky}
+			, IFNULL(#{param.parsncd},''), IFNULL(#{param.adjsrmk},''), #{param.stockky}
+			, #{param.areakey}, #{param.locakey}, #{param.lolayer}
+			, #{param.lotnmky}, #{param.stlotnb}
+			, #{param.custcod}, #{param.custnam}, #{param.ownerky}, #{param.ownrnam}
+			, <include refid="getSkugrky"/>, #{param.skumkey}, #{param.skudesc}
+			, #{param.skuweig}, #{param.skuwidt}, #{param.skuleng}, #{param.skuthic}
+			, #{param.purcnum}, <include refid="getAddcoky"/>
+			, #{param.orderln}
+			, #{param.regiorg}, #{param.destorg}, #{param.deorgnm}
+			, #{param.regimod}, IFNULL(#{param.destmod},''), #{param.demodnm}
+			, #{param.itemcod}, #{param.stotqty}, #{param.sallqty}
+			, #{param.sbloqty}, #{param.suomkey}, date_format(#{param.rcvdcdt}, '%Y%m%d')
+			, #{param.lotat01}, #{param.lotat02}, #{param.lotat03}
+			, #{param.stkstat}, #{param.emskuyn}, #{param.stkmemo}, #{param.blockid}
+			, #{param.rcvdcky}
+			, #{param.rcvdcit}, #{param.physoky}, #{param.physoit}
+			, #{param.shpdcky}, #{param.shpdcit}
+			, #{param.taskoky}, #{param.taskoit}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{userData.useract}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{userData.useract}
+		)
+	</insert>
+
+	<!-- doe041 재고 속성 및 상태, 조정문서번호, 아이템 update -->
+	<update id="updateDoe041Wstkky" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateDoe041Wstkky */
+		UPDATE ${userData.schema}.WSTKKY
+		SET	SKUWEIG = #{param.skuweig},
+			SKUWIDT = #{param.skuwidt},
+			SKULENG = #{param.skuleng},
+			SKUTHIC = #{param.skuthic},
+			REGIMOD = #{param.regimod},
+			DESTMOD = #{param.destmod},
+			SKUGRKY = <include refid="getSkugrky"></include>,
+			ADDCOKY = <include refid="getAddcoky"></include>,
+			STKSTAT = #{param.stkstat},
+			EMSKUYN = #{param.emskuyn},
+			STKMEMO = #{param.stkmemo},
+			ADJSOKY = #{param.adjsoky},
+			ADJSOIT = #{param.adjsoit},
+			CUSTCOD = IFNULL(#{param.custcod},''),
+			CUSTNAM = #{param.custnam},
+			OWNERKY = IFNULL(#{param.ownerky},''),
+			OWNRNAM = #{param.ownrnam},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND AREAKEY = #{param.areakey}
+			AND LOCAKEY = #{param.locakey}
+			AND LOLAYER = #{param.lolayer}
+			AND SKUMKEY = #{param.skumkey}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doe041 조정테이블 상태값 update -->
+	<update id="updateDoe041Adjistat" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateDoe041Adjistat */
+		UPDATE ${userData.schema}.WADJIT
+		SET	ADJDCST = #{param.adjdcst},
+			ADJITST = #{param.adjitst},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND ADJSOKY = #{param.adjsoky}
+			AND ADJGRKY = #{param.adjgrky}
+	</update>
+
+	<select id="getDoe042List" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getDoe042List */
+        SELECT
+            CONCAT(WS.STOCKKY, WS.WAREKEY) as ROWKEY
+            , WS.STOCKKY, WS.WAREKEY, MW.WHNAMLC
+            , WS.AREAKEY, MA.AREANAM
+            , WS.LOCAKEY, ML.LOCANAM
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY , WS.OWNRNAM
+            , WS.CUSTCOD, WS.CUSTNAM, WS.SKUMKEY, WS.SKUDESC, WS.SKUGRKY, MGR.GRPKYNM
+            , WS.BTRCATE, BC.BTRCNAM, WS.BTRFSTC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIORG, MR1.RENAMLC, WS.DESTORG, WS.DEORGNM
+            , WS.REGIMOD, MR2.RENAMLC as REMODNM, WS.DESTMOD, WS.DEMODNM
+            , WS.ITEMCOD, WS.STOTQTY, WS.TASKQTY, WS.SALLQTY, WS.SBLOQTY, WS.PLANQTY, WS.PLCMQTY
+            , WS.SUOMKEY, DATE_FORMAT(WS.RCVDCDT,'%Y-%m-%d') as RCVDCDT
+            , WS.LOTAT01, WS.LOTAT02, WS.LOTAT03
+            , WS.STKSTAT, MCO.COMCDTX as STATNAM, WS.EMSKUYN, WS.STKMEMO
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.ADDCOKY, MC02.COMCDTX as ADDCONM
+            , WS.TASKOIT, WAD.PARSNCD, MRS.RSNCDNM, WAD.ADJSRMK AS PARSNNM
+            , DATE_FORMAT(WS.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM( WS.CREUSER) AS CREUSER
+            , DATE_FORMAT(WS.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WS.LMOUSER) AS LMOUSER
+            , WS.UPDTCHK
+        FROM
+            ${userData.schema}.WSTKKY WS
+        INNER JOIN ${userData.schema}.MWARMA MW
+            ON MW.WAREKEY = WS.WAREKEY
+            AND MW.WHUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MAREMA MA
+            ON MA.WAREKEY = WS.WAREKEY
+            AND MA.AREAKEY = WS.AREAKEY
+            AND MA.ARUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MLOCMA ML
+            ON ML.WAREKEY = WS.WAREKEY
+            AND ML.AREAKEY = WS.AREAKEY
+            AND ML.LOCAKEY = WS.LOCAKEY
+            AND ML.LOUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WS.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WS.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MCODEM MCO
+            ON MCO.COMCDVL = WS.STKSTAT
+            AND MCO.COMCDKY = 'STKSTAT'
+            AND MCO.COUSEYN = 'Y'
+        LEFT JOIN ${userData.schema}.WADJIT WAD
+        	ON WAD.ADJSOKY = WS.ADJSOKY
+        	AND WAD.ADJSOIT = WS.ADJSOIT
+        LEFT JOIN ${userData.schema}.MRSCMA MRS
+        	ON MRS.WAREKEY = WAD.WAREKEY
+        	AND MRS.DOCCATE = WAD.DOCCATE
+        	AND MRS.DOCTYPE = WAD.DOCTYPE
+        	AND MRS.RSNCODE = WAD.PARSNCD
+        INNER JOIN ${userData.schema}.MGRPMA MGR
+        	ON MGR.SKUGRKY = WS.SKUGRKY
+		INNER JOIN ${userData.schema}.BADDCO BA
+		   ON BA.ADDCOKY = WS.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC02
+		   ON BA.ADDSIKY = MC02.COMCDVL
+		  AND MC02.COMCDKY = 'ADDSIKY'
+		  AND MC02.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.BTRCAT BC
+		    ON BC.BTRCATE = WS.BTRCATE
+        WHERE
+            WS.WAREKEY = #{param.warekey}
+            AND WS.STOTQTY > 0
+            AND WS.TASKQTY = 0
+            AND WS.SALLQTY = 0
+            AND WS.PLANQTY = 0
+            AND WS.PLCMQTY = 0
+            <if test='param.areakey != null and param.areakey != ""'>
+            	AND WS.AREAKEY = #{param.areakey}
+            </if>
+			<if test='param.locakeyList != null and param.locakeyList.size() > 0'>
+		  		AND WS.LOCAKEY IN
+			  	<foreach collection="param.locakeyList" item="locakey" index="index" open="(" close=")" separator=",">
+			  		#{locakey}
+			  	</foreach>
+		  	</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WS.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WS.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WS.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test='param.orderln != null and param.orderln != ""'>
+					AND WS.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+			<if test='param.purcnum != null and param.purcnum != ""'>
+		  		AND WS.PURCNUM LIKE CONCAT('%',#{param.purcnum},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WS.REGIMOD IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+			<if test='param.demodnm != null and param.demodnm != ""'>
+		  		AND WS.DEMODNM LIKE CONCAT('%',#{param.demodnm},'%')
+		  	</if>
+		ORDER BY  WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER DESC, WS.EMSKUYN DESC
+	</select>
+
+	<!-- doe042 재고 블락수량 update -->
+	<update id="updateDoe042Wstkky" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateDoe042Wstkky */
+		UPDATE ${userData.schema}.WSTKKY
+		SET	SBLOQTY = #{param.sbloqty},
+			ADJSOKY = #{param.adjsoky},
+			ADJSOIT = #{param.adjsoit},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND AREAKEY = #{param.areakey}
+			AND LOCAKEY = #{param.locakey}
+			AND LOLAYER = #{param.lolayer}
+			AND SKUMKEY = #{param.skumkey}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<select id="getDoe043List" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getDoe043List */
+        SELECT
+            CONCAT(WS.STOCKKY, WS.WAREKEY) as ROWKEY
+            , WS.STOCKKY, WS.WAREKEY, MW.WHNAMLC
+            , WS.AREAKEY, MA.AREANAM
+            , WS.LOCAKEY, ML.LOCANAM
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY , WS.OWNRNAM
+            , WS.CUSTCOD, WS.CUSTNAM, WS.SKUMKEY, WS.SKUDESC, WS.SKUGRKY, MGR.GRPKYNM
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.BTRCATE, BC.BTRCNAM, WS.BTRFSTC
+            , WS.REGIORG, MR1.RENAMLC, WS.DESTORG, WS.DEORGNM
+            , WS.REGIMOD, MR2.RENAMLC as REMODNM, WS.DESTMOD, WS.DEMODNM
+            , WS.ITEMCOD, WS.STOTQTY, WS.TASKQTY, WS.SALLQTY, WS.SBLOQTY, WS.PLANQTY, WS.PLCMQTY
+            , WS.SUOMKEY, DATE_FORMAT(WS.RCVDCDT,'%Y-%m-%d') as RCVDCDT
+            , WS.LOTAT01, WS.LOTAT02, WS.LOTAT03
+            , WS.STKSTAT, MCO.COMCDTX as STATNAM, WS.EMSKUYN, WS.STKMEMO
+            , WS.ADDCOKY, MC02.COMCDTX as ADDCONM
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT, WAD.PARSNCD, MRS.RSNCDNM, WAD.ADJSRMK AS PARSNNM
+            , DATE_FORMAT(WS.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM( WS.CREUSER) AS CREUSER
+            , DATE_FORMAT(WS.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WS.LMOUSER) AS LMOUSER
+            , WS.UPDTCHK
+        FROM
+            ${userData.schema}.WSTKKY WS
+        INNER JOIN ${userData.schema}.MWARMA MW
+            ON MW.WAREKEY = WS.WAREKEY
+            AND MW.WHUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MAREMA MA
+            ON MA.WAREKEY = WS.WAREKEY
+            AND MA.AREAKEY = WS.AREAKEY
+            AND MA.ARUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MLOCMA ML
+            ON ML.WAREKEY = WS.WAREKEY
+            AND ML.AREAKEY = WS.AREAKEY
+            AND ML.LOCAKEY = WS.LOCAKEY
+            AND ML.LOUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WS.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WS.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MCODEM MCO
+            ON MCO.COMCDVL = WS.STKSTAT
+            AND MCO.COMCDKY = 'STKSTAT'
+            AND MCO.COUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.WADJIT WAD
+        	ON WAD.ADJSOKY = WS.ADJSOKY
+        	AND WAD.ADJSOIT = WS.ADJSOIT
+        INNER JOIN ${userData.schema}.MRSCMA MRS
+        	ON MRS.WAREKEY = WAD.WAREKEY
+        	AND MRS.DOCCATE = WAD.DOCCATE
+        	AND MRS.DOCTYPE = WAD.DOCTYPE
+        	AND MRS.RSNCODE = WAD.PARSNCD
+        INNER JOIN ${userData.schema}.MGRPMA MGR
+        	ON MGR.SKUGRKY = WS.SKUGRKY
+		INNER JOIN ${userData.schema}.BADDCO BA
+		   ON BA.ADDCOKY = WS.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC02
+		   ON BA.ADDSIKY = MC02.COMCDVL
+		  AND MC02.COMCDKY = 'ADDSIKY'
+		  AND MC02.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.BTRCAT BC
+		    ON BC.BTRCATE = WS.BTRCATE
+        WHERE
+            WS.WAREKEY = #{param.warekey}
+            AND WS.STOTQTY > 0
+            AND WS.SALLQTY = 0
+            AND WS.PLANQTY = 0
+            AND WS.PLCMQTY = 0
+            AND WS.SBLOQTY = 1
+            <if test='param.areakey != null and param.areakey != ""'>
+            	AND WS.AREAKEY = #{param.areakey}
+            </if>
+			<if test='param.LocakeyList != null and param.LocakeyList.size() > 0'>
+		  		AND WS.LOCAKEY IN
+			  	<foreach collection="param.LocakeyList" item="locakey" index="index" open="(" close=")" separator=",">
+			  		#{locakey}
+			  	</foreach>
+		  	</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WS.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WS.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WS.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test='param.orderln != null and param.orderln != ""'>
+					AND WS.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+			<if test='param.purcnum != null and param.purcnum != ""'>
+		  		AND WS.PURCNUM LIKE CONCAT('%',#{param.purcnum},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WS.REGIMOD IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+			<if test='param.demodnm != null and param.demodnm != ""'>
+		  		AND WS.DEMODNM LIKE CONCAT('%',#{param.demodnm},'%')
+		  	</if>
+		ORDER BY  WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER DESC
+	</select>
+
+	<!-- 입고를 위한 task 조회 -->
+	<select id="selectWtakitListForInbound" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* selectWtakitListForInbound */
+		SELECT
+			<!-- pqGrid recIndx -->
+            CONCAT(WTA.TASKOKY, WTA.TASKOIT) AS ROWKEY,
+			<!-- P.K. -->
+			WTA.TASKOKY, WTA.TASKOIT,
+			<!-- Fields -->
+			WTA.WAREKEY, WTA.TASKDAT, WTA.DOCCATE, WTA.DOCTYPE,
+			WTA.TASKSTS, WTA.LOTNMKY, WTA.OWNERKY, WTA.CUSTCOD,
+			WTA.SKUMKEY, WTA.SKUDESC, WTA.FRAREKY, WTA.FRLOCKY,
+			WTA.FRLAYER, WTA.TOAREKY, WTA.TOLOCKY, WTA.TOLAYER,
+			WTA.FORDQTY, WTA.TCMPQTY, WTA.ALLGRKY, WTA.MVSTDAT,
+			WTA.MVSTTIM, WTA.MVEDDAT, WTA.MVEDTIM, WTA.PARSNCD,
+			WTA.PARSNNM, WTA.PKRSNCD, WTA.PKRSNNM, WTA.STOCKKY,
+			WTA.EOASNKY, WTA.EOASNIT, WTA.COSTRKY, WTA.COSTRIT,
+			WTA.RCVDCKY, WTA.RCVDCIT, WTA.OUTBOKY, WTA.OUTBOIT,
+			WTA.SHPDCKY, WTA.SHPDCIT,
+			<!-- Join Table Fields -->
+			<!-- Custom Field -->
+			<!-- Common Field -->
+			WTA.CREDATE, WTA.CRETIME, WTA.CREUSER, WTA.LMODATE,
+			WTA.LMOTIME, WTA.LMOUSER, WTA.UPDTCHK
+		FROM
+            ${userData.schema}.WTAKIT WTA
+		<where>
+			<if test="param.warekey != null">
+				AND WTA.WAREKEY = #{param.warekey}
+			</if>
+			<if test="param.taskoky != null">
+				AND WTA.TASKOKY = #{param.taskoky}
+			</if>
+			<if test="param.taskoit != null">
+				AND WTA.TASKOIT = #{param.taskoit}
+			</if>
+			<if test="param.rcvdcky != null">
+				AND WTA.RCVDCKY = #{param.rcvdcky}
+			</if>
+			<if test="param.rcvdcit != null">
+				AND WTA.RCVDCIT = #{param.rcvdcit}
+			</if>
+			<if test="param.eoasnky != null">
+				AND WTA.EOASNKY = #{param.eoasnky}
+			</if>
+			<if test="param.eoasnit != null">
+				AND WTA.EOASNIT = #{param.eoasnit}
+			</if>
+		</where>
+	</select>
+
+	<!-- 출고 위한 task 조회 -->
+	<select id="selectWtakitListForOutbound" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* selectWtakitListForOutbound */
+		SELECT
+			<!-- pqGrid recIndx -->
+            CONCAT(WTA.TASKOKY, WTA.TASKOIT) AS ROWKEY,
+			<!-- P.K. -->
+			WTA.TASKOKY, WTA.TASKOIT,
+			<!-- Fields -->
+			WTA.WAREKEY, WTA.TASKDAT, WTA.DOCCATE, WTA.DOCTYPE,
+			WTA.TASKSTS, WTA.LOTNMKY, WTA.OWNERKY, WTA.CUSTCOD,
+			WTA.SKUMKEY, WTA.SKUDESC, WTA.FRAREKY, WTA.FRLOCKY,
+			WTA.FRLAYER, WTA.TOAREKY, WTA.TOLOCKY, WTA.TOLAYER,
+			WTA.FORDQTY, WTA.TCMPQTY, WTA.ALLGRKY, WTA.MVSTDAT,
+			WTA.MVSTTIM, WTA.MVEDDAT, WTA.MVEDTIM, WTA.PARSNCD,
+			WTA.PARSNNM, WTA.PKRSNCD, WTA.PKRSNNM, WTA.STOCKKY,
+			WTA.EOASNKY, WTA.EOASNIT, WTA.COSTRKY, WTA.COSTRIT,
+			WTA.RCVDCKY, WTA.RCVDCIT, WTA.OUTBOKY, WTA.OUTBOIT,
+			WTA.SHPDCKY, WTA.SHPDCIT, WTA.TOLOCKY AS ULLOCKY,
+			WTA.EQUIPKY,
+			<!-- Join Table Fields -->
+			<!-- Custom Field -->
+			<!-- Common Field -->
+			WTA.CREDATE, WTA.CRETIME, WTA.CREUSER, WTA.LMODATE,
+			WTA.LMOTIME, WTA.LMOUSER, WTA.UPDTCHK
+		FROM
+            ${userData.schema}.WTAKIT WTA
+		<where>
+			<if test="param.warekey != null">
+				AND WTA.WAREKEY = #{param.warekey}
+			</if>
+			<if test="param.taskoky != null">
+				AND WTA.TASKOKY = #{param.taskoky}
+			</if>
+			<if test="param.taskoit != null">
+				AND WTA.TASKOIT = #{param.taskoit}
+			</if>
+			<if test="param.outboky != null">
+				AND WTA.OUTBOKY = #{param.outboky}
+			</if>
+			<if test="param.outboit != null">
+				AND WTA.OUTBOIT = #{param.outboit}
+			</if>
+			<if test="param.shpdcky != null">
+				AND WTA.SHPDCKY = #{param.shpdcky}
+			</if>
+			<if test="param.eoasnit != null">
+				AND WTA.SHPDCIT = #{param.shpdcit}
+			</if>
+		</where>
+		GROUP BY
+			WTA.TASKOKY, WTA.TASKOIT,
+			<!-- Fields -->
+			WTA.WAREKEY, WTA.TASKDAT, WTA.DOCCATE, WTA.DOCTYPE,
+			WTA.TASKSTS, WTA.LOTNMKY, WTA.OWNERKY, WTA.CUSTCOD,
+			WTA.SKUMKEY, WTA.SKUDESC, WTA.FRAREKY, WTA.FRLOCKY,
+			WTA.FRLAYER, WTA.TOAREKY, WTA.TOLOCKY, WTA.TOLAYER,
+			WTA.FORDQTY, WTA.TCMPQTY, WTA.ALLGRKY, WTA.MVSTDAT,
+			WTA.MVSTTIM, WTA.MVEDDAT, WTA.MVEDTIM, WTA.PARSNCD,
+			WTA.PARSNNM, WTA.PKRSNCD, WTA.PKRSNNM, WTA.STOCKKY,
+			WTA.EOASNKY, WTA.EOASNIT, WTA.COSTRKY, WTA.COSTRIT,
+			WTA.RCVDCKY, WTA.RCVDCIT, WTA.OUTBOKY, WTA.OUTBOIT,
+			WTA.SHPDCKY, WTA.SHPDCIT, WTA.EQUIPKY,
+			<!-- Join Table Fields -->
+			<!-- Custom Field -->
+			<!-- Common Field -->
+			WTA.CREDATE, WTA.CRETIME, WTA.CREUSER, WTA.LMODATE,
+			WTA.LMOTIME, WTA.LMOUSER, WTA.UPDTCHK
+		ORDER BY
+			WTA.TASKOKY, WTA.TASKOIT
+	</select>
+
+	<!-- task 상태 업데이트 -->
+	<update id="updateWtakitStatusToRcvdckyAndRcvdcit">
+		/* updateWtakitStatusToRcvdcky */
+		UPDATE ${userData.schema}.WTAKIT
+		SET
+			TASKSTS = #{status},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+<!-- 			UPDTCHK = #{param.updtchk} + 1 -->
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND RCVDCKY = #{param.rcvdcky}
+			<if test="param.rcvdcit != null">
+			AND RCVDCIT = #{param.rcvdcit}
+			</if>
+			<if test="param.taskoky != null">
+			AND TASKOKY = #{param.taskoky}
+			</if>
+			<if test="param.taskoit != null">
+			AND TASKOIT = #{param.taskoit}
+			</if>
+<!-- 			AND UPDTCHK = #{param.updtchk} -->
+	</update>
+
+	<!-- task 상태 업데이트 -->
+	<update id="updateWtakitStatusToShpdckyAndShpdcit">
+		/* updateWtakitStatusToShpdckyAndShpdcit */
+		UPDATE ${userData.schema}.WTAKIT
+		SET
+			TASKSTS = #{status},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+ 			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND SHPDCKY = #{param.shpdcky}
+			<if test="param.shpdcit != null">
+			AND SHPDCIT = #{param.shpdcit}
+			</if>
+			<if test="param.taskoky != null">
+			AND TASKOKY = #{param.taskoky}
+			</if>
+			<if test="param.taskoit != null">
+			AND TASKOIT = #{param.taskoit}
+			</if>
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<select id="getDoe089List" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getDoe089List */
+        SELECT
+            CONCAT(WS.STOCKKY, WS.WAREKEY) as ROWKEY
+            , WS.STOCKKY, WS.WAREKEY, MW.WHNAMLC
+            , WS.AREAKEY, MA.AREANAM
+            , WS.LOCAKEY, ML.LOCANAM
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY , WS.OWNRNAM
+            , WS.CUSTCOD, WS.CUSTNAM
+            , WS.SKUGRKY, MGP.GRPKYNM, WS.SKUMKEY, WS.SKUDESC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.GROSSWG, WS.GROSSWD, WS.GROSSLN, WS.GROSSTH
+            , WS.BTRCATE, BC.BTRCNAM, WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIORG, MR1.RENAMLC, WS.DESTORG, WS.DEORGNM
+            , WS.REGIMOD, MR2.RENAMLC as REMODNM, WS.DESTMOD, WS.DEMODNM
+            , WS.ITEMCOD, WS.STOTQTY, WS.TASKQTY, WS.SALLQTY, WS.SBLOQTY,  WS.PLANQTY, WS.PLCMQTY
+            , WS.SUOMKEY, WS.ADDCOKY, MC02.COMCDTX as ADDCONM, DATE_FORMAT(WS.RCVDCDT,'%Y-%m-%d') as RCVDCDT, DATE_FORMAT(STR_TO_DATE(WS.RCVDCTM,'%H%i%s'),'%H:%i:%s') as RCVDCTM
+            , DATE_FORMAT(WS.SHPLIMT,'%Y-%m-%d') as SHPLIMT, DATE_FORMAT(WS.DELVDSR, '%Y-%m-%d') as DELVDSR
+            , DATE_FORMAT(WS.POSHPDT,'%Y-%m-%d') as POSHPDT, DATE_FORMAT(STR_TO_DATE(WS.POSHPTM,'%H%i%s'),'%H:%i:%s') as POSHPTM, WS.POSHPDY
+            , WS.LOTAT01, WS.LOTAT02, WS.LOTAT03, WS.BTRFSTC
+            , WS.STKSTAT, MCO.COMCDTX as STATNAM
+            , WS.EMSKUYN, WS.STKMEMO
+            , WS.DEMDMAN, WS.DEMDADR, WS.DEMDTLN
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT
+            , DATE_FORMAT(WS.CREDATE,'%Y-%m-%d') as CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM( WS.CREUSER) AS CREUSER
+            , DATE_FORMAT(WS.LMODATE,'%Y-%m-%d') as LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(WS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(WS.LMOUSER) AS LMOUSER
+            , WS.UPDTCHK
+        FROM
+            ${userData.schema}.WSTKKY WS
+        INNER JOIN ${userData.schema}.MWARMA MW
+            ON MW.WAREKEY = WS.WAREKEY
+            AND MW.WHUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MAREMA MA
+            ON MA.WAREKEY = WS.WAREKEY
+            AND MA.AREAKEY = WS.AREAKEY
+            AND MA.ARUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MLOCMA ML
+            ON ML.WAREKEY = WS.WAREKEY
+            AND ML.AREAKEY = WS.AREAKEY
+            AND ML.LOCAKEY = WS.LOCAKEY
+            AND ML.LOUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR1
+            ON MR1.REGIKEY = WS.REGIORG
+            AND MR1.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MREGMA MR2
+            ON MR2.REGIKEY = WS.REGIMOD
+            AND MR2.REUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MCODEM MCO
+            ON MCO.COMCDVL = WS.STKSTAT
+            AND MCO.COMCDKY = 'STKSTAT'
+            AND MCO.COUSEYN = 'Y'
+        INNER JOIN ${userData.schema}.MGRPMA MGP
+        	ON MGP.SKUGRKY = WS.SKUGRKY
+		INNER JOIN ${userData.schema}.BADDCO BA
+		   ON BA.ADDCOKY = WS.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC02
+		   ON BA.ADDSIKY = MC02.COMCDVL
+		  AND MC02.COMCDKY = 'ADDSIKY'
+		  AND MC02.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.BTRCAT BC
+		    ON BC.BTRCATE = WS.BTRCATE
+        WHERE
+            WS.WAREKEY = #{param.warekey}
+            AND WS.STOTQTY > 0
+            <if test='param.areakey != null and param.areakey != ""'>
+            	AND WS.AREAKEY = #{param.areakey}
+            </if>
+			<if test='param.locakeyList != null and param.locakeyList.size() > 0'>
+		  		AND WS.LOCAKEY IN
+			  	<foreach collection="param.locakeyList" item="locakey" index="index" open="(" close=")" separator=",">
+			  		#{locakey}
+			  	</foreach>
+		  	</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WS.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WS.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WS.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test='param.orderln != null and param.orderln != ""'>
+					AND WS.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.custnam != null and param.custnam != ""'>
+		  		AND WS.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+		  	</if>
+			<if test='param.purcnum != null and param.purcnum != ""'>
+		  		AND WS.PURCNUM LIKE CONCAT('%',#{param.purcnum},'%')
+		  	</if>
+			<if test='param.regikeyList != null and param.regikeyList.size() > 0'>
+		  		AND WS.REGIMOD IN
+			  	<foreach collection="param.regikeyList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+			<if test='param.demodnm != null and param.demodnm != ""'>
+		  		AND WS.DEMODNM LIKE CONCAT('%',#{param.demodnm},'%')
+		  	</if>
+            ORDER BY  WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER DESC, WS.EMSKUYN DESC
+	</select>
+
+	<!-- doe041: 재고조정 (모달) 상세착지 selectbox -->
+	<select id="getDoe041Denamlc" resultType="com.kbph.logistics.md.domain.MdesmaDTO">
+		/* getDoe041Denamlc */
+		SELECT
+			MDE.DESTKEY AS DESTKEY, MDE.DENAMLC
+			, MDE.DEMANNM, MDE.DEPOSCD, MDE.DESADDR, MDE.DESTELN
+		  FROM ${userData.schema}.MDESMA MDE
+		 WHERE
+		 	MDE.DEUSEYN = 'Y'
+		 	<if test='param.denamlc != null and param.denamlc != ""'>
+		 		AND MDE.DENAMLC LIKE CONCAT('%',#{param.denamlc},'%')
+		 	</if>
+	</select>
+	<!-- doe041: 재고조정 (변경모달) 업데이트 -->
+	<update id="updateDoe041ModalUpdate" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateDoe041ModalUpdate */
+		UPDATE ${userInfo.schema}.WSTKKY
+		   SET REGIMOD = #{param.regimod}
+		     , DESTMOD = IFNULL(#{param.destmod},'')
+		     , DEMDMAN = #{param.demdman}
+		     , DEMPOCD = #{param.dempocd}
+		     , DEMDADR = #{param.demdadr}
+		     , DEMDTLN = #{param.demdtln}
+		     , DEMODNM = #{param.demodnm}
+		     , DEMODYN = #{param.demodyn}
+		     , LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		     , LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		WHERE STOCKKY = #{param.stockky}
+		  AND WAREKEY = #{param.warekey}
+	</update>
+
+	<!-- 재고 할당 및 블락(개별, 송장수정용) -->
+	<update id="updateStockAllocate" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateStockAllocate */
+		UPDATE
+			${userData.schema}.WSTKKY
+		SET
+			SALLQTY = 1,
+			PLANQTY = 1,
+			PLCMQTY = 1,
+			LMODATE = DATE_FORMAT(NOW(), '%Y%m%d'),
+			LMOTIME = DATE_FORMAT(NOW(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			STOCKKY = #{param.stockky}
+			AND WAREKEY = #{param.warekey}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<insert id="insertWstkkyForChangeInvoice">
+		/* insertWstkkyForChangeInvoice */
+		INSERT INTO
+			${userData.schema}.WSTKKY(
+			STOCKKY,
+			WAREKEY, AREAKEY, LOCAKEY, LOLAYER,
+			LOTNMKY, OWNERKY, OWNRNAM, CUSTCOD,
+			CUSTNAM, FNCUSKY, SKUMKEY, SKUDESC,
+			SKUGRKY,
+			GROSSWG, GROSSWD, GROSSLN, GROSSTH,
+			SKUWEIG, SKUWIDT, SKULENG, SKUTHIC,
+			BTRCATE, STLOTNB, PURCNUM, ORDERLN,
+			REGIORG, DESTORG, DEORGNM,
+			REGIMOD, DESTMOD, DEMODNM,
+			DEMDMAN, DEMDADR,
+			DEMPOCD, DEMDTLN, ITEMCOD, STOTQTY,
+			SUOMKEY,
+			ADDCOKY, BTRFSTC, STKMEMO, POSHPDT,
+			POSHPTM, POSHPDY, RCVDCDT, RCVDCTM,
+			RCVDCKY, RCVDCIT, TASKOKY, TASKOIT,
+			LOTAT01, LOTAT02, LOTAT03, STKSTAT,
+			SHPLIMT, DELVDSR, UPINFST,
+			CREDATE, CRETIME, CREUSER, LMODATE,
+			LMOTIME, LMOUSER
+		)
+		VALUES(
+			${userData.schema}.FN_SM_STOCKKY(),
+			#{param.warekey}, #{param.frareky}, #{param.frlocky}, #{param.frlayer},
+			${userData.schema}.FN_SM_LOTNMKY(), #{param.ownerky}, #{param.ownrnam}, #{param.custcod},
+			#{param.custnam}, #{param.fncusky}, #{param.skumkey}, #{param.skudesc}
+			, #{param.skugrky}
+			, #{param.grosswg}, #{param.grosswd}, #{param.grossln}, #{param.grossth}
+			, #{param.skuweig}, #{param.skuwidt}, #{param.skuleng}, #{param.skuthic}
+			, #{param.btrcate}, IFNULL(#{param.stlotnb}, ''), #{param.purcnum}, #{param.orderln}
+			, #{param.regiorg}, #{param.destorg}, #{param.deorgnm}
+			, #{param.regimod}, #{param.destmod}, #{param.demodnm}
+			, #{param.demdman}, #{param.demdadr}
+			, #{param.dempocd}, #{param.demdtln}, #{param.itemcod}, 1
+			, #{param.suomkey}
+			, #{param.addcoky}, #{param.btrfstc}, '', #{param.poshpdt}
+			, #{param.poshptm}, #{param.poshpdy}, #{param.rcvdcdt}, #{param.rcvdctm}
+			, #{param.rcvdcky}, #{param.rcvdcit}, '', 0
+			, #{param.lotat01}, #{param.lotat02}, #{param.lotat03}, #{param.stkstat}
+			, #{param.shplimt}, #{param.delvdsr}, 'Y'
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 재고삭제(송장수정) -->
+	<delete id="deleteWstkkyForChangeInvoice">
+		/* deleteWstkkyForChangeInvoice */
+		DELETE
+		FROM
+			${userData.schema}.WSTKKY
+		WHERE
+			WAREKEY = #{param.warekey}
+			<if test ="param.stockky != null and param.stockky != ''">
+				AND STOCKKY = #{param.stockky}
+			</if>
+			AND SKUMKEY = #{param.skumkey}
+	</delete>
+
+	<delete id="deleteWstkkyForPhysical" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* deleteWstkkyForPhysical */
+		DELETE
+			FROM
+				${userData.schema}.WSTKKY
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+	</delete>
+
+	<delete id="deleteMskuwcForPhysical" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* deleteMskuwcForPhysical */
+		DELETE
+			FROM
+				${userData.schema}.MSKUWC
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND SKUMKEY = #{param.skumkey}
+	</delete>
+
+	<update id="updateWrcvitForPhysical" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* updateWrcvitForPhysical */
+		UPDATE ${userData.schema}.WRCVIT
+			SET RCVITST = #{param.rcvitst},
+				LMODATE = DATE_FORMAT(NOW(), '%Y%m%d'),
+				LMOTIME = DATE_FORMAT(NOW(), '%H%i%s'),
+				LMOUSER = #{userData.useract},
+				UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND RCVDCKY = #{param.rcvdcky}
+			AND RCVDCIT = #{param.rcvdcit}
+			AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<!-- 재고실사지시 등록(송장수정용) -->
+	<insert id="insertWphyitForInvoiceChange">
+		/* insertWphyitForInvoiceChange */
+		INSERT INTO
+			${userData.schema}.WPHYIT(
+				<!-- P.K. -->
+				PHYSOKY, PHYSOIT,
+				<!-- Columns -->
+				WAREKEY, DOCCATE, DOCTYPE, PHYNAME,
+				PHYSTAT, PHYMODE, PHYGRKY, STOCKKY,
+				LOTNMKY, AREAKEY, LOCAKEY, STLAYER,
+				CUSTCOD, CUSTNAM, OWNERKY, OWNRNAM,
+				FNCUSKY, PARSNCD, PARSNNM, BTRCATE,
+				BTRFSTC, SKUGRKY, SKUMKEY, SKUDESC,
+				ADDCOKY, ITEMCOD, PURCNUM, ORDERLN,
+				SKUWEIG, SKUWIDT, SKULENG, SKUTHIC,
+				GROSSWG, GROSSLN, GROSSWD, GROSSTH,
+				REGIORG, REGIMOD, DESTORG, DEORGNM,
+				DESTMOD, DEMODNM, DEMDMAN, DEMPOCD,
+				DEMDADR, DEMDTLN, POSHPDT, POSHPTM,
+				POSHPDY, SHPLIMT, DELVDSR, STKMEMO,
+				EMSKUYN, RCVDCDT, RCVDCTM, SUOMKEY,
+				RCVDCKY, RCVDCIT, SYSTQTY, PHYSQTY,
+				COMPQTY,
+				<!-- Common Columns -->
+				CREDATE, CRETIME, CREUSER, LMODATE,
+				LMOTIME, LMOUSER
+		)
+		SELECT
+			<!-- P.K. -->
+			#{param.physoky} AS PHYSOKY, ${userData.schema}.FN_SM_PHYSOIT(#{param.physoky}) AS PHYSOIT,
+			<!-- Columns -->
+			WST.WAREKEY, #{param.doccate} AS DOCCATE, #{param.doctype} AS DOCTYPE, CONCAT(date_format(now(), '%Y%m%d'), '_실사_', '송장수정') AS PHYNAME,
+			#{param.phystat} AS PHYSTAT, #{param.phymode} AS PHYMODE, #{param.phygrky} AS PHYGRKY, WST.STOCKKY,
+			WST.LOTNMKY, WST.AREAKEY, WST.LOCAKEY, WST.LOLAYER,
+			WST.CUSTCOD, WST.CUSTNAM, WST.OWNERKY, WST.OWNRNAM,
+			IFNULL(WST.FNCUSKY, ''), #{param.parsncd} AS PARSNCD, #{param.parsnnm} AS PARSNNM, WST.BTRCATE,
+			IFNULL(WST.BTRFSTC, ''), WST.SKUGRKY, WST.SKUMKEY, WST.SKUDESC,
+			WST.ADDCOKY, WST.ITEMCOD, WST.PURCNUM, WST.ORDERLN,
+			WST.SKUWEIG, WST.SKUWIDT, WST.SKULENG, WST.SKUTHIC,
+			WST.GROSSWG, WST.GROSSLN, WST.GROSSWD, WST.GROSSTH,
+			WST.REGIORG, WST.REGIMOD, IFNULL(WST.DESTORG, ''), WST.DEORGNM,
+			IFNULL(WST.DESTMOD, ''), WST.DEMODNM, IFNULL(WST.DEMDMAN, ''), IFNULL(WST.DEMPOCD, ''),
+			IFNULL(WST.DEMDADR, ''), IFNULL(WST.DEMDTLN, ''), REPLACE(WST.POSHPDT, '-', ''), REPLACE(WST.POSHPTM, ':', ''),
+			WST.POSHPDY, REPLACE(WST.SHPLIMT, '-', ''), REPLACE(WST.DELVDSR, '-', ''), WST.STKMEMO,
+			WST.EMSKUYN, REPLACE(WST.RCVDCDT, '-', ''), REPLACE(WST.RCVDCTM, ':', ''), WST.SUOMKEY,
+			WST.RCVDCKY, WST.RCVDCIT, #{param.systqty} AS SYSTQTY, #{param.physqty} AS PHYSQTY,
+			#{param.compqty} AS COMPQTY,
+			<!-- Common Columns -->
+			date_format(now(), '%Y%m%d') AS CREDATE, date_format(now(), '%H%i%s') AS CRETIME, #{userData.useract} AS CREUSER, date_format(now(), '%Y%m%d') AS LMODATE,
+			date_format(now(), '%H%i%s') AS LMOTIME, #{userData.useract} AS LMOUSER
+		FROM
+			${userData.schema}.WSTKKY WST
+		WHERE
+			WST.WAREKEY = #{param.warekey}
+			<if test = "param.stockky != null and param.stockky != ''">
+				AND WST.STOCKKY = #{param.stockky}
+			</if>
+			AND WST.SKUMKEY = #{param.skumkey}
+	</insert>
+
+	<insert id="insertMskuwcForPhysical" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* insertMskuwcForPhysical */
+		INSERT INTO
+			${userData.schema}.MSKUWC(
+				<!-- P.K. -->
+				SKUMKEY,
+				<!-- Columns -->
+				WAREKEY, OWNERKY, SKUGRKY, ADDCOKY,
+				SKUDESC, ITEMCOD, SKUWEIG, SKUWIDT,
+				SKULENG, SKUTHIC, SUOMKEY, SKUSTAT,
+				<!-- Common Columns -->
+				CREDATE, CRETIME, CREUSER,
+				LMODATE, LMOTIME, LMOUSER
+			)
+		VALUES(
+			<!-- P.K. -->
+			#{param.skumkey},
+			<!-- Columns -->
+			#{param.warekey}, #{param.ownerky}, #{param.skugrky}, #{param.addcoky},
+			#{param.skudesc}, #{param.itemcod}, #{param.skuweig}, #{param.skuwidt},
+			#{param.skuleng}, #{param.skuthic}, #{param.suomkey}, #{param.skustat},
+			<!-- Common Columns -->
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract},
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+		ON DUPLICATE KEY
+			UPDATE
+				OWNERKY = #{param.ownerky}, SKUGRKY = #{param.skugrky}, ADDCOKY = #{param.addcoky},  SKUDESC =	#{param.skudesc},
+				ITEMCOD = #{param.itemcod}, SKUWEIG = #{param.skuweig}, SKUWIDT = #{param.skuwidt}, SKULENG = #{param.skuleng},
+				SKUTHIC = #{param.skuthic}, SUOMKEY = #{param.suomkey}, SKUSTAT = #{param.skustat},
+				LMODATE = date_format(now(), '%Y%m%d'), LMOTIME = date_format(now(), '%H%i%s'), LMOUSER = #{userData.useract}, UPDTCHK = UPDTCHK + 1
+	</insert>
+
+	<!-- 작업문서 리스트(검증용) -->
+	<select id="selectWtakitListForValidation" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* selectWtakitListForValidation */
+		SELECT
+			<!-- P.K. -->
+		    WTK.TASKOKY, WTK.TASKOIT,
+			<!-- Columns -->
+		    WTK.WAREKEY, WTK.TASKDAT,
+		    WTK.DOCCATE, WTK.DOCTYPE, WTK.TASKSTS, WTK.LOTNMKY,
+		    OWNRNAM, WTK.OWNERKY, WTK.CUSTCOD, WTK.CUSTNAM,
+		    WTK.SKUMKEY, WTK.SKUDESC, WTK.FRAREKY, WTK.FRLOCKY,
+		    WTK.FRLAYER, WTK.TOAREKY, WTK.TOLOCKY, WTK.TOLAYER,
+		    WTK.EQUIPKY, WTK.FORDQTY, WTK.TCMPQTY, WTK.ALLGRKY,
+		    WTK.MVSTDAT, WTK.MVSTTIM, WTK.MVEDDAT, WTK.MVEDTIM,
+		    WTK.PARSNCD, WTK.PARSNNM, WTK.PKRSNCD, WTK.PKRSNNM,
+		    WTK.STOCKKY, WTK.PLNSIZE, WTK.EOASNKY, WTK.EOASNIT,
+		    WTK.COSTRKY, WTK.COSTRIT, WTK.RCVDCKY, WTK.RCVDCIT,
+		    WTK.OUTBOKY, WTK.OUTBOIT, WTK.SHPDCKY, WTK.SHPDCIT,
+		    WTK.VHPLNKY, WTK.VHPLNIT,
+			<!-- Common Columns -->
+		    WTK.CREDATE, WTK.CRETIME, WTK.CREUSER,
+		    WTK.LMODATE, WTK.LMOTIME, WTK.LMOUSER,
+		    WTK.UPDTCHK
+		FROM
+		    ${userData.schema}.WTAKIT WTK
+		WHERE
+		    WTK.WAREKEY = #{param.warekey}
+		    AND WTK.SHPDCKY = #{param.shpdcky}
+	</select>
+</mapper>

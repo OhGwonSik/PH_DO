@@ -1,0 +1,423 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doe011Warekey" class="setting-grid-title ic-title-nece">[[#{menu.md.dom001}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe011Warekey" name="doe011Warekey"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+							data-cb-select="" data-cb-variable="warekeyList">
+							</select>
+						</div>
+					</div>
+					<label for="doe011Ownerky" class="setting-grid-title">[[#{menu.md.dom007}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe011Ownerky" name="doe011Ownerky"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/partner/customer"
+							data-cb-select="" data-cb-variable="ownerkyList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe011Skugrky" class="setting-grid-title">[[#{menu.md.dom012}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe011Skugrky" name="doe011Skugrky"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/units/sku-group"
+							data-cb-select="" data-cb-variable="skugrkyList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe011Addsiky" class="setting-grid-title">[[#{md.mskuwc.addsiky}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe011Addsiky" name="doe011Addsiky"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=addsiky&comcdsy=Y"
+							data-cb-select="" data-cb-variable="addsikyList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe011Skumkey" class="setting-grid-title">[[#{md.mskuwc.skumkey}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mskuwc.skumkey')}"
+							id="doe011Skumkey" name="doe011Skumkey">
+						</div>
+					</div>
+					<label for="doe011Itemcod" class="setting-grid-title">[[#{md.mskuwc.itemcod}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe011Itemcod" name="doe011Itemcod"
+							data-cb-val="combovl" data-cb-name="combovl" data-cb-url="/md/code/common-code?comcdky=itemcod&comcdsy=Y"
+							data-cb-select="" data-cb-variable="itemcodList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe011Skudesc" class="setting-grid-title">[[#{md.mskuwc.skudesc}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mskuwc.skumkey')}"
+							id="doe011Skudesc" name="doe011Skudesc">
+						</div>
+					</div>
+					<label for="doe011Skustat" class="setting-grid-title">[[#{md.mskuwc.skustat}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe011Skustat" name="doe011Skustat"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=skustat"
+							data-cb-select="" data-cb-variable="skustatList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doe011BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doe011BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe011}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe011BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe011Grid"></div>
+				</div>
+			</div>
+		<script>
+		/* 판매계약사 => 고객 변경
+		   UOM => MUOMMA select box로 구성.
+		*/
+		!function(){
+			let doe011CurrentWarekey; // 현재 warekey 검색값 저장
+			const pageId = '[[${tabPage}]]';
+			let doe011InitData;
+
+			// 칼럼
+			const doe011GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{menu.md.dom001}]]', dataType: 'string', dataIndx: 'warekey', editable: false,
+					editor: { options: [] }, render : gridRenderAndValue
+				},
+				{ title: '[[#{menu.md.dom012}]]', dataType: 'string', dataIndx: 'skugrky', editable: false,
+					editor: { options: [] }, render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mskuwc.addsiky}]]', dataType: 'string', dataIndx: 'addsiky', editable: false,
+					editor: {
+						type: 'select',
+			            init: function (ui) {
+			            	ui.$cell.find('select').pqSelect({ checkbox : true });
+			                setTimeout(function () {
+			                	ui.$cell.find('select').pqSelect('open');
+				        	}, 250);
+						},
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mskuwc.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+		 			editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				},
+				{ title: '[[#{md.mskuwc.itemcod}]]', dataType: 'string', dataIndx: 'itemcod', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, width: 100 });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mskuwc.skudesc}]]', dataType: 'string', dataIndx: 'skudesc', styleHead: { 'background-color':'[[#{grid.styleHead03}]]'}, editable: false},
+				{ title: '[[#{menu.md.dom007}]]', dataType: 'string', dataIndx: 'ownerky', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, width: 300 });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.weig}]]', dataType: 'integer', dataIndx: 'skuweig', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.widt}]]', dataType: 'float', dataIndx: 'skuwidt', format: '#,###.0', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.leng}]]', dataType: 'integer', dataIndx: 'skuleng', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.thic}]]', dataType: 'float', dataIndx: 'skuthic', format: '#,###.000', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mskuwc.suomkey}]]', dataType: 'string', dataIndx: 'suomkey', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, width: 150 });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mskuwc.skustat}]]', dataType: 'string', dataIndx: 'skustat', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const doe011Grid = new GridUtil(doe011GridCM, pageId, pageId + 'Grid');
+			doe011Grid.setFind();
+			doe011Grid.setReset();
+
+			// Grid 생성시 이벤트
+			doe011Grid.setCreate(async function(evt, ui) {
+				await _commonInit(pageId);
+				comboCreateData(pageId + 'Grid', 'warekey', warekeyList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'skugrky', skugrkyList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'ownerky', ownerkyList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'itemcod', itemcodList, { combovl : 'combovl', combonm : 'combovl' });
+				comboCreateData(pageId + 'Grid', 'skustat', skustatList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'addsiky', addsikyList, { combovl : 'combovl', combonm : 'combonm' });
+
+				const doe011InitRes = await fetchUtil('GET', '/md/' + pageId + '/init');
+				doe011InitData = await doe011InitRes.json();
+				comboCreateData(pageId + 'Grid', 'suomkey', doe011InitData.item.suomkeyList, { combovl : 'combovl', combonm : 'combonm' });
+
+				this.option('freezeCols', 1);
+			    $('#' + pageId + 'Itemcod').pqSelect({ deselect : false });
+			    $('#' + pageId + 'Ownerky').pqSelect({ deselect : false });
+			});
+
+			// 그리드 행 추가
+			doe011Grid.setAdd(function(evt, ui){
+				if(!doe011CurrentWarekey){
+					alert('[[#{ms.noSearchError}]]');
+					return;
+				}
+
+				const rowData = {
+					state: true,
+					warekey: doe011CurrentWarekey,
+					skuweig: 0,
+					skuwidt: 0,
+					skuleng: 0,
+					skuthic: 0,
+					suomkey: 'KG',
+					skustat: '00' // 제품상태 정상
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'Grid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe011Grid.setChange(async function(evt, ui){
+				if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+					let skumkeyData, ownerkyData, itemcodData, skustatData, suomkeyData;
+					for(const updateData of ui.updateList){
+
+		    			if(updateData.newRow.hasOwnProperty('skumkey') && updateData.oldRow.hasOwnProperty('skumkey')){
+		    				skumkeyData = updateData?.newRow?.skumkey?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+						if(updateData.newRow.hasOwnProperty('ownerky') && updateData.oldRow.hasOwnProperty('ownerky')){
+							ownerkyData = ownerkyList.find(function(data){
+	    						return(data.combonm === updateData.newRow['ownerky'])
+	    					})
+	    				}
+
+						if(updateData.newRow.hasOwnProperty('itemcod') && updateData.oldRow.hasOwnProperty('itemcod')){
+							itemcodData = itemcodList.find(function(data){
+	    						return(data.combovl.toUpperCase() === updateData.newRow['itemcod'])
+	    					})
+	    				}
+
+						if(updateData.newRow.hasOwnProperty('skustat') && updateData.oldRow.hasOwnProperty('skustat')){
+							skustatData = skustatList.find(function(data){
+	    						return(data.combonm === updateData.newRow['skustat'])
+	    					})
+	    				}
+
+						if(updateData.newRow.hasOwnProperty('suomkey') && updateData.oldRow.hasOwnProperty('suomkey')){
+							suomkeyData = doe011InitData.item.suomkeyList.find(function(data){
+	    						return(data.combonm === updateData.newRow['suomkey'])
+	    					})
+	    				}
+
+						this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								warekey: doe011CurrentWarekey,
+								skumkey: skumkeyData ? skumkeyData : updateData.rowData.skumkey,
+								ownerky: ownerkyData ? ownerkyData.combovl : updateData.rowData.ownerky,
+								itemcod: updateData.rowData.itemcod,
+								skudesc: itemcodData ? itemcodData.combonm : updateData.rowData.skudesc,
+								skustat: skustatData ? skustatData.combovl : updateData.rowData.skustat,
+								suomkey: suomkeyData ? suomkeyData.combovl : updateData.rowData.suomkey,
+								skuweig: updateData.rowData.skuweig,
+								skuwidt: updateData.rowData.skuwidt,
+								skuleng: updateData.rowData.skuleng,
+								skuthic: updateData.rowData.skuthic
+							},
+							checkEditable : false
+						})
+					}
+					for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.warekey = doe011CurrentWarekey;
+		    			addData.rowData.skumkey = skumkeyData ? skumkeyData : addData.rowData.skumkey;
+		    			addData.rowData.ownerky = ownerkyData ? ownerkyData.combovl : addData.rowData.ownerky;
+		    			addData.rowData.itemcod = addData.rowData.itemcod;
+		    			addData.rowData.skudesc = itemcodData ? itemcodData.combonm : addData.rowData.skudesc;
+		    			addData.rowData.skustat = skustatData ? skustatData.combovl : addData.rowData.skustat;
+		    			addData.rowData.suomkey = addData?.newRow?.suomkey || 'KG';
+		    			addData.rowData.skuweig = addData?.newRow?.skuweig || 0;
+		    			addData.rowData.skuwidt = addData?.newRow?.skuwidt || 0.0;
+		    			addData.rowData.skuleng = addData?.newRow?.skuleng || 0;
+		    			addData.rowData.skuthic = addData?.newRow?.skuthic || 0.000;
+		    			addData.rowData.skustat = addData?.newRow?.skustat || '00'; // 제품상태 정상
+					}
+		    	}
+			});
+
+			// Grid 객체 생성
+			doe011Grid.open();
+
+			// 검색 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+				await getDoe011List();
+			})
+
+			// 저장 버튼
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe011Grid, ['warekey', 'ownerky', 'skumkey', 'skudesc', 'suomkey', 'itemcod'])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe011Grid, ['skumkey']);
+				if( !validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doe011Grid, refineGridUtilSaveList(doe011Grid), '/md/' + pageId + '/grid');
+				getDoe011List();
+			})
+
+			// 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+				makeEmptyGrid(doe011Grid);
+				resetSearchConditions(pageId);
+
+				$('#' + pageId + 'Itemcod').pqSelect('refreshData');
+				$('#' + pageId + 'Itemcod').val('').pqSelect('refreshData');
+
+				$('#' + pageId + 'Ownerky').pqSelect('refreshData');
+				$('#' + pageId + 'Ownerky').val('').pqSelect('refreshData');
+			})
+
+			// 창고 변경시 자동조회
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(doe011CurrentWarekey && grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						this.value = doe011CurrentWarekey;
+						return;
+					}
+				}
+				await getDoe011List();
+			});
+
+			// Grid 데이터 조회 함수
+			async function getDoe011List(){
+			    const grid = pq.grid('#' + pageId + 'Grid');
+			    const doe011Data = {
+			        warekey: document.querySelector('#' + pageId + 'Warekey').value.toUpperCase(),
+			        ownerky: document.querySelector('#' + pageId + 'Ownerky').selectedOptions[0].value.toUpperCase(),
+			        skugrky: document.querySelector('#' + pageId + 'Skugrky').value.toUpperCase(),
+			        addsiky: document.querySelector('#' + pageId + 'Addsiky').value.toUpperCase(),
+			        skumkey: document.querySelector('#' + pageId + 'Skumkey').value.toUpperCase(),
+			        skudesc: document.querySelector('#' + pageId + 'Skudesc').value.toUpperCase(),
+			        itemcod: document.querySelector('#' + pageId + 'Itemcod').selectedOptions[0].value.toUpperCase(),
+			        skustat: document.querySelector('#' + pageId + 'Skustat').value
+			    };
+
+			    doe011CurrentWarekey = doe011Data.warekey;
+
+			    grid.showLoading();
+			    const res = await fetchUtil('GET', '/md/' + pageId + '/grid', doe011Data);
+
+			    if (res.status === 200) {
+			        const doe011List = await res.json();
+			        grid.option('dataModel', {
+			            data: doe011List,
+			            recIndx: 'rowkey'
+			        });
+			        grid.refreshDataAndView();
+			    }
+			    grid.hideLoading();
+			}
+
+			const itemList = document.querySelectorAll('.setting-grid input');
+			itemList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			})
+
+			// Enter로 검색
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getDoe011List();
+			    }
+			}
+
+		}();
+		</script>
+	</div>
+</html>

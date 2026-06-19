@@ -1,0 +1,39 @@
+# Sensitive files
+src/main/resources/application.yml
+src/main/resources/application-dev.yml
+src/main/resources/application-prod.yml
+src/main/resources/application-local-prod.yml
+src/main/resources/firebase/
+
+# CI/CD (서버 정보 노출)
+Jenkinsfile
+
+# Internal docs
+PH_DO_프로젝트정리.md
+commits_detail.txt
+
+# Third-party commercial library (라이선스 문제로 제외)
+src/main/resources/static/library/paramquery-pro 8.6/
+
+# Company asset / internal manuals (불필요 + confidential 가능성)
+src/main/resources/static/appapk/
+src/main/resources/static/manual/
+
+# Build
+target/
+bin/
+*.class
+*.jar
+
+# IDE
+.idea/
+.classpath
+.project
+.settings/
+*.iml
+.gradle/
+.temp-ph_do*.txt
+
+# Logs
+logs/
+*.log

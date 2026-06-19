@@ -1,0 +1,1730 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="doe061Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe061Warekey" name="doe061Warekey"
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+						data-cb-variable="warekeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe061Vhpdate" class="setting-grid-title">[[#{tm.tplnhd.vhpdate}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-date-group">
+						<input type="date" id="doe061VhpdateFrom">
+						<span>~</span>
+						<input type="date" id="doe061VhpdateTo">
+					</div>
+				</div>
+				<label for="doe061Vhcfnam" class="setting-grid-title">[[#{tm.common.vhcfnam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('tm.common.vhcfnam')}" id="doe061Vhcfnam" name="doe061Vhcfnam" onkeyup="doe061KeyupEvt()">
+					</div>
+				</div>
+				<label for="doe061Doctype" class="setting-grid-title">[[#{tm.common.doctype}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe061Doctype" name="doe061Doctype">
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe061Search"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe061Reset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.tm.doe061}]]</span>
+				</div>
+				<div class="edit-btn-wrapper">
+					<button type="button" class="btn-navy btn-green" id="doe061AddDispatch" data-bs-toggle="modal" data-bs-target="#doe061Modal">[[#{tm.common.dispatch}]]</button>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box">
+				<div id="doe061HeadGrid"></div>
+			</div>
+		</div>
+		<div class="doe061GridStyle" style="display: flex; position: relative; gap: 10px;">
+			<div class="search-list" style="max-width: 50%; flex: 1;">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{tm.doe061.itemGrid}]]</span>
+					</div>
+                </div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe061ItemGrid"></div>
+				</div>
+			</div>
+			<div class="search-list" style="max-width: 50%; flex: 1;">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{tm.doe061.weightGrid}]]</span>
+					</div>
+                </div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe061WeightGrid"></div>
+				</div>
+			</div>
+		</div>
+		<!-- 모달 -->
+		<div class="modal fade modalTm" id="doe061Modal" role="dialog" aria-labelledby="doe061Modal" aria-hidden="true">
+			<div class="modal-dialog" role="document" style="max-width: 1000px;">
+				<div class="modal-content">
+					<div class="modal-top">
+						<button type="button" class="close" id="doe061ModalClose" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body">
+						<div class="search-list">
+							<div class="search-list">
+								<div class="list-top">
+									<div class="list-title ic-title-mark">
+										<span>[[#{tm.doe058.vehicle}]]</span>
+										<input type="text" id="doe061ModalVhplnky" readonly style="display: none">
+										<input type="text" id="doe061ModalOrderWeig" readonly style="display: none">
+										<input type="text" id="doe061ModalEmerWeig" readonly style="display: none">
+									</div>
+								</div>
+								<div class="setting-grid con-box" style="grid-template-columns: 90px 1fr 50px 1fr 90px 1fr;">
+									<label for="doe061ModalVhcsnam" class="setting-grid-title">[[#{tm.common.vhcfnam}]]</label>
+									<div class="input-wrapper">
+										<input type="text" id="doe061ModalVhcsnam" readonly>
+									</div>
+									<label for="doe061ModalVownkey" class="setting-grid-title">[[#{tm.tplnhd.vownkey}]]</label>
+		                            <div class="input-wrapper">
+		                            	<input type="text" id="doe061ModalVownkey" readonly>
+		                            </div>
+									<label for="doe061ModalVhctncd" class="setting-grid-title">[[#{tm.common.orderPossibleWeight}]] : </label>
+		                            <div class="input-wrapper">
+		                            	<input type="text" id="doe061ModalVhctncd" readonly style="width: 80px;">
+		                            	<span> ~ </span>
+		                            	<input type="number" id="doe061ModalVhcmaxw" style="width: 80px;">
+		                            </div>
+		                            <label for="doe061Drvernm" class="setting-grid-title">[[#{md.mvhcma.drvernm}]]</label>
+		                            <div class="input-wrapper">
+		                            	<input type="text" id="doe061Drvernm">
+		                            </div>
+		                            <label for="doe061Drverph" class="setting-grid-title">[[#{md.mvhcma.drverph}]]</label>
+		                            <div class="input-wrapper">
+		                            	<input type="text" id="doe061Drverph">
+		                            </div>
+								</div>
+							</div>
+							<div class="search-list" style="height: 30px; justify-content: center;">
+								<div style="border: 0.3px solid #D8D8D8;"></div>
+							</div>
+							<div class="search-list">
+								<div class="list-top">
+									<div class="list-title ic-title-mark">
+										<span>[[#{tm.doe058.orderList}]]</span>
+									</div>
+									<div class="edit-btn-wrapper">
+	                                    <span>[[#{tm.common.orderPossibleWeight}]] : </span>
+	                                    <span id="doe061MinWeight"></span>
+	                                    <span> ~ </span>
+	                                    <span id="doe061MaxWeight"></span>
+	                                    <span> [[#{tm.common.ton}]]</span>
+	                                </div>
+								</div>
+								<div class="list-grid-wrapper con-box" style="flex-direction: column;">
+									<div class="search-conditions" style="padding: 15px;">
+										<div class="setting-grid" style="grid-template-columns: 60px 1fr 0.5fr 60px 1fr;">
+											<label for="doe061ModalRegikey" class="setting-grid-title">[[#{search.renamlc}]]</label>
+											<div class="input-group">
+												<select id="doe061ModalRegikey" multiple="multiple" data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/partner/region">
+												</select>
+											</div>
+											<label for="doe061ModalSearchWpldate" class="setting-grid-title">[[#{tm.wplnhd.wpldate}]]</label>
+											<div class="setting-grid-content">
+												<div class="input-date-group">
+													<input type="date" id="doe061WpldateFrom">
+													<span>~</span>
+													<input type="date" id="doe061WpldateTo">
+												</div>
+											</div>
+										</div>
+			                            <div class="search-btn-group">
+											<button type="button" class="btn-search btn-navy btn-green" id="doe061ModalSearch">[[#{bt.search}]]</button>
+										</div>
+									</div>
+									<div id="doe061OrderGrid"></div>
+								</div>
+							</div>
+							<div class="search-list" style="display: none" id="doe061ModalEmerGrid">
+								<div class="list-top">
+									<div class="list-title ic-title-mark">
+										<span>[[#{tm.doe058.emerOrderList}]]</span>
+									</div>
+								</div>
+								<div class="list-grid-wrapper con-box">
+									<div id="doe061EmerOrderGrid"></div>
+								</div>
+								<div class="setting-grid con-box" style="display: flex; flex-direction: row;">
+									<div>
+		                                <span>[[#{tm.doe058.emerOrderWeight}]] : </span>
+		                                <span id="doe061Emodweig"></span>
+		                            </div>
+		                            <div style="margin-left: auto;">
+		                            	<button class="btn-save btn-navy btn-green" style="padding: 3px 10px 2px; border: solid 1px #9aa6b8; font-size: 12px; font-weight: bold;" id="doe061ModalEmergencyAuto">[[#{tm.common.filling}]]</button>
+		                            </div>
+								</div>
+								<div class="modal-bottom">
+									<button class="btn-save btn-navy btn-green" id="doe061EmerOrderSave">[[#{bt.save}]]</button>
+									<button class="btn-white" id="doe061EmerOrderClose">[[#{bt.close}]]</button>
+								</div>
+							</div>
+							<div class="edit-btn-wrapper" style="justify-content: left">
+								<span>[[#{tm.doe058.allOrderWeight}]] </span>
+								<span id="doe061TotalOrderWeight"></span>
+								<span> [[#{tm.common.ton}]]</span>
+	                        </div>
+	                        <!-- 기존 데이터 불러와서 선택값으로 박아주기 -->
+							<div class="setting-grid con-box" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;">
+	                            <label for="doe061Tpriloc" class="setting-grid-title ic-title-nece">[[#{tm.doe058.tpriloc}]]</label>
+	                            <div class="input-group" style="grid-column: span 2;">
+	                                <select id="doe061Tpriloc" name="doe061Tpriloc">
+	                                </select>
+	                            </div>
+	                            <label for="doe061Spriloc" class="setting-grid-title ic-title-nece">[[#{tm.doe058.spriloc}]]</label>
+	                            <div class="input-group" style="grid-column: span 2;">
+	                                <select id="doe061Spriloc" name="doe061Spriloc">
+	                                </select>
+	                            </div>
+	                            <label for="doe061Trnmemo" class="setting-grid-title">[[#{tm.tplnhd.trnmemo}]]</label>
+								<div class="input-wrapper" style="grid-column: span 5; padding-right: 46px;">
+									<input type="text" th:placeholder="${#messages.msg('tm.tplnhd.trnmemo')}" id="doe061Trnmemo" name="doe061Trnmemo" style="width: 100%">
+								</div>
+							</div>
+						</div>
+						<div class="modal-bottom">
+							<button class="btn-save btn-navy btn-green" id="doe061ModalSave">[[#{bt.save}]]</button>
+							<button class="btn-white" id="doe061ModalCancel">[[#{bt.cancel}]]</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+		!function() {
+			const pageId = 'doe061';
+			const doe061ModalId = document.getElementById(pageId + 'Modal');
+			const doe061Modal = new bootstrap.Modal(doe061ModalId, {
+				backdrop: 'static',
+				keyboard: false
+			});
+
+			//전역변수
+			let emergencyList = [];	//저장한 긴급재 리스트
+			let plnsizeList = [];
+
+			//날짜 셋팅
+			const yesterday = moment().subtract(1, 'd').format('YYYY-MM-DD');
+			const today = moment().format('YYYY-MM-DD');
+			const vhpdateFrom = document.querySelector('#' + pageId + 'VhpdateFrom');
+			const vhpdateTo = document.querySelector('#' + pageId + 'VhpdateTo');
+			const wpldateFrom = document.querySelector('#' + pageId + 'WpldateFrom');
+			const wpldateTo = document.querySelector('#' + pageId + 'WpldateTo');
+
+			dateValidation(vhpdateFrom, vhpdateTo, 'doe061Vhpdate', 'd', 1);
+			dateValidation(wpldateFrom, wpldateTo, 'doe061Wpldate', 'd', 1);
+
+			//========================================================
+			//DOE061 Head Grid (헤드 그리드)
+			//========================================================
+			//헤드 그리드 column Model
+			const doe061HeadGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center',
+					type: 'checkbox', cls:'ui-state-default', sortable: false, editor: false,
+					cb: { all: false, header: false, maxCheck: 1 },
+					nodrag: true, nodrop: true, paste: false
+				},
+				{ title: '[[#{tm.common.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false, hidden: true },
+				{ title: '[[#{tm.common.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{tm.tplnhd.vhplnky}]]', dataType: 'string', dataIndx: 'vhplnky', editable: false },
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{tm.tplnhd.loadkey}]]', dataType: 'string', dataIndx: 'lonamlc', editable: false },
+				{ title: '[[#{tm.common.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+				{ title: '[[#{tm.tplnhd.vownkey}]]', dataType: 'string', dataIndx: 'vonamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhctncd}]]', dataType: 'string', dataIndx: 'vhnamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhcmaxw}]]', dataType: 'string', dataIndx: 'vhcmaxw', editable: false },
+				{ title: '[[#{tm.common.drvernm}]]', dataType: 'string', dataIndx: 'drvernm', editable: false },
+				{ title: '[[#{md.mvhcma.drverph}]]', dataType: 'string', dataIndx: 'drverph', editable: false },
+				{ title: '[[#{tm.doe058.odweig}]]', dataType: 'integer', dataIndx: 'orderweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.common.totalweig}]]', dataType: 'integer', dataIndx: 'totalweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.tplnhd.aprovyn}]]', dataType: 'string', dataIndx: 'apnamlc', editable: false },
+				{ title: '[[#{tm.tplnhd.tpnstat}]]', dataType: 'string', dataIndx: 'plnamlc', editable: false },
+				{ title: '[[#{tm.tplnhd.trnmemo}]]', dataType: 'string', dataIndx: 'trnmemo', editable: false },
+				{ title: '[[#{tm.tplnhd.mixcuyn}]]', dataType: 'string', dataIndx: 'mixcuyn', editable: false },
+				{ title: '[[#{tm.doe058.tpriloc}]]', dataType: 'string', dataIndx: 'trlocml', editable: false },
+				{ title: '[[#{tm.doe058.spriloc}]]', dataType: 'string', dataIndx: 'srlocml', editable: false },
+				{ title: '[[#{tm.tplnhd.vhpdate}]]', dataType: 'string', dataIndx: 'vhpdate', editable: false },
+				{ title: '[[#{tm.tplnhd.vhptime}]]', dataType: 'string', dataIndx: 'vhptime', editable: false },
+				{ title: '[[#{tm.tplnhd.stpitdt}]]', dataType: 'string', dataIndx: 'stpitdt', editable: false },
+				{ title: '[[#{tm.tplnhd.stpittm}]]', dataType: 'string', dataIndx: 'stpittm', editable: false },
+				{ title: '[[#{tm.tplnhd.trnindt}]]', dataType: 'string', dataIndx: 'trnindt', editable: false },
+				{ title: '[[#{tm.tplnhd.trnintm}]]', dataType: 'string', dataIndx: 'trnintm', editable: false },
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe061HeadGrid = new GridUtil(doe061HeadGridCM, pageId, pageId + 'HeadGrid');
+
+			doe061HeadGrid.setFind();
+
+			doe061HeadGrid.setHeight(300);
+
+			//헤드 그리드 create 이벤트
+			doe061HeadGrid.setCreate(async function() {
+				await _commonInit(pageId);
+				const responseData = await doe061InitData();
+
+				vhpdateSetting();
+
+				doctypeSetting(responseData);
+
+				//검색조건 내 목적지 pqSelect(multi)
+				$('#' + pageId + 'ModalRegikey').pqSelect({
+					searchId: pageId + 'ModalRegikey',
+					multiplePlaceholder: '[[#{ms.chooseAll}]]',//전체
+					displayText: '{0}개 선택',
+					checkbox: true,
+					deselect: false,
+					selectallText: '[[#{ms.chooseAll}]]',//전체
+					width: '100%'
+				});
+
+				this.option('freezeCols', 1);
+			});
+
+			//헤드그리드 RowDblClick evt
+			//아이템 그리드, 중량 그리드 데이터 셋팅
+			doe061HeadGrid.setRowDblClick(async function(evt, ui) {
+				const gridCheckList = this.Checkbox('state').getCheckedNodes();
+
+				//하나만 체크하기 위해서
+				//체크된 데이터 있으면 풀기
+				if(gridCheckList.length > 0) {
+					for(const check of gridCheckList) {
+						this.updateRow({
+							rowIndx: check.pq_ri,
+							newRow: {
+								state: false
+							}
+						});
+					}
+				}
+
+				//해당 데이터 체크
+				this.updateRow({
+					rowIndx: ui.rowIndx,
+					newRow:{
+						state: true
+					}
+				});
+
+				const data = {
+						vhplnky: ui.rowData.vhplnky,
+						pageId: pageId,
+						warekey: document.querySelector('#' + pageId + 'Warekey').value
+				}
+
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+				const weightGrid = pq.grid('#' + pageId + 'WeightGrid');
+
+				itemGrid.showLoading();
+				weightGrid.showLoading();
+
+				//아이템 그리드 내용 채우기
+				const itemList = await fetchUtil('GET', '/tm/dispatch/common/itemgrid', data);
+
+				if(itemList.status !== 200) {
+					itemGrid.option('dataModel', {data: []});
+				}else {
+					const itemGridData = await itemList.json();
+
+					itemGrid.option('dataModel', {
+						data: itemGridData,
+						recIndx: 'rowkey'
+					});
+				}
+
+				//중량 그리드 내용 채우기
+				const weightList = await fetchUtil('GET', '/tm/dispatch/doe061/tpwpwg', data);
+
+				if(weightList.status !== 200) {
+					weightGrid.option('dataModel', {data: []});
+				}else {
+					const weightGridData = await weightList.json();
+
+					weightGrid.option('dataModel', {
+						data: weightGridData,
+						recIndx: 'shpplky'
+					});
+				}
+
+				itemGrid.refreshDataAndView();
+				weightGrid.refreshDataAndView();
+				itemGrid.hideLoading();
+				weightGrid.hideLoading();
+			});
+
+			doe061HeadGrid.open();
+
+			//========================================================
+			//DOE061 Item Grid (아이템 그리드)
+			//========================================================
+			//아이템 그리드 column Model
+			const doe061ItemGridCM = [
+				{ title: '[[#{tm.tplnhd.vhplnky}]]', dataType: 'string', dataIndx: 'vhplnky', editable: false },
+				{ title: '[[#{tm.tplnit.vhplnit}]]', dataType: 'integer', dataIndx: 'vhplnit', editable: false, format: '#,###' },
+				{ title: '[[#{tm.tplnit.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+				{ title: '[[#{tm.tplnit.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, format: '#,###.000', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{grid.grossth}]]', dataType: 'float', dataIndx: 'grossth', editable: false, format: '#,###.000', summary: { type: 'max' } },
+				{ title: '[[#{grid.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editable: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{grid.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{grid.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{grid.addcoky}]]', dataType: 'string', dataIndx: 'addnaml', editable: false },
+				{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+				{ title: '[[#{grid.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false },
+				{ title: '[[#{grid.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+				{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false },
+				{ title: '[[#{grid.rgorgnm}]]', dataType: 'string', dataIndx: 'ronamlc', editable: false },
+				{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false },
+				{ title: '[[#{grid.remodnm}]]', dataType: 'string', dataIndx: 'rmnamlc', editable: false },
+				{ title: '[[#{grid.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false },
+				{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },
+				{ title: '[[#{grid.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false },
+				{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+				{ title: '[[#{tm.tplnit.demdadr}]]', dataType: 'string', dataIndx: 'stockaddr', editable: false },
+				{ title: '[[#{tm.tplnit.demdnam}]]', dataType: 'string', dataIndx: 'demdman', editable: false },
+				{ title: '[[#{tm.tplnit.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false },
+				{ title: '[[#{tm.tplnit.tpistat}]]', dataType: 'string', dataIndx: 'pinamlc', editable: false },
+				{ title: '[[#{grid.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false },
+				{ title: '[[#{grid.ownamlc}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+				{ title: '[[#{tm.tplnit.plnsize}]]', dataType: 'string', dataIndx: 'pnszmlc', editable: false },
+				{ title: '[[#{tm.wplnhd.skugrky}]]', dataType: 'string', dataIndx: 'sknamlc', editable: false },
+				{ title: '[[#{tm.common.stkmemo}]]', dataType: 'string', dataIndx: 'stkmemo', editable: false },
+				{ title: '[[#{tm.tplnit.itemcod}]]', dataType: 'string', dataIndx: 'itemmlc', editable: false },
+				{ title: '[[#{tm.tplnit.tritqty}]]', dataType: 'integer', dataIndx: 'tritqty', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{im.wasnit.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+				{ title: '[[#{im.wasnit.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+				{ title: '[[#{im.wasnit.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+				{ title: '[[#{grid.shplimt}]]', dataType: 'string', dataIndx: 'shplimt', editable: false },
+				{ title: '[[#{grid.delvdsr}]]', dataType: 'string', dataIndx: 'delvdsr', editable: false },
+				{ title: '[[#{tm.tplnit.purcnum}]]', dataType: 'string', dataIndx: 'purcnum', editable: false },
+				{ title: '[[#{tm.tplnit.orderln}]]', dataType: 'string', dataIndx: 'orderln', editable: false },
+				{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+				{ title: '[[#{tm.tplnit.emskuyn}]]', dataType: 'string', dataIndx: 'emskuyn', editable: false,
+					type: 'checkbox', align: 'center',
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N' }
+				},
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{tm.wplnit.shpplit}]]', dataType: 'integer', dataIndx: 'shpplit', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe061ItemGrid = new GridUtil(doe061ItemGridCM, pageId, pageId + 'ItemGrid');
+
+			doe061ItemGrid.setFind();
+
+			doe061ItemGrid.setHeight(300);
+
+			//아이템 그리드 row Init
+			//긴급재여부(emskyun)이 Y라면 백그라운드 색, 폰트 굵기 변경
+			doe061ItemGrid.setRowInit(function(ui) {
+				if(ui.rowData.emskuyn === 'Y'){
+					return {
+						style: ui.rowData.emskuyn === 'Y' ? 'background-color: #FAED7D; font-weight: bold;' : ''
+					}
+				}
+			});
+
+			doe061ItemGrid.open();
+
+			//========================================================
+			//DOE061 Weight Grid (중량 그리드)
+			//========================================================
+			//중량 그리드 column Model
+			const doe061WeightGridCM = [
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{grid.regikey}]]', dataType: 'string', dataIndx: 'regikey', editable: false },
+				{ title: '[[#{grid.renamlc}]]', dataType: 'string', dataIndx: 'renamlc', editable: false },
+				{ title: '[[#{tm.doe058.odweig}]]', dataType: 'string', dataIndx: 'alcweig', editable:false ,format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.tplnit.plnsize}]]', dataType: 'string', dataIndx: 'grpkynm', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe061WeightGrid = new GridUtil(doe061WeightGridCM, pageId, pageId + 'WeightGrid');
+
+			doe061WeightGrid.setFind();
+
+			doe061WeightGrid.setHeight(300);
+
+			doe061WeightGrid.open();
+
+			//========================================================
+			//DOE061 Order Grid (출고예정정보 그리드)
+			//========================================================
+			//배차모달 출고예정정보 그리드 column Model
+			const doe061OrderGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center',
+					type: 'checkbox', cls:'ui-state-default', sortable: false, editor: false,
+					cb: { all: false, header: true },
+					nodrag: true, nodrop: true
+				},
+				{ title: '[[#{grid.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{grid.regikey}]]', dataType: 'string', dataIndx: 'regikey', editable: false },
+				{ title: '[[#{grid.renamlc}]]', dataType: 'string', dataIndx: 'renamlc', editable: false },
+				{ title: '[[#{grid.destkey}]]', dataType: 'string', dataIndx: 'destkey', editable: false },
+				{ title: '[[#{grid.denamlc}]]', dataType: 'string', dataIndx: 'denamlc', editable: false },
+				{ title: '[[#{md.mdesma.desaddr}]]', dataType: 'string', dataIndx: 'desaddr', editable: false },
+				{ title: '[[#{tm.wplnhd.wpldate}]]', dataType: 'string', dataIndx: 'wpldate', editable: false },
+				{ title: '[[#{tm.wplnhd.wpltime}]]', dataType: 'string', dataIndx: 'wpltime', editable: false },
+				{ title: '[[#{tm.wplnhd.shpweig}]]', dataType: 'integer', dataIndx: 'shpweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.common.remweig}]]', dataType: 'integer', dataIndx: 'remweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.doe058.odweig}]]', dataType: 'integer', dataIndx: 'odweig', format: '#,###', summary: { type: 'sum' },
+					styleHead: { 'background-color': '[[#{grid.styleHead01}]]'},
+					editable: function(ui) {
+						return ui.rowData.remweig > 0;
+					}
+				},
+				{ title: '[[#{tm.doe058.emerweig}]]', dataType: 'integer', dataIndx: 'emerweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.doe058.emodweig}]]', dataType: 'integer', dataIndx: 'emodweig', editable: false, format: '#,###', summary: { type: 'sum' },
+					styleHead: { 'background-color': '[[#{grid.styleHead02}]]'}
+				},
+				{ title: '[[#{tm.tplnit.plnsize}]]', dataType: 'string', dataIndx: 'plnsize',
+					styleHead: { 'background-color': '[[#{grid.styleHead01}]]'},
+					editor: {
+						type: 'select',
+						prepend: { '' : '' },
+						init: function(ui) {
+							ui.$cell.find('select').pqSelect();
+							setTimeout(function() {
+								ui.$cell.find('select').pqSelect('open');
+							}, 250);
+						},
+						options: []
+					},
+					render: function(ui) {
+						let renderName;
+						if(ui.cellData !== undefined && ui.cellData !== null) {
+							renderName = plnsizeList.find(function(obj) {
+								return obj.skugrky === ui.rowData.plnsize
+							});
+						}
+						return renderName ? renderName.grpkynm : '';
+					}
+				},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe061OrderGrid = new GridUtil(doe061OrderGridCM, pageId, pageId + 'OrderGrid');
+
+			//출고예정정보 그리드 create 이벤트
+			doe061OrderGrid.setCreate(async function(evt, ui) {
+				//배차사이즈 가져오기
+				plnsizeList = await doe061ModalInit();
+
+				//그리드 내 고정 시킬 열의 갯수
+				this.option('freezeCols', 1);
+			});
+
+			doe061OrderGrid.setFind();
+
+			//출고예정정보 그리드 셀 더블클릭 evt
+			doe061OrderGrid.setCellDblClick(async function(evt, ui) {
+				//더블클릭시 체크박스 체크
+				this.updateRow({
+					rowIndx: ui.rowIndx,
+					newRow: {
+						state: true
+					}
+				});
+
+				//dataIndx = 'plnsize' (배차사이즈)
+				if(ui.dataIndx === 'plnsize') {
+					plnsizeSelectBoxSetting(ui);
+				//긴급재 지시중량 더블클릭 시
+				}else if(ui.dataIndx === 'emodweig') {
+
+					if(ui.rowData.plnsize == null || ui.rowData.plnsize == '') {
+						//배차 사이즈를 먼저 선택해 주세요.
+						alert('[[#{tm.doe058.choicePlnsize}]]');
+						plnsizeSelectBoxSetting(ui);
+						this.editCell({
+							rowIndx: ui.rowIndx,
+							dataIndx: 'plnsize'
+						});
+						return;
+					}
+
+					//지시중량이 0이거나 긴급재 중량이 0일경우 alert
+					if(ui.rowData.odweig <= 0 || ui.rowData.emerweig <= 0) {
+						//지시할 수 있는 중량이 없습니다.
+						alert('[[#{tm.doe058.remweigZero}]]');
+
+						//긴급재 그리드가 열려있다면 닫아줌
+						if(document.querySelector('#' + pageId + 'ModalEmerGrid').style.display === 'block') {
+							makeEmptyGrid(doe061EmerOrderGrid);
+							document.querySelector('#' + pageId + 'ModalEmerGrid').style.display = 'none';
+						}
+
+						document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+						return false;
+					}
+
+					//긴급재 리스트 그리드 style block;
+					document.querySelector('#' + pageId + 'ModalEmerGrid').style.display = 'block';
+
+					const emerGrid = pq.grid('#' + pageId + 'EmerOrderGrid', { collapsible: { on: false, toggled: false } } );
+
+					//높이설정 => 안해주면 높이가 없음
+					emerGrid.option('height', 200);
+
+					const data = {
+							shpplky: ui.rowData.shpplky,
+							warekey: ui.rowData.warekey,
+							chkdisp: 'N',
+							szgubun: plnsizeList.find(item => item.skugrky === ui.rowData.plnsize).szgubun,
+					}
+
+					emerGrid.showLoading();
+
+					//긴급재 리스트 가져오기
+					const emerOrderList = await fetchUtil('GET', '/tm/dispatch/doe058/itemgrid', data);
+
+					if(emerOrderList.status !== 200) {
+						emerGrid.option('dataModel', {data: []});
+					}else {
+						const emerGridData = await emerOrderList.json();
+
+						emerGrid.option('dataModel', {
+							data: emerGridData
+						});
+
+						//그리드 처음 위로 올리려고
+						emerGrid.scrollY(0);
+					}
+
+					emerGrid.refreshDataAndView();
+					emerGrid.hideLoading();
+
+					//긴급재 체크된 중량은 현재 0
+					document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+
+				}else if(ui.dataIndx === 'odweig') {
+					//잔여중량이 0일 경우
+					if(ui.rowData.remweig <= 0) {
+						//지시할 수 있는 중량이 없습니다.
+						alert('[[#{tm.doe058.remweigZero}]]');
+						return false;
+					}
+				}
+			});
+
+			//배차모달 내 출고예정정보 그리드 change evt
+			doe061OrderGrid.setChange(function (evt, ui) {
+				const updateList = ui.updateList[0];
+
+				if(ui.source === 'edit') {
+					//newRow에 odweig가 있다면
+					if(updateList.newRow.hasOwnProperty('odweig')) {
+						if(updateList.rowData.remweig < updateList.newRow.odweig) {
+							//지시하신 중량이 오더 잔여 중량보다 많습니다.
+							alert('[[#{tm.doe058.overOrderWeight}]]');
+
+							updateList.newRow.odweig = 0;
+
+							this.updateRow({
+								rowIndx: updateList.rowIndx,
+								newRow: {
+									odweig: 0
+								}
+							});
+						}
+
+						orderGridValueChange(updateList, 'odweig');
+					}else if(updateList.newRow.hasOwnProperty('plnsize')) {
+
+						makeEmptyGrid(doe061EmerOrderGrid);
+
+						if(document.querySelector('#' + pageId + 'ModalEmerGrid').style.display === 'block') {
+							document.querySelector('#' + pageId + 'ModalEmerGrid').style.display = 'none'
+						}
+
+						document.querySelector('#' + pageId + 'Emodweig').innerText = 0 + '(t)';
+					}
+				}else if(ui.source === 'clear') {
+					//데이터를 지울 때 동작하는 코드라 oldRow에 odweig가 있을 때 => 즉 odweig의 값을 지웠을 때
+					if(updateList.oldRow.hasOwnProperty('odweig')) {
+						//총 지시중량 계산을 위해서 newRow의 지시중량을 0으로 바꿈
+						//그리드 내의 지시중량 컬럼값을 0으로 바꿈
+						updateList.newRow.odweig = 0;
+
+						this.updateRow({
+							rowIndx: updateList.rowIndx,
+							newRow: {
+								odweig: 0
+							}
+						});
+
+						orderGridValueChange(updateList, 'odweig');
+					}
+				}
+			});
+
+			doe061OrderGrid.setCheck(async function(evt, ui) {
+				let totalOrderWeight = 0;
+
+				const gridCheckList = this.Checkbox('state').getCheckedNodes();
+
+				for(const gridCheck of gridCheckList){
+					totalOrderWeight += Number(gridCheck.odweig ? gridCheck.odweig : 0);
+				}
+
+				document.querySelector('#doe061TotalOrderWeight').innerText = totalOrderWeight;
+
+
+				if(ui.check === false) {
+					//긴급재는 다시 구성해야하므로 긴급재 그리드를 다음
+					if(document.querySelector('#emerOrderListGrid').style.display === 'block') {
+						document.querySelector('#emerOrderListGrid').style.display = 'none';
+					}
+
+					//지시중량 초기화
+					//긴급재지시중량 초기화
+					this.updateRow({
+						rowIndx: ui.rowIndx,
+						newRow: {
+							emodweig: null,
+							odweig: 0,
+							plnsize: null
+						},
+						checkEditable: false
+					});
+
+					this.refreshDataAndView();
+
+					//지시중량이 변경되면 긴급재 리스트 전역변수에 값을 재할당.
+					//해당 전역변수에 담겨있는 값에서 해당 출고번호 데이터들을 지움.
+					emergencyList = emergencyList.filter(item => item.shpplky !== ui.rowData.shpplky);
+
+					await selectFilterLocationSelectBox(emergencyList);
+				}
+			});
+
+			//중량 변경 코드
+			async function orderGridValueChange(updateList, column) {
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+
+				if(document.querySelector('#' + pageId + 'ModalEmerGrid').style.display === 'block') {
+					document.querySelector('#' + pageId + 'ModalEmerGrid').style.display = 'none';
+				}
+
+				const totalWeight = Number(document.querySelector('#doe061TotalOrderWeight').innerText);
+
+				let weight = 0;
+
+				weight += updateList.newRow[column];
+
+				if(totalWeight > 0) {
+					const beforeWeight = totalWeight - updateList.oldRow[column];
+					weight = beforeWeight + weight;
+				}else {
+					weight = totalWeight + weight;
+				}
+
+				document.querySelector('#doe061TotalOrderWeight').innerText = weight;
+
+				if(updateList.newRow[column] < updateList.rowData.emodweig) {
+					//지시중량이 변경되면 긴급재 리스트 전역변수에 값을 재할당.
+					//해당 전역변수에 담겨있는 값에서 해당 출고번호 데이터들을 지움.
+					emergencyList = emergencyList.filter(item => item.shpplky !== updateList.rowData.shpplky);
+
+					//grid updateRow
+					gridUpdateRowEvt(orderGrid, 'emodweig', null, updateList.rowIndx);
+				}
+
+				await selectFilterLocationSelectBox(emergencyList);
+			}
+
+			doe061OrderGrid.open();
+
+			//긴급재 아이템 그리드
+			const doe061EmerOrderGridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center',
+					type: 'checkbox', cls:'ui-state-default', sortable: false, editor: false,
+					cb: { all: false, header: true },
+					nodrag: true, nodrop: true
+				},
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{tm.wplnit.shpplit}]]', dataType: 'integer', dataIndx: 'shpplit', editable: false, format: '#,###' },
+				{ title: '[[#{grid.locakey}]]', dataType: 'string', dataIndx: 'locakey', editable: false },
+				{ title: '[[#{grid.locanam}]]', dataType: 'string', dataIndx: 'locanam', editable: false },
+				{ title: '[[#{grid.lolayer}]]', dataType: 'integer', dataIndx: 'lolayer', editable: false },
+				{ title: '[[#{tm.tplnit.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+				{ title: '[[#{tm.tplnit.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, format: '#,###.000', summary: { type: 'max '} },
+				{ title: '[[#{tm.tplnit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, format: '#,###', summary: {} },
+				{ title: '[[#{grid.grossth}]]', dataType: 'float', dataIndx: 'grossth', editable: false, format: '#,###.000', summary: { type: 'max' } },
+				{ title: '[[#{grid.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editable: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{grid.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{grid.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{grid.addcoky}]]', dataType: 'string', dataIndx: 'addnaml', editable: false },
+				{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+				{ title: '[[#{grid.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false },
+				{ title: '[[#{grid.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+				{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false },
+				{ title: '[[#{grid.rgorgnm}]]', dataType: 'string', dataIndx: 'ronamlc', editable: false },
+				{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false },
+				{ title: '[[#{grid.remodnm}]]', dataType: 'string', dataIndx: 'rmnamlc', editable: false },
+				{ title: '[[#{grid.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false },
+				{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },
+				{ title: '[[#{grid.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false },
+				{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+				{ title: '[[#{tm.tplnit.demdadr}]]', dataType: 'string', dataIndx: 'stockaddr', editable: false	},
+				{ title: '[[#{tm.tplnit.demdnam}]]', dataType: 'string', dataIndx: 'demdman', editable: false },
+				{ title: '[[#{tm.tplnit.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false },
+				{ title: '[[#{grid.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false },
+				{ title: '[[#{grid.ownamlc}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+				{ title: '[[#{tm.wplnit.skugrky}]]', dataType: 'string', dataIndx: 'grpkynm', editable: false },
+				{ title: '[[#{tm.common.stkmemo}]]', dataType: 'string', dataIndx: 'stkmemo', editable: false },
+				{ title: '[[#{tm.tplnit.itemcod}]]', dataType: 'string', dataIndx: 'itemmlc', editable: false },
+				{ title: '[[#{tm.wplnit.planqty}]]', dataType: 'integer', dataIndx: 'planqty', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{im.wasnit.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+				{ title: '[[#{im.wasnit.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+				{ title: '[[#{im.wasnit.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+				{ title: '[[#{grid.shplimt}]]', dataType: 'string', dataIndx: 'shplimt', editable: false },
+				{ title: '[[#{grid.delvdsr}]]', dataType: 'string', dataIndx: 'delvdsr', editable: false },
+				{ title: '[[#{tm.tplnit.purcnum}]]', dataType: 'string', dataIndx: 'purcnum', editable: false },
+				{ title: '[[#{tm.tplnit.orderln}]]', dataType: 'string', dataIndx: 'orderln', editable: false },
+				{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+				{ title: '[[#{tm.tplnit.emskuyn}]]', dataType: 'string', dataIndx: 'emskuyn', editable: false,
+					type: 'checkbox', align: 'center',
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N' }
+				},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe061EmerOrderGrid = new GridUtil(doe061EmerOrderGridCM, pageId, pageId + 'EmerOrderGrid');
+
+			doe061EmerOrderGrid.setFind();
+
+			//긴급재 그리드 create 이벤트
+			doe061EmerOrderGrid.setCreate(function(evt, ui) {
+
+				//그리드 내 고정 시킬 열의 갯수
+				this.option('freezeCols', 1);
+			});
+
+			//긴급재 그리드 rowInit 이벤트
+			//긴급재여부(emskuyn)이 Y라면 백그라운드 색, 폰트 굵기 변경
+			doe061EmerOrderGrid.setRowInit(function(ui) {
+				if(ui.rowData.emskuyn === 'Y'){
+					return {
+						style: ui.rowData.emskuyn === 'Y' ? 'background-color: #FAED7D; font-weight: bold;' : ''
+					}
+				}
+			});
+
+			//긴급재 리스트 그리드 cellDblClick
+			doe061EmerOrderGrid.setRowDblClick(function(evt, ui) {
+				if(ui.rowData.state === true) {
+					this.updateRow({
+						rowIndx: ui.rowIndx,
+						newRow: {
+							state: false
+						}
+					});
+				}else if(ui.rowData.state === false){
+					this.updateRow({
+						rowIndx: ui.rowIndx,
+						newRow: {
+							state: true
+						}
+					});
+				}
+			});
+
+			//긴급재 아이템 그리드 체크 이벤트
+			doe061EmerOrderGrid.setCheck(function(evt, ui) {
+				let emodweig = 0;
+
+				const gridCheckList = this.Checkbox('state').getCheckedNodes();
+
+				for(const gridCheck of gridCheckList){
+					emodweig += Number(gridCheck.skuweig);
+				}
+
+				emodweig = emodweig / 1000;
+
+				document.querySelector('#' + pageId + 'Emodweig').innerText = emodweig  + '(t)';
+			});
+
+			//긴급재 아이템 그리드 자동 체크
+			doe061EmerOrderGrid.setSelectEnd(function(evt, ui){
+				if(ui.selection._areas[0].type === 'cell'){
+					return;
+				}
+
+				const checkMap = new Map();
+
+				this.Selection().getSelection().forEach(function(data){
+					if(!checkMap.has(data.rowIndx)){
+						checkMap.set(data.rowIndx, data);
+						return true;
+					}
+					return false;
+				});
+
+				for(const [rowIndx, data] of checkMap){
+					this.updateRow({
+						rowIndx : rowIndx,
+						newRow : {
+							state : data.rowData.state === true ? false : true
+						}
+					});
+				}
+			});
+
+			doe061EmerOrderGrid.open();
+
+
+			//========================================================
+			//Init Data
+			//========================================================
+			//배차사이즈 selectBox 셋팅
+			function plnsizeSelectBoxSetting(ui) {
+				//szgubun 0이 제일 큰 데이터
+				//0이면 전체 plnsizeList를 보여줌
+				//1이면 1과 그 이후 데이터
+				//2면 2과 그 이후 데이터 이런식으로 구성
+				let vehiclePlnsize = [];
+
+				if(ui.rowData.szgubun === 0) {
+					vehiclePlnsize = plnsizeList;
+				}else {
+					vehiclePlnsize = plnsizeList.filter(item => item.szgubun >= ui.rowData.szgubun);
+				}
+
+				comboCreateData(pageId + 'OrderGrid', 'plnsize', vehiclePlnsize, { combovl: 'skugrky', combonm: 'grpkynm' });
+			}
+
+			//initData
+			async function doe061InitData() {
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value
+				}
+				let responseData = await fetchUtil('GET', '/tm/dispatch/common/init', data);
+				responseData = await responseData.json();
+
+				return responseData;
+			}
+
+			//modalInit
+			async function doe061ModalInit() {
+
+				let plnsizeList = await fetchUtil('GET', '/tm/dispatch/common/plnsizelist', {});
+				plnsizeList = await plnsizeList.json();
+
+				return plnsizeList;
+			}
+
+			//doctype selectBox
+			function doctypeSetting(responseData) {
+				const doctypeSelectBox = document.querySelector('#' + pageId + 'Doctype');
+				doctypeSelectBox.innerHTML = '';
+
+				let option = document.createElement('option');
+				option.value = '';
+				option.text = '[[#{tm.common.all}]]';
+				doctypeSelectBox.appendChild(option);
+
+				for(const doctype of responseData.doctypeList) {
+					let option = document.createElement('option');
+					option.value = doctype.combovl;
+					option.text = doctype.combonm;
+					doctypeSelectBox.appendChild(option);
+				}
+			}
+
+			//vhpdate 셋팅
+			function vhpdateSetting() {
+				document.querySelector('#' + pageId + 'VhpdateFrom').value = yesterday;
+				document.querySelector('#' + pageId + 'VhpdateTo').value = today;
+			}
+
+			//wpldate 셋팅
+			function wpldateSetting() {
+				document.querySelector('#' + pageId + 'WpldateFrom').value = yesterday;
+				document.querySelector('#' + pageId + 'WpldateTo').value = today;
+			}
+
+			//정차포인트 selectBox
+			async function selectFilterLocationSelectBox(listData) {
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value,
+						emergencyList: listData,
+						vhplnky: document.querySelector('#' + pageId + 'ModalVhplnky').value
+				}
+				const responseData = await fetchUtil('POST', '/tm/dispatch/doe061/location/filter-list', data);
+				const filterLocationList = await responseData.json();
+
+				settingLocationSelectBox(filterLocationList);
+			}
+
+			function settingLocationSelectBox(locationList) {
+				const tprilocSelectBox = document.querySelector('#' + pageId + 'Tpriloc');
+				const sprilocSelectBox = document.querySelector('#' + pageId + 'Spriloc');
+
+				tprilocSelectBox.innerHTML = '';
+			    sprilocSelectBox.innerHTML = '';
+
+				const tprilocChoic= document.createElement('option');
+				tprilocChoic.value = '';
+				tprilocChoic.text = '[[#{tm.doe058.choice}]]';
+				tprilocSelectBox.appendChild(tprilocChoic);
+
+				const sprilocChoice = document.createElement('option');
+				sprilocChoice.value = '';
+				sprilocChoice.text = '[[#{tm.doe058.choice}]]';
+				sprilocSelectBox.appendChild(sprilocChoice);
+
+				for(const riloc of locationList) {
+					const tprilocOption = document.createElement('option');
+					tprilocOption.value = riloc.locakey;
+					tprilocOption.text = riloc.locanam;
+					tprilocSelectBox.appendChild(tprilocOption);
+
+					const sprilocOption = document.createElement('option');
+					sprilocOption.value = riloc.locakey;
+					sprilocOption.text = riloc.locanam;
+					sprilocSelectBox.appendChild(sprilocOption);
+				}
+			}
+
+			//========================================================
+			//모달(Modal)
+			//========================================================
+			//배차모달 오픈
+			document.querySelector('#' + pageId + 'AddDispatch').addEventListener('click', async function() {
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const headGridCheckList = headGrid.Checkbox('state').getCheckedNodes();
+
+				if(headGridCheckList.length === 1) {
+
+					const headGrid = headGridCheckList[0];
+
+					document.querySelector('#' + pageId + 'ModalVhplnky').value = headGrid.vhplnky;
+					document.querySelector('#' + pageId + 'ModalOrderWeig').value = headGrid.orderweig;
+					document.querySelector('#' + pageId + 'ModalEmerWeig').value = headGrid.totalweig;
+
+					document.querySelector('#' + pageId + 'ModalVhctncd').value = Number(headGrid.vhnamlc.replace(/톤/g, '').trim());
+					document.querySelector('#' + pageId + 'ModalVhcmaxw').value = headGrid.vhcmaxw;
+					document.querySelector('#' + pageId + 'ModalVhcsnam').value = headGrid.vhcsnam;
+					document.querySelector('#' + pageId + 'ModalVownkey').value = headGrid.vonamlc;
+
+					document.querySelector('#doe061MinWeight').innerText = Number(headGrid.vhnamlc.replace(/톤/g, '').trim());
+					document.querySelector('#doe061MaxWeight').innerText = headGrid.vhcmaxw;
+
+					document.querySelector('#doe061TotalOrderWeight').innerText = 0;
+					
+					wpldateSetting();
+
+					emergencyList = [];
+					await doe061OrderGridSearch();
+					await selectFilterLocationSelectBox(emergencyList);
+
+					document.querySelector('#' + pageId + 'Tpriloc').value = headGrid.tpriloc;
+					document.querySelector('#' + pageId + 'Spriloc').value = headGrid.spriloc;
+
+					document.querySelector('#' + pageId + 'Trnmemo').value = headGrid.trnmemo;
+
+					document.querySelector('#' + pageId + 'Drvernm').value = headGrid.drvernm;
+					document.querySelector('#' + pageId + 'Drverph').value = headGrid.drverph;
+					
+					doe061Modal.show();
+				}else if(headGridCheckList.length > 1) {
+					//최대 1개 오더만 선택 가능합니다.
+					alert('[[#{tm.doe061.choiceAlert}]]');
+				}else {
+					//배차를 진행할 오더를 선택해 주세요.
+					alert('[[#{tm.doe058.orderChoice}]]');
+				}
+			});
+
+			//배차 모달 오픈할 때 실행되는 이벤트
+			//자바스크립트로는 구현이 되지가 않아 불가피하게 제이쿼리 사용
+			$('#' + pageId + 'Modal').on('shown.bs.modal', async function() {
+				//그리드가 뜨질 않아서 그리드들 초기화, 높이설정을 안해주면 높이가 없음
+				//스크롤이 자꾸 전에 있던 위치 그대로 가져와서 강제로 위로올려줌
+
+				//출고예정정보 그리드
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid', { collapsible: { on: false, toggled: false } } );
+				orderGrid.option('height', 250);
+				orderGrid.scrollX(0);
+				orderGrid.refreshDataAndView();
+			});
+
+			//배차 모달 내 최대중량 체인지 이벤트
+			document.querySelector('#' + pageId + 'ModalVhcmaxw').addEventListener('change', function() {
+				if(Number(this.value) < Number(document.querySelector('#' + pageId + 'ModalVhctncd').value)) {
+					alert('입력하신 최대 중량이 최소 중량보다 작습니다.');
+					this.focus();
+				}else {
+					document.querySelector('#doe061MaxWeight').innerText = this.value;
+				}
+			});
+
+			document.querySelector('#' + pageId + 'ModalVhcmaxw').addEventListener('blur', function() {
+				if(Number(this.value) < Number(document.querySelector('#' + pageId + 'ModalVhctncd').value)) {
+					this.focus();
+				}
+			});
+
+			//배차모달 닫기
+			document.querySelector('#' + pageId + 'ModalClose').addEventListener('click', function() {
+				doe061ModalClose();
+			});
+
+			document.querySelector('#' + pageId + 'ModalCancel').addEventListener('click', function() {
+				doe061ModalClose();
+			});
+
+			//모달 닫기
+			async function doe061ModalClose() {
+				//값 초기화
+				document.querySelector('#' + pageId + 'ModalVhctncd').value = 0;
+				document.querySelector('#' + pageId + 'ModalVhcmaxw').value = 0;
+				document.querySelector('#' + pageId + 'ModalVhcsnam').value = '';
+				document.querySelector('#' + pageId + 'ModalVownkey').value = '';
+				document.querySelector('#' + pageId + 'ModalVhplnky').value = '';
+				document.querySelector('#' + pageId + 'ModalOrderWeig').value = 0;
+				document.querySelector('#' + pageId + 'ModalEmerWeig').value = 0;
+
+				document.querySelector('#' + pageId + 'Tpriloc').selectedIndex = 0;
+				document.querySelector('#' + pageId + 'Spriloc').selectedIndex = 0;
+
+				document.querySelector('#' + pageId + 'Drvernm').value = '';
+				document.querySelector('#' + pageId + 'Drverph').value = '';
+
+				document.querySelector('#doe061MinWeight').innerText = 0;
+				document.querySelector('#doe061MaxWeight').innerText = 0;
+				document.querySelector('#doe061TotalOrderWeight').innerText = 0;
+
+				$('#' + pageId + 'ModalRegikey').val('').pqSelect('refreshData');
+
+				if(document.querySelector('#' + pageId + 'ModalEmerGrid').style.display === 'block') {
+					document.querySelector('#' + pageId + 'ModalEmerGrid').style.display = 'none';
+				}
+
+				makeEmptyGrid(doe061OrderGrid);
+				makeEmptyGrid(doe061EmerOrderGrid);
+
+				wpldateSetting();
+
+				//전역변수 초기화
+				emergencyList = [];
+
+				doe061Modal.hide();
+			}
+			//긴급재 리스트 저장
+			document.querySelector('#' + pageId + 'EmerOrderSave').addEventListener('click', async function() {
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const emerOrderGrid = pq.grid('#' + pageId + 'EmerOrderGrid');
+				const eoGridCheck = emerOrderGrid.Checkbox('state').getCheckedNodes();
+				let emodweigValue = Number(document.querySelector('#' + pageId + 'Emodweig').innerText.replace(/\(t\)/, '').trim());
+				const totalOrderWeight = Number(document.querySelector('#' + pageId + 'TotalOrderWeight').innerText);
+
+				const orderGridFilterList = orderGrid.pdata.find(item => item.shpplky === emerOrderGrid.pdata[0].shpplky);
+
+				if(orderGridFilterList.remweig === orderGridFilterList.emerweig) {
+					if(orderGridFilterList.odweig > parseInt(emodweigValue)) {
+						if(confirm(`[[#{tm.common.checkAlert}]]`)) {
+							let weight = totalOrderWeight - orderGridFilterList.odweig;
+
+							orderGrid.updateRow({
+								rowIndx: orderGridFilterList.pq_ri,
+								newRow: {
+									odweig: emodweigValue < 1 ? Math.round(emodweigValue) : parseInt(emodweigValue)
+								}
+							});
+
+							weight = weight + parseInt(emodweigValue);
+							document.querySelector('#' + pageId + 'TotalOrderWeight').innerText = weight;
+						}else {
+							return;
+						}
+					}
+				}
+
+				//해당 출고번호 긴급재관련 리스트를 한 번 날린 후 다시 담기 => 재조정할 수 있어서
+				emergencyList = emergencyList.filter(item => item.shpplky !== emerOrderGrid.pdata[0].shpplky);
+
+				let plnsize = '';
+
+				//배차사이즈
+				const grid = orderGrid.pdata.find(grid => grid.shpplky === emerOrderGrid.pdata[0].shpplky);
+				if (grid) {
+					plnsize = grid.plnsize;
+				}
+
+				for(const emergency of eoGridCheck) {
+					emergency.plnsize = plnsize;
+					emergencyList.push(emergency);
+				}
+
+				//지시중량보다 긴급재 중량이 더 클 경우
+				if(orderGridFilterList.odweig < parseInt(emodweigValue)) {
+					alert('[[#{tm.doe058.overEmerWeight}]]');
+					return false;
+				}
+
+				if(emodweigValue < 1) {
+					emodweigValue = Math.round(emodweigValue);
+				}
+
+				gridUpdateRowEvt(orderGrid, 'emodweig', emodweigValue, orderGridFilterList.pq_ri);
+
+				document.querySelector('#' + pageId + 'ModalEmerGrid').style.display = 'none';
+
+				await selectFilterLocationSelectBox(emergencyList);
+
+				//그리드 초기화
+				makeEmptyGrid(doe061EmerOrderGrid);
+			});
+
+			//긴급재 리스트 닫기
+			document.querySelector('#' + pageId + 'EmerOrderClose').addEventListener('click', async function() {
+				document.querySelector('#' + pageId + 'ModalEmerGrid').style.display = 'none';
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const orderGridFilterList = orderGrid.pdata.find(item => item.shpplky === emerOrderGrid.pdata[0].shpplky);
+
+				gridUpdateRowEvt(orderGrid, 'emodweig', null, orderGridFilterList.pq_ri);
+
+				emergencyList = emergencyList.filter(item => item.shpplky !== orderGridFilterList.pq_ri);
+
+				await selectFilterLocationSelectBox(emergencyList);
+
+				//그리드 초기화
+				makeEmptyGrid(doe061EmerOrderGrid);
+			});
+
+			//모달 출고예정정보 그리드 검색
+			document.querySelector('#' + pageId + 'ModalSearch').addEventListener('click', async function() {
+				await doe061OrderGridSearch();
+			});
+
+			//========================================================
+			//이벤트(event)
+			//========================================================
+			//그리드 로우 업데이트 이벤트
+			function gridUpdateRowEvt(grid, dataIndx, value, rowIndx) {
+				grid.updateRow({
+					rowIndx: rowIndx,
+					newRow: {
+						[dataIndx]: value
+					},
+					checkEditable: false
+				});
+
+				//?
+				grid.refreshDataAndView();
+			}
+
+			//초기화
+			document.querySelector('#' + pageId + 'Reset').addEventListener('click', function() {
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+				const weightGrid = pq.grid('#' + pageId + 'WeightGrid');
+
+				if(headGrid.pdata.length > 0 || itemGrid.pdata.length > 0 || weightGrid.pdata.length > 0) {
+					if(!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+
+				resetSearchConditions(pageId);
+
+				makeEmptyGrid(doe061HeadGrid);
+				makeEmptyGrid(doe061ItemGrid);
+			});
+
+			//검색
+			document.querySelector('#' + pageId + 'Search').addEventListener('click', async function() {
+				await doe061SearchData();
+			});
+
+			let previousWarekey;
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('focus', function() {
+				previousWarekey = this.value;
+			});
+
+			//창고 change evt
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+				const weightGrid = pq.grid('#' + pageId + 'WeightGrid');
+
+				if(headGrid.pdata.length > 0 || itemGrid.pdata.length > 0 || weightGrid.pdata.length > 0) {
+					if(!confirm('[[#{ms.listViewRollback}]]')) {
+						document.querySelector('#' + pageId + 'Warekey').value = previousWarekey;
+						return;
+					}
+				}
+
+				await doe061SearchData();
+
+				const responseData = await doe061InitData();
+				doctypeSetting(responseData);
+			});
+
+			//긴급재 채우기 버튼 클릭 이벤트
+			document.querySelector('#' + pageId + 'ModalEmergencyAuto').addEventListener('click', function() {
+				const emergencyGrid = pq.grid('#' + pageId + 'EmerOrderGrid');
+				const emergencyCheckList = emergencyGrid.Checkbox('state').getCheckedNodes();
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const orderGridFilterList = orderGrid.pdata.find(item => item.shpplky === emergencyGrid.pdata[0].shpplky);
+				let weight = 0;
+
+				if(emergencyCheckList.length > 0) {
+					for(const check of emergencyCheckList) {
+						weight += check.skuweig;
+					}
+				}
+
+				for(const grid of emergencyGrid.pdata) {
+
+					if(grid.state === false && grid.emskuyn === 'Y') {
+						weight += grid.skuweig;
+
+						if(parseInt(weight / 1000) <= orderGridFilterList.odweig) {
+							emergencyGrid.updateRow({
+								rowIndx: grid.pq_ri,
+								newRow: {
+									state: true
+								}
+							});
+						}else {
+							break;
+						}
+					}
+				}
+
+				if(parseInt(weight / 1000) <= orderGridFilterList.odweig) {
+					for(const grid of emergencyGrid.pdata) {
+
+						if(grid.state === false) {
+							weight += grid.skuweig;
+
+							if(parseInt(weight / 1000) <= orderGridFilterList.odweig) {
+								emergencyGrid.updateRow({
+									rowIndx: grid.pq_ri,
+									newRow: {
+										state: true
+									}
+								});
+							}else {
+								break;
+							}
+						}
+					}
+				}
+			});
+
+			//우선 change 이벤트
+			document.querySelector('#' + pageId + 'Tpriloc').addEventListener('change', function() {
+				document.querySelector('#' + pageId + 'Spriloc').value = this.value;
+			});
+
+
+			//========================================================
+			//검색
+			//========================================================
+			//모달 검색
+			async function doe061OrderGridSearch() {
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const regikeyList = [];
+
+				const regikeyOptions = document.querySelector('#' + pageId + 'ModalRegikey').selectedOptions;
+
+				for(const option of regikeyOptions) {
+					regikeyList.push(option.value);
+				}
+
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value,
+						regikeySelectedList: regikeyList,
+						wpldateFrom: document.querySelector('#' + pageId + 'WpldateFrom').value.replaceAll('-', ''),
+						wpldateTo: document.querySelector('#' + pageId + 'WpldateTo').value.replaceAll('-', '')
+				}
+
+				orderGrid.showLoading();
+
+				const orderGridList = await fetchUtil('GET', '/tm/dispatch/doe061/ordergrid', data);
+
+				if(orderGridList.status !== 200) {
+					orderGrid.option('dataModel', {data: []});
+				}else {
+					const orderGridData = await orderGridList.json();
+
+					orderGrid.option('dataModel', {
+						data: orderGridData,
+						recIndx: 'rowkey'
+					});
+				}
+
+				orderGrid.refreshDataAndView();
+				orderGrid.hideLoading();
+			}
+
+
+			//========================================================
+			//Validation
+			//========================================================
+			//합짐여부 validation
+			function doe061MixcuynValidation(mixcuyn) {
+				//합짐여부가 처음부터 Y이면 로직을 안탄다. 쭉 Y 유지
+				//합짐여부가 N일 때
+				//긴급재리스트에서 비교를 했을 때 다르다면 Y
+				//긴급재에서 비교를 했을 때는 N이었는데 아이템과 비교해서 달라지면 Y
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+
+				if(emergencyList.length > 0) {
+					const firstDemodnm = emergencyList[0].demodnm;
+
+					const emergencyMixcuynCheck = emergencyList.some(emergency => emergency.demodnm !== firstDemodnm);
+
+					if(emergencyMixcuynCheck) {
+						mixcuyn = 'Y';
+					}
+
+					if(mixcuyn === 'N') {
+						if(itemGrid.pdata.length > 0) {
+
+							const itemMixcuynCheck = itemGrid.pdata.some(item => item.demodnm !== firstDemodnm);
+
+							if(itemMixcuynCheck) {
+								mixcuyn = 'Y';
+							}
+						}
+					}
+				}
+
+				return mixcuyn;
+			}
+
+			//doe061 저장 validation
+			function doe061SaveValidation(orderGrid, orderGridChecked) {
+				const tpriloc = document.querySelector('#' + pageId + 'Tpriloc').value;
+				const spriloc = document.querySelector('#' + pageId + 'Spriloc').value;
+				const totalWeight = Number(document.querySelector('#doe061TotalOrderWeight').innerText);
+				const minWeight = Number(document.querySelector('#doe061MinWeight').innerText);
+				const maxWeight = Number(document.querySelector('#doe061MaxWeight').innerText);
+				const orderWeight = Number(document.querySelector('#doe061ModalOrderWeig').value);
+
+				//오더 선택 안했을 때
+ 				if(orderGridChecked.length === 0) {
+ 					//출고 오더가 선택되지 않았습니다.\n배차 추가 없이 변경 사항만 반영 됩니다.
+					alert(`[[#{tm.doe061.checkAlert}]]`);
+					return true;
+				}else {
+					if(!orderGridSaveValidation(orderGrid, orderGridChecked)) {
+						return false;
+					}
+				}
+
+				//최소중량이 더 크면 부적운임 발생할 수 있다는 confirm
+				if(minWeight > (totalWeight + orderWeight)) {
+					//지시하신 중량이 지시 가능한 최소 중량보다 적어 부적 운임이 발생할 수 있습니다.
+					if(!confirm('[[#{tm.doe058.deadFreight}]]')) {
+						return false;
+					}
+				}
+
+				//초과중량보다 지시한 중량이 더 크다면 중량 over
+				if(maxWeight < (totalWeight + orderWeight)) {
+					//지시하신 중량이 지시 가능한 최대 중량보다 초과되어 배차가 불가합니다.
+					const message = `[[#{tm.doe061.totalWeight}]]`;
+					const alertMessage = message.replace('{0}', (totalWeight + orderWeight));
+
+					alert(alertMessage);
+					return false;
+				}
+
+				//값이 하나라도 비어있을 경우
+				if(tpriloc === '' || spriloc === '') {
+					//필수 값을 선택해 주세요.
+					alert('[[#{tm.doe058.mustChoice}]]');
+					return false;
+				}
+
+				return true;
+			}
+
+			//orderGrid 관련 저장 validation
+			function orderGridSaveValidation(orderGrid, orderGridChecked) {
+				for(const order of orderGridChecked) {
+					//지시중량 입력 안했을 때
+					if(!order.hasOwnProperty('odweig') || order.odweig <= 0) {
+						//지시 중량이 없습니다.
+						alert('[[#{tm.doe058.notOrderWeight}]]');
+						orderGrid.editCell({
+							rowIndx: order.pq_ri,
+							dataIndx: 'odweig'
+						});
+						return false;
+					}
+
+					//배차사이즈가 없을 때
+					if(!order.hasOwnProperty('plnsize') || order.plnsize === "" || order.plnsize === null || order.plnsize === undefined) {
+						//필수 값을 선택해 주세요.
+						alert('[[#{tm.doe058.mustChoice}]]');
+						orderGrid.editCell({
+							rowIndx: order.pq_ri,
+							dataIndx: 'plnsize'
+						});
+						return false;
+					}
+
+					//잔여중량에서 지시중량 뺀 중량이 긴급재 지시 잔여중량(긴급재 중량에서 긴급재 지시중량 뺀 중량) 보다 적으면 안된다.
+					//소수점으로 들어오는건 우선 parseInt로 강제 정수 만들어서 짜르고있음
+
+					if(order.emodweig == null) {
+						order.emodweig = 0;
+					}
+
+					if(order.odweig > 0 && order.emerweig > 0) {
+						if(order.remweig - order.odweig < order.emerweig - parseInt(order.emodweig)) {
+							//출고예정번호
+							//의 긴급재 중량을 확인해주세요.
+							alert('[[#{tm.doe061.shpplky}]] ' + order.shpplky + '[[#{tm.doe058.checkEmerWeight}]]');
+							return false;
+						}
+					}
+				}
+
+				return true;
+			}
+
+			//보정중량 validation
+			function corweigValidation(emerweig, vhcmaxw) {
+				const totalWeight = Number(document.querySelector('#doe061TotalOrderWeight').innerText) + Number(document.querySelector('#doe061ModalOrderWeig').value);
+				const emerWeight = Number(document.querySelector('#' + pageId + 'ModalEmerWeig').value) / 1000;
+				const corEmerWeig = Math.trunc(emerweig / 1000) + Math.trunc(emerWeight);
+
+				let isValid = true;
+
+				//totalWeight + orderWeight = 현 오더 지시중량 + 입력한 지시중량
+				//corEmerWeig + emerWeight = 현 오더 총 재고중량 + 입력한 총 재고중량
+				if(corEmerWeig > totalWeight) {
+					if(corEmerWeig > vhcmaxw) {
+						const message = `[[#{tm.doe061.changeVhcmaxw}]]`;
+						const confirmMessage = message.replace('{0}', totalWeight)
+													  .replace('{1}', corEmerWeig)
+													  .replace('{2}', vhcmaxw);
+
+						if(!confirm(confirmMessage)) {
+							isValid = false;
+						}else {
+							vhcmaxw = corEmerWeig;
+						}
+					}else {
+						const message = `[[#{tm.doe061.checkWeight}]]`;
+						const confirmMessage = message.replace('{0}', totalWeight)
+													  .replace('{1}', corEmerWeig)
+													  .replace('{2}', vhcmaxw);
+
+						if(!confirm(confirmMessage)) {
+							isValid = false;
+						}
+					}
+				}else {
+					const message = `[[#{tm.doe061.checkWeight}]]`;
+					const confirmMessage = message.replace('{0}', totalWeight)
+												  .replace('{1}', corEmerWeig)
+												  .replace('{2}', vhcmaxw);
+
+					if(!confirm(confirmMessage)) {
+						isValid = false;
+					}
+				}
+
+				return { isValid, vhcmaxw, corEmerWeig, totalWeight };
+			}
+
+			//긴급재 중량 validation
+			function emergencyListWeight() {
+				let emerweig = 0;
+
+				if(emergencyList.length > 0) {
+					for(const emergency of emergencyList) {
+						emerweig += emergency.skuweig;
+					}
+				}
+
+				return emerweig;
+			}
+			//========================================================
+			//저장
+			//========================================================
+			//모달 저장
+			document.querySelector('#' + pageId + 'ModalSave').addEventListener('click', async function() {
+				const orderGrid = pq.grid('#' + pageId + 'OrderGrid');
+				const orderGridChecked = orderGrid.Checkbox('state').getCheckedNodes();
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				const headGridCheckList = headGrid.Checkbox('state').getCheckedNodes();
+				let vhcmaxw = Number(document.querySelector('#' + pageId + 'ModalVhcmaxw').value);
+
+				//doe061 저장 validation
+				if(!doe061SaveValidation(orderGrid, orderGridChecked)) {
+					return false;
+				}
+
+				const mixcuynData = headGridCheckList[0].mixcuyn === 'Y' ? headGridCheckList[0].mixcuyn : doe061MixcuynValidation(headGridCheckList[0].mixcuyn);
+
+				//긴급재 중량 validation
+				const emerweig = emergencyListWeight();
+
+				const { isValid, vhcmaxw: updatedVhcmaxw, corEmerWeig, totalWeight  } = corweigValidation(emerweig, vhcmaxw);
+
+				if(!isValid) {
+					return false;
+				}
+
+				vhcmaxw = updatedVhcmaxw;
+
+				const data = {
+						vhplnky: headGridCheckList[0].vhplnky,
+						vhcmaxw: vhcmaxw,
+						tpriloc: document.querySelector('#' + pageId + 'Tpriloc').value,
+						spriloc: document.querySelector('#' + pageId + 'Spriloc').value,
+						trnmemo: document.querySelector('#' + pageId + 'Trnmemo').value,
+						warekey: document.querySelector('#' + pageId + 'Warekey').value,
+						drvernm: document.querySelector('#' + pageId + 'Drvernm').value,
+						drverph: document.querySelector('#' + pageId + 'Drverph').value,
+						orderGridCheckedList: orderGridChecked,
+						emergencyList: emergencyList,
+						mixcuyn: mixcuynData,
+						emerweig: corEmerWeig,
+						totalWeight: totalWeight,
+						type: 'beforeShipment'
+				}
+
+ 				const response = await fetchUtil('POST', '/tm/dispatch/doe061/add/transport', data);
+
+				if(response.status === 200) {
+					doe061ModalClose();
+					await doe061SearchData();
+				}
+			});
+		}();
+
+		//keyup
+		async function doe061KeyupEvt() {
+			const key = this.event.key || this.event.keyCode;
+			if(key === 'Enter' || key === 13) {
+				await doe061SearchData();
+			}
+		}
+
+		//헤더검색
+		async function doe061SearchData() {
+			const pageId = 'doe061';
+
+			const data = {
+					warekey: document.querySelector('#' + pageId + 'Warekey').value,
+					doctype: document.querySelector('#' + pageId + 'Doctype').value,
+					vhpdateFrom: document.querySelector('#' + pageId + 'VhpdateFrom').value.replaceAll('-', ''),
+					vhpdateTo: document.querySelector('#' + pageId + 'VhpdateTo').value.replaceAll('-', ''),
+					vhcfnam: document.querySelector('#' + pageId + 'Vhcfnam').value,
+					type: 'beforeShipment'
+			}
+
+			const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+
+			headGrid.showLoading();
+
+			const headGridList = await fetchUtil('GET', '/tm/dispatch/doe061/headgrid', data);
+
+			if(headGridList.status !== 200) {
+				headGrid.option('dataModel', {data: []});
+			}else {
+				const headGridData = await headGridList.json();
+
+				headGrid.option('dataModel', {
+					data: headGridData,
+					recIndx: 'rowkey'
+				});
+			}
+
+			headGrid.refreshDataAndView();
+			headGrid.hideLoading();
+
+			const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+
+			itemGrid.showLoading();
+
+			itemGrid.option('dataModel', {data: []});
+
+			itemGrid.refreshDataAndView();
+			itemGrid.hideLoading();
+
+			const weightGrid = pq.grid('#' + pageId + 'WeightGrid');
+
+			weightGrid.showLoading();
+
+			weightGrid.option('dataModel', {data: []});
+
+			weightGrid.refreshDataAndView();
+			weightGrid.hideLoading();
+		}
+		</script>
+	</div>
+</html>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.sy.mapper.DataManageMapper">
+	<delete id="alarmMonthlyCleanup" parameterType="String">
+		DELETE
+		  FROM ${schema}.ALRMHI
+		 WHERE <![CDATA[CREDATE < TO_CHAR(DATE_ADD(NOW(), INTERVAL -1 MONTH), 'YYYYMMDD')]]> 
+	</delete>
+	
+	<select id="selectStockDailyTime" resultType="com.kbph.logistics.md.domain.MwarmaDTO">
+		SELECT WAREKEY, STKDYTM
+		  FROM ${schema}.MWARMA
+		 <where>
+		 	AND WHUSEYN = 'Y'
+		 </where>
+	</select>
+	
+	<delete id="stockQuarterlyCleanup" parameterType="com.kbph.logistics.md.domain.MwarmaDTO">
+		DELETE 
+          FROM ${schema}.WSTKDY
+        <where>
+        	AND STKDATE IN(
+        						SELECT STKDATE
+        				  		  FROM ${schema}.WSTKDY
+        				 		 WHERE WAREKEY = #{param.warekey}
+        				   		   AND STKDATE <![CDATA[ < TO_CHAR(DATE_ADD( NOW(), INTERVAL -3 MONTH), 'YYYYMMDD') ]]>
+        				   		   AND STKDATE != CONCAT(SUBSTRING(STKDATE, 1, 6), '01')                      
+        				   		   AND STKDATE != CONCAT(SUBSTRING(STKDATE, 1, 6), '15')                     
+        				   		   AND STKDATE != TO_CHAR(LAST_DAY(STKDATE), 'YYYYMMDD')                     
+        				 		 GROUP BY STKDATE
+        	)
+        </where>
+	</delete>
+	
+	<insert id="insertStockDailyBackup" parameterType="com.kbph.logistics.md.domain.MwarmaDTO">
+		INSERT
+		  INTO ${schema}.WSTKDY
+		  (
+		  		STKDATE
+		  	  , STKTIME
+		  	  , STOCKKY, WAREKEY
+              , AREAKEY, LOCAKEY, LOLAYER, SAVEPNT
+              , LOTNMKY, OWNERKY, OWNRNAM, CUSTCOD
+              , CUSTNAM, FNCUSKY, FCNAMLC, SKUGRKY
+              , SKUMKEY, SKUDESC, SKUWEIG, SKUWIDT
+              , SKULENG, SKUTHIC, STLOTNB, GROSSWG
+              , GROSSLN, GROSSWD, GROSSTH, BTRCATE
+              , BTRFSTC, PURCNUM, ORDERLN, REGIKEY
+              , DESTKEY, REGIORG, REGIMOD, DESTORG
+              , DEORGNM, DESTMOD, ITEMCOD, DEMODNM
+              , DEMODYN, DEMDMAN, DEMPOCD, DEMDADR
+              , DEMDTLN, STOTQTY, TASKQTY, SALLQTY
+              , SBLOQTY, PLANQTY, PLCMQTY, SUOMKEY
+              , ADDCOKY, POSHPDT, POSHPTM, POSHPDY
+              , SHPLIMT, DELVDSR, STKMEMO, EMSKUYN
+              , RCVDCDT, RCVDCTM, LOTAT01, LOTAT02
+              , LOTAT03, STKSTAT, BLOCKID, RCVDCKY
+              , RCVDCIT, ADJSOKY, ADJSOIT, PHYSOKY
+              , PHYSOIT, SHPDCKY, SHPDCIT, TASKOKY
+              , TASKOIT, CREDATE, CRETIME, CREUSER
+              , LMODATE, LMOTIME, LMOUSER, UPDTCHK
+		  )
+		SELECT TO_CHAR(NOW(), 'YYYYMMDD') AS STKDATE
+		     , TO_CHAR(NOW(), 'HH24MISS') AS STKTIME
+		     , STOCKKY, WAREKEY
+             , AREAKEY, LOCAKEY, LOLAYER, SAVEPNT
+             , LOTNMKY, OWNERKY, OWNRNAM, CUSTCOD
+             , CUSTNAM, FNCUSKY, FCNAMLC, SKUGRKY
+             , SKUMKEY, SKUDESC, SKUWEIG, SKUWIDT
+             , SKULENG, SKUTHIC, STLOTNB, GROSSWG
+             , GROSSLN, GROSSWD, GROSSTH, BTRCATE
+             , BTRFSTC, PURCNUM, ORDERLN, REGIKEY
+             , DESTKEY, REGIORG, REGIMOD, DESTORG
+             , DEORGNM, DESTMOD, ITEMCOD, DEMODNM
+             , DEMODYN, DEMDMAN, DEMPOCD, DEMDADR
+             , DEMDTLN, STOTQTY, TASKQTY, SALLQTY
+             , SBLOQTY, PLANQTY, PLCMQTY, SUOMKEY
+             , ADDCOKY, POSHPDT, POSHPTM, POSHPDY
+             , SHPLIMT, DELVDSR, STKMEMO, EMSKUYN
+             , RCVDCDT, RCVDCTM, LOTAT01, LOTAT02
+             , LOTAT03, STKSTAT, BLOCKID, RCVDCKY
+             , RCVDCIT, ADJSOKY, ADJSOIT, PHYSOKY
+             , PHYSOIT, SHPDCKY, SHPDCIT, TASKOKY
+             , TASKOIT, CREDATE, CRETIME, CREUSER
+             , LMODATE, LMOTIME, LMOUSER, UPDTCHK
+          FROM ${schema}.WSTKKY
+         <where>
+         	AND WAREKEY = #{param.warekey}
+         	AND STOTQTY > 0
+         </where>
+	</insert>
+	
+	<insert id="insertSpllog" parameterType="com.kbph.logistics.sy.domain.SpllogVO">
+		INSERT 
+          INTO ${schema}.SPLLOG
+          (
+          		PLLOGSQ, PLLOGMG 
+          ) 
+          VALUES 
+          (
+          		LPAD(NEXTVAL(${schema}.SQ_SY_PLLOGSQ), 10, '0'), #{param.pllogmg}
+          )
+	</insert>
+</mapper>

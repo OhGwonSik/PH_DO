@@ -1,0 +1,940 @@
+<html xmlns:th="http://www.thymeleaf.org">
+	<div th:fragment="fragments-mainContent">
+		<main class="mobile-content">
+			<div class="search-condition">
+				<div class="row">
+					<div class="condition-title col">
+						<label for="doe036Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+					</div>
+					<div class="input-wrapper col">
+						<div class="select-group">
+							<select id="doe036Warekey" name="doe036Warekey"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+							data-cb-variable="warekeyList">
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="condition-title col">
+						<label for="doe036Taskoky" class="setting-grid-title">[[#{sm.wstkky.taskoky}]]</label>
+					</div>
+					<div class="input-wrapper col">
+						<div class="select-group">
+							<input type="search" th:placeholder="${#messages.msg('sm.wstkky.taskoky')}" id="doe036Taskoky" name="doe036Taskoky" onkeydown="doe036KeydownEvt()">
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="condition-title col">
+						<label for="doe036Equipky" class="setting-grid-title">[[#{grid.equinam}]]</label>
+					</div>
+					<div class="input-wrapper col">
+						<div class="select-group">
+							<select id="doe036Equipky" name="doe036Equipky"
+							data-cb-val="equipky" data-cb-name="equinam" data-cb-url="/md/wae-relations"
+							data-cb-select="" data-cb-variable="equipkyList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<button type="button" class="btn-clear btn-white col" id="doe036Reset"><img>[[#{bt.reset}]]</button>
+					<button type="button" class="btn-search btn-main col" id="doe036Search"><img>[[#{bt.search}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="bt-wrap">
+						<button type="button" class="btn-main" id="doe036StartOper">[[#{bt.startOperation}]]</button>
+						<button type="button" class="btn-white" id="doe036CmpOper">[[#{bt.completeOperation}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe036HeadGrid"></div>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="bt-wrap">
+						<button type="button" class="btn-main" id="doe036CmpTask">[[#{bt.completeTask}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe036ItemGrid"></div>
+				</div>
+			</div>
+			<div id="modal-background"></div>
+
+			<!-- MODAL -->
+			<div class="modal" id="doe036Modal"
+			style="display: none; width: 700px; height: 550px; position: fixed; top: 50%; left: 50%; right: 50%; transform: translate(-50%, -50%); z-index:1999;">
+				<div class="modal-body">
+		            <div class="search-list">
+	                	<div class="list-top">
+							<div class="list-title ic-title-mark">
+								<span><span id="dongBed"></span> 재고</span>
+							</div>
+						</div>
+	                    <div class="list-grid-wrapper con-box">
+	                        <div id="doe036ModalGrid"></div>
+	                    </div>
+	                </div>
+		         </div>
+	            <div class="btn-wrap">
+	            	<button class="btn-close btn-white btn-delete" id="doe036CncTaskBtn">[[#{bt.cancel}]]</button>
+	                <button class="btn-save btn-main" id="doe036CmpTaskBtn">[[#{bt.completeTask}]]</button>
+	            </div>
+	        </div>
+		</main>
+		<script>
+		!function() {
+			console.log('doe036 :: 선별정보등록-태블릿')
+			const pageId = '[[${tabPage}]]';
+			let doe036CurrentWarekey;
+
+			//모달 키보드와 마우스로 안닫히게끔 설정
+			const doe036Modal = new bootstrap.Modal(document.getElementById(pageId + 'Modal'), {
+		        backdrop: 'static',
+		        keyboard: false
+		    });
+
+			//헤드그리드
+			const doe036HeadGridCM = [
+				{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+				{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true},
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{sm.doe037.taskoky}]]', dataType: 'string', dataIndx: 'taskoky', editable: false },
+				{ title: '[[#{sm.doe036.tsitcnt}]]', dataType: 'integer', dataIndx: 'tsitcnt', editable: false },
+				{ title: '[[#{sm.wstkky.areakey}]]', dataType: 'string', dataIndx: 'areakey', editable: false, hidden: true },
+				{ title: '[[#{grid.areanam}]]', dataType: 'string', dataIndx: 'areanam', editable: false },
+				{ title: '[[#{grid.equipky}]]', dataType: 'string', dataIndx: 'equipky', editable: false, hidden: true },
+				{ title: '[[#{grid.equinam}]]', dataType: 'string', dataIndx: 'equinam', editable: false },
+				{ title: '[[#{sm.doe037.taskdat}]]', dataType: 'string', dataIndx: 'taskdat', editable: false },
+				{ title: '[[#{sm.doe037.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false, hidden: true }, //hidden
+				{ title: '[[#{sm.doe037.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false, hidden: true },
+				{ title: '[[#{sm.doe037.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{sm.doe037.tasksts}]]', dataType: 'string', dataIndx: 'tasksts', editable: false, hidden: true },
+				{ title: '[[#{sm.doe037.tasksts}]]', dataType: 'string', dataIndx: 'tstsnam', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			const doe036HeadGrid = new GridUtil(doe036HeadGridCM, pageId , pageId + 'HeadGrid');
+			doe036HeadGrid.setRowHt(40); // 모바일이라 로우 크기 크게
+			doe036HeadGrid.setSelectionModel({type: 'row', mode: 'single'});
+			doe036HeadGrid.setCreate(async function() {
+				await _commonInit(pageId)
+
+			    const equpikyFilter = equipkyList.filter(e=>{
+			    	return e.warekey === document.querySelector('#doe036Warekey').value;
+			    });
+
+			    await makeOptionEquipky(equpikyFilter);
+			});
+
+			doe036HeadGrid.setRowClick(async function(evt, ui) {
+				await getDoe036ItGridData(ui.rowData);
+
+			});
+
+			doe036HeadGrid.open();
+
+			//아이템 그리드
+			const doe036ItemGridCM = [
+				{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+					, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N' }, cls:'tabletCb',
+					nodrag: true, nodrop: true,
+				    render: function (ui) {
+				        const checked = ui.cellData === 'Y' ? 'checked' : '';
+				        const isEditable = 'OPERSTR' === ui.rowData.tasksts;
+				        const className = isEditable ? '' : 'color-gray pq-cell-disable';
+				        return `<input type="checkbox" class="tabletCb ${className}" ${checked} />`;
+				    },
+					editable: ui => {
+						return 'OPERSTR' === ui.rowData.tasksts;
+					}
+				},
+				{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+				{ title: '[[#{sm.doe037.taskoky}]]', dataType: 'string', dataIndx: 'taskoky', editable: false, hidden: true}, // hidden 처리
+				{ title: '[[#{sm.doe037.taskoit}]]', dataType: 'string', dataIndx: 'taskoit', editable: false, hidden: true}, // hidden 처리
+				{ title: '[[#{sm.wstkky.stockky}]]', dataType: 'string', dataIndx: 'stockky', editable: false, hidden: true}, // hidden 처리
+				{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{sm.doe037.frareky}]]', dataType: 'string', dataIndx: 'frareky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.frareky}]]', dataType: 'string', dataIndx: 'fraranm', editable: false },
+				{ title: '[[#{sm.doe037.frlocky}]]', dataType: 'string', dataIndx: 'frlocky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.frlocky}]]', dataType: 'string', dataIndx: 'frlocnm', editable: false },
+				{ title: '[[#{sm.doe037.frlayer}]]', dataType: 'integer', dataIndx: 'frlayer', editable: false },
+				{
+					title: '[[#{grid.equipky}]]',
+					dataType: 'string',
+					dataIndx: 'equipky',
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        				 deselect: false,
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window['meqlocList'].map(e => {
+								if(e.warekey === ui.rowData.warekey && e.areakey === ui?.rowData?.toareky){
+									const rObj = {};
+									rObj[e.equipky] = e.equinam;
+
+									return rObj;
+								}
+							}).filter(e=>e);
+						}
+					},
+					render: ui => {
+						const renderObj = {};
+						const target = window['meqlocList']?.find(e => e.warekey === ui.rowData?.warekey && e.areakey === ui?.rowData?.toareky && e.equipky === ui.cellData);
+
+						renderObj.text = target ? target['equinam'] : ui?.rowData?.equipky;
+						return renderObj;
+					},
+					editable : false
+				},
+				{ title: '[[#{sm.doe037.toareky}]]', dataType: 'string', dataIndx: 'toareky', editable: false, hidden: true },
+				{ title: '[[#{sm.doe037.toareky}]]', dataType: 'string', dataIndx: 'toaranm', editable: false },
+				{ title: '[[#{sm.doe037.tolocky}]]', dataType: 'string', dataIndx: 'tolocky',
+					styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        				 deselect: false,
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window['meqlocList']?.map(e => {
+								if(e.warekey === ui.rowData.warekey && e.areakey === ui.rowData.toareky && e.loctype === 'BED' && e.equipky === ui.rowData.equipky){
+									const obj = {};
+									obj[e.locakey] = e.locanam;
+
+									return obj;
+								}
+							}).filter(e => e);
+						}
+					},
+					render: ui => {
+						const target = window['meqlocList']?.find( e => e.warekey === ui.rowData?.warekey && e.areakey === ui.rowData.toareky && e.locakey === ui.cellData && e.loctype === 'BED' && e.equipky === ui.rowData.equipky);
+ 						return {
+    						text: target ? target.locanam : ui.cellData,
+    						cls: ui?.column?.editable(ui) ? '' : 'color-gray pq-cell-disable'
+ 						};
+					},
+					editable : ui => ui.rowData.tasksts === 'OPERSTR'
+				},
+				{ title: '[[#{sm.doe037.tolayer}]]', dataType: 'integer', dataIndx: 'tolayer',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+		            render : ui => {
+		            	return {
+		            		cls: ui?.column?.editable(ui) ? '' : 'color-gray pq-cell-disable'
+		            	}
+		            },
+		            editable : ui => ui.rowData.tasksts === 'OPERSTR' && ui.rowData.state === 'Y'
+				},
+				{ title: '[[#{sm.doe037.tasksts}]]', dataType: 'string', dataIndx: 'tasksts', editable: false, hidden: true}, // hidden 처리
+				{ title: '[[#{sm.doe037.tasksts}]]', dataType: 'string', dataIndx: 'tstsnam', editable: false}, // hidden 처리
+				{ title: '[[#{sm.doe037.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+				{ title: '[[#{sm.doe037.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.ownerky}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+				{ title: '[[#{sm.doe037.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.custkey}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+				{ title: '[[#{sm.doe037.lotnmky}]]', dataType: 'string', dataIndx: 'lotnmky', editable: false },
+				{ title: '[[#{sm.doe037.fordqty}]]', dataType: 'integer', dataIndx: 'fordqty', editable: false },
+				{ title: '[[#{sm.doe037.parsncd}]]', dataType: 'string', dataIndx: 'parsncd', editable: false },
+				{ title: '[[#{sm.doe037.parsncd}]]', dataType: 'string', dataIndx: 'rsncdnm', editable: false },
+				{ title: '[[#{sm.doe037.parsnnm}]]', dataType: 'string', dataIndx: 'parsnnm', editable: false },
+				{ title: '[[#{sm.doe037.taskdat}]]', dataType: 'string', dataIndx: 'taskdat', editable: false}, // hidden 처리
+				{ title: '[[#{sm.doe037.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false, hidden: true}, // hidden 처리
+				{ title: '[[#{sm.doe037.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false}, // hidden 처리
+				{ title: '[[#{sm.doe037.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false, hidden: true}, // hidden 처리
+				{ title: '[[#{sm.doe037.doccate}]]', dataType: 'string', dataIndx: 'doctynm', editable: false}, // hidden 처리
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },										// 생성일자
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },										// 생성일시
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },										// 생성사용자
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },										// 수정일자
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },										// 수정일시
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },										// 수정사용자
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			];
+
+			const doe036ItemGrid = new GridUtil(doe036ItemGridCM,'[[${tabPage}]]', pageId + 'ItemGrid');
+			doe036ItemGrid.setRowHt(40);
+			doe036ItemGrid.setFreezeCols(1);
+
+			doe036ItemGrid.setChange(async function(evt, ui){
+
+				if(ui.source === 'edit'){
+					let pqRi = 0;
+					const newRow = {};
+
+					if(ui.updateList[0].newRow.hasOwnProperty('tolocky')){
+
+						const countMap = new Map();
+						const checkList = this.Checkbox('state').getCheckedNodes();
+						[...checkList].sort((a,b)=> a.tolayer - b.tolayer)
+							.forEach(row =>{
+								const key = row.tolocky + '_' + row.equipky;
+
+								if(countMap.has(key)){
+									countMap.set(key, countMap.get(key) + 1);
+								}else{
+									countMap.set(key, 1);
+								}
+
+								this.updateRow({
+									rowIndx : row.pq_ri,
+									newRow : {tolayer : countMap.get(key)},
+									checkEditable : false
+								});
+						});
+						this.updateRow({
+							rowIndx : ui.updateList[0].rowIndx,
+							newRow : newRow,
+							checkEditable : false
+						});
+					}
+
+					if(ui.updateList[0].newRow.hasOwnProperty('tolayer')){
+						const itemGrid = pq.grid('#doe036ItemGrid');
+						const findSameLocAndLayer = itemGrid.getData().find(e=>{
+							return e.toareky === ui.updateList[0].rowData.toareky
+								&& e.tolocky === ui.updateList[0].rowData.tolocky
+								&& e.tolayer === Number(ui.updateList[0].newRow.tolayer)
+								&& e.skumkey !== ui.updateList[0].rowData.skumkey
+								&& e.tasksts !== 'TASKCMP';
+						});
+
+						pqRi = findSameLocAndLayer ? findSameLocAndLayer.pq_ri : ui.updateList[0].rowData.pq_ri;
+
+						newRow.tolayer = ui.updateList[0].oldRow.tolayer;
+					}
+
+					this.updateRow({
+						rowIndx : pqRi ?? ui.updateList[0].rowIndx,
+						newRow : newRow,
+						checkEditable : false
+					});
+				}
+			});
+
+			doe036ItemGrid.setCellDblClick(async function(evt, ui){
+
+				//필수값 입력은 이벤트 실행X
+				if(ui.dataIndx === 'tolocky' || ui.dataIndx === 'tolayer' || ui.dataIndx === 'equipky'){
+					return;
+				}
+
+				const checkList = this.Checkbox('state').getCheckedNodes();
+
+				if(!checkList.length){
+					return;
+				}
+
+				const doe036SameToloc = checkList.every(item => item.frareky === checkList[0].frareky && item.frlocky === checkList[0].frlocky);
+
+				if(!doe036SameToloc){
+					alert('[[#{ms.SameFromLocChoice}]]');
+					return;
+				}
+
+				doe036Modal.show();
+			});
+
+			doe036ItemGrid.setCheck(function(evt, ui){
+				if(ui.dataIndx === 'state'){
+					const checkNodes = this.Checkbox('state').getCheckedNodes();
+					const grouped = {};
+					const tolockySet = new Set(checkNodes.map(e=> e.tolocky));
+					checkNodes.sort((a, b) => (a.tolayer ?? Infinity) - (b.tolayer ?? Infinity));
+					if(tolockySet.size > 1){
+						alert('[[#{ms.toBeDifferent}]]');
+						for(const row of ui.rows){
+							row.rowData.state = 'N';
+							row.rowData.tolayer = null;
+						}
+					}else if(tolockySet.size === 1){
+						for(const row of ui.rows){
+			                this.updateRow({
+			                    rowIndx: row.rowIndx,
+			                    newRow: {
+			                        tolayer: null
+			                    },
+			                    checkEditable: false
+			                });
+							for(const checkNode of checkNodes){
+					            const key = checkNode.tolocky;
+					            if(!grouped[key]){
+					                grouped[key] = [];
+					            }
+					            grouped[key].push(checkNode);
+					        }
+
+					        for(const key in grouped){
+					            const group = grouped[key];
+					            for (let i = 0; i < group.length; i++) {
+					                const rowData = group[i];
+					                this.updateRow({
+					                    rowIndx: rowData.pq_ri,
+					                    newRow: {
+					                        tolayer: i + 1
+					                    },
+					                    checkEditable: false
+					                });
+					            }
+					        }
+						}
+					}else if(tolockySet.size === 0){
+						for(const row of ui.rows){
+							row.rowData.tolayer = null;
+						}
+					}
+				}
+			});
+
+			initFunc();
+			doe036ItemGrid.open();
+			gridSetPaste('#' + pageId + 'ItemGrid');
+
+			async function initFunc(){
+				const relationList = await Promise.allSettled([
+					getReasonCodeRelationList(),
+					getVehicelRelationList(),
+					getAreaRelationList(),
+					getLocationRelationList(),
+					getRegistrationRelationList(),
+					getDestinationRelationList(),
+					getBtrcateList(),
+					getMeqlocList()
+				]);
+
+				const dataList = [
+					{
+						listName: 'rsncodeRelationList'
+					}, {
+						listName: 'vehickyRelationList'
+					}, {
+						listName: 'areaRelationList'
+					}, {
+						listName: 'locationRelationList'
+					}, {
+						listName: 'registrationRelationList'
+					}, {
+						listName: 'destinationRelationList'
+				}, {
+						listName: 'btrcateList'
+				}, {
+						listName: 'meqlocList'
+				}];
+
+				for(let idx=0; idx < relationList.length; idx++){
+					const target = dataList[idx];
+					target['list'] = relationList[idx].value;
+				}
+
+				setPreloadDataOnWindow(dataList);
+				resetSearchConditions(pageId, 0, 0, 7);
+			};
+
+			//초기화
+			document.querySelector('#' + pageId + 'Reset').addEventListener('click', async function () {
+				const grid = pq.grid('#' + pageId + 'HeadGrid');
+				if(grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+				resetSearchConditions(pageId, 0, 0, 7);//공통 초기화함수
+
+			    const equpikyFilter = equipkyList.filter(e=>{
+			    	return e.warekey === document.querySelector('#doe036Warekey').value;
+			    });
+
+			    await makeOptionEquipky(equpikyFilter);
+
+				makeEmptyGrid(doe036HeadGrid);
+				makeEmptyGrid(doe036ItemGrid);
+
+			});
+
+			document.querySelector('#' + pageId + 'Search').addEventListener('click', function() {
+				getDoe036HdGridData();
+			});
+
+			async function makeOptionEquipky(filterList){
+				let html = '<option value="">[[#{ms.chooseAll}]]</option>';
+				console.log(filterList)
+				for(const equpikyData of filterList){
+					html += '<option value="'+ equpikyData.equipky +'">'+ equpikyData.equinam +'</option>';
+				}
+				document.querySelector('#doe036Equipky').innerHTML = html;
+			}
+
+			async function getDoe036HdGridData() {
+				const headGrid = pq.grid('#doe036HeadGrid');
+				const itemGrid = pq.grid('#doe036ItemGrid');
+
+				const searchParams = document.querySelectorAll('input[id*="doe036"], select[id*="doe036"]');
+
+				const params = {};
+
+				//input, selectbox 검색 조건 params.
+				for(const searchParam of searchParams) {
+					const key = searchParam.id.substring(6).toLowerCase();
+					params[key] = searchParam.value;
+				}
+
+				doe036CurrentWarekey = params.warekey;
+
+				headGrid.showLoading();
+
+				const doe036Response = await fetchUtil('GET', '/sm/inventory/doe036/grid/head', params);
+				const doe036TaskList = await doe036Response.json();
+
+				headGrid.option('dataModel', {data: doe036TaskList, recIndx: 'rowkey'});
+
+				headGrid.refreshDataAndView();
+
+				itemGrid.showLoading();
+				itemGrid.option('dataModel', {data: []});
+				itemGrid.refreshDataAndView();
+				itemGrid.hideLoading();
+
+				headGrid.hideLoading();
+			}
+
+			async function getDoe036ItGridData(objData){
+
+				const itemGrid = pq.grid('#doe036ItemGrid');
+
+				const param = {
+						warekey : objData.warekey,
+						taskoky : objData.taskoky
+				}
+
+				itemGrid.showLoading();
+
+				const itemResponse = await fetchUtil('GET', '/sm/inventory/doe036/grid/item', param);
+				const detailTaskList = await itemResponse.json();
+
+				itemGrid.option('dataModel', {data: detailTaskList, recIndx: 'rowkey'});
+
+				itemGrid.refreshDataAndView();
+				itemGrid.hideLoading();
+			}
+
+			//조업시작 버튼 클릭 시
+			document.querySelector('#doe036StartOper').addEventListener('click', async function(event){
+				saveDoe036('/sm/inventory/doe036/oper-start');
+			});
+
+			//작업완료 버튼 클릭 시
+			document.querySelector('#doe036CmpTask').addEventListener('click', async function(event){
+				saveDoe036Task('/sm/inventory/doe036/task-cmp');
+			});
+
+			//조업완료 버튼 클릭 시
+			document.querySelector('#doe036CmpOper').addEventListener('click', async function(event){
+				saveDoe036('/sm/inventory/doe036/oper-cmp');
+			});
+
+			async function saveDoe036(url){
+
+				const headGrid = pq.grid('#doe036HeadGrid');
+				const itemGrid = pq.grid('#doe036ItemGrid');
+
+				const headGridSelection = headGrid.SelectRow().getSelection();
+
+				if(!headGridSelection.length){
+					alert('[[#{ms.choiceRowZero}]]');
+					return;
+				}
+				const headParam = headGridSelection[0].rowData;
+				const validationOperStartAndCmp = await doe036Validation(headParam, url+'/validation');
+				if(!validationOperStartAndCmp){
+					return;
+				}
+
+				if(confirm('[[#{ms.checksave}]]')) {
+
+					itemGrid.showLoading();
+
+					const response = await fetchUtil('POST', url, headParam);
+
+					if(response.status === 200){
+
+						await getDoe036HdGridData();
+
+						if(!url.includes('oper-cmp')){
+							$('#doe036HeadGrid').pqGrid( "setSelection", {rowIndx:headParam.pq_ri});
+							await getDoe036ItGridData(headParam);
+						}
+					}
+
+					itemGrid.hideLoading();
+				}
+			}
+
+			async function saveDoe036Task(url){
+
+				const headGridSelection = doe036HeadGrid.getGrid().SelectRow().getSelection();
+
+				if(!headGridSelection.length){
+					alert('[[#{ms.choiceRowZero}]]');
+					return;
+				}
+
+				const headParam = headGridSelection[0].rowData;
+				const validationOperStart = await doe036Validation(headParam, url+'/validation');
+				if(!validationOperStart){
+					return;
+				}
+
+				const itemGrid = pq.grid('#doe036ItemGrid');
+				const itemParam = makeSaveData(itemGrid);
+
+				if(!itemParam){
+					return;
+				}
+
+				itemParam.updateList.sort((a, b) => {
+					if(a.tolocky !== b.tolocky){
+						return a.tolocky - b.tolocky;
+					}
+					return a.tolayer - b.tolayer;
+				});
+
+				if(confirm('[[#{ms.checksave}]]')) {
+
+					itemGrid.showLoading();
+
+					const response = await fetchUtil('POST', url, itemParam);
+
+					if(response.status === 200){
+
+						await getDoe036HdGridData();
+
+						$('#doe036HeadGrid').pqGrid( "setSelection", {rowIndx:headParam.pq_ri});
+						await getDoe036ItGridData(headParam);
+					}
+
+					itemGrid.hideLoading();
+				}
+			}
+
+			async function doe036Validation(param, url){
+
+				const response = await fetchUtil('POST',url, param);
+
+				return response.status === 200;
+			}
+
+			/* MODAL */
+
+			const doe036ModalGridCM = [
+				{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+					, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N' }, cls:'tabletCb',
+					editable: ui => {
+						const findSkumkey = doe036ItemGrid.getGrid().Checkbox('state').getCheckedNodes().find(findData=>findData.skumkey === ui.rowData.skumkey);
+						return Boolean(findSkumkey);
+					},
+				    render: function (ui) {
+				        const checked = ui.cellData === 'Y' ? 'checked' : '';
+				        const isEditable = ui?.column?.editable(ui);
+				        const className = isEditable ? '' : 'color-gray pq-cell-disable';
+				        return `<input type="checkbox" class="tabletCb ${className}" ${checked} />`;
+				    }
+				},
+				{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+				{ title: '[[#{sm.doe037.frareky}]]', dataType: 'string', dataIndx: 'frareky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.frareky}]]', dataType: 'string', dataIndx: 'fraranm', editable: false },
+				{ title: '[[#{sm.doe037.frlocky}]]', dataType: 'string', dataIndx: 'frlocky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.frlocky}]]', dataType: 'string', dataIndx: 'frlocnm', editable: false },
+				{ title: '[[#{sm.doe037.frlayer}]]', dataType: 'integer', dataIndx: 'frlayer', editable: false },
+				{ title: '[[#{sm.doe037.toareky}]]', dataType: 'string', dataIndx: 'toareky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.toareky}]]', dataType: 'string', dataIndx: 'toaranm', editable: false },
+				{ title: '[[#{sm.doe037.tolocky}]]', dataType: 'string', dataIndx: 'tolocky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.doe037.tolocky}]]', dataType: 'string', dataIndx: 'tolocnm', editable: false },
+				{ title: '[[#{sm.doe037.tolayer}]]', dataType: 'integer', dataIndx: 'tolayer',
+					styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editable: ui => {
+						const findSkumkey = doe036ItemGrid.getGrid().Checkbox('state').getCheckedNodes().find(findData=>findData.skumkey === ui.rowData.skumkey);
+						return Boolean(findSkumkey) && ui.rowData.state === 'Y';
+					},
+					render : ui =>{
+						return {
+							cls: ui?.column?.editable(ui)? '' : 'color-gray pq-cell-disable'
+						}
+					}
+				},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.equipky}]]', dataType: 'string', dataIndx: 'equipky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.wstkky.stockky}]]', dataType: 'string', dataIndx: 'stockky', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{sm.wstkky.taskoit}]]', dataType: 'string', dataIndx: 'taskoit', editable: false, hidden: true }, // hidden 처리
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true } // hidden 처리
+			]
+
+			const doe036ModalGrid = new GridUtil(doe036ModalGridCM, pageId , pageId + 'ModalGrid');
+
+			$('#doe036Modal').on('shown.bs.modal', async function() {
+				doe036ModalGrid.open();
+				gridSetPaste('#' + pageId + 'ModalGrid');
+		        await getDoe036MdGridData();
+				const stockGrid = pq.grid('#' + pageId + 'ModalGrid');
+				stockGrid.option('height', 400);
+				stockGrid.scrollX(0);
+				stockGrid.refreshDataAndView();
+			});
+
+			$('#doe036Modal').on('hidden.bs.modal', async function() {
+				doe036ModalGrid.getGrid().destroy();
+		        document.activeElement.blur();
+			});
+
+			doe036ModalGrid.setChange(async function(evt, ui){
+
+				if(ui.source === 'edit'){
+					let pqRi = 0;
+					const newRow = {};
+
+					if(ui.updateList[0].newRow.hasOwnProperty('tolocky')){
+						newRow.ullocky = '';
+					}
+
+					if(ui.updateList[0].newRow.hasOwnProperty('tolayer')){
+						const itemGrid = pq.grid('#doe036ModalGrid');
+						const findSameLocAndLayer = itemGrid.getData().find(e=>{
+							return e.toareky === ui.updateList[0].rowData.toareky
+								&& e.tolocky === ui.updateList[0].rowData.tolocky
+								&& e.tolayer === Number(ui.updateList[0].newRow.tolayer)
+								&& e.skumkey !== ui.updateList[0].rowData.skumkey
+								&& e.tasksts !== 'TASKCMP';
+						});
+
+						pqRi = findSameLocAndLayer ? findSameLocAndLayer.pq_ri : ui.updateList[0].rowData.pq_ri;
+
+						newRow.tolayer = ui.updateList[0].oldRow.tolayer;
+					}
+
+					this.updateRow({
+						rowIndx : pqRi ?? ui.updateList[0].rowIndx,
+						newRow : newRow,
+						checkEditable : false
+					});
+				}
+			});
+
+			doe036ModalGrid.setCheck(function(evt, ui){
+				if(ui.dataIndx === 'state'){
+					const checkNodes = this.Checkbox('state').getCheckedNodes();
+					const grouped = {};
+					const tolockySet = new Set(checkNodes.map(e=> e.tolocky));
+					checkNodes.sort((a, b) => (a.tolayer ?? Infinity) - (b.tolayer ?? Infinity));
+					if(tolockySet.size > 1){
+						alert('[[#{ms.toBeDifferent}]]');
+						for(const row of ui.rows){
+							row.rowData.state = 'N';
+							row.rowData.tolayer = null;
+						}
+					}else if(tolockySet.size === 1){
+						for(const row of ui.rows){
+			                this.updateRow({
+			                    rowIndx: row.rowIndx,
+			                    newRow: {
+			                        tolayer: null
+			                    },
+			                    checkEditable: false
+			                });
+							for(const checkNode of checkNodes){
+					            const key = checkNode.tolocky;
+					            if(!grouped[key]){
+					                grouped[key] = [];
+					            }
+					            grouped[key].push(checkNode);
+					        }
+
+					        for(const key in grouped){
+					            const group = grouped[key];
+					            for (let i = 0; i < group.length; i++) {
+					                const rowData = group[i];
+					                this.updateRow({
+					                    rowIndx: rowData.pq_ri,
+					                    newRow: {
+					                        tolayer: i + 1
+					                    },
+					                    checkEditable: false
+					                });
+					            }
+					        }
+						}
+					}else if(tolockySet.size === 0){
+						for(const row of ui.rows){
+							row.rowData.tolayer = null;
+						}
+					}
+				}
+			});
+
+			doe036ModalGrid.setRowInit(function(ui){
+				const itemGrid = pq.grid('#doe036ItemGrid');
+				const itemCheckList = itemGrid.Checkbox('state').getCheckedNodes();
+
+				const matchedItem = itemCheckList.find(checkItem => checkItem.skumkey === ui.rowData.skumkey);
+
+				if (matchedItem) {
+					return {
+						style : 'background-color: #FFD1DC; font-weight: bold;'
+					};
+				}
+			});
+
+			// 모달 데이터 조회 함수
+			async function getDoe036MdGridData(){
+				const modalGrid = pq.grid('#' + pageId + 'ModalGrid');
+				const itemGrid = pq.grid('#doe036ItemGrid');
+				const itemCheckList = itemGrid.Checkbox('state').getCheckedNodes();
+
+				modalGrid.showLoading();
+				const res = await fetchUtil('GET', '/sm/inventory/doe036/grid/modal', itemCheckList[0]);
+
+				if(res.status === 200){
+					const modalList = await res.json();
+
+					document.querySelector('#dongBed').innerText = modalList[0].fraranm + ' ' + modalList[0].frlocnm;
+					modalGrid.option('dataModel', {
+						data: modalList,
+						recIndx: 'rowkey'
+					});
+					modalGrid.refreshDataAndView();
+				}
+				modalGrid.hideLoading();
+			}
+
+
+			// 모달창 닫기
+			document.querySelector('#' + pageId + 'CncTaskBtn').addEventListener('click', async function(){
+				modalReset();
+		        doe036Modal.hide();
+			});
+
+			// 모달 내 작업완료 버튼
+			document.querySelector('#doe036CmpTaskBtn').addEventListener('click', async function(event){
+				saveDoe036ModalTask('/sm/inventory/doe036/task-cmp');
+			});
+
+			async function saveDoe036ModalTask(url){
+				const modalGrid = pq.grid('#doe036ModalGrid');
+				const modalGridCheck = modalGrid.Checkbox('state').getCheckedNodes();
+				const headGridSelection = doe036HeadGrid.getGrid().SelectRow().getSelection();
+				const headSelectionRowData = headGridSelection[0].rowData;
+
+				if(!modalGridCheck.length){
+					alert('[[#{ms.choiceRowZero}]]');
+					return;
+				}
+
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe036ModalGrid, ['tolayer']) // 단 필수입력 validation
+				if( !validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+
+				const modalParam = makeSaveData(modalGrid);
+				modalParam.updateList.sort((a, b) => {
+					if(a.tolocky !== b.tolocky){
+						return a.tolocky - b.tolocky;
+					}
+					return a.tolayer - b.tolayer;
+				});
+
+				modalGrid.showLoading();
+				await saveGridUtil(doe036ModalGrid, modalParam, url);
+				modalGrid.hideLoading();
+		        modalReset();
+		        doe036Modal.hide();
+				await getDoe036HdGridData();
+
+				//강제 헤더 셀렉트
+				$('#doe036HeadGrid').pqGrid( "setSelection", {rowIndx : headSelectionRowData.pq_ri});
+				await getDoe036ItGridData(headSelectionRowData);
+			}
+
+			// 리셋
+			function modalReset(){
+		        document.querySelector('#dongBed').textContent = '';
+		        const modalGrid = pq.grid('#' + pageId + 'ModalGrid');
+		        modalGrid.option('dataModel', { data: [] });
+		        modalGrid.refreshDataAndView();
+			}
+
+			// 창고 변경시 자동조회
+			document.querySelector('#doe036Warekey').addEventListener('change', async function() {
+
+			    const equpikyFilter = equipkyList.filter(e=>{
+			    	return e.warekey === document.querySelector('#doe036Warekey').value;
+			    });
+
+			    await makeOptionEquipky(equpikyFilter);
+
+				const grid = pq.grid('#' + pageId + 'HeadGrid');
+				if(doe036CurrentWarekey && grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						this.value = doe036CurrentWarekey;
+						return;
+					}
+				}
+				makeEmptyGrid(doe036ItemGrid);
+				await getDoe036HdGridData();
+			});
+
+			function gridSetPaste(element){
+				const grid = pq.grid(element);
+				grid.option('pasteModel.on', false);
+			}
+
+			//keyup
+			doe036KeydownEvt = async function (){
+				const key = this.event.key || this.event.keyCode;
+				if(key === 'Enter' || key === 13) {
+					await getDoe036HdGridData();
+				}
+			}
+		}();
+
+		</script>
+	 </div>
+</html>

@@ -1,0 +1,1536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.tm.mapper.TmDispatchMapper">
+
+	<!-- 헤더조회 -->
+	<select id="selectDispatchHeadOrder" resultType="com.kbph.logistics.tm.domain.TplnhdDTO">
+		/* selectDispatchHeadOrder */
+		SELECT CONCAT(TP.WAREKEY, TP.VHPLNKY) AS ROWKEY
+			 , TP.WAREKEY
+			 , MW.WHNAMLC
+			 , TP.VHPLNKY
+			 , TP.VOWNKEY
+			 , MV.VONAMLC
+			 , TP.VEHICKY
+			 , MH.VHCFNAM
+			 , MH.VHCSNAM
+			 , MH.VHCVRYN
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'VHCTNCD' AND COMCDVL = MH.VHCTNCD AND COUSEYN = 'Y') AS VHNAMLC
+			 , TP.VHCMAXW
+			 , MH.VHCTYPE
+			 , TP.DRVERNM
+			 , TP.DRVERPH
+			 , TP.DOCCATE
+			 , TP.DOCTYPE
+			 , MD.DOCCTNM
+			 , MD.DOCTYNM
+			 , TP.LOADKEY
+			 , MCL.COMCDTX as LONAMLC
+			 , TP.TPNSTAT
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'TPNSTAT' AND COMCDVL = TP.TPNSTAT AND COUSEYN = 'Y') AS PLNAMLC
+			 , TP.TPRILOC
+			 , (SELECT LOCANAM FROM ${userInfo.schema}.MLOCMA WHERE WAREKEY = #{param.warekey} AND LOCTYPE = 'STP' AND LOUSEYN = 'Y' AND LOCAKEY = TP.TPRILOC) AS TRLOCML
+			 , TP.SPRILOC
+			 , (SELECT LOCANAM FROM ${userInfo.schema}.MLOCMA WHERE WAREKEY = #{param.warekey} AND LOCTYPE = 'STP' AND LOUSEYN = 'Y' AND LOCAKEY = TP.SPRILOC) AS SRLOCML
+			 , TP.TRNMEMO
+			 , TP.MIXCUYN
+			 , DATE_FORMAT(TP.VHPDATE, '%Y-%m-%d') as VHPDATE
+			 , CASE
+			 		WHEN TP.VHPTIME IS NULL OR TRIM(TP.VHPTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.VHPTIME, '%H%i%s')
+			   END as VHPTIME
+			 , DATE_FORMAT(TP.STPITDT, '%Y-%m-%d') as STPITDT
+			 , CASE
+			 		WHEN TP.STPITTM IS NULL OR TRIM(TP.STPITTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.STPITTM, '%H%i%s')
+			   END AS STPITTM
+			 , DATE_FORMAT(TP.TRNINDT, '%Y-%m-%d') as TRNINDT
+			 , CASE
+			 		WHEN TP.TRNINTM IS NULL OR TRIM(TP.TRNINTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.TRNINTM, '%H%i%s')
+			   END as TRNINTM
+			 , DATE_FORMAT(TP.TRCNLDT, '%Y-%m-%d') as TRCNLDT
+			 , CASE
+			 		WHEN TP.TRCNLTM IS NULL OR TRIM(TP.TRCNLTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.TRCNLTM, '%H%i%s')
+			   END as TRCNLTM
+			 , ${userInfo.schema}.FN_SY_USERNAM(TP.CREUSER) as CREUSER
+			 , DATE_FORMAT(TP.CREDATE, '%Y-%m-%d') as CREDATE
+			 , CASE
+			 		WHEN TP.CRETIME IS NULL OR TRIM(TP.CRETIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.CRETIME, '%H%i%s')
+			   END as CRETIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(TP.LMOUSER) as LMOUSER
+			 , DATE_FORMAT(TP.LMODATE, '%Y-%m-%d') as LMODATE
+			 , CASE
+			 		WHEN TP.LMOTIME IS NULL OR TRIM(TP.LMOTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.LMOTIME, '%H%i%s')
+			   END as LMOTIME
+			 , SUM(TI.SKUWEIG) AS TOTALWEIG
+			 , TW.ORDERWEIG
+			 , TP.UPDTCHK
+			 , TP.APROVYN
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'APROVYN' AND COMCDVL = TP.APROVYN AND COUSEYN = 'Y') AS APNAMLC
+			 , DATE_FORMAT(TP.APROVDT, '%Y-%m-%d') as APROVDT
+			 , CASE
+			 		WHEN TP.APROVTM IS NULL OR TRIM(TP.APROVTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.APROVTM, '%H%i%s')
+			   END as APROVTM
+		FROM ${userInfo.schema}.TPLNHD TP
+		INNER JOIN ${userInfo.schema}.MWARMA MW
+			ON MW.WAREKEY = TP.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userInfo.commonSchema}.MVOWMA MV
+			ON MV.VOWNKEY = TP.VOWNKEY
+		   AND MV.VOUSEYN = 'Y'
+		INNER JOIN ${userInfo.commonSchema}.MVHCMA MH
+			ON MH.VOWNKEY = TP.VOWNKEY
+		   AND MH.VEHICKY = TP.VEHICKY
+		   AND MH.VHUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MDOCMA MD
+			ON MD.WAREKEY = TP.WAREKEY
+		   AND MD.DOCCATE = TP.DOCCATE
+		   AND MD.DOCTYPE = TP.DOCTYPE
+		   AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCL
+			ON MCL.COMCDKY = 'LOADKEY'
+		   AND MCL.COMCDVL = TP.LOADKEY
+		   AND MCL.COUSEYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.TPLNIT TI
+			ON TI.WAREKEY = TP.WAREKEY
+		   AND TI.VHPLNKY = TP.VHPLNKY
+		   AND TI.TPISTAT != 'CANCEL'
+		LEFT JOIN (
+			SELECT VHPLNKY, SUM(ALCWEIG) AS ORDERWEIG
+			FROM ${userInfo.schema}.TPWPWG
+			GROUP BY VHPLNKY
+		) TW
+			ON TW.VHPLNKY = TP.VHPLNKY
+		WHERE TP.WAREKEY = #{param.warekey}
+		  <if test='param.doctype != null and param.doctype != ""'>
+		  	AND TP.DOCTYPE = #{param.doctype}
+		  </if>
+		  <if test='param.vhcfnam != null and param.vhcfnam != ""'>
+		  	AND REPLACE(MH.VHCFNAM, ' ', '') LIKE CONCAT('%', REPLACE(#{param.vhcfnam}, ' ', ''), '%')
+		  </if>
+		  <if test='param.aprovyn != null and param.aprovyn != ""'>
+		  	AND TP.APROVYN = #{param.aprovyn}
+		  </if>
+		  <if test="param.tpnstatCheckedList != null and param.tpnstatCheckedList.size() > 0">
+			AND TP.TPNSTAT IN
+			<foreach collection="param.tpnstatCheckedList" item="tpnstat" index="idx" open="(" close=")" separator=",">
+				#{tpnstat}
+			</foreach>
+		  </if>
+		  <if test='param.vhpdateFrom != null and param.vhpdateFrom != "" and param.vhpdateTo != null and param.vhpdateTo != ""'>
+		  	AND TP.VHPDATE BETWEEN #{param.vhpdateFrom} AND #{param.vhpdateTo}
+		  </if>
+		GROUP BY TP.WAREKEY, MW.WHNAMLC, TP.VHPLNKY, TP.VOWNKEY, MV.VONAMLC
+			   , TP.VEHICKY, MH.VHCFNAM, MH.VHCSNAM, MH.VHCVRYN, TP.VHCMAXW
+			   , MH.VHCTYPE, TP.DRVERNM, TP.DRVERPH, TP.DOCCATE, TP.DOCTYPE
+			   , MD.DOCCTNM, MD.DOCTYNM, TP.LOADKEY, MCL.COMCDTX, TP.TPNSTAT
+			   , TP.TPRILOC, TP.SPRILOC, TP.TRNMEMO, TP.MIXCUYN, TP.VHPDATE
+			   , TP.VHPTIME, TP.STPITDT, TP.STPITTM, TP.TRNINDT, TP.TRNINTM
+			   , TP.CREUSER, TP.CREDATE, TP.CRETIME, TP.LMOUSER, TP.LMODATE
+			   , TP.LMOTIME, TW.ORDERWEIG, TP.UPDTCHK, TP.APROVYN, TP.APROVDT
+			   , TP.APROVTM
+		ORDER BY TP.VHPLNKY DESC
+	</select>
+
+	<select id="selectDispatchCurrentHeadOrder" resultType="com.kbph.logistics.tm.domain.TplnhdDTO">
+		/* selectDispatchCurrentHeadOrder */
+		SELECT CONCAT(TP.WAREKEY, TP.VHPLNKY) AS ROWKEY
+			 , TP.WAREKEY
+			 , MW.WHNAMLC
+			 , TP.VHPLNKY
+			 , TP.VOWNKEY
+			 , MV.VONAMLC
+			 , TP.VEHICKY
+			 , MH.VHCFNAM
+			 , MH.VHCSNAM
+			 , MH.VHCVRYN
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'VHCTNCD' AND COMCDVL = MH.VHCTNCD AND COUSEYN = 'Y') AS VHNAMLC
+			 , TP.VHCMAXW
+			 , MH.VHCTYPE
+			 , TP.DRVERNM
+			 , TP.DRVERPH
+			 , TP.DOCCATE
+			 , TP.DOCTYPE
+			 , MD.DOCCTNM
+			 , MD.DOCTYNM
+			 , TP.LOADKEY
+			 , MCL.COMCDTX as LONAMLC
+			 , TP.TPNSTAT
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'TPNSTAT' AND COMCDVL = TP.TPNSTAT AND COUSEYN = 'Y') AS PLNAMLC
+			 , TP.TPRILOC
+			 , (SELECT LOCANAM FROM ${userInfo.schema}.MLOCMA WHERE WAREKEY = #{param.warekey} AND LOCTYPE = 'STP' AND LOUSEYN = 'Y' AND LOCAKEY = TP.TPRILOC) AS TRLOCML
+			 , TP.SPRILOC
+			 , (SELECT LOCANAM FROM ${userInfo.schema}.MLOCMA WHERE WAREKEY = #{param.warekey} AND LOCTYPE = 'STP' AND LOUSEYN = 'Y' AND LOCAKEY = TP.SPRILOC) AS SRLOCML
+			 , TP.TRNMEMO
+			 , TP.MIXCUYN
+			 , DATE_FORMAT(TP.VHPDATE, '%Y-%m-%d') as VHPDATE
+			 , CASE
+			 		WHEN TP.VHPTIME IS NULL OR TRIM(TP.VHPTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.VHPTIME, '%H%i%s')
+			   END as VHPTIME
+			 , DATE_FORMAT(TP.STPITDT, '%Y-%m-%d') as STPITDT
+			 , CASE
+			 		WHEN TP.STPITTM IS NULL OR TRIM(TP.STPITTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.STPITTM, '%H%i%s')
+			   END AS STPITTM
+			 , DATE_FORMAT(TP.TRNINDT, '%Y-%m-%d') as TRNINDT
+			 , CASE
+			 		WHEN TP.TRNINTM IS NULL OR TRIM(TP.TRNINTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.TRNINTM, '%H%i%s')
+			   END as TRNINTM
+			 , DATE_FORMAT(TP.TRCNLDT, '%Y-%m-%d') as TRCNLDT
+			 , CASE
+			 		WHEN TP.TRCNLTM IS NULL OR TRIM(TP.TRCNLTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.TRCNLTM, '%H%i%s')
+			   END as TRCNLTM
+			 , ${userInfo.schema}.FN_SY_USERNAM(TP.CREUSER) as CREUSER
+			 , DATE_FORMAT(TP.CREDATE, '%Y-%m-%d') as CREDATE
+			 , CASE
+			 		WHEN TP.CRETIME IS NULL OR TRIM(TP.CRETIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.CRETIME, '%H%i%s')
+			   END as CRETIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(TP.LMOUSER) as LMOUSER
+			 , DATE_FORMAT(TP.LMODATE, '%Y-%m-%d') as LMODATE
+			 , CASE
+			 		WHEN TP.LMOTIME IS NULL OR TRIM(TP.LMOTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.LMOTIME, '%H%i%s')
+			   END as LMOTIME
+			 , SUM(TI.SKUWEIG) AS TOTALWEIG
+			 , TW.ORDERWEIG
+			 , TP.UPDTCHK
+			 , TP.APROVYN
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'APROVYN' AND COMCDVL = TP.APROVYN AND COUSEYN = 'Y') AS APNAMLC
+			 , DATE_FORMAT(TP.APROVDT, '%Y-%m-%d') as APROVDT
+			 , CASE
+			 		WHEN TP.APROVTM IS NULL OR TRIM(TP.APROVTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TP.APROVTM, '%H%i%s')
+			   END as APROVTM
+		FROM ${userInfo.schema}.TPLNHD TP
+		INNER JOIN ${userInfo.schema}.MWARMA MW
+			ON MW.WAREKEY = TP.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userInfo.commonSchema}.MVOWMA MV
+			ON MV.VOWNKEY = TP.VOWNKEY
+		   AND MV.VOUSEYN = 'Y'
+		INNER JOIN ${userInfo.commonSchema}.MVHCMA MH
+			ON MH.VOWNKEY = TP.VOWNKEY
+		   AND MH.VEHICKY = TP.VEHICKY
+		   AND MH.VHUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MDOCMA MD
+			ON MD.WAREKEY = TP.WAREKEY
+		   AND MD.DOCCATE = TP.DOCCATE
+		   AND MD.DOCTYPE = TP.DOCTYPE
+		   AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCL
+			ON MCL.COMCDKY = 'LOADKEY'
+		   AND MCL.COMCDVL = TP.LOADKEY
+		   AND MCL.COUSEYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.TPLNIT TI
+			ON TI.WAREKEY = TP.WAREKEY
+		   AND TI.VHPLNKY = TP.VHPLNKY
+		INNER JOIN (
+			SELECT VHPLNKY, SUM(ALCWEIG) AS ORDERWEIG
+			FROM ${userInfo.schema}.TPWPWG
+			GROUP BY VHPLNKY
+			<if test='param.type != null and param.type == "shipmentCompleted"'>
+				HAVING SUM(CASE WHEN WPLCFYN != 'Y' THEN 1 ELSE 0 END) = 0
+				   AND SUM(CASE WHEN OOUCFYN != 'Y' THEN 1 ELSE 0 END) = 0
+				   AND SUM(CASE WHEN SHPCFYN != 'Y' THEN 1 ELSE 0 END) = 0
+			</if>
+			<if test='param.type != null and param.type == "beforeShipment"'>
+				HAVING SUM(CASE WHEN WPLCFYN = 'Y' THEN 1 ELSE 0 END) = 0
+				   AND SUM(CASE WHEN OOUCFYN = 'Y' THEN 1 ELSE 0 END) = 0
+				   AND SUM(CASE WHEN SHPCFYN = 'Y' THEN 1 ELSE 0 END) = 0
+			</if>
+		) TW
+			ON TW.VHPLNKY = TP.VHPLNKY
+		WHERE TP.WAREKEY = #{param.warekey}
+		  <if test='param.doctype != null and param.doctype != ""'>
+		  	AND TP.DOCTYPE = #{param.doctype}
+		  </if>
+		  <choose>
+		  	<when test='param.type != null and param.type == "beforeShipment"'>
+		  		AND TP.TPNSTAT != 'CANCEL'
+		  	</when>
+		  	<otherwise>
+		  		AND TP.TPNSTAT NOT IN ('CANCEL', 'PLAN')
+		  	</otherwise>
+		  </choose>
+		  <if test='param.vhcfnam != null and param.vhcfnam != ""'>
+		  	AND REPLACE(MH.VHCFNAM, ' ', '') LIKE CONCAT('%', REPLACE(#{param.vhcfnam}, ' ', ''), '%')
+		  </if>
+		  <if test='param.aprovyn != null and param.aprovyn != ""'>
+		  	AND TP.APROVYN = #{param.aprovyn}
+		  </if>
+		  <if test="param.tpnstatCheckedList != null and param.tpnstatCheckedList.size() > 0">
+			AND TP.TPNSTAT IN
+			<foreach collection="param.tpnstatCheckedList" item="tpnstat" index="idx" open="(" close=")" separator=",">
+				#{tpnstat}
+			</foreach>
+		  </if>
+		  <if test='param.vhpdateFrom != null and param.vhpdateFrom != "" and param.vhpdateTo != null and param.vhpdateTo != ""'>
+		  	AND TP.VHPDATE BETWEEN #{param.vhpdateFrom} AND #{param.vhpdateTo}
+		  </if>
+		GROUP BY TP.WAREKEY, MW.WHNAMLC, TP.VHPLNKY, TP.VOWNKEY, MV.VONAMLC
+			   , TP.VEHICKY, MH.VHCFNAM, MH.VHCSNAM, MH.VHCVRYN, TP.VHCMAXW
+			   , MH.VHCTYPE, TP.DRVERNM, TP.DRVERPH, TP.DOCCATE, TP.DOCTYPE
+			   , MD.DOCCTNM, MD.DOCTYNM, TP.LOADKEY, MCL.COMCDTX, TP.TPNSTAT
+			   , TP.TPRILOC, TP.SPRILOC, TP.TRNMEMO, TP.MIXCUYN, TP.VHPDATE
+			   , TP.VHPTIME, TP.STPITDT, TP.STPITTM, TP.TRNINDT, TP.TRNINTM
+			   , TP.CREUSER, TP.CREDATE, TP.CRETIME, TP.LMOUSER, TP.LMODATE
+			   , TP.LMOTIME, TW.ORDERWEIG, TP.UPDTCHK, TP.APROVYN, TP.APROVDT
+			   , TP.APROVTM
+		ORDER BY TP.VHPLNKY DESC
+	</select>
+
+	<!-- 아이템 조회 -->
+	<select id="selectDispatchItemOrder" resultType="com.kbph.logistics.tm.domain.TplnitDTO">
+		/* selectDispatchItemOrder */
+		SELECT CONCAT(TI.WAREKEY, TI.VHPLNKY, TI.VHPLNIT) AS ROWKEY
+			 , TI.WAREKEY
+			 , MW.WHNAMLC
+			 , TI.VHPLNKY
+			 , TI.VHPLNIT
+			 , TI.CUSTCOD
+			 , CASE
+			 		WHEN TI.CUSTCOD IS NULL OR TRIM(TI.CUSTCOD) = '' THEN TI.CUSTNAM
+			 		WHEN MCU.CUNAMLC IS NULL OR TRIM(MCU.CUNAMLC) = '' THEN TI.CUSTNAM
+			 		ELSE MCU.CUNAMLC
+			   END AS CUSTNAM
+			 , TI.DESTORG
+			 , CASE
+			 		WHEN TI.DESTORG IS NULL OR TRIM(TI.DESTORG) = '' THEN TI.DEORGNM
+			 		WHEN MDO.DENAMLC IS NULL OR TRIM(MDO.DENAMLC) = '' THEN TI.DEORGNM
+			 		ELSE MDO.DENAMLC
+			   END AS DEORGNM
+			 , TI.DESTMOD
+			 , CASE
+			 		WHEN TI.DESTMOD IS NULL OR TRIM(TI.DESTMOD) = '' THEN TI.DEMODNM
+			 		WHEN MDM.DENAMLC IS NULL OR TRIM(MDM.DENAMLC) = '' THEN TI.DEMODNM
+			 		ELSE MDM.DENAMLC
+			   END AS DEMODNM
+			 , TI.DEMDMAN
+			 , TI.DEMPOCD
+			 , TI.DEMDADR
+			 , CASE
+			 		WHEN (TI.DEMDADR IS NULL OR TI.DEMDADR = '') AND (TI.DEMPOCD IS NULL OR TI.DEMPOCD = '') THEN ''
+			 		WHEN (TI.DEMPOCD IS NULL OR TI.DEMPOCD = '') AND (TI.DEMDADR IS NOT NULL OR TI.DEMDADR != '') THEN TI.DEMDADR
+			 		ELSE CONCAT('(', TI.DEMPOCD, ') ', TI.DEMDADR)
+			   END AS STOCKADDR
+			 , TI.DEMDTLN
+			 , DATE_FORMAT(TI.POSHPDT, '%Y%-%m-%d') as POSHPDT
+			 , CASE
+			 		WHEN TI.POSHPTM IS NULL OR TRIM(TI.POSHPTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TI.POSHPTM, '%H%i%s')
+			   END as POSHPTM
+			 , TI.POSHPDY
+			 , TI.SKUGRKY
+			 , MGS.GRPKYNM AS SKNAMLC
+			 , MGS.GRPKYNM
+			 , TI.PLNSIZE
+			 , (SELECT GRPKYNM FROM ${userInfo.schema}.MGRPMA WHERE SKUGRKY = TI.PLNSIZE AND GRUSEYN = 'Y') AS PNSZMLC
+			 , TI.OWNERKY
+			 , CASE
+			 		WHEN TI.OWNERKY IS NULL OR TRIM(TI.OWNERKY) = '' THEN TI.OWNRNAM
+			 		WHEN MCO.CUNAMLC IS NULL OR TRIM(MCO.CUNAMLC) = '' THEN TI.OWNRNAM
+			 		ELSE MCO.CUNAMLC
+			   END AS OWNRNAM
+			 , TI.SKUMKEY
+			 , TI.SKUTHIC
+			 , TI.SKUWIDT
+			 , TI.SKULENG
+			 , TI.SKUWEIG
+			 , TI.GROSSTH
+			 , TI.GROSSWD
+			 , TI.GROSSLN
+			 , TI.GROSSWG
+			 , TI.STKMEMO
+			 , TI.TRITQTY
+			 , TI.ITEMCOD
+			 , MCI.COMCDVL AS ITEMMLC
+			 , MCI.COMCDTX
+			 , TI.EMSKUYN
+			 , TI.TPISTAT
+			 , MCP.COMCDTX AS PINAMLC
+			 , TI.SHPPLKY
+			 , TI.SHPPLIT
+			 , DATE_FORMAT(TI.TRNCPDT, '%Y-%m-%d') as TRNCPDT
+			 , CASE
+			 		WHEN TI.TRNCPTM IS NULL OR TRIM(TI.TRNCPTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(TI.TRNCPTM, '%H%i%s')
+			   END as TRNCPTM
+			 , TI.REGIORG
+			 , MRO.RENAMLC AS RONAMLC
+			 , TI.REGIMOD
+			 , MRM.RENAMLC AS RMNAMLC
+			 , TI.PURCNUM
+			 , TI.ORDERLN
+			 , DATE_FORMAT(TI.SHPLIMT, '%Y-%m-%d') AS SHPLIMT
+			 , DATE_FORMAT(TI.DELVDSR, '%Y-%m-%d') AS DELVDSR
+			 , ${userInfo.schema}.FN_SY_USERNAM(TI.CREUSER) as CREUSER
+			 , DATE_FORMAT(TI.CREDATE, '%Y-%m-%d') as CREDATE
+			 , CASE
+			 		WHEN TI.CRETIME IS NULL OR TRIM(TI.CRETIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TI.CRETIME, '%H%i%s')
+			   END as CRETIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(TI.LMOUSER) as LMOUSER
+			 , DATE_FORMAT(TI.LMODATE, '%Y-%m-%d') as LMODATE
+			 , CASE
+			 		WHEN TI.LMOTIME IS NULL OR TRIM(TI.LMOTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TI.LMOTIME, '%H%i%s')
+			   END as LMOTIME
+			 , TI.UPDTCHK
+			 , TI.BTRCATE
+			 , (SELECT BTRCNAM FROM ${userInfo.schema}.BTRCAT WHERE BTRCATE = TI.BTRCATE) AS BTRCNAM
+			 , TI.ADDCOKY
+			 , MCB.COMCDTX AS ADDNAML
+			 , TI.BTRFSTC
+			 , TI.DEMODYN
+			 , TI.FNCUSKY
+			 , TI.FCNAMLC
+			 , TI.RCVDCKY
+			 , TI.RCVDCIT
+			 , TI.RCVDCDT
+			 , TI.RCVDCTM
+			 , TI.LOTAT01
+			 , TI.LOTAT02
+			 , TI.LOTAT03
+			 , TI.STLOTNB
+			 , TI.SKUDESC
+			 , TI.SUOMKEY
+		FROM ${userInfo.schema}.TPLNIT TI
+		INNER JOIN ${userInfo.schema}.MWARMA MW
+			ON MW.WAREKEY = TI.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MGRPMA MGS
+			ON MGS.SKUGRKY = TI.SKUGRKY
+		   AND MGS.GRUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCP
+			ON MCP.COMCDKY = 'TPISTAT'
+		   AND MCP.COMCDVL = TI.TPISTAT
+		INNER JOIN ${userInfo.schema}.MREGMA MRO
+			ON MRO.REGIKEY = TI.REGIORG
+		   AND MRO.REUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MREGMA MRM
+			ON MRM.REGIKEY = TI.REGIMOD
+		   AND MRM.REUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCI
+			ON MCI.COMCDKY = 'ITEMCOD'
+		   AND MCI.COMCDVL = TI.ITEMCOD
+		   AND MCI.COUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.BADDCO BA
+			ON BA.ADDCOKY = TI.ADDCOKY
+		INNER JOIN ${userInfo.schema}.MCODEM MCB
+			ON MCB.COMCDKY = 'ADDSIKY'
+		   AND MCB.COMCDVL = BA.ADDSIKY
+		   AND MCB.COUSEYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.MCUSMA MCU
+			ON MCU.CUSTKEY = TI.CUSTCOD
+		   AND MCU.CUDELYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.MCUSMA MCO
+			ON MCO.CUSTKEY = TI.OWNERKY
+		   AND MCO.CUDELYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.MDESMA MDO
+			ON MDO.REGIKEY = TI.REGIORG
+		   AND MDO.CUSTKEY = TI.OWNERKY
+		   AND MDO.DESTKEY = TI.DESTORG
+		   AND MDO.DEUSEYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.MDESMA MDM
+			ON MDM.REGIKEY = TI.REGIMOD
+		   AND MDM.CUSTKEY = TI.OWNERKY
+		   AND MDM.DESTKEY = TI.DESTMOD
+		   AND MDM.DEUSEYN = 'Y'
+		WHERE TI.VHPLNKY = #{param.vhplnky}
+		  AND TI.WAREKEY = #{param.warekey}
+		ORDER BY TI.VHPLNIT ASC
+	</select>
+
+	<select id="selectTplnitWstkkyJoinList" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectTplnitWstkkyJoinList */
+		SELECT CONCAT(TI.WAREKEY, TI.VHPLNKY, TI.VHPLNIT) AS ROWKEY
+			 , TI.WAREKEY
+			 , TI.VHPLNKY
+			 , TI.VHPLNIT
+			 , TI.CUSTCOD
+			 , TI.CUSTNAM
+			 , TI.DESTORG
+			 , TI.DEORGNM
+			 , TI.DESTMOD
+			 , TI.DEMODNM
+			 , TI.DEMDMAN
+			 , TI.DEMPOCD
+			 , TI.DEMDADR
+			 , TI.DEMPOCD
+			 , TI.DEMDADR
+			 , TI.DEMDTLN
+			 , TI.POSHPDT
+			 , TI.POSHPTM
+			 , TI.POSHPDY
+			 , TI.SKUGRKY
+			 , TI.PLNSIZE
+			 , TI.OWNERKY
+			 , TI.OWNRNAM
+			 , TI.OWNRNAM
+			 , TI.SKUMKEY
+			 , TI.SKUTHIC
+			 , TI.SKUWIDT
+			 , TI.SKULENG
+			 , TI.SKUWEIG
+			 , TI.GROSSTH
+			 , TI.GROSSWD
+			 , TI.GROSSLN
+			 , TI.GROSSWG
+			 , TI.STKMEMO
+			 , TI.TRITQTY
+			 , TI.ITEMCOD
+			 , TI.EMSKUYN
+			 , TI.TPISTAT
+			 , TI.SHPPLKY
+			 , TI.SHPPLIT
+			 , TI.TRNCPDT
+			 , TI.TRNCPTM
+			 , TI.REGIORG
+			 , TI.REGIMOD
+			 , TI.PURCNUM
+			 , TI.ORDERLN
+			 , TI.SHPLIMT
+			 , TI.DELVDSR
+			 , TI.CREUSER
+			 , TI.CREDATE
+			 , TI.CRETIME
+			 , TI.LMOUSER
+			 , TI.LMODATE
+			 , TI.LMOTIME
+			 , TI.UPDTCHK
+			 , TI.BTRCATE
+			 , TI.ADDCOKY
+			 , WS.STOCKKY
+			 , TI.BTRFSTC
+		FROM ${userInfo.schema}.TPLNIT TI
+		INNER JOIN ${userInfo.schema}.WSTKKY WS
+			ON WS.SKUMKEY = TI.SKUMKEY
+		   AND WS.WAREKEY = TI.WAREKEY
+		WHERE TI.VHPLNKY = #{param.vhplnky}
+		  AND TI.WAREKEY = #{param.warekey}
+		ORDER BY TI.VHPLNIT ASC
+	</select>
+
+	<!-- 배차 승인 여부 업데이트 -->
+	<update id="updateTplnhdAprovyn" parameterType="com.kbph.logistics.tm.domain.TplnhdDTO">
+		/* updateTplnhdAprovyn */
+		UPDATE ${userInfo.schema}.TPLNHD
+		   SET UPDTCHK = UPDTCHK + 1
+		     , LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		     , LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+		     , LMOUSER = #{userInfo.useract}
+		     , APROVYN = #{param.aprovyn}
+		     , APROVDT = DATE_FORMAT(NOW(), '%Y%m%d')
+		     , APROVTM = DATE_FORMAT(NOW(), '%H%i%s')
+			 <if test='param.aprovyn != null and param.aprovyn == "CANCEL"'>
+			 	, TPNSTAT = #{param.tpnstat}
+				, TRCNLDT = DATE_FORMAT(NOW(), '%Y%m%d')
+				, TRCNLTM = DATE_FORMAT(NOW(), '%H%i%s')
+			 </if>
+		 WHERE VHPLNKY = #{param.vhplnky}
+		   AND WAREKEY = #{param.warekey}
+		   AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.TPLNHD WHERE VHPLNKY = #{param.vhplnky} AND WAREKEY = #{param.warekey})
+	</update>
+
+	<update id="updateTplnhdTpnstat" parameterType="com.kbph.logistics.tm.domain.TplnhdDTO">
+		/* updateTplnhdTpnstat */
+		UPDATE ${userInfo.schema}.TPLNHD
+		   SET UPDTCHK = UPDTCHK + 1
+		     , LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		     , LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+		     , LMOUSER = #{userInfo.useract}
+			 , TPNSTAT = #{param.tpnstat}
+			 <if test='param.tpnstat != null and param.tpnstat == "START"'>
+			 	, STPITDT = DATE_FORMAT(NOW(), '%Y%m%d')
+				, STPITTM = DATE_FORMAT(NOW(), '%H%i%s')
+				, TRNINDT = ''
+				, TRNINTM = ''
+			 </if>
+			 <if test='param.tpnstat != null and param.tpnstat == "FINISH"'>
+				, TRNINDT = DATE_FORMAT(NOW(), '%Y%m%d')
+				, TRNINTM = DATE_FORMAT(NOW(), '%H%i%s')
+				<if test='param.stpitdt == null or param.stpitdt == ""'>
+					, STPITDT = DATE_FORMAT(NOW(), '%Y%m%d')
+				</if>
+				<if test='param.stpittm == null or param.stpittm == ""'>
+					, STPITTM = DATE_FORMAT(NOW(), '%H%i%s')
+				</if>
+			 </if>
+			 <if test='param.tpnstat != null and param.tpnstat == "REFUSAL"'>
+			 	, TRCNLDT = DATE_FORMAT(NOW(), '%Y%m%d')
+			 	, TRCNLTM = DATE_FORMAT(NOW(), '%H%i%s')
+			 </if>
+		 WHERE VHPLNKY = #{param.vhplnky}
+		   AND WAREKEY = #{param.warekey}
+		   AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.TPLNHD WHERE VHPLNKY = #{param.vhplnky} AND WAREKEY = #{param.warekey})
+	</update>
+
+	<!-- TPLNHD 헤더 업데이트 -->
+	<update id="updateTplnhd" parameterType="com.kbph.logistics.tm.domain.TplnhdDTO">
+		/* updateTplnhd */
+		UPDATE ${userInfo.schema}.TPLNHD
+		   SET UPDTCHK = UPDTCHK + 1
+		     , LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		     , LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+		     , LMOUSER = #{userInfo.useract}
+		    <if test='param.type != null and param.type == "beforeShipment"'>
+		    	, VHCMAXW = #{param.vhcmaxw}
+		    	, MIXCUYN = #{param.mixcuyn}
+		    	, TPRILOC = #{param.tpriloc}
+		    	, SPRILOC = #{param.spriloc}
+		    	, TRNMEMO = #{param.trnmemo}
+		    	, DRVERNM = #{param.drvernm}
+		    	, DRVERPH = #{param.drverph}
+		    	, CORWEIG = #{param.corweig}
+		    </if>
+		 WHERE VHPLNKY = #{param.vhplnky}
+		   AND WAREKEY = #{param.warekey}
+		   AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.TPLNHD WHERE VHPLNKY = #{param.vhplnky} AND WAREKEY = #{param.warekey})
+	</update>
+
+	<!-- 중량 테이블 업데이트 -->
+	<update id="updateTmTpwpwg" parameterType="com.kbph.logistics.om.domain.TpwpwgDTO">
+		/* updateTmTpwpwg */
+		UPDATE ${userInfo.schema}.TPWPWG
+		   SET UPDTCHK = UPDTCHK + 1
+		     , LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		     , LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+		     , LMOUSER = #{userInfo.useract}
+		     <if test='param.arrivyn != null and param.arrivyn != ""'>
+		     	, ARRIVYN = #{param.arrivyn}
+		     </if>
+		     <if test="param.alcweig != null and param.alcweig != 0">
+		     	, ALCWEIG = #{param.alcweig}
+		     </if>
+		WHERE VHPLNKY = #{param.vhplnky}
+		  AND SHPPLKY = #{param.shpplky}
+		  AND PLNSIZE = #{param.plnsize}
+		  AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.TPWPWG WHERE VHPLNKY = #{param.vhplnky} AND SHPPLKY = #{param.shpplky} AND PLNSIZE = #{param.plnsize})
+	</update>
+
+	<!-- 아이템배차상태 업데이트 -->
+	<update id="updateTpistat" parameterType="com.kbph.logistics.tm.domain.TplnitDTO">
+		/* updateTpistat */
+		UPDATE ${userInfo.schema}.TPLNIT
+           SET TPISTAT = #{param.tpistat}
+             , UPDTCHK = UPDTCHK + 1
+             , LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+ 		     , LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+  		     , LMOUSER = #{userInfo.useract}
+  		   <if test='param.tpistat != null and (param.tpistat == "START" or param.tpistat == "REFUSAL")'>
+  		     , TRNCPDT = ''
+  		     , TRNCPTM = ''
+  		   </if>
+           <if test='param.tpistat != null and param.tpistat == "ARRIVE"'>
+             , TRNCPDT = CASE WHEN TRNCPDT IS NULL OR TRIM(TRNCPDT) = '' THEN DATE_FORMAT(NOW(), '%Y%m%d') ELSE TRNCPDT END
+    		 , TRNCPTM = CASE WHEN TRNCPTM IS NULL OR TRIM(TRNCPTM) = '' THEN DATE_FORMAT(NOW(), '%H%i%s') ELSE TRNCPTM END
+    		 , BILDATE = CASE WHEN BILDATE IS NULL OR TRIM(BILDATE) = '' THEN DATE_FORMAT(NOW(), '%Y%m%d') ELSE BILDATE END
+           </if>
+         WHERE VHPLNKY = #{param.vhplnky}
+           AND VHPLNIT = #{param.vhplnit}
+           AND WAREKEY = #{param.warekey}
+           AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.TPLNIT WHERE VHPLNKY = #{param.vhplnky} AND VHPLNIT = #{param.vhplnit} AND WAREKEY = #{param.warekey})
+	</update>
+
+	<!-- 운송오더 헤더 데이터 -->
+	<select id="selectVehicleOrderList" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectVehicleOrderList */
+		SELECT CONCAT(WH.WAREKEY, WH.SHPPLKY) as ROWKEY
+			 , WH.SHPPLKY
+			 , WH.WAREKEY
+			 , MW.WHNAMLC
+			 , WH.REGIKEY
+			 , MR.RENAMLC
+			 , CASE
+			 		WHEN WH.SHPWEIG &lt; 1000 THEN ROUND(WH.SHPWEIG / 1000)
+			 		ELSE WH.SHPWEIG / 1000
+			   END AS SHPWEIG
+			 , WH.SKUGRKY
+			 , MG.GRPKYNM
+			 , MG.SZGUBUN
+			 , WH.DESTKEY
+			 , CASE
+			 		WHEN WH.DESTKEY IS NULL OR TRIM(WH.DESTKEY) = '' THEN WH.DENAMLC
+			 		WHEN MDE.DENAMLC IS NULL OR TRIM(MDE.DENAMLC) = '' THEN WH.DENAMLC
+			 		ELSE MDE.DENAMLC
+			   END AS DENAMLC
+			 , WH.DESADDR
+			 , DATE_FORMAT(WH.WPLDATE, '%Y-%m-%d') as WPLDATE
+			 , CASE
+			 		WHEN WH.WPLTIME IS NULL OR TRIM(WH.WPLTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(WH.WPLTIME, '%H%i%s')
+			   END as WPLTIME
+			 , WH.DOCCATE
+			 , WH.DOCTYPE
+			 , MD.DOCCTNM
+			 , MD.DOCTYNM
+			 , WH.WPLSTAT
+			 , MC.COMCDTX as WPLAMLC
+			 , CASE
+			 		WHEN WH.REMWEIG &lt; 1000 THEN ROUND(WH.REMWEIG / 1000)
+			 		ELSE WH.REMWEIG / 1000
+			   END AS REMWEIG
+			 , ROUND(WH.REMWEIG / 1000) as GDRMWEG
+			 , DATE_FORMAT(WH.CREDATE, '%Y-%m-%d') as CREDATE
+			 , CASE
+			 		WHEN WH.CRETIME IS NULL OR TRIM(WH.CRETIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(WH.CRETIME, '%H%i%s')
+			   END as CRETIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(WH.CREUSER) as CREUSER
+			 , DATE_FORMAT(WH.LMODATE, '%Y-%m-%d') as LMODATE
+			 , CASE
+			 		WHEN WH.LMOTIME IS NULL OR TRIM(WH.LMOTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(WH.LMOTIME, '%H%i%s')
+			   END as LMOTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(WH.LMOUSER) as LMOUSER
+			 , WH.UPDTCHK
+			 , SUM(WI.SKUWEIG) as TOTALWEIG
+			 , ( SELECT CASE
+			 				WHEN SUM(WI2.SKUWEIG) = 0 THEN 0
+			 				WHEN SUM(WI2.SKUWEIG) &lt; 1000 THEN ROUND(SUM(WI2.SKUWEIG) / 1000)
+			 				ELSE SUM(WI2.SKUWEIG) / 1000
+			 			END
+			     FROM ${userInfo.schema}.WPLNIT WI2
+    			 WHERE WI2.SHPPLKY = WH.SHPPLKY
+    			 AND WI2.CHKDISP = 'N' AND WI2.WPLITST != 'CANCEL') as EMERWEIG
+		FROM ${userInfo.schema}.WPLNHD WH
+		INNER JOIN ${userInfo.schema}.MWARMA MW
+			ON MW.WAREKEY = WH.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MREGMA MR
+			ON MR.REGIKEY = WH.REGIKEY
+		   AND MR.REUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MGRPMA MG
+			ON MG.SKUGRKY = WH.SKUGRKY
+		   AND MG.GRUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MDOCMA MD
+			ON MD.WAREKEY = WH.WAREKEY
+		   AND MD.DOCCATE = WH.DOCCATE
+		   AND MD.DOCTYPE = WH.DOCTYPE
+		   AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MC
+			ON MC.COMCDKY = 'WPLSTAT'
+		   AND MC.COMCDVL = WH.WPLSTAT
+		   AND MC.COUSEYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.WPLNIT WI
+			ON WI.SHPPLKY = WH.SHPPLKY
+		LEFT JOIN ${userInfo.schema}.MDESMA MDE
+			ON MDE.CUSTKEY = WH.OWNERKY
+		   AND MDE.REGIKEY = WH.REGIKEY
+		   AND MDE.DESTKEY = WH.DESTKEY
+		WHERE WH.WAREKEY = #{param.warekey}
+		  AND (WH.WPLSTAT = 'NEW' OR WH.WPLSTAT = 'ING')
+		  AND WH.REMWEIG > 0
+			<if test="param.regikeySelectedList != null and param.regikeySelectedList.size() > 0">
+		  		AND WH.REGIKEY IN
+			  	<foreach collection="param.regikeySelectedList" item="regikey" index="index" open="(" close=")" separator=",">
+			  		#{regikey}
+			  	</foreach>
+		  	</if>
+			<if test='param.WpldateFrom != null and param.WpldateFrom != "" and param.WpldateTo != null and param.WpldateTo != ""'>
+				AND WH.WPLDATE BETWEEN #{param.wpldateFrom} AND #{param.wpldateTo}
+			</if>
+			<if test='param.doctype != null and param.doctype != ""'>
+				AND WH.DOCTYPE = #{param.doctype}
+			</if>
+			<if test="param.shpplkyList != null and param.shpplkyList.size() > 0">
+				AND WH.SHPPLKY IN
+				<foreach collection="param.shpplkyList" item="shpplky" index="index" open="(" close=")" separator=",">
+					#{shpplky}
+				</foreach>
+			</if>
+		GROUP BY WH.SHPPLKY, WH.WAREKEY, MW.WHNAMLC, WH.REGIKEY, MR.RENAMLC,
+				 WH.SHPWEIG, WH.SKUGRKY, MG.GRPKYNM, MG.SZGUBUN, WH.WPLDATE,
+				 WH.WPLTIME, WH.DOCCATE, WH.DOCTYPE, MD.DOCCTNM, MD.DOCTYNM,
+				 WH.WPLSTAT, MC.COMCDTX, WH.REMWEIG, WH.CREDATE, WH.CRETIME,
+				 WH.CREUSER, WH.LMODATE, WH.LMOTIME, WH.LMOUSER, WH.UPDTCHK
+		ORDER BY WH.SHPPLKY DESC
+	</select>
+
+	<!-- 운송오더 (단건) -->
+	<select id="selectTmWplnhd" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectTmWplnhd */
+		SELECT WH.SHPPLKY
+			 , WH.WAREKEY
+			 , WH.REGIKEY
+			 , WH.SHPWEIG
+			 , WH.REMWEIG
+			 , WH.SKUGRKY
+			 , WH.WPLDATE
+			 , WH.WPLTIME
+			 , WH.DOCCATE
+			 , WH.DOCTYPE
+			 , WH.RSNCODE
+			 , WH.PARSNNM
+			 , WH.UPDTCHK
+		FROM ${userInfo.schema}.WPLNHD WH
+		WHERE WH.SHPPLKY = #{param.shpplky}
+	</select>
+
+	<!-- 운송오더 아이템 데이터 -->
+	<select id="selectVehicleOrderItemList" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectVehicleOrderItemList */
+		SELECT CONCAT(WI.WAREKEY, WI.SHPPLKY, WI.SHPPLIT) as ROWKEY
+			 , WI.SHPPLKY
+			 , WI.SHPPLIT
+			 , WI.WPLITST
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'WPLITST' AND COMCDVL = WI.WPLITST AND COUSEYN = 'Y') AS WPLNAMC
+			 , WI.WAREKEY
+			 , WI.CUSTCOD
+			 , CASE
+			 		WHEN WI.CUSTCOD IS NULL OR TRIM(WI.CUSTCOD) != '' THEN WI.CUSTNAM
+			 		WHEN MCU.CUNAMLC IS NULL OR TRIM(MCU.CUNAMLC) != '' THEN WI.CUSTNAM
+			 		ELSE MCU.CUNAMLC
+			   END AS CUSTNAM
+			 , WI.OWNRNAM
+			 , WI.OWNERKY
+			 , CASE
+			 		WHEN WI.OWNERKY IS NULL OR TRIM(WI.OWNERKY) != '' THEN WI.OWNRNAM
+			 		WHEN MCO.CUNAMLC IS NULL OR TRIM(MCO.CUNAMLC) != '' THEN WI.OWNRNAM
+			 		ELSE MCO.CUNAMLC
+			   END AS OWNRNAM
+			 , WI.REGIORG
+			 , RO.RENAMLC AS RONAMLC
+			 , WI.DESTORG
+			 , CASE
+			 		WHEN WI.DESTORG IS NULL OR TRIM(WI.DESTORG) = '' THEN WI.DEORGNM
+			 		WHEN MDO.DENAMLC IS NULL OR TRIM(MDO.DENAMLC) = '' THEN WI.DEORGNM
+			 		ELSE MDO.DENAMLC
+			   END AS DEORGNM
+			 , WI.REGIMOD
+			 , RM.RENAMLC AS RMNAMLC
+			 , WI.DESTMOD
+			 , CASE
+			 		WHEN WI.DESTMOD IS NULL OR TRIM(WI.DESTMOD) = '' THEN WI.DEMODNM
+			 		WHEN MDM.DENAMLC IS NULL OR TRIM(MDM.DENAMLC) = '' THEN WI.DEMODNM
+			 		ELSE MDM.DENAMLC
+			   END AS DEMODNM
+			 , WI.DEMDMAN
+			 , WI.DEMPOCD
+			 , WI.DEMDADR
+			 , CASE
+			 		WHEN (WI.DEMDADR IS NULL OR TRIM(WI.DEMDADR) = '') AND (WI.DEMPOCD IS NULL OR TRIM(WI.DEMPOCD) = '') THEN ''
+			 		WHEN (WI.DEMPOCD IS NULL OR TRIM(WI.DEMPOCD) = '') AND (WI.DEMDADR IS NOT NULL OR TRIM(WI.DEMDADR) != '') THEN WI.DEMDADR
+			 		ELSE CONCAT('(', WI.DEMPOCD, ') ', WI.DEMDADR)
+			   END AS STOCKADDR
+			 , WI.DEMDTLN
+			 , DATE_FORMAT(WI.POSHPDT, '%Y-%m-%d') as POSHPDT
+			 , CASE
+			 		WHEN WI.POSHPTM IS NULL OR TRIM(WI.POSHPTM) = '' THEN ''
+			 		ELSE STR_TO_DATE(WI.POSHPTM, '%H%i%s')
+			   END as POSHPTM
+			 , WS.POSHPDY
+			 , WI.SKUGRKY
+			 , MG.GRPKYNM
+			 , WI.SKUMKEY
+			 , WI.SKUDESC
+			 , WI.SKULENG
+			 , WI.SKUWIDT
+			 , WI.SKUTHIC
+			 , WI.SKUWEIG
+			 , WI.PLANQTY
+			 , WI.STKMEMO
+			 , WI.ITEMCOD
+			 , MCI.COMCDVL AS ITEMMLC
+			 , WI.PURCNUM
+			 , WI.ORDERLN
+			 , WI.CHKDISP
+			 , WI.GROSSWD
+			 , WI.GROSSLN
+			 , WI.GROSSTH
+			 , WI.GROSSWG
+			 , WI.SUOMKEY
+			 , WI.EMSKUYN
+			 , WI.STOCKKY
+			 , WS.BTRCATE
+			 , WS.ADDCOKY
+			 , WS.STOCKKY
+			 , DATE_FORMAT(WI.SHPLIMT, '%Y-%m-%d') as SHPLIMT
+			 , DATE_FORMAT(WI.DELVDSR, '%Y-%m-%d') as DELVDSR
+			 , WI.BTRFSTC
+			 , DATE_FORMAT(WI.CREDATE, '%Y-%m-%d') as CREDATE
+			 , CASE
+			 		WHEN WI.CRETIME IS NULL OR TRIM(WI.CRETIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(WI.CRETIME, '%H%i%s')
+			   END as CRETIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(WI.CREUSER) as CREUSER
+			 , DATE_FORMAT(WI.LMODATE, '%Y-%m-%d') as LMODATE
+			 , CASE
+			 		WHEN WI.LMOTIME IS NULL OR TRIM(WI.LMOTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(WI.LMOTIME, '%H%i%s')
+			   END as LMOTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(WI.LMOUSER) as LMOUSER
+			 , WI.UPDTCHK
+			 , WS.BTRCATE
+			 , (SELECT BTRCNAM FROM ${userInfo.schema}.BTRCAT WHERE BTRCATE = WS.BTRCATE) AS BTRCNAM
+			 , WS.ADDCOKY
+			 , MCB.COMCDTX AS ADDNAML
+			 , WS.LOCAKEY
+			 , MLO.LOCANAM
+			 , WS.LOLAYER
+			 , WI.DEMODYN
+			 , WS.FNCUSKY
+			 , WS.FCNAMLC
+			 , WS.RCVDCKY
+			 , WS.RCVDCIT
+			 , WS.RCVDCDT
+			 , WS.RCVDCTM
+			 , WS.LOTAT01
+			 , WS.LOTAT02
+			 , WS.LOTAT03
+			 , WS.STLOTNB
+		FROM ${userInfo.schema}.WPLNIT WI
+		INNER JOIN ${userInfo.schema}.MREGMA RO
+			ON RO.REGIKEY = WI.REGIORG
+		   AND RO.REUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MGRPMA MG
+			ON MG.SKUGRKY = WI.SKUGRKY
+		   AND MG.GRUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCI
+			ON MCI.COMCDKY = 'ITEMCOD'
+		   AND MCI.COMCDVL = WI.ITEMCOD
+		   AND MCI.COUSEYN = 'Y'
+		<!-- 재고는 출고완료되면 데이터 삭제되므로 left -->
+		LEFT JOIN ${userInfo.schema}.WSTKKY WS
+			ON WS.STOCKKY = WI.STOCKKY
+		INNER JOIN ${userInfo.schema}.MREGMA RM
+			ON RM.REGIKEY = WI.REGIMOD
+		   AND RM.REUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.BADDCO BA
+			ON WS.ADDCOKY = BA.ADDCOKY
+		INNER JOIN ${userInfo.schema}.MCODEM MCB
+			ON MCB.COMCDKY = 'ADDSIKY'
+		   AND MCB.COMCDVL = BA.ADDSIKY
+		   AND MCB.COUSEYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.MCUSMA MCU
+			ON MCU.CUSTKEY = WI.CUSTCOD
+		   AND MCU.CUDELYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.MCUSMA MCO
+			ON MCO.CUSTKEY = WI.OWNERKY
+		   AND MCO.CUDELYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.MDESMA MDO
+			ON MDO.REGIKEY = WI.REGIORG
+		   AND MDO.CUSTKEY = WI.OWNERKY
+		   AND MDO.DESTKEY = WI.DESTORG
+		   AND MDO.DEUSEYN = 'Y'
+		LEFT JOIN ${userInfo.schema}.MDESMA MDM
+			ON MDM.REGIKEY = WI.REGIMOD
+		   AND MDM.CUSTKEY = WI.OWNERKY
+		   AND MDM.DESTKEY = WI.DESTMOD
+		   AND MDM.DEUSEYN = 'Y'
+		<!-- 재고 테이블이 LEFT JOIN으로 걸려있어서 MLOCMA 또한 LEFT JOIN -->
+		LEFT JOIN ${userInfo.schema}.MLOCMA MLO
+			ON MLO.WAREKEY = WS.WAREKEY
+		   AND MLO.AREAKEY = WS.AREAKEY
+		   AND MLO.LOCAKEY = WS.LOCAKEY
+		   AND MLO.LOUSEYN = 'Y'
+		WHERE WI.SHPPLKY = #{param.shpplky}
+		  AND WI.WAREKEY = #{param.warekey}
+		  <if test='param.chkdisp != null and param.chkdisp != ""'>
+		  	AND WI.CHKDISP = #{param.chkdisp}
+		  </if>
+		  <if test='param.wplitst != null and param.wplitst != ""'>
+		  	AND WI.WPLITST != #{param.wplitst}
+		  </if>
+		  <if test="param.szgubun != null and param.szgubun > 0">
+		  	AND MG.SZGUBUN >= #{param.szgubun}
+		  </if>
+		ORDER BY WI.WAREKEY ASC, WS.AREAKEY ASC, WS.LOCAKEY ASC, WS.LOLAYER DESC, WI.SHPPLKY ASC, WI.SHPPLIT ASC
+	</select>
+	
+	<!-- 출고예정 단건 조회 -->
+	<select id="selectTmWplnit" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectTmWplnit */
+		SELECT WI.SHPPLKY
+			 , WI.SHPPLIT
+			 , WI.WPLITST
+			 , WI.DOCCATE
+			 , WI.DOCTYPE
+			 , WI.WAREKEY
+			 , WI.POSHPDT
+			 , WI.POSHPTM
+			 , WI.POSHPDY
+			 , WI.BTRCATE
+			 , WI.OWNERKY
+			 , WI.OWNRNAM
+			 , WI.STOCKKY
+			 , WI.REGIORG
+			 , WI.REGIMOD
+			 , WI.DESTORG
+			 , WI.DEORGNM
+			 , WI.DESTMOD
+			 , WI.DEMDMAN
+			 , WI.DEMODNM
+			 , WI.DEMODYN
+			 , WI.DEMDADR
+			 , WI.DEMPOCD
+			 , WI.DEMDTLN
+			 , WI.CUSTCOD
+			 , WI.CUSTNAM
+			 , WI.FNCUSKY
+			 , WI.SKUGRKY
+			 , MG.GRPKYNM
+			 , WI.SKUMKEY
+			 , WI.SKUDESC
+			 , WI.TPRILOC
+			 , WI.SPRILOC
+			 , WI.EMSKUYN
+			 , WI.STKMEMO
+			 , WI.CHKDISP
+			 , WI.SKUWEIG
+			 , WI.SKUWIDT
+			 , WI.SKULENG
+			 , WI.SKUTHIC
+			 , WI.GROSSWD
+			 , WI.GROSSLN
+			 , WI.GROSSTH
+			 , WI.GROSSWG
+			 , WI.PLANQTY
+			 , WI.SUOMKEY
+			 , WI.ITEMCOD
+			 , MC.COMCDTX
+			 , WI.STLOTNB
+			 , WI.PURCNUM
+			 , WI.ORDERLN
+			 , WI.RCVDCKY
+			 , WI.RCVDCIT
+			 , WI.RCVDCDT
+			 , WI.RCVDCTM
+			 , WI.SHPLIMT
+			 , WI.DELVDSR
+			 , WI.BTRFSTC
+			 , WI.ADDCOKY
+			 , WI.CREDATE
+			 , WI.CRETIME
+			 , WI.CREUSER
+			 , WI.LMODATE
+			 , WI.LMOTIME
+			 , WI.LMOUSER
+		FROM ${userInfo.schema}.WPLNIT WI
+		INNER JOIN ${userInfo.schema}.MGRPMA MG
+			ON MG.SKUGRKY = WI.SKUGRKY
+		   AND MG.GRUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MC
+			ON MC.COMCDKY = 'ITEMCOD'
+		   AND MC.COMCDVL = WI.ITEMCOD
+		WHERE WI.WAREKEY = #{param.warekey}
+		  AND WI.SHPPLKY = #{param.shpplky}
+		  <if test="param.shpplit != null and param.shpplit != 0">
+		  	AND WI.SHPPLIT = #{param.shpplit}
+		  </if>
+	</select>
+
+	<!-- 목적지 조회 -->
+	<select id="selectRegikeyList" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectRegikeyList */
+		SELECT REGIKEY as combovl,
+			   CONCAT(RENAMLC, '[', REGIKEY, ']') as combonm
+		FROM ${userInfo.schema}.MREGMA
+		WHERE REUSEYN = 'Y'
+		GROUP BY REGIKEY
+		ORDER BY RENAMLC, REGIKEY
+	</select>
+
+	<!-- 차량조회 -->
+	<select id="selectVehicleList" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectVehicleList */
+		SELECT MV.VEHICKY
+			 , MCV.COMCDTX as CONAMLC
+			 , MCD.COMCDTX as DLNAMLC
+			 , MV.VHCSNAM
+			 , MV.VHCFNAM
+			 , MV.VHCTYPE
+			 , MCH.COMCDTX as VTNAMLC
+			 , MCT.COMCDTX as CDNAMLC
+			 , MV.VHCMAXW
+			 , MV.VHCVRYN
+			 , MV.VHCMEMO
+			 , MCS.COMCDTX as STNAMLC
+			 , MV.VOWNKEY
+			 , MO.VONAMLC
+			 , MV.DRVERNM
+			 , MV.DRVERPH
+			 , DATE_FORMAT(MV.CREDATE, '%Y-%m-%d') as CREDATE
+			 , CASE
+			 		WHEN MV.CRETIME IS NULL OR TRIM(MV.CRETIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(MV.CRETIME, '%H%i%s')
+			   END as CRETIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(MV.CREUSER) as CREUSER
+			 , DATE_FORMAT(MV.LMODATE, '%Y-%m-%d') as LMODATE
+			 , CASE
+			 		WHEN MV.LMOTIME IS NULL OR TRIM(MV.LMOTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(MV.LMOTIME, '%H%i%s')
+			   END as LMOTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(MV.LMOUSER) as LMOUSER
+		FROM ${userInfo.commonSchema}.MVHCMA MV
+		INNER JOIN ${userInfo.commonSchema}.MVOWMA MO
+			ON MO.VOWNKEY = MV.VOWNKEY
+		   AND MO.VOUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCV
+			ON MCV.COMCDKY = 'VHCOPTY'
+		   AND MCV.COMCDVL = MV.VHCOPTY
+		   AND MCV.COUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCD
+			ON MCD.COMCDKY = 'DLVTYPE'
+		   AND MCD.COMCDVL = MV.DLVTYPE
+		   AND MCD.COUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCH
+			ON MCH.COMCDKY = 'VHCTYPE'
+		   AND MCH.COMCDVL = MV.VHCTYPE
+		   AND MCH.COUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCT
+			ON MCT.COMCDKY = 'VHCTNCD'
+		   AND MCT.COMCDVL = MV.VHCTNCD
+		   AND MCT.COUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MCODEM MCS
+			ON MCS.COMCDKY = 'VHCSTAT'
+		   AND MCS.COMCDVL = MV.VHCSTAT
+		   AND MCS.COUSEYN = 'Y'
+		WHERE MV.VHUSEYN = 'Y'
+		  AND ((MV.VHCTYPE = (SELECT VHCTYPE FROM ${userInfo.schema}.MGRPMA WHERE GRUSEYN = 'Y' AND SKUGRKY = #{param.skugrky})) OR MV.VHCVRYN = 'Y')
+		  <choose>
+		  	  <when test='param.dmwplnm != null and param.dmwplnm != ""'>
+				  AND (MV.PUBLCYN = 'Y'
+				  OR (MV.PUBLCYN = 'N' AND MV.DMWPLNM = #{param.dmwplnm}))
+		  	  </when>
+			  <otherwise>
+				  AND (MV.PUBLCYN = 'Y'
+				  OR (MV.PUBLCYN = 'N' AND MV.DMWPLNM = REPLACE(LOWER(#{userInfo.schema}), '_', '-')))
+			  </otherwise>
+		  </choose>
+	</select>
+
+	<!-- 일단위 운행일지 -->
+	<select id="selectOperationDayLog" resultType="com.kbph.logistics.tm.domain.TplnhdDTO">
+		/* selectOperationDayLog */
+		SELECT TP.WAREKEY
+			 , MW.WHNAMLC
+			 , TP.DOCCATE
+			 , TP.DOCTYPE
+			 , MD.DOCCTNM
+			 , MD.DOCTYNM
+			 , MV.VHCSNAM
+			 , MV.VHCFNAM
+			 , MV.DRVERNM
+			 , MO.VONAMLC
+			 <foreach collection="param.dates" item="day">
+            	, SUM(CASE WHEN DATE_FORMAT(TP.TRNINDT, '%d') = #{day} THEN 1 ELSE 0 END) AS TRNINDT${day}
+        	 </foreach>
+        	 , SUM(
+        	 	CASE WHEN DATE_FORMAT(TP.TRNINDT, '%d') IN
+        	 	<foreach collection="param.dates" item="day" open="(" close=")" separator=",">
+        	 		#{day}
+        	 	</foreach>
+        	 	THEN 1 ELSE 0 END
+        	 ) AS totalTrnindtCnt
+		FROM ${userInfo.schema}.TPLNHD TP
+		INNER JOIN ${userInfo.commonSchema}.MVHCMA MV
+			ON MV.VOWNKEY = TP.VOWNKEY
+			AND MV.VEHICKY = TP.VEHICKY
+			AND MV.VHUSEYN = 'Y'
+		INNER JOIN ${userInfo.commonSchema}.MVOWMA MO
+			ON MO.VOWNKEY = TP.VOWNKEY
+		   AND MO.VOUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MDOCMA MD
+			ON MD.WAREKEY = TP.WAREKEY
+		   AND MD.DOCCATE = TP.DOCCATE
+		   AND MD.DOCTYPE = TP.DOCTYPE
+		   AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MWARMA MW
+			ON MW.WAREKEY = TP.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		WHERE TP.TPNSTAT = 'FINISH'
+		  AND DATE_FORMAT(TP.TRNINDT, '%Y%m') = #{param.targetMonth}
+		  AND TP.WAREKEY = #{param.warekey}
+		  <if test='param.vhcfnam != null and param.vhcfnam != ""'>
+		  	AND REPLACE(MV.VHCFNAM, ' ', '') LIKE CONCAT('%', REPLACE(#{param.vhcfnam}, ' ', ''), '%')
+		  </if>
+		  <if test='param.vonamlc != null and param.vonamlc != ""'>
+		  	AND REPLACE(MO.VONAMLC, ' ', '') LIKE CONCAT('%', REPLACE(#{param.vonamlc}, ' ', ''), '%')
+		  </if>
+		  <if test='param.drvernm != null and param.drvernm != ""'>
+		  	AND REPLACE(MV.DRVERNM, ' ', '') LIKE CONCAT('%', REPLACE(#{param.drvernm}, ' ', ''), '%')
+		  </if>
+		GROUP BY TP.DOCCATE, TP.DOCTYPE, MD.DOCCTNM, MD.DOCTYNM
+			   , MV.VHCSNAM, MV.VHCFNAM, MV.DRVERNM, MO.VONAMLC
+			   , TP.WAREKEY, MW.WHNAMLC
+	</select>
+
+	<!-- 월단위 운행일지 -->
+	<select id="selectOperationMonthLog" resultType="com.kbph.logistics.tm.domain.TplnhdDTO">
+		/* selectOperationMonthLog */
+ 		SELECT TP.DOCCATE
+			 , TP.DOCTYPE
+			 , MD.DOCCTNM
+			 , MD.DOCTYNM
+			 , TP.VEHICKY
+			 , MV.VHCSNAM
+			 , MV.VHCFNAM
+			 , MV.DRVERNM
+			 , TP.VOWNKEY
+			 , MO.VONAMLC
+			 , COUNT(DISTINCT DATE_FORMAT(TP.TRNINDT, '%Y-%m-%d')) as TRNMONT
+		FROM ${userInfo.schema}.TPLNHD TP
+		INNER JOIN ${userInfo.schema}.MDOCMA MD
+			ON MD.WAREKEY = TP.WAREKEY
+		   AND MD.DOCCATE = TP.DOCCATE
+		   AND MD.DOCTYPE = TP.DOCTYPE
+		   AND MD.DOUSEYN = 'Y'
+		INNER JOIN ${userInfo.commonSchema}.MVHCMA MV
+			ON MV.VOWNKEY = TP.VOWNKEY
+		   AND MV.VEHICKY = TP.VEHICKY
+		   AND MV.VHUSEYN = 'Y'
+		INNER JOIN ${userInfo.commonSchema}.MVOWMA MO
+			ON MO.VOWNKEY = TP.VOWNKEY
+		   AND MO.VOUSEYN = 'Y'
+		WHERE TP.TPNSTAT = 'FINISH'
+		  AND DATE_FORMAT(TP.TRNINDT, '%Y%m') = #{param.targetMonth}
+		  AND TP.WAREKEY = #{param.warekey}
+		  <if test='param.vhcfnam != null and param.vhcfnam != ""'>
+		  	AND REPLACE(MV.VHCFNAM, ' ', '') LIKE CONCAT('%', REPLACE(#{param.vhcfnam}, ' ', ''), '%')
+		  </if>
+		  <if test='param.vonamlc != null and param.vonamlc != ""'>
+		  	AND REPLACE(MO.VONAMLC, ' ', '') LIKE CONCAT('%', REPLACE(#{param.vonamlc}, ' ', ''), '%')
+		  </if>
+		  <if test='param.drvernm != null and param.drvernm != ""'>
+		  	AND REPLACE(MV.DRVERNM, ' ', '') LIKE CONCAT('%', REPLACE(#{param.drvernm}, ' ', ''), '%')
+		  </if>
+		GROUP BY TP.DOCCATE, TP.DOCTYPE, MD.DOCCTNM, MD.DOCTYNM
+			   , TP.VEHICKY, MV.VHCSNAM, MV.VHCFNAM, TP.VOWNKEY
+			   , MO.VONAMLC, MV.DRVERNM
+	</select>
+
+	<!-- 차량-기사 매핑 -->
+	<select id="selectVehicleDriverMapping" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectVehicleDriverMapping */
+		SELECT SU.USERKEY
+			 , SU.USERACT
+			 , SU.VOWNKEY
+			 , SU.VEHICKY
+			 , SM.USERNAM
+			 , SM.TELPHNM
+		FROM ${param.commonSchema}.SUSRVH SU
+		INNER JOIN ${param.commonSchema}.SUSRMA SM
+			ON SM.USERKEY = SU.USERKEY
+		   AND SM.USERACT = SU.USERACT
+		WHERE SU.VOWNKEY = #{param.vownkey}
+		  AND SU.VEHICKY = #{param.vehicky}
+		  AND SU.VHUSEYN = 'Y'
+	</select>
+
+	<!-- 베드 리스트 (selectBox) -->
+	<select id="selectLocationList" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectLocationList */
+		SELECT ML.LOCAKEY
+			 , ML.LOCANAM
+			 , ML.LOCSTAT
+			 , ML.LOCTYPE
+		FROM ${userInfo.schema}.MLOCMA ML
+		WHERE ML.WAREKEY = #{param.warekey}
+		  AND ML.LOCTYPE = 'STP'
+		  AND ML.LOUSEYN = 'Y'
+		ORDER BY ML.WAREKEY, ML.AREAKEY, ML.LOCAKEY
+	</select>
+
+	<!-- 배차계획키 채번 -->
+	<select id="selectVhplnky" resultType="String">
+		/* selectVhplnky */
+		SELECT ${userInfo.schema}.FN_TM_VHPLNKY() AS VHPLNKY FROM DUAL
+	</select>
+
+	<!-- 배차계획 insert -->
+	<insert id="insertTplnhd" parameterType="com.kbph.logistics.tm.domain.TplnhdDTO">
+		/* insertTplnhd */
+		INSERT
+			INTO ${userInfo.schema}.TPLNHD
+				(
+					WAREKEY, VHPLNKY, VOWNKEY, VEHICKY, DOCCATE,
+					DOCTYPE, LOADKEY, VHPDATE, VHPTIME, TRNMEMO,
+					TPRILOC, SPRILOC, CREDATE, CRETIME, CREUSER,
+					LMODATE, LMOTIME, LMOUSER, VHCMAXW, DRVERNM,
+					DRVERPH, MIXCUYN, CORWEIG
+					<if test='param.aprovyn != null and param.aprovyn != ""'>
+						, APROVYN, APROVDT, APROVTM
+					</if>
+				)
+			VALUES
+				(
+					#{param.warekey}, #{param.vhplnky}, #{param.vownkey}, #{param.vehicky}, #{param.doccate},
+					#{param.doctype}, #{param.loadkey}, DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'), #{param.trnmemo},
+					#{param.tpriloc}, #{param.spriloc}, DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'), #{userInfo.useract},
+					DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'), #{userInfo.useract}, #{param.vhcmaxw}, #{param.drvernm},
+					#{param.drverph}, #{param.mixcuyn}, #{param.corweig}
+					<if test='param.aprovyn != null and param.aprovyn != ""'>
+						, #{param.aprovyn}, DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s')
+					</if>
+				)
+	</insert>
+
+	<!-- 배차계획별 insert -->
+	<insert id="insertTpwpwg" parameterType="com.kbph.logistics.om.domain.TpwpwgDTO">
+		/* insertTpwpwg */
+		INSERT
+			INTO ${userInfo.schema}.TPWPWG
+				(
+					VHPLNKY, SHPPLKY, ALCWEIG, PLNSIZE, REGIKEY,
+					CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME,
+					LMOUSER
+				)
+			VALUES
+				(
+					#{param.vhplnky}, #{param.shpplky}, #{param.alcweig}, #{param.plnsize}, #{param.regikey},
+					DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'), #{userInfo.useract}, DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'),
+					#{userInfo.useract}
+				)
+	</insert>
+
+	<!-- 배차계획아이템번호 채번 -->
+	<select id="selectVhplnit" resultType="Integer">
+		/* selectVhplnit */
+		SELECT ${userInfo.schema}.FN_TM_VHPLNIT(#{param.vhplnky}) AS SHPDCIT FROM DUAL
+	</select>
+
+	<!-- 배차계획아이템 insert -->
+	<insert id="insertTplnit" parameterType="com.kbph.logistics.tm.domain.TplnitDTO">
+		/* insertTplnit */
+		INSERT
+			INTO ${userInfo.schema}.TPLNIT
+				(
+					WAREKEY, VHPLNKY, VHPLNIT, CUSTCOD, OWNERKY,
+					CUSTNAM, OWNRNAM, SKUMKEY, SKUDESC, OBITQTY,
+					TRITQTY, REGIORG, REGIMOD, DESTORG, DEORGNM,
+					DESTMOD, DEMODNM, DEMDMAN, DEMPOCD, DEMDADR,
+					DEMDTLN, ITEMCOD, SKUGRKY, SKUTHIC, SKUWIDT,
+					SKULENG, SKUWEIG, STKMEMO, GROSSWD, GROSSLN,
+					GROSSTH, GROSSWG, PURCNUM, ORDERLN, SUOMKEY,
+					EMSKUYN, SHPPLKY, SHPPLIT, BTRCATE, ADDCOKY,
+					CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME,
+					LMOUSER, POSHPDT, POSHPTM, POSHPDY, SHPLIMT,
+					DELVDSR, BTRFSTC, PLNSIZE, DEMODYN, FNCUSKY,
+					FCNAMLC, RCVDCKY, RCVDCIT, RCVDCDT, RCVDCTM,
+					LOTAT01, LOTAT02, LOTAT03
+				)
+			VALUES
+				(
+					#{param.warekey}, #{param.vhplnky}, #{param.vhplnit}, #{param.custcod}, #{param.ownerky},
+					#{param.custnam}, #{param.ownrnam}, #{param.skumkey}, #{param.skudesc}, #{param.planqty},
+					#{param.planqty}, #{param.regiorg}, #{param.regimod}, #{param.destorg}, #{param.deorgnm},
+					#{param.destmod}, #{param.demodnm}, #{param.demdman}, #{param.dempocd}, #{param.demdadr},
+					#{param.demdtln}, #{param.itemcod}, #{param.skugrky}, #{param.skuthic}, #{param.skuwidt},
+					#{param.skuleng}, #{param.skuweig}, #{param.stkmemo}, #{param.grosswd}, #{param.grossln},
+					#{param.grossth}, #{param.grosswg}, #{param.purcnum}, #{param.orderln}, #{param.suomkey},
+					#{param.emskuyn}, #{param.shpplky}, #{param.shpplit}, #{param.btrcate}, #{param.addcoky},
+					DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'), #{userInfo.useract}, DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'),
+					#{userInfo.useract}, REPLACE(#{param.poshpdt}, '-', ''), REPLACE(#{param.poshptm}, ':', ''), #{param.poshpdy}, REPLACE(#{param.shplimt}, '-', ''),
+					REPLACE(#{param.delvdsr}, '-', ''), #{param.btrfstc}, #{param.plnsize}, #{param.demodyn}, #{param.fncusky},
+					#{param.fcnamlc}, #{param.rcvdcky}, #{param.rcvdcit}, #{param.rcvdcdt}, #{param.rcvdctm},
+					#{param.lotat01}, #{param.lotat02}, #{param.lotat03}
+				)
+	</insert>
+
+	<!-- 출고아이템 update -->
+	<update id="tmUpdateWplnit" parameterType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* tmUpdateWplnit */
+		UPDATE ${userInfo.schema}.WPLNIT
+		   SET CHKDISP = #{param.chkdisp}
+		     , LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		     , LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = UPDTCHK + 1
+		WHERE SHPPLKY = #{param.shpplky}
+		  AND SHPPLIT = #{param.shpplit}
+		  AND WAREKEY = #{param.warekey}
+		  AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.WPLNIT WHERE SHPPLKY = #{param.shpplky} AND SHPPLIT = #{param.shpplit} AND WAREKEY = #{param.warekey})
+	</update>
+
+	<!-- 출고 잔여중량 update -->
+	<update id="tmUpdateWplnhd" parameterType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* tmUpdateWplnhd */
+		UPDATE ${userInfo.schema}.WPLNHD
+		   SET REMWEIG = #{param.remweig}
+		     , LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		     , LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		WHERE SHPPLKY = #{param.shpplky}
+		  AND UPDTCHK = #{param.updtchk}
+		<if test='param.warekey != null and param.warekey != ""'>
+			AND WAREKEY = #{param.warekey}
+		</if>
+	</update>
+
+	<!-- 제품 그룹키 가져오기 -->
+	<select id="selectPlnsizeList" resultType="com.kbph.logistics.md.domain.MgrpmaDTO">
+		/* selectPlnsizeList */
+		SELECT SKUGRKY
+			 , GRPKYNM
+			 , VHCTYPE
+			 , SZGUBUN
+		FROM ${userInfo.schema}.MGRPMA
+		WHERE GRUSEYN = 'Y'
+		GROUP BY SKUGRKY, GRPKYNM
+		ORDER BY SZGUBUN, SKUGROR
+	</select>
+
+	<!-- 중량 테이블 삭제 -->
+	<delete id="deleteTmTpwpwg" parameterType="com.kbph.logistics.om.domain.TpwpwgDTO">
+		/* deleteTmTpwpwg */
+		DELETE FROM ${userInfo.schema}.TPWPWG
+		 WHERE VHPLNKY = #{param.vhplnky}
+		   AND SHPPLKY = #{param.shpplky}
+		   AND PLNSIZE = #{param.plnsize}
+	</delete>
+
+	<!-- tpwpwg list -->
+	<select id="selectTpwpwgList" resultType="com.kbph.logistics.om.domain.TpwpwgDTO">
+		/* selectTpwpwgList */
+		SELECT TW.VHPLNKY
+			 , TW.SHPPLKY
+			 , TW.ALCWEIG
+			 , TW.PLNSIZE
+			 , MG.GRPKYNM
+			 , TW.REGIKEY
+			 , MR.RENAMLC
+			 , TW.WPLCFYN
+			 , TW.OOUCFYN
+			 , TW.SHPCFYN
+			 , TW.ARRIVYN
+			 , TW.UPDTCHK
+			 , DATE_FORMAT(TW.CREDATE, '%Y-%m-%d') as CREDATE
+			 , CASE
+			 		WHEN TW.CRETIME IS NULL OR TRIM(TW.CRETIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TW.CRETIME, '%H%i%s')
+			   END as CRETIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(TW.CREUSER) as CREUSER
+			 , DATE_FORMAT(TW.LMODATE, '%Y-%m-%d') as LMODATE
+			 , CASE
+			 		WHEN TW.LMOTIME IS NULL OR TRIM(TW.LMOTIME) = '' THEN ''
+			 		ELSE STR_TO_DATE(TW.LMOTIME, '%H%i%s')
+			   END as LMOTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(TW.LMOUSER) as LMOUSER
+		FROM ${userInfo.schema}.TPWPWG TW
+		INNER JOIN ${userInfo.schema}.MREGMA MR
+			ON MR.REGIKEY = TW.REGIKEY
+		   AND MR.REUSEYN = 'Y'
+		INNER JOIN ${userInfo.schema}.MGRPMA MG
+			ON MG.SKUGRKY = TW.PLNSIZE
+		   AND MG.GRUSEYN = 'Y'
+		WHERE TW.VHPLNKY = #{param.vhplnky}
+			<if test='param.shpplky != null and param.shpplky != ""'>
+				AND TW.SHPPLKY = #{param.shpplky}
+			</if>
+			<if test='param.type != null and param.type == "beforeShipment"'>
+				AND TW.WPLCFYN = 'N'
+			    AND TW.OOUCFYN = 'N'
+			    AND TW.SHPCFYN = 'N'
+			    AND TW.ARRIVYN = 'N'
+			</if>
+	</select>
+	
+	<!-- 차량정보 -->
+	<select id="selectVehicleInformation" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectVehicleInformation */
+		SELECT VOWNKEY
+			 , VEHICKY
+			 , VHCSNAM
+			 , VHCFNAM
+			 , DLVTYPE
+			 , VHCOPTY
+			 , VHCTYPE
+			 , VHCTNCD
+			 , VHCMAXW
+			 , DRVERNM
+			 , DRVERPH
+			 , VHCMEMO
+		FROM ${param.commonSchema}.MVHCMA MV
+		WHERE MV.VEHICKY = #{param.vehicky}
+		  AND MV.VHUSEYN = 'Y'
+	</select>
+	
+	<!-- 로케이션 필터 -->
+	<select id="selectLocationFilterList" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectLocationFilterList */
+		SELECT ML.WAREKEY
+			 , ML.AREAKEY
+			 , ML.LOCAKEY
+			 , ML.LOCANAM
+		FROM ${userInfo.schema}.MLOCMA ML
+		INNER JOIN (
+			SELECT DISTINCT LOCAKEY FROM ${userInfo.schema}.MEQLOC
+			WHERE EQUIPKY IN (
+				SELECT DISTINCT ME.EQUIPKY
+				FROM ${userInfo.schema}.MEQLOC ME
+				INNER JOIN ${userInfo.schema}.WSTKKY WS
+					ON WS.STOCKKY IN
+					<foreach collection="param.stockkyList" item="item" index="idx" open="(" close=")" separator=", ">
+						#{item.stockky}
+					</foreach>
+				   AND WS.LOCAKEY = ME.LOCAKEY
+				   WHERE ME.ELUSEYN = 'Y'
+			)
+		)AS A
+			ON A.LOCAKEY = ML.LOCAKEY
+		WHERE ML.LOCTYPE = 'STP'
+		  AND ML.WAREKEY = #{param.warekey}
+		  AND ML.LOUSEYN = 'Y'
+	</select>
+	
+	<!-- 맥스 단 위치 -->
+	<select id="selectMaxLayerByLocation" resultType="Integer">
+		/* selectMaxLayerByLocation */
+		SELECT MAX(WS.LOLAYER) as MAXLAYER
+		FROM ${userInfo.schema}.WSTKKY WS
+		WHERE WS.WAREKEY = #{param.warekey}
+		  AND WS.AREAKEY = #{param.areakey}
+		  AND WS.LOCAKEY = #{param.locakey}
+	</select>
+
+	<!-- 재고 테이블 생성 -->
+	<insert id="insertWstkkyData" parameterType="com.kbph.logistics.tm.domain.TplnitDTO">
+		/* insertWstkkyData */
+		INSERT
+			INTO ${userInfo.schema}.WSTKKY
+			(
+				STOCKKY, WAREKEY, AREAKEY, LOCAKEY, LOLAYER,
+				SAVEPNT, LOTNMKY, OWNERKY, OWNRNAM, CUSTCOD,
+				CUSTNAM, FNCUSKY, SKUGRKY, SKUMKEY, SKUDESC,
+				SKUWEIG, SKUWIDT, SKULENG, SKUTHIC, STLOTNB, 
+				GROSSWG, GROSSLN, GROSSWD, GROSSTH, BTRCATE, 
+				BTRFSTC, PURCNUM, ORDERLN, REGIKEY, DESTKEY, 
+				REGIORG, REGIMOD, DESTORG, DEORGNM, DESTMOD, 
+				ITEMCOD, DEMODNM, DEMODYN, DEMDMAN, DEMPOCD, 
+				DEMDADR, DEMDTLN, STOTQTY, SUOMKEY, ADDCOKY, 
+				POSHPDT, POSHPTM, POSHPDY, SHPLIMT, DELVDSR, 
+				STKMEMO, EMSKUYN, RCVDCDT, RCVDCTM, LOTAT01, 
+				LOTAT02, LOTAT03, STKSTAT, RCVDCKY, RCVDCIT, 
+				CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, 
+				LMOUSER, UPINFST
+			)
+		VALUES
+			(
+				#{param.stockky}, #{param.warekey}, #{param.areakey}, #{param.locakey}, #{param.lolayer},
+				#{param.savepnt}, #{param.lotnmky}, #{param.ownerky}, #{param.ownrnam}, #{param.custcod},
+				#{param.custnam}, #{param.fncusky}, #{param.skugrky}, #{param.skumkey}, #{param.skudesc}, 
+				#{param.skuweig}, #{param.skuwidt}, #{param.skuleng}, #{param.skuthic}, #{param.stlotnb}, 
+				#{param.grosswg}, #{param.grossln}, #{param.grosswd}, #{param.grossth}, #{param.btrcate}, 
+				#{param.btrfstc}, #{param.purcnum}, #{param.orderln}, #{param.regikey}, #{param.destkey}, 
+				#{param.regiorg}, #{param.regimod}, #{param.destorg}, #{param.deorgnm}, #{param.destmod}, 
+				#{param.itemcod}, #{param.demodnm}, #{param.demodyn}, #{param.demdman}, #{param.dempocd}, 
+				#{param.demdadr}, #{param.demdtln}, #{param.stotqty}, #{param.suomkey}, #{param.addcoky}, 
+				REPLACE(#{param.poshpdt}, '-', ''), REPLACE(#{param.poshptm}, ':', ''), #{param.poshpdy}, REPLACE(#{param.shplimt}, '-', ''), REPLACE(#{param.delvdsr}, '-', ''), 
+				#{param.stkmemo}, #{param.emskuyn}, #{param.rcvdcdt}, #{param.rcvdctm}, #{param.lotat01}, 
+				#{param.lotat02}, #{param.lotat03}, #{param.skustat}, #{param.rcvdcky}, #{param.rcvdcit}, 
+				DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'), #{userInfo.useract}, DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s'), 
+				#{userInfo.useract}, #{param.upinfst}
+			)
+	</insert>
+</mapper>

@@ -1,0 +1,705 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.api.mapper.ApiOutboundMapper">
+	<!-- API -->
+	<!-- 입차정보 -->
+	<insert id="updateEntranceCar" parameterType="com.kbph.logistics.api.domain.OubEntranceCarDTO">
+		/* updateEntranceCar */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE
+			${apiCommon.schema}.OOUBHD
+		SET
+			ENTDATE = DATE_FORMAT(STR_TO_DATE(#{data.entdttm}, '%y%m%d %H%i%s'), '%Y%m%d'), <!-- %y%m%d %H%i%	s로 받아야 에러 안남  -->
+			ENTTIME = DATE_FORMAT(STR_TO_DATE(#{data.entdttm}, '%y%m%d %H%i%s'), '%H%i%s'),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{apiCommon.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			OUTBOKY = #{data.outboky}
+			AND VEHICKY = #{data.vehicky}
+		</foreach>
+	</insert>
+
+	<!-- 출고조업,작업 벨리데이션 -->
+	<select id="checkOutboundStart" resultType="int">
+		/* checkOutboundStart */
+		SELECT
+            COUNT(1)
+        FROM
+            ${apiCommon.schema}.WTAKIT WT
+        INNER JOIN ${apiCommon.schema}.OOUBIT OOU
+            ON OOU.OUTBOKY = WT.OUTBOKY
+            AND OOU.OUTBOIT = WT.OUTBOIT
+        WHERE
+            OOU.OUTBOKY = #{param.outboky}
+            AND WT.TASKOKY = #{param.taskoky}
+            <if test='param.tasksts != null and param.tasksts != ""'>
+            	AND WT.TASKSTS = #{param.tasksts}
+            </if>
+	</select>
+
+	<!-- 출고조업시작 -->
+	<update id="updateOutboundStart" parameterType="com.kbph.logistics.api.domain.ApiCommonDTO">
+		/* updateOutboundStart */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE
+			${apiCommon.schema}.WTAKIT
+		SET
+			TASKSTS = 'OPERSTR',
+			MVSTDAT = date_format(now(), '%Y%m%d'),
+			MVSTTIM = date_format(now(), '%H%i%s'),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{apiCommon.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			TASKOKY = #{data.taskoky}
+			AND OUTBOKY = #{data.outboky}
+		</foreach>
+	</update>
+
+	<select id="getApiShpdckyAndIt" resultType="com.kbph.logistics.om.domain.OoubitDTO">
+		/* getApiShpdckyAndIt */
+		SELECT
+            WSH.SHPDCKY, WSH.SHPDCIT, WSH.UPDTCHK
+        FROM
+            ${apiCommon.schema}.WTAKIT WT
+        INNER JOIN ${apiCommon.schema}.WSHPIT WSH
+            ON WSH.SHPDCKY = WT.SHPDCKY
+            AND WSH.SHPDCIT = WT.SHPDCIT
+        WHERE
+            WT.TASKOKY = #{param.taskoky}
+            AND WT.OUTBOKY = #{param.outboky}
+	</select>
+
+	<select id="selectOoubitListForApiValidation" resultType="com.kbph.logistics.om.domain.OoubitDTO">
+		/* selectOoubitListForApiValidation */
+		SELECT
+			OUTBOKY, OUTBOIT, DOCCATE, DOCTYPE
+			, WAREKEY, POSHPDT, POSHPTM, POSHPDY
+			, OWNERKY, OWNRNAM, CUSTCOD, CUSTNAM
+			, FNCUSKY, REGIORG, DESTORG, REGIMOD
+			, DESTMOD, DEMODNM, DEMODYN, DEMDMAN
+			, DEMDADR, DEMPOCD, DEMDTLN, OBOMEMO
+			, OUBRQDT, OUBRQTM, SKUGRKY, SKUMKEY
+			, SKUDESC, SKUWEIG, SKUWIDT, SKULENG
+			, SKUTHIC, GROSSWG, GROSSWD, GROSSLN
+			, GROSSTH, FRAREKY, FRLOCKY, FRLAYER
+			, SHLOCKY, RGITQTY, SHCFQTY, SUOMKEY
+			, SHPPLKY, SHPPLIT, VHPLNKY, VHPLNIT
+			, OBOITST, ITEMCOD, PURCNUM, ORDERLN
+			, STLOTNB, SHPLIMT, DELVDSR, BTRFSTC
+			, PARSNCD, PARSNNM, CREDATE, CRETIME
+			, CREUSER, LMODATE, LMOTIME, LMOUSER
+			, UPDTCHK
+		FROM
+			${apiCommon.schema}.OOUBIT
+		WHERE
+<!-- 			WAREKEY = #{param.warekey} -->
+<!-- 			AND  -->
+			OUTBOKY = #{param.outboky}
+			AND OBOITST != 'CANCEL'
+		GROUP BY
+			OUTBOKY, OUTBOIT, DOCCATE, DOCTYPE
+			, WAREKEY, POSHPDT, POSHPTM, POSHPDY
+			, OWNERKY, OWNRNAM, CUSTCOD, CUSTNAM
+			, FNCUSKY, REGIORG, DESTORG, REGIMOD
+			, DESTMOD, DEMODNM, DEMODYN, DEMDMAN
+			, DEMDADR, DEMPOCD, DEMDTLN, OBOMEMO
+			, OUBRQDT, OUBRQTM, SKUGRKY, SKUMKEY
+			, SKUDESC, SKUWEIG, SKUWIDT, SKULENG
+			, SKUTHIC, GROSSWG, GROSSWD, GROSSLN
+			, GROSSTH, FRAREKY, FRLOCKY, FRLAYER
+			, SHLOCKY, RGITQTY, SHCFQTY, SUOMKEY
+			, SHPPLKY, SHPPLIT, VHPLNKY, VHPLNIT
+			, OBOITST, ITEMCOD, PURCNUM, ORDERLN
+			, STLOTNB, SHPLIMT, DELVDSR, BTRFSTC
+			, PARSNCD, PARSNNM, CREDATE, CRETIME
+			, CREUSER, LMODATE, LMOTIME, LMOUSER
+			, UPDTCHK
+	</select>
+
+	<update id="updateApiWshpitStat" parameterType="com.kbph.logistics.om.domain.OoubitDTO">
+		/* updateApiWshpitStat */
+		UPDATE ${apiCommon.schema}.WSHPIT
+			SET SHPITST = #{param.shpitst},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = #{param.updtchk} + 1
+			WHERE
+				SHPDCKY = #{param.shpdcky}
+				AND SHPDCIT = #{param.shpdcit}
+				AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<update id="updateApiWshphdStat" parameterType="com.kbph.logistics.om.domain.OoubitDTO">
+		/* updateApiWshphdStat */
+		UPDATE ${apiCommon.schema}.WSHPHD
+			SET SHPDCST = #{param.shpdcst},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				SHPDCKY = #{param.shpdcky}
+	</update>
+
+	<select id="getApiWshpitStatCount" resultType="int">
+		/* getApiWshpitStatCount */
+		SELECT
+			COUNT(1)
+		FROM
+			${apiCommon.schema}.WSHPIT
+		WHERE
+			SHPDCKY = #{param.shpdcky}
+			<if test='param.shpitst != null and param.shpitst != ""'>
+				AND SHPITST = #{param.shpitst}
+			</if>
+	</select>
+
+	<select id="getApiOutStockInfo" resultType="com.kbph.logistics.api.domain.OutboundTaskDTO">
+		/* getApiOutStockInfo */
+        SELECT
+            WS.STOCKKY, WS.SKUMKEY, WS.AREAKEY AS FRAREKY, WS.LOCAKEY AS FRLOCKY
+            , WS.LOLAYER AS FRLAYER
+            , WT.TASKOKY, WT.TASKOIT, WT.OUTBOKY, WT.OUTBOIT
+            , WT.SHPDCKY, WT.SHPDCIT
+        FROM
+            ${apiCommon.schema}.WTAKIT WT
+        INNER JOIN ${apiCommon.schema}.WSTKKY WS
+            ON WS.STOCKKY = WT.STOCKKY
+            AND WS.SKUMKEY = WT.SKUMKEY
+        WHERE
+            WT.TASKOKY = #{param.taskoky}
+            AND WT.OUTBOKY = #{param.outboky}
+	</select>
+
+	<update id="updateAPiOutTask" parameterType="com.kbph.logistics.api.domain.OutboundTaskDTO">
+		/* updateAPiOutTaskInfo */
+		UPDATE ${apiCommon.schema}.WTAKIT
+			SET FRAREKY = #{param.frareky},
+			    FRLOCKY = #{param.frlocky},
+			    FRLAYER = #{param.frlayer},
+			    LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				TASKOKY = #{param.taskoky}
+				AND TASKOIT = #{param.taskoit}
+				AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<update id="updateAPiOutboundOrder" parameterType="com.kbph.logistics.api.domain.OutboundTaskDTO">
+		/* updateAPiOutboundOrderInfo */
+		UPDATE ${apiCommon.schema}.OOUBIT
+			SET FRAREKY = #{param.frareky},
+			    FRLOCKY = #{param.frlocky},
+			    FRLAYER = #{param.frlayer},
+			    LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				OUTBOKY = #{param.outboky}
+				AND OUTBOIT = #{param.outboit}
+				AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<update id="updateAPiOutboundShip" parameterType="com.kbph.logistics.api.domain.OutboundTaskDTO">
+		/* updateAPiOutboundShip */
+		UPDATE ${apiCommon.schema}.WSHPIT
+			SET FRAREKY = #{param.frareky},
+			    FRLOCKY = #{param.frlocky},
+			    FRLAYER = #{param.frlayer},
+			    LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{apiCommon.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				SHPDCKY = #{param.shpdcky}
+				AND SHPDCIT = #{param.shpdcit}
+				AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<select id="getApiOutTaskInfo" resultType="com.kbph.logistics.api.domain.OutboundTaskDTO">
+		/* getApiOutTaskInfo */
+		SELECT
+			OUTBOKY, TASKOKY, TOLOCKY AS ULLOCKY, EQUIPKY
+			, SKUMKEY, FRLOCKY, FRLAYER, TOLOCKY, TOLAYER
+		FROM
+			${apiCommon.schema}.WTAKIT
+		WHERE
+			TASKOKY = #{param.taskoky}
+			AND OUTBOKY = #{param.outboky}
+	</select>
+
+	<!-- 출고작업완료 -->
+	<insert id="updateOutboundTask" parameterType="com.kbph.logistics.api.domain.ApiCommonDTO">
+		/* updateOutboundTask */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE
+			${apiCommon.schema}.WTAKIT
+		SET
+			TASKSTS = 'TASKCMP',
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{apiCommon.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			TASKOKY = #{data.taskoky}
+			AND OUTBOKY = #{data.outboky}
+			AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</insert>
+
+	<!-- 출고조업완료 -->
+	<update id="updateOutboundComplete" parameterType="com.kbph.logistics.api.domain.ApiCommonDTO">
+		/* updateOutboundComplete */
+		<foreach collection="apiCommon.apiData" item="data" separator=";">
+		UPDATE
+			${apiCommon.schema}.WTAKIT
+		SET
+			TASKSTS = 'OPERCMP',
+			FRLAYER = #{data.frlayer},
+			TOLAYER = #{data.tolayer},
+			MVEDDAT = date_format(now(), '%Y%m%d'),
+			MVEDTIM = date_format(now(), '%H%i%s'),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{apiCommon.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			TASKOKY = #{data.taskoky}
+			AND OUTBOKY = #{data.outboky}
+			AND SKUMKEY = #{data.skumkey}
+		</foreach>
+	</update>
+
+	<!-- API 이후 자동화용 쿼리 -->
+	<!-- 출고예정 헤더 상태값 update -->
+	<update id="updateWplnhdStatForApi" parameterType="com.kbph.logistics.om.domain.WshphdDTO">
+		/* updateWplnhdStatForApi */
+		UPDATE
+			${common.schema}.WPLNHD
+			SET WPLSTAT = #{param.wplstat},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				SHPPLKY = #{param.shpplky}
+				AND WPLSTAT != 'CANCEL'
+	</update>
+
+	<!-- 출고예정아이템 상태값 update -->
+	<update id="updateWplnitStatForApi" parameterType="com.kbph.logistics.om.domain.WshphdDTO">
+		/* updateWplnitStatForApi */
+		UPDATE
+			${common.schema}.WPLNIT
+			SET WPLITST = #{param.wplitst},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				SHPPLKY = #{param.shpplky}
+				AND SKUMKEY = #{param.skumkey}
+				AND WPLITST != 'CANCEL'
+	</update>
+
+	<!-- 출고오더 Head 상태값 변경 -->
+	<update id="updateObostatForApi" parameterType="com.kbph.logistics.om.domain.OoubhdDTO">
+		/* updateObostatForApi */
+		UPDATE ${common.schema}.OOUBHD
+			SET OBOSTAT = #{param.obostat},
+				RSNCODE = #{param.rsncode},
+				<if test='param.parsnnm != null and param.parsnnm != ""'>
+					PARSNNM = #{param.parsnnm},
+				</if>
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				OUTBOKY = #{param.outboky}
+				AND OBOSTAT != 'CANCEL'
+	</update>
+
+	<!-- 출고오더 Item 상태값 변경 -->
+	<update id="updateOboitstForApi" parameterType="com.kbph.logistics.om.domain.OoubitDTO">
+		/* updateOboitstForApi */
+		UPDATE ${common.schema}.OOUBIT
+			SET OBOITST = #{param.oboitst},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				OUTBOKY = #{param.outboky}
+				AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<!-- 출고오더 상태값 변경(완료) -->
+	<update id="updateObostatCMPForApi" parameterType="com.kbph.logistics.om.domain.OoubhdDTO">
+		/* updateObostatCMPForApi */
+		UPDATE
+			${common.schema}.OOUBHD OBH
+		SET
+			OBH.OBOSTAT = #{param.obostat},
+			OBH.LMODATE = date_format(now(), '%Y%m%d'),
+			OBH.LMOTIME = date_format(now(), '%H%i%s'),
+			OBH.LMOUSER = #{common.useract},
+			OBH.UPDTCHK = UPDTCHK + 1
+		WHERE
+			OBH.OUTBOKY = #{param.outboky}
+			AND OBH.OBOSTAT != 'CANCEL'
+	</update>
+
+	<!-- 출고오더 Item 상태값 변경(완료) -->
+	<update id="updateOboitstCMPForApi" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateOboitstCMPForApi */
+		UPDATE
+			${common.schema}.OOUBIT
+			SET OBOITST = #{param.oboitst},
+				SHCFQTY = 1,
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				OUTBOKY = #{param.outboky}
+				AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<!-- 중량테이블 출고완료 상태값 수정 -->
+	<update id="updateTpwpwgShpcfynForApi" parameterType="com.kbph.logistics.om.domain.WshphdDTO">
+		/* updateTpwpwgShpcfynForApi */
+		UPDATE
+			${common.schema}.TPWPWG
+			SET
+				SHPCFYN = #{param.shpcfyn},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				VHPLNKY = #{param.vhplnky}
+				AND SHPPLKY = #{param.shpplky}
+				AND PLNSIZE = #{param.plnsize}
+	</update>
+
+	<!-- 출고 문서 생성 -->
+	<insert id="insertWshphdForApi" parameterType="com.kbph.logistics.om.domain.OoubhdDTO">
+		/* insertWshphdForApi */
+		INSERT INTO
+			${common.schema}.WSHPHD (
+				SHPDCKY
+				, WAREKEY, DOCCATE, DOCTYPE
+				, VOWNKEY, VEHICKY
+				, SHPDCST
+				, PARSNCD, PARSNNM, SHPWEIG
+				, WPLNDAT, WPLNTIM, REGIKEY
+				, OBODATE, OBOTIME
+				, SHPSDAY, SHPSTIM
+				, CREDATE, CRETIME, CREUSER
+				, LMODATE, LMOTIME, LMOUSER
+		)
+		VALUES (
+			#{param.shpdcky}
+			, #{param.warekey}, #{param.doccate}, #{param.doctype}
+			, #{param.vownkey}, #{param.vehicky}
+			, #{param.shpdcst}
+			, #{param.parsncd}, #{param.parsnnm}, #{param.shpweig}
+			, date_format( #{param.wplndat}, '%Y%m%d'), date_format(STR_TO_DATE(#{param.wplntim}, '%H%i%s'), '%H%i%s'), #{param.regikey}
+			, date_format(#{param.obodate}, '%Y%m%d'), date_format(STR_TO_DATE(#{param.obotime}, '%H%i%s'), '%H%i%s')
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s')
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{common.useract}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{common.useract}
+		)
+	</insert>
+
+	<!-- 출고문서아이템등록 -->
+	<insert id="insertWshpitForApi" parameterType="com.kbph.logistics.om.domain.OoubitDTO">
+		/* insertWshpitForApi */
+		INSERT INTO
+			${common.schema}.WSHPIT (
+				SHPDCKY, SHPDCIT
+				, WAREKEY, SHPITST, OUTBOKY, OUTBOIT
+				, DOCCATE, DOCTYPE
+				, OUBRQDT, OUBRQTM
+				, BTRCATE, OWNERKY, CUSTCOD, SKUGRKY
+				, SKUMKEY, SKUDESC
+				, SKUTHIC, SKUWIDT, SKULENG, SKUWEIG
+				, GROSSWD, GROSSLN, GROSSWG, GROSSTH
+				, FRAREKY, FRLOCKY, FRLAYER
+				, SHLOCKY, REGIORG, REGIMOD, DESTORG
+				, STLOTNB, PURCNUM, ORDERLN, ITEMCOD
+				, SHPLIMT, DELVDSR, BTRFSTC, DESTMOD
+				, OBOMEMO, ALLGRKY, RGITQTY, SHALQTY
+				, SHCFQTY, SUOMKEY
+				, CREDATE, CRETIME, CREUSER
+				, LMODATE, LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{param.shpdcky}, #{param.shpdcit}
+			, #{param.warekey}, #{param.shpitst}, #{param.outboky}, #{param.outboit}
+			, #{param.doccate}, #{param.doctype}
+			, #{param.oubrqdt}, #{param.oubrqtm}
+			, #{param.btrcate}, #{param.ownerky}, #{param.custcod}, #{param.skugrky}
+			, #{param.skumkey}, #{param.skudesc}
+			, #{param.skuthic}, #{param.skuwidt}, #{param.skuleng}, #{param.skuweig}
+			, #{param.grosswd}, #{param.grossln}, #{param.grosswg}, #{param.grossth}
+			, #{param.frareky}, #{param.frlocky}, #{param.frlayer}
+			, #{param.shlocky}, #{param.regiorg}, #{param.regimod}, #{param.destorg}
+			, #{param.stlotnb}, #{param.purcnum}, #{param.orderln}, #{param.itemcod}
+			, #{param.shplimt}, #{param.delvdsr}, #{param.btrfstc}, #{param.destmod}
+			, #{param.obomemo}, #{param.allgrky}, #{param.rgitqty}, #{param.rgitqty}
+			, #{param.shcfqty}, #{param.suomkey}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{common.useract}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{common.useract}
+		)
+	</insert>
+
+	<!-- 작업문서 생성 -->
+    <insert id="insertWtakitForApi" parameterType="com.kbph.logistics.om.domain.OoubitDTO">
+    	/* insertWtakitForApi */
+		INSERT INTO
+		${common.schema}.WTAKIT(
+			TASKOKY, TASKOIT, WAREKEY
+			, TASKDAT, DOCCATE, DOCTYPE, TASKSTS
+			, LOTNMKY, OWNERKY, CUSTCOD
+			, SKUMKEY, SKUDESC
+			, FRAREKY, FRLOCKY, FRLAYER
+			, TOAREKY, TOLOCKY, TOLAYER
+			, FORDQTY
+			, STOCKKY
+			, PARSNCD, PARSNNM
+			, OUTBOKY, OUTBOIT
+			, SHPDCKY, SHPDCIT
+			, CREDATE, CRETIME, CREUSER
+			, LMODATE, LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{param.taskoky}, #{param.taskoit}, #{param.warekey}
+			, date_format(now(), '%Y%m%d'), #{param.doccate}, #{param.doctype}, #{param.tasksts}
+			, #{param.lotnmky}, #{param.ownerky}, #{param.custcod}
+			, #{param.skumkey}, #{param.skudesc}
+			, #{param.frareky}, #{param.frlocky}, #{param.frlayer}
+			, #{param.frareky}, #{param.shlocky}, #{param.frlayer}
+			, #{param.rgitqty}
+			, #{param.stockky}
+			, #{param.parsncd}, #{param.parsnnm}
+			, #{param.outboky}, #{param.outboit}
+			, #{param.shpdcky}, #{param.shpdcit}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{common.useract}
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{common.useract}
+		)
+    </insert>
+
+    <!-- 재고 삭제 -->
+	<delete id="deleteStockForApi" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* deleteStockForApi */
+		DELETE
+			FROM ${common.schema}.WSTKKY
+		WHERE
+			SKUMKEY = #{param.skumkey}
+	</delete>
+
+	<!-- 출고문서 출고완료 시간, 출고완료수량 업데이트 -->
+	<update id="updateWshpitShpDateForApi" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateWshpitShpDateForApi */
+		UPDATE
+			${common.schema}.WSHPIT
+			SET SPEIDAT = date_format(now(), '%Y%m%d'),
+				SPEITIM = date_format(now(), '%H%i%s'),
+				SHCFQTY = 1,
+				FRLAYER = #{param.frlayer},
+				STLAYER = #{param.tolayer},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				OUTBOKY = #{param.outboky}
+				AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<!-- 출고문서 완료 -->
+	<update id="updateShpdcstCMPForApi" parameterType="com.kbph.logistics.om.domain.WshpitDTO">
+		/* updateShpdcstCMPForApi */
+		UPDATE
+			${common.schema}.WSHPHD
+			SET
+				SHPDCST = #{param.shpdcst},
+				SPEHDAT = date_format(now(), '%Y%m%d'),
+				SPEHTIM = date_format(now(), '%H%i%s'),
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				SHPDCKY = #{param.shpdcky}
+				AND SHPDCST != 'CANCEL'
+	</update>
+
+	<!-- 출고확정 상태값 변경 -->
+	<update id="updateShpitstCMPForApi" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateShpitstCMPForApi */
+		UPDATE ${common.schema}.WSHPIT
+			SET
+				SHPITST = #{param.shpitst},
+				FRLAYER = #{param.frlayer},
+				STLAYER = #{param.tolayer},
+				SHCFQTY = 1,
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{common.useract},
+				UPDTCHK = UPDTCHK + 1
+			WHERE
+				OUTBOKY = #{param.outboky}
+				AND SKUMKEY = #{param.skumkey}
+				AND SHPITST != 'CANCEL'
+	</update>
+
+	<!-- 작업문서 상태값 update -->
+	<update id="updateWtakitTaskstsForApi" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateWtakitTaskstsForApi */
+		UPDATE
+			${common.schema}.WTAKIT
+		SET
+			TASKSTS = #{param.tasksts},
+			<if test = 'param.frlayer != null'>
+				FRLAYER = #{param.frlayer},
+			</if>
+			<if test = 'param.tolayer != null'>
+				TOLAYER = #{param.tolayer},
+			</if>
+			TCMPQTY = 1,
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{common.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			TASKOKY = #{param.taskoky}
+			AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<!-- 작업완료 from베드 재고 조회 -->
+	<select id="getApiLocationStockInfo" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getLocationStockInfo */
+		SELECT
+			STOCKKY, WAREKEY, SKUMKEY, AREAKEY, LOCAKEY, LOLAYER as STLAYER
+			, 'N' as RMSTKYN, 'N' as RETUNYN
+			, DATE_FORMAT(now(), '%y-%m-%d %H:%i:%s') as PHYDTTM
+		FROM
+			${common.schema}.WSTKKY
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND AREAKEY = #{param.areakey}
+			AND LOCAKEY = #{param.locakey}
+		ORDER BY LOLAYER ASC
+	</select>
+
+	<!-- 단수 정렬 -->
+	<update id="updateApiStockLayerSort" parameterType="com.kbph.logistics.sm.domain.WphyitDTO">
+		/* updateApiStockLayerSort */
+		UPDATE ${common.schema}.WSTKKY
+		SET LOLAYER = #{param.lolayer},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{common.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+	</update>
+
+	<!-- 작업문서 상태값 update OPERCMP -->
+	<update id="updateWtakitStatOperCmpForApi" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* updateWtakitStatOperCmpForApi */
+		UPDATE
+			${common.schema}.WTAKIT
+		SET
+			TASKSTS = 'OPERCMP',
+			MVEDDAT = date_format(now(), '%Y%m%d'),
+			MVEDTIM = date_format(now(), '%H%i%s'),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{common.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			TASKOKY = #{param.taskoky}
+			AND SKUMKEY = #{param.skumkey}
+	</update>
+
+	<!-- 배차계획 헤더 상태 업데이트 -->
+	<update id="updateTplnhdStatForApi">
+		/* updateTplnhdStatForApi */
+		UPDATE
+			${common.schema}.TPLNHD
+		SET
+			TPNSTAT = #{status},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{common.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			VHPLNKY IN(
+					SELECT
+						VHPLNKY
+					FROM
+						${common.schema}.OOUBIT
+					WHERE
+						OUTBOKY = #{param.outboky}
+					GROUP BY
+						VHPLNKY
+				)
+			AND TPNSTAT = 'PLAN'
+	</update>
+
+	<!-- 배차계획 아이템 상태 업데이트 -->
+	<update id="updateTplnitStatForApi">
+		/* updateTplnitStatForApi */
+		UPDATE
+			${common.schema}.TPLNIT
+		SET
+			TPISTAT = #{status},
+			BILDATE = date_format(now(), '%Y%m%d'),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{common.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			SKUMKEY = #{data.skumkey}
+			AND VHPLNKY = (
+										SELECT
+											VHPLNKY
+										FROM
+											${common.schema}.OOUBIT
+										WHERE
+											OUTBOKY = #{data.outboky}
+											AND SKUMKEY = #{data.skumkey}
+									)
+			AND TPISTAT = 'PLAN'
+	</update>
+
+	<!-- 입동지시여부 갱신 -->
+	<update id="updateOoubhdEntdoyn" parameterType="com.kbph.logistics.om.domain.OoubhdDTO">
+		/* updateOoubhdEntdoyn */
+		UPDATE
+			${common.schema}.OOUBHD
+		SET
+			ENTDOYN = #{param.entdoyn},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{common.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND OUTBOKY = #{param.outboky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+</mapper>

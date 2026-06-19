@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+    <path style="fill:none" d="M0 0h12v12H0z"/>
+    <path data-name="선 25" transform="translate(1 1)" style="stroke:#989ca0;stroke-linecap:round;stroke-width:1.3px;fill:none" d="M10 10 0 0"/>
+    <path data-name="선 26" transform="translate(1 1)" style="stroke:#989ca0;stroke-linecap:round;stroke-width:1.3px;fill:none" d="M10 0 0 10"/>
+</svg>

@@ -1,0 +1,2099 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{/main/fragment/defaultLayout}">
+<div class="tab-contents" layout:fragment="content">
+	<div class="location"></div>
+	<div class="search-conditions con-box">
+		<div class="setting-grid">
+			<label for="doe023Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe023Warekey" data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse" data-cb-select="" data-cb-variable="warekeyList">
+					</select>
+				</div>
+			</div>
+			<div class="search-btn-group" hidden='hidden'>
+				<select id="doe023Doccate" data-cb-val="" data-cb-name="" data-cb-url="/md/document/document-category?doccate=100" data-cb-variable="doccate100List">
+				</select>
+				<select id="doe023Doctype" data-cb-val="" data-cb-name="" data-cb-url="/md/document/document-type?doccate=100" data-cb-variable="doctype100List">
+				</select>
+				<select id="doe023Suomkey" data-cb-val="" data-cb-name="" data-cb-url="/md/code/common-code?comcdky=suomkey" data-cb-variable="suomkeyList">
+				</select>
+				<select id="doe023Skustat" data-cb-val="" data-cb-name="" data-cb-url="/md/code/common-code?comcdky=skustat" data-cb-variable="skustatList">
+				</select>
+				<select id="doe023Itemcod" data-cb-val="" data-cb-name="" data-cb-url="/md/code/common-code?comcdky=itemcod" data-cb-variable="itemcodList">
+				</select>
+				<select id="doe023Vownkey" data-cb-val="" data-cb-name="" data-cb-url="/md/partner/vehicle-owner" data-cb-variable="vownkeyList">
+				</select>
+				<select id="doe023Custkey" data-cb-val="" data-cb-name="" data-cb-url="/md/partner/customer" data-cb-variable="custkeyList">
+				</select>
+				<select id="doe023Skugrky" data-cb-val="" data-cb-name="" data-cb-url="/md/units/sku-group" data-cb-variable="skugrkyList">
+				</select>
+				<select id="doe023Btrfstc" data-cb-val="" data-cb-name="" data-cb-url="/md/code/common-code?comcdky=btrfstc" data-cb-variable="btrfstcList">
+				</select>
+				<select id="doe023Regikey" data-cb-val="" data-cb-name="" data-cb-url="/md/partner/region" data-cb-variable="regikeyList">
+				</select>
+			</div>
+		</div>
+	</div>
+	<div class="search-list">
+		<div class="list-top">
+			<div class="list-title ic-title-mark">
+				<span>[[#{menu.im.doe023}]]</span>
+			</div>
+			<div class="edit-btn-wrapper">
+				<button class="btn-navy btn-green" id="doe023BtnSave">
+					<img class="ic-bt-save">[[#{bt.save}]]
+				</button>
+				<button type="button" class="btn-clear btn-white" id="doe023BtnReset">
+					<img class="ic-bt-reset">[[#{bt.reset}]]
+				</button>
+			</div>
+		</div>
+		<div class="list-grid-wrapper con-box">
+			<div id="doe023TreeGrid"></div>
+		</div>
+	</div>
+	<script>
+		!function(){
+			const pageId = '[[${tabPage}]]';
+			let doe023CurrentWarekey;
+			//전략X 필수값
+			const columnsToUpdate = ['toareky', 'tolocky', 'tolayer','equipky', 'ullocky'];
+
+			//전략X이면서 입고일자, 입고시간 (기타입고)
+			const phyInboundColumns = ['rcvdcdt','rcvdctm'];
+
+			//전략일떄 필수값
+			const columnsUpdate = ['ownerky', 'custcod'];
+
+			const childEssentialCols = [
+				'poshpdt', 'poshptm', 'poshpdy', 'btrcate', 'invoice', 'skumkey', 'itemcod'
+				, 'skuthic', 'grossth' , 'skuwidt', 'grosswd', 'skuleng', 'grossln', 'skuweig', 'grosswg'
+				, 'custnam', 'ownrnam', 'regiorg', 'deorgnm', 'orderln', 'suomkey'
+				, 'skustrd', 'purcnum', 'stroqty', 'skustat'
+			];
+
+			// ColModel
+			const doe023TreeGridCM = [
+				{
+					title: '[[#{grid.orderId}]]',
+					dataType: 'string',
+					dataIndx: 'id',
+					align: 'left',
+					editable: false
+				}, {
+					title: '[[#{grid.whnamlc}]]',
+					dataType: 'string',
+					dataIndx: 'warekey',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData);
+						return {
+							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData,
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					},
+					editable: false
+				}, {
+					title: '[[#{grid.doccate}]]',
+					dataType: 'string',
+					dataIndx: 'doccate',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        						 checkbox: true,
+		        						 search: false,
+		        						 width: getSelectBoxWidthCondition(ui)
+		        					});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e =>  e['[[#{grid.comboKey}]]'] === ui.cellData);
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData,
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => !ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					hidden: true
+				}, {
+					title: '[[#{grid.doctype}]]',
+					dataType: 'string',
+					dataIndx: 'doctype',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]
+					},
+					editable: ui => ui.rowData.doccate !== null && ui.rowData.doccate !== undefined && !ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData && e.doccate === ui.rowData.doccate);
+						ui.rowData[ui.dataIndx] = target ? target['[[#{grid.comboKey}]]'] : '';
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : '',
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.rsncode}]]',
+					dataType: 'string',
+					dataIndx: 'rsncode',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window[ui.dataIndx + 'RelationList']?.map(e => {
+								if(e.warekey === ui.rowData.warekey && e.doccate === ui.rowData.doccate && e.doctype === ui.rowData.doctype && e.rscate1 === 'NORMAL'){
+									const obj = {};
+									obj[e.rsncode] =  e.rsncdnm;
+
+									return obj;
+								}
+							}).filter(e => e);
+						}
+					},
+					editable: ui => ui.rowData.doccate !== null && ui.rowData.doccate !== undefined
+								&& ui.rowData.doctype !== null && ui.rowData.doctype !== undefined
+								&& !ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const target = window[ui.dataIndx + 'RelationList']?.find( e =>  e[ui.dataIndx] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target? target.rsncode : '';
+ 						return {
+    						text: target? target.rsncdnm : '',
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{im.wasnit.parsnnm}]]',
+					dataType: 'string',
+					dataIndx: 'parsnnm',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => !ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+ 						return {
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				},{
+					title: '[[#{grid.vhcfnam}]]',
+					dataType: 'string',
+					dataIndx: 'vehicky',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window[ui.dataIndx + 'RelationList']?.map(e => {
+								const obj = {};
+								obj[e.vehicky] =  e.vhcfnam;
+
+								return obj;
+							}).filter(e => e);
+						}
+					},
+					editable: ui =>  !ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const target = window[ui.dataIndx + 'RelationList']?.find( e => e[ui.dataIndx] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target.vehicky : '';
+ 						return {
+    						text: target ? target.vhcfnam : '',
+    						cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.vhcfnam}]]',
+					dataType: 'string',
+					dataIndx: 'vhcfnam',
+					hidden : true,
+					editable: ui =>  !ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+ 						return {
+    						cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.vonamlc}]]',
+					dataType: 'string',
+					dataIndx: 'vownkey',
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window['vehickyRelationList']?.map(e => {
+								const obj = {};
+								if(e.vehicky === ui.rowData.vehicky){
+									obj[e.vownkey] =  e.vonamlc;
+								}
+								return obj;
+							}).filter(e => e);
+						}
+					},
+					render: ui => {
+ 						return {
+ 							text: window['vehickyRelationList']?.find( e => e[ui.dataIndx] === ui.cellData)?.drvernm || ui.cellData,
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: false
+				},{
+					title: '[[#{grid.drvernm}]]',
+					dataType: 'string',
+					dataIndx: 'drvernm',
+					editor: {
+						type: 'textbox',
+						getData: ui => {
+							return window['vehickyRelationList'].find(e => e.vownkey === ui.rowData.vownkey && e.vehicky === ui.rowData.vehicky)[ui.dataIndx];
+						}
+					},
+					editable: false,
+					render: ui => {
+ 						return {
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{im.ostrhd.strdate}]]',
+					dataType: 'string',
+					dataIndx: 'strdate',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead01}]]"
+			        },
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'yymmdd',
+			        editor: {
+						type: 'textbox',
+						init: dateEditor,
+			        },
+					editable: ui =>  !ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						if(ui.cellData && !regDateFormat.test(ui.cellData)){
+							ui.rowData[ui.dataIndx] = moment().format('YYYY-MM-DD');
+							return {
+								text : moment().format('YYYY-MM-DD')
+							}
+						}
+						ui.rowData[ui.dataIndx] = ui.cellData?.replace(regDivideDateYMD, divideDateFormatYMD);
+						return {
+							text: ui.cellData?.replace(regDivideDateYMD, divideDateFormatYMD),
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.ostrhd.strtime}]]',
+					dataType: 'string',
+					dataIndx: 'strtime',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead01}]]"
+			        },
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'hhmmss',
+			        editor: {
+						type: 'textbox',
+						init: timeEditor2,
+			        },
+					editable: ui => !ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						if(ui.cellData && !regTimeFormat.test(ui.cellData)){
+							ui.rowData[ui.dataIndx] = moment().format('HH:mm:ss');
+							return {
+								text : moment().format('HH:mm:ss')
+							}
+						}
+						ui.rowData[ui.dataIndx] = ui.cellData?.replace(regDivideTime, divideTimeFormat);
+						return {
+							text: ui.cellData?.replace(regDivideTime, divideTimeFormat),
+							cls: ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wasnit.poshpdt}]]',
+					dataType: 'string',
+					dataIndx: 'poshpdt',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead01}]]"
+			        },
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'yymmdd',
+			        editor: {
+						type: 'textbox',
+						init: dateEditor,
+			        },
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						if(ui.cellData && !regDateFormat.test(ui.cellData)){
+							ui.rowData[ui.dataIndx] = moment().format('YYYY-MM-DD');
+							return {
+								text : moment().format('YYYY-MM-DD')
+							}
+						}
+						ui.rowData[ui.dataIndx] = ui.cellData?.replace(regDivideDateYMD, divideDateFormatYMD);
+						return {
+							text: ui.cellData?.replace(regDivideDateYMD, divideDateFormatYMD),
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wasnit.poshptm}]]',
+					dataType: 'string',
+					dataIndx: 'poshptm',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead01}]]"
+			        },
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'hhmmss',
+			        editor: {
+						type: 'textbox',
+						init: timeEditor2,
+			        },
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						if(ui.cellData && !regTimeFormat.test(ui.cellData)){
+							const defaultTime = moment('000000', 'HHmmss').format('HH:mm:ss');
+							ui.rowData[ui.dataIndx] = defaultTime;
+							return {
+								text : defaultTime
+							}
+						}
+						ui.rowData[ui.dataIndx] = ui.cellData?.replace(regDivideTime, divideTimeFormat);
+						return {
+							text: ui.cellData?.replace(regDivideTime, divideTimeFormat),
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wasnit.poshpdy}]]',
+					dataType: 'string',
+					dataIndx: 'poshpdy',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead01}]]"
+			        },
+					editable: false,
+					render: ui => {
+						return {
+							text: ui?.rowData[ui.dataIndx] ? ui?.rowData[ui.dataIndx] + '요일' : '',
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.btrcate}]]',
+					dataIndx: 'btrcate',
+					dataType: 'string',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead01}]]"
+			        },
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window['btrcateList']?.map(e => {
+								const obj = {};
+								obj[e.btrcate] = e.btrcnam;
+
+								return obj;
+							}).filter(e => e);
+						}
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const target = window['btrcateList'].find(e => e['btrcate'] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target['btrcate'] : '';
+ 						return {
+  							text: target ? target['btrcnam'] : '',
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						}
+					}
+				}, {
+					title: '[[#{im.wasnit.invoice}]]',
+					dataType: 'string',
+					dataIndx: 'invoice',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				},{
+					title: '[[#{grid.skumkey}]]',
+					dataType: 'string',
+					dataIndx: 'skumkey',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.itemcod}]]',
+					dataType: 'string',
+					dataIndx: 'itemcod',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+							ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+							});
+							setTimeout(() => {
+								ui.$cell.find('select').pqSelect('open');
+							}, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboKey}]]',
+						options: ui => window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData && e.doccate === ui.rowData.doccate);
+						ui.rowData[ui.dataIndx] = target ? target['[[#{grid.comboKey}]]'] : '';
+ 						return {
+  							text: target ? target['[[#{grid.comboKey}]]'] : '',
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.skudesc}]]',
+					dataType: 'string',
+					dataIndx: 'skudesc',
+					editable: false,
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wasnit.stkmemo}]]',
+					dataType: 'string',
+					dataIndx: 'stkmemo',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wasnit.toareky}]]',
+					dataType: 'string',
+					dataIndx: 'toareky',
+					styleHead: {
+							'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							const treeGrid = doe023TreeGrid.getGrid().Tree();
+							const parent = treeGrid.getParent(treeGrid.getNode(ui.rowData.id));
+
+							return window['areaRelationList']?.map(e => {
+								if(e.warekey === parent.warekey){
+									const obj = {};
+									obj[e.areakey] = e.areanam;
+
+									return obj;
+								}
+							}).filter(e => e);
+						}
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const treeGrid = doe023TreeGrid.getGrid().Tree();
+						const parent = (ui?.rowData?.id !== null && ui?.rowData?.id !== undefined) ? treeGrid.getParent(treeGrid.getNode(ui.rowData.id)) : null;
+						const target = window['areaRelationList']?.find( e => e.warekey === parent?.warekey && e['areakey'] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target.areakey : '';
+ 						return {
+    						text: target ? target.areanam : '',
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{im.wasnit.tolocky}]]',
+					dataType: 'string',
+					dataIndx: 'tolocky',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							const treeGrid = doe023TreeGrid.getGrid().Tree();
+							const parent = treeGrid.getParent(treeGrid.getNode(ui.rowData.id));
+
+							return window['locationRelationList']?.map(e => {
+								if(e.warekey === parent.warekey && e.areakey === ui.rowData.toareky && e.loctype === 'BED'){
+									const obj = {};
+									obj[e.locakey] = e.locanam;
+
+									return obj;
+								}
+							}).filter(e => e);
+						}
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary') && ui.rowData.toareky,
+					render: ui => {
+						const treeGrid = doe023TreeGrid.getGrid().Tree();
+						const parent = (ui?.rowData?.id !== null && ui?.rowData?.id !== undefined) ? treeGrid.getParent(treeGrid.getNode(ui.rowData.id)) : null;
+						const target = window['locationRelationList']?.find( e => e.warekey === parent?.warekey && e.areakey === ui.rowData.toareky && e.locakey === ui.cellData && e.loctype === 'BED');
+						ui.rowData[ui.dataIndx] = target ? target.locakey : '';
+ 						return {
+    						text: target ? target.locanam : '',
+    						cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.equipky}]]',
+					dataType: 'string',
+					dataIndx: 'equipky',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							const treeGrid = doe023TreeGrid.getGrid().Tree();
+							const parent = treeGrid?.getParent(treeGrid.getNode(ui?.rowData?.id || ui?.rowData?.parentId));
+
+							return window['meqlocList'].map(e => {
+								if(e.warekey === parent?.warekey && e.areakey === ui?.rowData?.toareky && e.locakey === ui?.rowData?.tolocky){
+									const rObj = {};
+									rObj[e.equipky] = e.equinam;
+
+									return rObj;
+								}
+							}).filter(e=>e);
+						}
+					},
+					render: ui => {
+						const renderObj = {};
+						const treeGrid = doe023TreeGrid?.getGrid()?.Tree();
+						const parent = treeGrid?.getParent(treeGrid.getNode(ui?.rowData?.id || ui?.rowData?.parentId));
+
+						if(parent){
+							const target = window['meqlocList']?.find(e => e.warekey === parent?.warekey && e.areakey === ui?.rowData?.toareky && e.locakey === ui?.rowData?.tolocky && e.equipky === ui?.rowData?.equipky);
+
+							renderObj.text = target ? target['equinam'] : '';
+							ui.rowData[ui.dataIndx] = target ? target.equipky : '';
+						}
+
+						renderObj.cls= !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						return renderObj;
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') && ui.rowData.toareky  !== null && ui.rowData.tolocky  !== null
+				}, {
+					title: '[[#{im.wasnit.ullocky}]]',
+					dataType: 'string',
+					dataIndx: 'ullocky',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							const treeGrid = doe023TreeGrid.getGrid().Tree();
+							const parent = treeGrid.getParent(treeGrid.getNode(ui.rowData.id));
+
+							return window['meqlocList']?.map(e => {
+								if(e.warekey === parent?.warekey && e.areakey === ui?.rowData?.toareky && e.equipky === ui?.rowData?.equipky && e.loctype === 'STP'){
+									const obj = {};
+									obj[e.locakey] = e.locanam;
+
+									return obj;
+								}
+							}).filter(e => e);
+						}
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary') && ui.rowData.toareky !== null && ui.rowData.tolocky  !== null && ui.rowData.equipky  !== null,
+					render: ui => {
+						const treeGrid = doe023TreeGrid.getGrid().Tree();
+						const parent = (ui?.rowData?.id !== null && ui?.rowData?.id !== undefined) ? treeGrid.getParent(treeGrid.getNode(ui.rowData.id)) : null;
+						const target = window['meqlocList']?.find( e => e.warekey === parent?.warekey && e['locakey'] === ui.cellData && e.equipky === ui?.rowData?.equipky && e.loctype === 'STP');
+						ui.rowData[ui.dataIndx] = target ? target.locakey : '';
+ 						return {
+    						text: target ? target.locanam : '',
+    						cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{im.wasnit.tolayer}]]',
+					dataType: 'integer',
+					dataIndx: 'tolayer',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+ 						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.skuthic}]]',
+					dataType: 'float',
+					format: '#,###.000',
+					dataIndx: 'skuthic',
+					summary: {
+						type: 'max'
+					},
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.grossth}]]',
+					dataType: 'float',
+					format: '#,###.000',
+					dataIndx: 'grossth',
+					summary: {
+						type: 'max'
+					},
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				},  {
+					title: '[[#{grid.skuwidt}]]',
+					dataType: 'float',
+					format: '#,###.0',
+					dataIndx: 'skuwidt',
+					summary: {
+						type: 'max'
+					},
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.grosswd}]]',
+					dataType: 'float',
+					format: '#,###.0',
+					dataIndx: 'grosswd',
+					summary: {
+						type: 'max'
+					},
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.skuleng}]]',
+					dataType: 'integer',
+					format: '#,###',
+					dataIndx: 'skuleng',
+					summary: {
+						type: 'max'
+					},
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.grossln}]]',
+					dataType: 'integer',
+					format: '#,###',
+					dataIndx: 'grossln',
+					summary: {
+						type: 'max'
+					},
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.skuweig}]]',
+					dataType: 'integer',
+					format: '#,###',
+					summary: {
+						type: 'sum'
+					},
+					dataIndx: 'skuweig',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.grosswg}]]',
+					dataType: 'integer',
+					format: '#,###',
+					summary: {
+						type: 'sum'
+					},
+					dataIndx: 'grosswg',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.custkey}]]',
+					dataType: 'string',
+					dataIndx: 'custcod',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        						 checkbox: true,
+		        						 search: true,
+		        						 width: getSelectBoxWidthCondition(ui)
+		        					});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => window['custkeyList']
+					},
+					render: ui => {
+						const target = window['custkeyList']?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target['[[#{grid.comboKey}]]'] : '';
+ 						return {
+  							text: target ? target['[[#{grid.comboKey}]]'] : '',
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary')
+				},{
+					title: '[[#{grid.cunamlc}]]',
+					dataType: 'string',
+					dataIndx: 'custnam',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				},{
+					title: '[[#{grid.ownerky}]]',
+					dataType: 'string',
+					dataIndx: 'ownerky',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        						 checkbox: true,
+		        						 search: true,
+		        						 width: getSelectBoxWidthCondition(ui)
+		        					});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => window['custkeyList']
+					},
+					render: ui => {
+						const target = window['custkeyList']?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target['[[#{grid.comboKey}]]'] : '';
+ 						return {
+  							text: target ? target['[[#{grid.comboKey}]]'] : '',
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary')
+				}, {
+					title: '[[#{grid.ownamlc}]]',
+					dataType: 'string',
+					dataIndx: 'ownrnam',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					render: ui => {
+ 						return {
+ 							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary')
+				}, {
+					title: '[[#{grid.rgorgnm}]]',
+					dataType: 'string',
+					dataIndx: 'regiorg',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        						 checkbox: true,
+		        						 search: true,
+		        						 width: getSelectBoxWidthCondition(ui)
+		        					});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window['regikeyList']?.map(e => {
+									const obj = {};
+									obj[e.combovl] = e.combonm;
+
+									return obj;
+							}).filter(e => e);
+						}
+					},
+					render: ui => {
+						const target = window['regikeyList']?.find(e => e.combovl === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target['combovl'] : '';
+ 						return {
+  							text: target ? target['combonm'] : '',
+  							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary')
+				}, {
+					title: '[[#{grid.destorg}]]',
+					dataType: 'string',
+					dataIndx: 'destorg',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window['destinationRelationList']?.map(e => {
+									if(e.ownerky === ui.rowData.ownerky && e.regikey === ui.rowData.regiorg){
+										const obj = {};
+										obj[e.destkey] = e.denamlc;
+
+										return obj;
+									}
+							}).filter(e => e);
+						}
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const target = window['destinationRelationList']?.find( e => e.ownerky === ui.rowData.ownerky && e.regikey ===  ui.rowData.regiorg && e['destkey'] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target.destkey : '';
+ 						return {
+    						text: target ? target.destkey : '',
+    						cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.deorgnm}]]',
+					dataType: 'string',
+					dataIndx: 'deorgnm',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.rgmodnm}]]',
+					dataType: 'string',
+					dataIndx: 'regimod',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+		        						 checkbox: true,
+		        						 search: true,
+		        						 width: getSelectBoxWidthCondition(ui)
+		        					});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+	        			options: ui => {
+							return window['regikeyList']?.map(e => {
+									const obj = {};
+									obj[e.combovl] = e.combonm;
+									return obj;
+							}).filter(e => e);
+						}
+					},
+					render: ui => {
+						const target = window['regikeyList']?.find(e => e.combovl === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target['combovl'] : '';
+ 						return {
+  							text: target ? target['combonm'] : '',
+  							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary')
+				},{
+					title: '[[#{grid.destmod}]]',
+					dataType: 'string',
+					dataIndx: 'destmod',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+		        			 ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: true,
+        						 width: getSelectBoxWidthCondition(ui)
+		        			});
+		        			 setTimeout(() => {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			},
+						options: ui => {
+							return window['destinationRelationList']?.map(e => {
+									if(e.ownerky === ui.rowData.ownerky && e.regikey === ui.rowData.regimod){
+										const obj = {};
+										obj[e.destkey] = e.denamlc;
+
+										return obj;
+									}
+							}).filter(e => e);
+						}
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const target = window['destinationRelationList']?.find( e => e.ownerky === ui.rowData.ownerky && e.regikey ===  ui.rowData.regimod && e['destkey'] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target.destkey : '';
+ 						return {
+    						text: target ? target.destkey : '',
+    						cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.demodnm}]]',
+					dataType: 'string',
+					dataIndx: 'demodnm',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui.rowData.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				},{
+					title: '[[#{grid.dempocd}]]',
+					dataType: 'string',
+					dataIndx: 'dempocd',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: true,
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.demdadr}]]',
+					dataType: 'string',
+					dataIndx: 'demdadr',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: true,
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.demdman}]]',
+					dataType: 'string',
+					dataIndx: 'demdman',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: true,
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.demdtln}]]',
+					dataType: 'string',
+					dataIndx: 'demdtln',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: true,
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.orderln}]]',
+					dataType: 'string',
+					dataIndx: 'orderln',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+ 						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{im.wrcvit.rcvdcdt}]]',
+					dataType: 'string',
+					dataIndx: 'rcvdcdt',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead02}]]"
+			        },
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'yymmdd',
+			        editor: {
+						type: 'textbox',
+						init: dateEditor,
+			        },
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						if(ui.cellData && !regDateFormat.test(ui.cellData)){
+							ui.rowData[ui.dataIndx] = moment().format('YYYY-MM-DD');
+							return {
+								text : moment().format('YYYY-MM-DD')
+							}
+						}
+						ui.rowData[ui.dataIndx] = ui.cellData?.replace(regDivideDateYMD, divideDateFormatYMD);
+						return {
+							text: ui.cellData?.replace(regDivideDateYMD, divideDateFormatYMD),
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wrcvit.rcvdctm}]]',
+					dataType: 'string',
+					dataIndx: 'rcvdctm',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead02}]]"
+			        },
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'hhmmss',
+			        editor: {
+						type: 'textbox',
+						init: timeEditor2,
+			        },
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						if(ui.cellData && !regTimeFormat.test(ui.cellData)){
+							const defaultTime = moment('000000', 'HHmmss').format('HH:mm:ss');
+							ui.rowData[ui.dataIndx] = defaultTime;
+							return {
+								text : defaultTime
+							}
+						}
+						ui.rowData[ui.dataIndx] = ui.cellData?.replace(regDivideTime, divideTimeFormat);
+						return {
+							text: ui.cellData?.replace(regDivideTime, divideTimeFormat),
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wasnit.shplimt}]]',
+					dataType: 'string',
+					dataIndx: 'shplimt',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead02}]]"
+			        },
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'yymmdd',
+			        editor: {
+						type: 'textbox',
+						init: dateEditor,
+			        },
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							text: ui.cellData?.replace(regDivideDateYMD, divideDateFormatYMD),
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wasnit.delvdsr}]]',
+					dataType: 'string',
+					dataIndx: 'delvdsr',
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead02}]]"
+			        },
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'yymmdd',
+			        editor: {
+						type: 'textbox',
+						init: dateEditor,
+			        },
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							text: ui.cellData?.replace(regDivideDateYMD, divideDateFormatYMD),
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				},{
+					title: '[[#{grid.stlotnb}]]',
+					dataType: 'string',
+					dataIndx: 'stlotnb',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+ 						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.suomkey}]]',
+					dataType: 'string',
+					dataIndx: 'suomkey',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+							ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+							});
+							setTimeout(() => {
+								ui.$cell.find('select').pqSelect('open');
+							}, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData && e.doccate === ui.rowData.doccate);
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData,
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary')
+				},{
+					title: '[[#{grid.skugrky}]]',
+					dataType: 'string',
+					dataIndx: 'skugrky',
+					hidden: true,
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData);
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : ui.cellData,
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: false
+				}, {
+					title: '[[#{grid.skustrd}]]',
+					dataType: 'string',
+					dataIndx: 'skustrd',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.purcnum}]]',
+					dataType: 'string',
+					dataIndx: 'purcnum',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+ 						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.btrfstc}]]',
+					dataType: 'string',
+					dataIndx: 'btrfstc',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+							ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+							});
+							setTimeout(() => {
+								ui.$cell.find('select').pqSelect('open');
+							}, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData && e.doccate === ui.rowData.doccate);
+						ui.rowData[ui.dataIndx] = target ? target['[[#{grid.comboKey}]]'] : '';
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : '',
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{im.ostrit.stroqty}]]',
+					dataType: 'integer',
+					summary: {
+						type: 'sum'
+					},
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					dataIndx: 'stroqty',
+					render: ui => {
+ 						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: false
+				},{
+					title: '[[#{grid.skustat}]]',
+					dataType: 'string',
+					dataIndx: 'skustat',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead01}]]'
+					},
+					editor: {
+						type: 'select',
+						init: ui => {
+							ui.$cell.find('select').pqSelect({
+        						 checkbox: true,
+        						 search: false,
+        						 width: getSelectBoxWidthCondition(ui)
+							});
+							setTimeout(() => {
+								ui.$cell.find('select').pqSelect('open');
+							}, 250);
+	        			},
+						valueIndx: '[[#{grid.comboKey}]]',
+			            labelIndx: '[[#{grid.comboValue}]]',
+						options: ui => window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]
+					},
+					render: ui => {
+						const target = window[document.querySelector('#' + pageId + convertCamelCaseToPascalCase(ui.dataIndx)).dataset.cbVariable]?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData);
+						ui.rowData[ui.dataIndx] = target ? target['[[#{grid.comboKey}]]'] : '';
+ 						return {
+  							text: target ? target['[[#{grid.comboValue}]]'] : '',
+							cls: !ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary')
+				}, {
+					title: '[[#{grid.fncusnm}]]',
+					dataType: 'string',
+					dataIndx: 'fncusky',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					render: ui => {
+ 						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary')
+				},{
+					title: '[[#{im.wasnit.restkyn}]]',
+					dataType: 'string',
+					dataIndx: 'restkyn',
+					align: 'center',
+					type: 'checkbox',
+					sortable: false,
+					editor: false,
+					cb: {
+						all: false,
+						check: 'Y',
+						uncheck: 'N'
+					},
+			        styleHead: {
+			        	'background-color': "[[#{grid.styleHead02}]]"
+			        },
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+ 						return {
+							cls: !ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{im.wasnit.stlayer}]]',
+					dataType: 'integer',
+					dataIndx: 'stlayer',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui =>  ui.rowData.hasOwnProperty('parentId'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.indimet}]]',
+					dataType: 'integer',
+					format: '#,###',
+					dataIndx: 'indimet',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{grid.outdimt}]]',
+					dataType: 'integer',
+					format: '#,###',
+					dataIndx: 'outdimt',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId'),
+					render: ui => {
+						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+						};
+					}
+				}, {
+					title: '[[#{im.wasnit.serinum}]]',
+					dataType: 'integer',
+					dataIndx: 'serinum',
+					styleHead: {
+						'background-color': '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => ui.rowData.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary'),
+					render: ui => {
+ 						return {
+							cls: !ui?.rowData?.hasOwnProperty('parentId') && !ui?.rowData?.hasOwnProperty('pq_gsummary') ? 'color-gray pq-cell-disable' : ''
+ 						};
+					}
+				}, {
+					title: '[[#{grid.credate}]]',
+					dataType: 'string',
+					dataIndx: 'credate',
+					hidden: true,
+					editable: false
+				}, {
+					title: '[[#{grid.cretime}]]',
+					dataType: 'string',
+					dataIndx: 'cretime',
+					hidden: true,
+					editable: false
+				}, {
+					title: '[[#{grid.creuser}]]',
+					dataType: 'string',
+					dataIndx: 'creuser',
+					hidden: true,
+					editable: false
+				}, {
+					title: '[[#{grid.lmodate}]]',
+					dataType: 'string',
+					dataIndx: 'lmodate',
+					hidden: true,
+					editable: false
+				}, {
+					title: '[[#{grid.lmotime}]]',
+					dataType: 'string',
+					dataIndx: 'lmotime',
+					hidden: true,
+					editable: false
+				}, {
+					title: '[[#{grid.lmouser}]]',
+					dataType: 'string',
+					dataIndx: 'lmouser',
+					hidden: true,
+					editable: false
+				}, {
+					title: '[[#{grid.updtchk}]]',
+					dataType: 'integer',
+					dataIndx: 'updtchk',
+					editable: false,
+					hidden: true
+				}
+			];
+			// 그리드 기본 세팅
+			const doe023TreeGrid = new GridUtil(doe023TreeGridCM, pageId, pageId + 'TreeGrid');
+
+			doe023TreeGrid.setTreeModel({
+				dataIndx: 'id',
+	            checkbox: true,
+	            checkboxHead: true,
+	            filterShowChildren: true,
+	            cascade: true,
+				summary: true,
+				format: 'flat'
+			}); // grid tree model
+
+			doe023TreeGrid.setCustom(function(){
+				const pqGrid = this;
+				const warekey = document.querySelector('#' + pageId + 'Warekey');
+				const parentDataList = pqGrid.getData().filter(e => {
+					return !e.hasOwnProperty('parentId');
+				});
+
+				let nodeId=1;
+				while(pqGrid.getData().findIndex(e => Number(e.id) === nodeId) !== -1){
+					nodeId++;
+				}
+
+				const nodeData = {
+					id: nodeId,
+					warekey: warekey.value,
+					doccate: '100',
+ 					whnamlc: warekey.options[warekey.selectedIndex].text,
+ 					strdate: moment().format('YYYY-MM-DD'),
+ 					strtime: moment().format('HH:mm:ss'),
+				};
+
+				if(nodeData){
+					pqGrid?.Tree()?.addNodes([nodeData]);
+					pqGrid?.Tree()?.checkNodes([nodeData]);
+					pqGrid.setSelection({
+						rowIndxPage: pqGrid.Tree().getNode(nodeData.id).pq_ri + 1,
+						colIndx: 1,
+						focus: true
+					}); // 추가된 row 선택
+				}
+			}, '[[#{bt.addOrder}]]'); // 오더추가
+
+			// 그리드 추가
+			doe023TreeGrid.setAdd(function(evt, ui){ // 세부오더
+
+				const pqGrid = this;
+				if(!pqGrid.pdata.length){
+					alert('[[#{ms.validation.SelectOrderNumber}]]');
+					return;
+				}
+
+				const selection = pqGrid.Selection().getSelection();
+				if(selection[0]?.rowData.hasOwnProperty('parentId')){
+					alert('[[#{ms.validation.addBeforeSelectOrderNumber}]]');
+					return;
+				}
+
+				const parent = selection[0]?.rowData;
+				const parentEssentialCols = ['warekey', 'doccate', 'doctype', 'rsncode', 'vehicky','vownkey', 'strdate', 'strtime'];
+
+	    		for(let checkCol of parentEssentialCols){
+    				if(null === parent[checkCol] || undefined === parent[checkCol] || '' === parent[checkCol]){
+		    	  		alert((parent.pq_ri+1)+' [[#{ms.row}]] '+'[[#{ms.requiredValue}]]' + '(' + pqGrid.getColModel().find(e => e.dataIndx === checkCol).title + ')'); // 필수입력 값을 입력해주세요
+
+	    	  			return false;
+    				}
+	    		} // header 필수 값 먼저 체크
+
+				const childrenDataList = pqGrid.getData().filter(e =>  (e.hasOwnProperty('parentId') && e.parentId === parent?.id));
+
+				let nodeId=1;
+				while(pqGrid.getData().findIndex(e => e.hasOwnProperty('parentId')
+																&& e.parentId === parent.id
+																&& nodeId === Number(e.id.substring(e.id.lastIndexOf('-')+1))) !== -1){
+					nodeId++;
+				}
+
+				if(selection.length && parent && parent.hasOwnProperty('id') && !parent.hasOwnProperty('parentId')) {
+					const nodeData = {
+ 						id: parent.id + '-' + nodeId,
+ 						poshptm: '000000',
+ 						stroqty: 1,
+ 	 					rchsqty: 0,
+ 	 					skuweig: 0,
+ 	 					skuwidt: 0,
+ 	 					skuleng: 0,
+ 	 					skuthic: 0,
+ 	 					grosswg: 0,
+ 	 					grosswd: 0,
+ 	 					grossln: 0,
+ 	 					grossth: 0,
+ 	 					stlayer: nodeId,
+ 	 					serinum: 1,
+ 	 					suomkey: 'KG',
+ 	 					skustat: '00' // 정상
+					};
+
+					pqGrid.Tree().expandNodes([parent]);
+					pqGrid.Tree().addNodes([nodeData], parent);
+					pqGrid.Tree().checkNodes([nodeData]);
+                } else {
+                    alert('[[#{ms.validation.addBeforeSelectOrderNumber}]]');
+                }
+			});
+
+			doe023TreeGrid.setDelete(async function(evt, ui){
+				const pqGrid = this;
+				if(!pqGrid.pdata.length){
+					alert('[[#{ms.validation.SelectOrderNumber}]]');
+					return;
+				}
+				const gridCheck = pqGrid.Tree().getCheckedNodes();
+
+				if(!confirm('[[#{ms.choiceRowDelete}]]')){
+					return;
+				}
+
+				pqGrid.Tree().deleteNodes(gridCheck);
+			});
+
+			doe023TreeGrid.setRowInit(function(ui){
+				const rd = ui.rowData;
+
+				if( rd.pq_gsummary ){
+					return {
+						style: 'background: lightblue; font-weight: bold;'
+					};
+				} else if(!rd.hasOwnProperty('parentId')){
+					return {
+						style: 'background: lightyellow; font-weight: bold;'
+					};
+				}
+			});
+
+			doe023TreeGrid.setChange(async function(evt, ui){
+				if('edit' === ui.source || 'paste' === ui.source || 'clear' === ui.source){
+					const updateRowList = [];
+					for(const updateData of ui.updateList) {
+		    			const newRow = {};
+
+		    			if(updateData.newRow.hasOwnProperty('poshpdt')){
+		    				const nameOfDay = new Date(updateData?.rowData?.poshpdt?.replace(regDivideDateYMD, divideDateFormatYMD)).getDay();
+		    				newRow['poshpdy'] = weekdayList[nameOfDay];
+		    				updateData.rowData.poshpdy = weekdayList[nameOfDay];
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('doccate')){
+		    				newRow['doctype'] = null;
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('doctype')){
+		    				//문서타입 변경 후 자동 사유코드 세팅
+		    				const rsncodFilter = window['rsncodeRelationList'].filter(e=> e.warekey === updateData.rowData.warekey && e.doccate === updateData.rowData.doccate && e.doctype === updateData.rowData.doctype && e.rscate1 === 'NORMAL');
+		    				newRow['rsncode'] = rsncodFilter.length ? rsncodFilter[0].rsncode : '';
+
+		    				const filterStrategyDocs = window.doctype100List.filter(e => e.doctat1 === 'STRATEGY');
+		    				const colModels = this.option('colModel');
+
+		    				for(const strategyDoc of filterStrategyDocs){
+		    					const styleHeadColor = strategyDoc.combovl === updateData.newRow.doctype ? {'background-color': '[[#{grid.styleHead02}]]'} : {'background-color': '[[#{grid.styleHead01}]]'};
+								const columnsToProcess = [...columnsToUpdate];
+
+								if(updateData.rowData.doctype === '190'){
+									columnsToProcess.push(...phyInboundColumns);
+								}else{
+									phyInboundColumns.forEach(function(dataIndx){
+										const index = childEssentialCols.indexOf(dataIndx);
+										if(index !== -1){
+											childEssentialCols.splice(index, 1);
+										}
+
+										const colIndx = colModels.findIndex(col => col.dataIndx === dataIndx);
+										if(colIndx !== -1){
+											colModels[colIndx].styleHead = { 'background-color': '[[#{grid.styleHead02}]]' };
+										}
+									});
+								}
+
+								columnsToProcess.forEach(function(dataIndx){
+	    							const colIndx = colModels.findIndex(col => col.dataIndx === dataIndx);
+
+									if(colIndx !== -1){
+										colModels[colIndx].styleHead = styleHeadColor;
+										if (styleHeadColor['background-color'] === '[[#{grid.styleHead01}]]') {
+											if (!childEssentialCols.includes(dataIndx)) {
+												childEssentialCols.push(dataIndx);
+											}
+										}else{
+											const index = childEssentialCols.indexOf(dataIndx);
+											if (index !== -1) {
+												childEssentialCols.splice(index, 1);
+											}
+										}
+									}
+	    						});
+		    				}
+		    				for(const strategyDoc of filterStrategyDocs){
+		    					const styleHeadColor = strategyDoc.combovl === updateData.newRow.doctype ? {'background-color': '[[#{grid.styleHead01}]]'} : {'background-color': '[[#{grid.styleHead02}]]'};
+
+	    						columnsUpdate.forEach(function(dataIndx){
+	    							const colIndx = colModels.findIndex(col => col.dataIndx === dataIndx);
+
+									if(colIndx !== -1){
+										colModels[colIndx].styleHead = styleHeadColor;
+										if (styleHeadColor['background-color'] === '[[#{grid.styleHead01}]]') {
+											if (!childEssentialCols.includes(dataIndx)) {
+												childEssentialCols.push(dataIndx);
+											}
+										}else{
+											const index = childEssentialCols.indexOf(dataIndx);
+											if (index !== -1) {
+												childEssentialCols.splice(index, 1);
+											}
+										}
+									}
+	    						});
+		    				}
+		    				this.refreshHeader();
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('vehicky')){
+		    				const drvernmTarget = window['vehickyRelationList']?.find(e => e.vehicky === updateData.newRow.vehicky);
+		    				newRow['vownkey'] = drvernmTarget ? drvernmTarget.vownkey : null;
+		    				newRow['drvernm'] = drvernmTarget ? drvernmTarget.drvernm : null;
+		    				newRow['vhcfnam'] = drvernmTarget ? drvernmTarget.vhcfnam : null;
+		    			}
+
+		    			if((updateData.newRow.hasOwnProperty('toareky')) && updateData.newRow.toareky){
+		    				newRow['tolocky'] = null;
+		    				if(updateData.newRow.hasOwnProperty('tolocky') && updateData.newRow.tolocky){
+		    					newRow['tolocky'] = updateData.newRow.tolocky;
+		    				}
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('tolocky') && updateData.newRow.tolocky){
+		    				newRow['ullocky'] = null;
+		    				newRow['equipky'] = null;
+		    				newRow['tolayer'] = null;
+	    					if(updateData.newRow.hasOwnProperty('equipky') && updateData.newRow.equipky){
+	    						newRow['equipky'] = updateData.newRow.equipky;
+	    					}
+	    					if(updateData.newRow.hasOwnProperty('ullocky') && updateData.newRow.ullocky){
+	    						newRow['ullocky'] = updateData.newRow.ullocky;
+	    					}
+
+	    					if(updateData.newRow.hasOwnProperty('tolayer') && updateData.newRow.tolayer){
+	    						newRow['tolayer'] = updateData.newRow.tolayer;
+	    					}
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('itemcod')){
+		    				const skudescTarget= window[document.querySelector('#' + pageId + 'Itemcod').dataset.cbVariable]?.find( e => e['[[#{grid.comboKey}]]'] === updateData.newRow.itemcod);
+		    				newRow['skudesc'] = skudescTarget? skudescTarget['[[#{grid.comboValue}]]'] : '';
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('custcod') && updateData.newRow.custcod){
+		    				const custkeyFilter = window['custkeyList']?.find(e=> e.combovl === updateData.newRow.custcod);
+		    				newRow['custnam'] = custkeyFilter.combonm;
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('custnam')){
+		    				const custkeyFilter = window['custkeyList']?.find(e=> e.combonm === updateData.newRow.custnam);
+		    				newRow['custcod'] = custkeyFilter ? custkeyFilter.combovl : '';
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('ownerky') && updateData.newRow.ownerky){
+		    				const ownerkeyFilter = window['custkeyList']?.find(e=> e.combovl === updateData.newRow.ownerky);
+		    				newRow['ownrnam'] = ownerkeyFilter.combonm;
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('ownrnam')){
+		    				const ownerkeyFilter = window['custkeyList']?.find(e=> e.combonm === updateData.newRow.ownrnam);
+		    				newRow['ownerky'] = ownerkeyFilter ? ownerkeyFilter.combovl : '';
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('destorg') && updateData.newRow.destorg){
+		    				const destkeyTarget = window['destinationRelationList']?.find(e => (e.ownerky === updateData.rowData.ownerky && e.regikey === updateData.rowData.regiorg && e.destkey === updateData.newRow.destorg));
+							newRow['deorgnm'] = destkeyTarget ? destkeyTarget.denamlc : '';
+							newRow['demdman'] = destkeyTarget ? destkeyTarget.demannm : '';
+							newRow['demdadr'] = destkeyTarget ? destkeyTarget.desaddr : '';
+							newRow['dempocd'] = destkeyTarget ? destkeyTarget.deposcd : '';
+							newRow['demdtln'] = destkeyTarget ? destkeyTarget.desteln : '';
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('deorgnm')){
+		    				const destkeyTarget = window['destinationRelationList']?.find(e => (e.ownerky === updateData.rowData.ownerky && e.regikey === updateData.rowData.regiorg && e.denamlc === updateData.newRow.deorgnm));
+							newRow['destorg'] = destkeyTarget ? destkeyTarget.destkey : '';
+							newRow['demdman'] = destkeyTarget ? destkeyTarget.demannm : '';
+							newRow['demdadr'] = destkeyTarget ? destkeyTarget.desaddr : '';
+							newRow['dempocd'] = destkeyTarget ? destkeyTarget.deposcd : '';
+							newRow['demdtln'] = destkeyTarget ? destkeyTarget.desteln : '';
+		    			}
+		    			if(updateData.newRow.hasOwnProperty('destmod') && updateData.newRow.destmod){
+		    				const destkeyTarget = window['destinationRelationList']?.find(e => (e.ownerky === updateData.rowData.ownerky && e.regikey === updateData.rowData.regimod && e.destkey === updateData.newRow.destmod));
+							newRow['demodnm'] = destkeyTarget ? destkeyTarget.denamlc : '';
+							newRow['demdman'] = destkeyTarget ? destkeyTarget.demannm : '';
+							newRow['demdadr'] = destkeyTarget ? destkeyTarget.desaddr : '';
+							newRow['dempocd'] = destkeyTarget ? destkeyTarget.deposcd : '';
+							newRow['demdtln'] = destkeyTarget ? destkeyTarget.desteln : '';
+		    			}
+
+		    			updateRowList.push({
+							rowIndx: updateData.rowIndx,
+							newRow: newRow
+						});
+					}
+					this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}
+			});
+
+			initFunc();
+
+			doe023TreeGrid.open();
+			// Grid 객체 생성
+			async function initFunc(){
+				const relationList = await Promise.allSettled([
+					getReasonCodeRelationList(),
+					getVehicelRelationList(),
+					getAreaRelationList(),
+					getLocationRelationList(),
+					getDestinationRelationList(),
+					getBtrcateList(),
+					getMeqlocList()
+				]);
+				await _commonInit(pageId);
+
+				const dataList = [
+					{
+						listName: 'rsncodeRelationList'
+					}, {
+						listName: 'vehickyRelationList'
+					}, {
+						listName: 'areaRelationList'
+					}, {
+						listName: 'locationRelationList'
+					}, {
+						listName: 'destinationRelationList'
+				}, {
+						listName: 'btrcateList'
+				}, {
+						listName: 'meqlocList'
+				}];
+
+				for(let idx=0; idx < relationList.length; idx++){
+					const target = dataList[idx];
+					target['list'] = relationList[idx].value;
+				}
+
+				setPreloadDataOnWindow(dataList);
+				resetSearchConditions(pageId, 0, 0, 1);
+				doe023CurrentWarekey = document.querySelector('#doe023Warekey').value;
+			};
+
+			// Grid 데이터 저장 함수
+			async function saveDoe023List(saveDataList){
+				if(!saveDataList){
+					return false;
+				}
+
+				for(const saveData of saveDataList){
+					if(saveData.doctype === '190'){
+						saveData.children.sort((a, b) => {
+							if(a.tolocky !== b.tolocky){
+								return a.tolayer < b.tolayer ? -1 : 1;
+							}
+
+							const aTolayer = a.tolayer ? a.tolayer : Infinity;
+							const bTolayer = b.tolayer ? b.tolayer : Infinity;
+
+							return aTolayer - bTolayer;
+	 	        		});
+					}
+				}
+
+				const grid = pq.grid('#' + pageId + 'TreeGrid');
+				grid.showLoading();
+				const res = await fetchUtil('PUT', '/im/inbound/doe023/grids/1', saveDataList);
+
+				if(res.status === 200){
+					grid.option('dataModel', { data: [] });
+					grid.refreshDataAndView();
+				}
+
+				grid.hideLoading();
+			}
+
+			// 초기화
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+				const grid = pq.grid('#' + pageId + 'TreeGrid');
+				const gridData = grid.getData();
+				if(gridData.length && confirm('[[#{ms.listViewRollback}]]')){
+					resetSearchConditions(pageId, 0, 0, 1);
+					grid.deleteNodes(grid.getData());
+				}
+			});
+
+			// 저장
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const grid = pq.grid('#' + pageId + 'TreeGrid');
+				// TreeGrid 사용 시 checkNodes가 아닌 pq_tree_cb 속성 사용.
+				// item 해제 시 트리 헤더 pq_tree_cb === null. 헤더가 체크 해제 될 시 false.
+				const gridCheck = grid.pdata.filter(e => !e.hasOwnProperty('parentId') && e.children && e.pq_tree_cb !== false);
+
+				//헤더 체크여부 확인 후 아이템 체크 여부 필터링.
+				gridCheck.forEach(element => element.children = element.children.filter(item => item.pq_tree_cb));
+
+				if(gridCheck.length===0){
+					alert('[[#{ms.choiceRowZero}]]'); // 선택된 Row가 없습니다
+					return;
+				}
+
+				for(const target of gridCheck){
+					const parentEssentialCols = ['warekey', 'doccate', 'doctype', 'rsncode', 'vehicky', 'vownkey', 'strdate', 'strtime'];
+
+		    		for(let checkCol of parentEssentialCols){
+	    				if(null === target[checkCol] || undefined === target[checkCol] || '' === target[checkCol]){
+			    	  		alert((target.pq_ri+1)+' [[#{ms.row}]] '+'[[#{ms.requiredValue}]]' + '(' + grid.getColModel().find(e => e.dataIndx === checkCol).title + ')'); // 필수입력 값을 입력해주세요
+			    	  		grid.editCell({ rowIndx : target.pq_ri, dataIndx : checkCol });
+		    	  			return false;
+	    				}
+		    		} // header 필수 값 먼저 체크
+
+					if(!target.children?.length){
+						alert(target.id + '[[#{ms.noDetailOrder}]]');
+
+						return false;
+					} else {
+						for(const child of target.children){
+				    		for(let checkCol of childEssentialCols){
+			    				if(null === child[checkCol] || undefined === child[checkCol] || '' === child[checkCol]){
+					    	  		alert((child.pq_ri+1)+' [[#{ms.row}]] '+'[[#{ms.requiredValue}]]' + '(' + grid.getColModel().find(e => e.dataIndx === checkCol).title + ')'); // 필수입력 값을 입력해주세요
+					    	  		grid.editCell({ rowIndx : child.pq_ri, dataIndx : checkCol });
+				    	  			return false;
+			    				}
+			    				if(checkCol === 'tolayer'){
+			    					const tolocAndTolayerKey = new Set();
+
+									for(let gData of target.children){
+										const key = gData.tolocky + '_' + gData.tolayer;
+
+										if(tolocAndTolayerKey.has(key)){
+											const alertTxt = '[[#{ms.DuplicateKeyErr}]]' + '( ' + (child.pq_ri+1) + '[[#{ms.row}]] & ' + (gData.pq_ri+1) + '[[#{ms.row}]] )';
+
+											alert(alertTxt);
+											grid.editCell({ rowIndx : gData.pq_ri, dataIndx : 'tolayer' });
+											return false;
+										}
+										tolocAndTolayerKey.add(key);
+									}
+			    				}
+				    		}
+						}
+					}
+
+		    		// 입고예정확정서 헤더 저장 가능여부 판별
+					let count = 0;
+					target.children.forEach(e => {
+						if((e.toareky && e.toareky !='') &&(e.tolocky && e.tolocky !='') && (e.ullocky && e.ullocky !='') && (e.equipky && e.equipky !='')){
+							count++;
+						}
+					});
+					target.hdsavyn = target.children.length === count ? 'Y' : 'N';
+				}
+
+				if(!confirm('[[#{ms.checksave}]]')){
+					return false;
+				};
+
+				saveDoe023List(gridCheck);
+			});
+
+			// 창고 변경시 자동조회
+			document.querySelector('#doe023Warekey').addEventListener('change', async function() {
+				const grid = pq.grid('#doe023TreeGrid');
+				if(grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						this.value = doe023CurrentWarekey;
+						return;
+					}
+				}
+				doe023CurrentWarekey = this.value;
+				grid.deleteNodes(grid.getData());
+			});
+		}();
+		</script>
+</div>
+</html>

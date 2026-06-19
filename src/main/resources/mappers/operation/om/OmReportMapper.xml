@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.om.mapper.OmReportMapper">
+	<!-- doe049 출고지시서 -->
+	<select id="selectShippingOrder" resultType="com.kbph.logistics.om.domain.OmReportDTO">
+		/* selectShippingOrder */
+		SELECT ROW_NUMBER() OVER(ORDER BY OI.OUTBOIT) AS ROWNUM
+			 , MW.WHNAMLC, OH.OUTBOKY
+			 , CONCAT(DATE_FORMAT(OH.OBODATE,'%Y-%m-%d'), DATE_FORMAT(STR_TO_DATE(OH.OBOTIME,'%H%i%s'),'%H:%i:%s')) AS OBODATE
+			 , MV.VHCFNAM, OI.SKUMKEY, CONCAT(MA.AREANAM, ' ', ML1.LOCANAM, ' ', OI.FRLAYER, '단') AS SKARLOC
+			 , ML2.LOCANAM AS SHLOCNM, ME.EQUINAM AS EQUINAM, OI.SKUTHIC, OI.SKUWIDT
+			 , OI.SKULENG, OI.SKUWEIG, MG.GRPKYNM AS GRPKYNM
+			 , IF((OI.OWNERKY IS NULL OR TRIM(OI.OWNERKY ) = ''), OI.OWNRNAM, MC.CUNAMLC) AS CUNAMLC
+			 , OI.DEMODNM, OI.DEMDADR
+		  FROM ${userData.schema}.OOUBIT OI
+		 INNER JOIN ${userData.schema}.OOUBHD OH
+		 		 ON OH.OUTBOKY = OI.OUTBOKY
+		 		AND OH.WAREKEY = OI.WAREKEY
+		 INNER JOIN ${userData.schema}.MWARMA MW
+		 		 ON MW.WAREKEY = OI.WAREKEY
+		 		AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userData.commonSchema}.MVHCMA MV
+		 		 ON MV.VOWNKEY = OH.VOWNKEY
+		 		AND MV.VEHICKY = OH.VEHICKY
+		 		AND MV.VHUSEYN = 'Y'
+		 INNER JOIN ${userData.schema}.MAREMA MA
+		 		 ON MA.WAREKEY = OI.WAREKEY
+		 		AND MA.AREAKEY = OI.FRAREKY
+		 		AND MA.ARUSEYN = 'Y'
+		 INNER JOIN ${userData.schema}.MLOCMA ML1
+		 		 ON ML1.WAREKEY = OI.WAREKEY
+		 		AND ML1.AREAKEY = OI.FRAREKY
+		 		AND ML1.LOCAKEY = OI.FRLOCKY
+		 		AND ML1.LOUSEYN = 'Y'
+		 INNER JOIN ${userData.schema}.MLOCMA ML2
+		 		 ON ML2.WAREKEY = OI.WAREKEY
+		 		AND ML2.AREAKEY = OI.FRAREKY
+		 		AND ML2.LOCAKEY = OI.SHLOCKY
+		 		AND ML2.LOUSEYN = 'Y'
+		 INNER JOIN ${userData.schema}.MEQUMA ME
+		 		 ON OI.EQUIPKY = ME.EQUIPKY
+		 		AND ME.EQUSEYN = 'Y'
+		 INNER JOIN ${userData.schema}.MGRPMA MG
+		 		 ON MG.SKUGRKY = OI.SKUGRKY
+		 		AND MG.GRUSEYN = 'Y'
+		  LEFT JOIN ${userData.schema}.MCUSMA MC
+		  		 ON MC.CUSTKEY = OI.OWNERKY
+		  		AND MC.CUDELYN = 'Y'
+  		<where>
+  			<if test='param.outboky != null and param.outboky != ""'>
+  				AND OH.OUTBOKY = #{param.outboky}
+			</if>
+			<if test='param.warekey != null and param.warekey != ""'>
+				AND OI.WAREKEY = #{param.warekey}
+		    </if>
+		</where>
+		  GROUP BY MW.WHNAMLC, OH.OUTBOKY, OH.OBODATE, OH.OBOTIME
+		  		 , MV.VHCFNAM, OI.SKUMKEY, MA.AREANAM, ML1.LOCANAM
+		  		 , OI.FRLAYER, ML2.LOCANAM, ME.EQUINAM, OI.SKUTHIC
+		  		 , OI.SKUWIDT, OI.SKULENG, OI.SKUWEIG, MG.GRPKYNM
+		  		 , OI.OWNERKY, OI.OWNRNAM, MC.CUNAMLC, OI.DESTMOD
+		  		 , OI.DEMODNM
+  		  ORDER BY ROWNUM
+	</select>
+
+	<select id="selectShippingOrderParam" resultType="com.kbph.logistics.om.domain.OmReportDTO">
+		/* selectShippingOrderParam */
+		SELECT SUM(OI.RGITQTY) AS QUANCNT, SUM(OI.GROSSWG) AS WEIGSUM
+		FROM ${userData.schema}.OOUBIT OI
+		<where>
+		    <if test='param.outboky != null and param.outboky != ""'>
+		    	AND OI.OUTBOKY = #{param.outboky}
+		    </if>
+		    <if test='param.warekey != null and param.warekey != ""'>
+		    	AND OI.WAREKEY = #{param.warekey}
+		    </if>
+		</where>
+	</select>
+
+	<!-- 출고송장 쿼리 -->
+	<select id="selectShippingInvoiceHead" resultType="com.kbph.logistics.om.domain.OmReportDTO">
+		/* selectShippingInvoiceHead */
+		SELECT
+		    WH.SHPDCKY, MW.WHNAMLC, WH.VOWNKEY, MO.VONAMLC
+		    , MV.VHCFNAM, WI.SKUDESC
+		    , IF((WI.CUSTCOD IS NULL OR TRIM(WI.CUSTCOD) = ''), WI.CUSTNAM, MC.CUNAMLC) AS CUNAMLC
+		    , WI.REGIMOD, CONCAT('[', WI.REGIMOD, '] ', MR.RENAMLC) AS RENAMLC, WI.DESTMOD
+		    , CONCAT(IF((WI.DEMODNM IS NULL OR TRIM(WI.DEMODNM) = ''), MD.DENAMLC, WI.DEMODNM), '(', WI.DEMDADR , ' / ', WI.DEMPOCD, ' / ', WI.DEMDTLN, ' / ', WI.DEMDMAN, ')') AS DEMODNM
+		    , COUNT(WI.SHPDCKY) as ITEMCNT
+		    , SUM(WI.SKUWEIG) as SKWGSUM
+		    , SUM(WI.GROSSWG) as GRWGSUM
+		    , CONCAT(DATE_FORMAT(WH.SPEHDAT,'%Y-%m-%d'), ' ', DATE_FORMAT(STR_TO_DATE(WH.SPEHTIM,'%H%i%s'),'%H:%i:%s')) AS SPEHDAT
+		    , MW.WARTELN, MW.PROOFYN
+		FROM
+		    ${userData.schema}.WSHPIT WI
+		INNER JOIN ${userData.schema}.WSHPHD WH
+		    ON WH.SHPDCKY = WI.SHPDCKY
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WI.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.commonSchema}.MVHCMA MV
+		    ON MV.VOWNKEY = WH.VOWNKEY
+		    AND MV.VEHICKY = WH.VEHICKY
+		    AND MV.VHUSEYN = 'Y'
+		INNER JOIN ${userData.commonSchema}.MVOWMA MO
+		    ON MO.VOWNKEY = WH.VOWNKEY
+		    AND MO.VOUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MCUSMA MC
+		    ON MC.CUSTKEY = WI.CUSTCOD
+		    AND MC.CUDELYN = 'Y'
+		INNER JOIN ${userData.schema}.MREGMA MR
+		    ON MR.REGIKEY = WI.REGIMOD
+		    AND MR.REUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MDESMA MD
+		    ON MD.REGIKEY = WI.REGIMOD
+		    AND MD.CUSTKEY = WI.CUSTCOD
+		    AND MD.DESTKEY = WI.DESTMOD
+		    AND MD.DEUSEYN = 'Y'
+		WHERE
+		    WI.WAREKEY = #{param.warekey}
+		    AND WI.SHPDCKY = #{param.shpdcky}
+		GROUP BY
+		    WH.SHPDCKY, MW.WHNAMLC, WH.VOWNKEY, MO.VONAMLC
+		    , MV.VHCFNAM, WI.SKUDESC, MC.CUNAMLC, WI.REGIMOD, MR.RENAMLC
+		    , WI.DESTMOD, MD.DENAMLC
+		    , WH.SPEHDAT, WH.SPEHTIM
+		    , MW.WARTELN
+	</select>
+
+<!-- 	<select id="selectShippingInvoiceHeadList" resultType="com.kbph.logistics.om.domain.OmReportDTO"> -->
+<!-- 		/* selectShippingInvoiceHeadList */ -->
+<!-- 		SELECT -->
+<!-- 		    WH.SHPDCKY, WH.WAREKEY, MW.WHNAMLC, WH.VOWNKEY, MO.VONAMLC -->
+<!-- 		    , MV.VHCFNAM, WI.SKUDESC -->
+<!-- 		    , IF((WI.CUSTCOD IS NULL OR TRIM(WI.CUSTCOD) = ''), WI.CUSTNAM, MC.CUNAMLC) AS CUNAMLC -->
+<!-- 		    , WI.REGIMOD, CONCAT('[', WI.REGIMOD, '] ', MR.RENAMLC) AS RENAMLC, WI.DESTMOD -->
+<!-- 		    , CONCAT(IF((WI.DEMODNM IS NULL OR TRIM(WI.DEMODNM) = ''), MD.DENAMLC, WI.DEMODNM), '(', WI.DEMDADR , ' / ', WI.DEMPOCD, ' / ', WI.DEMDTLN, ' / ', WI.DEMDMAN, ')') AS DEMODNM -->
+<!-- 		    , IF((WI.DEMODNM IS NULL OR TRIM(WI.DEMODNM) = ''), MD.DENAMLC, WI.DEMODNM) AS DENAMLC -->
+<!-- 		    , COUNT(WI.SHPDCKY) as ITEMCNT -->
+<!-- 		    , SUM(WI.SKUWEIG) as SKWGSUM -->
+<!-- 		    , SUM(WI.GROSSWG) as GRWGSUM -->
+<!-- 		    , CONCAT(DATE_FORMAT(WH.SPEHDAT,'%Y-%m-%d'), ' ', DATE_FORMAT(STR_TO_DATE(WH.SPEHTIM,'%H%i%s'),'%H:%i:%s')) AS SPEHDAT -->
+<!-- 		    , MW.WARTELN, MW.PROOFYN -->
+<!-- 		FROM -->
+<!-- 		    ${userData.schema}.WSHPIT WI -->
+<!-- 		INNER JOIN ${userData.schema}.WSHPHD WH -->
+<!-- 		    ON WH.SHPDCKY = WI.SHPDCKY -->
+<!-- 		INNER JOIN ${userData.schema}.MWARMA MW -->
+<!-- 		    ON MW.WAREKEY = WI.WAREKEY -->
+<!-- 		    AND MW.WHUSEYN = 'Y' -->
+<!-- 		INNER JOIN ${userData.commonSchema}.MVHCMA MV -->
+<!-- 		    ON MV.VOWNKEY = WH.VOWNKEY -->
+<!-- 		    AND MV.VEHICKY = WH.VEHICKY -->
+<!-- 		    AND MV.VHUSEYN = 'Y' -->
+<!-- 		INNER JOIN ${userData.commonSchema}.MVOWMA MO -->
+<!-- 		    ON MO.VOWNKEY = WH.VOWNKEY -->
+<!-- 		    AND MO.VOUSEYN = 'Y' -->
+<!-- 		INNER JOIN ${userData.schema}.MREGMA MR -->
+<!-- 		    ON MR.REGIKEY = WI.REGIMOD -->
+<!-- 		    AND MR.REUSEYN = 'Y' -->
+<!-- 		LEFT JOIN ${userData.schema}.MCUSMA MC -->
+<!-- 		    ON MC.CUSTKEY = WI.CUSTCOD -->
+<!-- 		    AND MC.CUDELYN = 'Y' -->
+<!-- 		LEFT JOIN ${userData.schema}.MDESMA MD -->
+<!-- 		    ON MD.REGIKEY = WI.REGIMOD -->
+<!-- 		    AND MD.CUSTKEY = WI.CUSTCOD -->
+<!-- 		    AND MD.DESTKEY = WI.DESTMOD -->
+<!-- 		    AND MD.DEUSEYN = 'Y' -->
+<!-- 		WHERE -->
+<!-- 		    WI.WAREKEY = #{param.warekey} -->
+<!-- 		    AND WI.SHPDCKY = #{param.shpdcky} -->
+<!-- 		GROUP BY -->
+<!-- 		    WH.SHPDCKY, WH.WAREKEY, MW.WHNAMLC, WH.VOWNKEY, MO.VONAMLC -->
+<!-- 		    , MV.VHCFNAM, WI.SKUDESC, MC.CUNAMLC, WI.REGIMOD, MR.RENAMLC -->
+<!-- 		    , WI.DESTMOD, MD.DENAMLC -->
+<!-- 		    , WH.SPEHDAT, WH.SPEHTIM -->
+<!-- 		    , MW.WARTELN -->
+<!-- 	</select> -->
+
+	<select id="selectShippingInvoiceHeadList" resultType="com.kbph.logistics.om.domain.OmReportDTO">
+		/* selectShippingInvoiceHeadList */
+		SELECT
+		    WH.SHPDCKY, WH.WAREKEY, MW.WHNAMLC, WH.VOWNKEY, MO.VONAMLC
+		    , MV.VHCFNAM, WI.SKUDESC
+			, IF((WI.OWNERKY IS NULL OR TRIM(WI.OWNERKY) = ''),WI.OWNRNAM,MC1.CUNAMLC) AS OWNRNAM
+			, IF((WI.CUSTCOD IS NULL OR TRIM(WI.CUSTCOD) = ''),WI.CUSTNAM,MC2.CUNAMLC) AS CUNAMLC
+			, WI.FNCUSKY
+		    , WI.REGIMOD, CONCAT('[', WI.REGIMOD, '] ', MR.RENAMLC) AS RENAMLC, WI.DESTMOD
+		    , CONCAT(IF((WI.DEMODNM IS NULL OR TRIM(WI.DEMODNM) = ''), MD.DENAMLC, WI.DEMODNM), '(', WI.DEMDADR , ' / ', WI.DEMPOCD, ' / ', WI.DEMDTLN, ' / ', WI.DEMDMAN, ')') AS DEMODNM
+		    , IF((WI.DEMODNM IS NULL OR TRIM(WI.DEMODNM) = ''), MD.DENAMLC, WI.DEMODNM) AS DENAMLC
+		    , COUNT(WI.SHPDCKY) as ITEMCNT
+		    , SUM(WI.SKUWEIG) as SKWGSUM
+		    , SUM(WI.GROSSWG) as GRWGSUM
+		    , CONCAT(DATE_FORMAT(WH.SPEHDAT,'%Y-%m-%d'), ' ', DATE_FORMAT(STR_TO_DATE(WH.SPEHTIM,'%H%i%s'),'%H:%i:%s')) AS SPEHDAT
+		    , MW.WARTELN, MW.PROOFYN
+		FROM
+		    ${userData.schema}.WSHPIT WI
+		INNER JOIN ${userData.schema}.WSHPHD WH
+		    ON WH.SHPDCKY = WI.SHPDCKY
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WI.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.commonSchema}.MVHCMA MV
+		    ON MV.VOWNKEY = WH.VOWNKEY
+		    AND MV.VEHICKY = WH.VEHICKY
+		    AND MV.VHUSEYN = 'Y'
+		INNER JOIN ${userData.commonSchema}.MVOWMA MO
+		    ON MO.VOWNKEY = WH.VOWNKEY
+		    AND MO.VOUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MREGMA MR
+		    ON MR.REGIKEY = WI.REGIMOD
+		    AND MR.REUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MCUSMA MC1 ON
+			MC1.CUSTKEY 	= WI.OWNERKY
+			AND MC1.CUDELYN = 'Y'
+		LEFT JOIN ${userData.schema}.MCUSMA MC2 ON
+			MC2.CUSTKEY 	= WI.CUSTCOD
+			AND MC2.CUDELYN = 'Y'
+		LEFT JOIN ${userData.schema}.MDESMA MD
+		    ON MD.REGIKEY = WI.REGIMOD
+		    AND MD.CUSTKEY = WI.CUSTCOD
+		    AND MD.DESTKEY = WI.DESTMOD
+		    AND MD.DEUSEYN = 'Y'
+		WHERE
+		    WI.WAREKEY = #{param.warekey}
+		    AND WI.SHPDCKY = #{param.shpdcky}
+		GROUP BY
+			WH.SHPDCKY,
+			WH.WAREKEY,
+			MW.WHNAMLC,
+			WH.VOWNKEY,
+			MO.VONAMLC ,
+			MV.VHCFNAM,
+			WI.SKUDESC,
+			WI.OWNERKY,
+			WI.CUSTCOD,
+			WI.CUSTNAM,
+			MC1.CUNAMLC,
+			MC2.CUNAMLC,
+			WI.FNCUSKY,
+			WI.REGIMOD,
+			MR.RENAMLC ,
+			WI.DESTMOD,
+			MD.DENAMLC ,
+			WH.SPEHDAT,
+			WH.SPEHTIM,
+			MW.WARTELN
+	</select>
+
+<!-- 	<select id="selectShippingInvoiceItem" resultType="com.kbph.logistics.om.domain.OmReportDTO"> -->
+<!-- 		/* selectShippingInvoiceItem */ -->
+<!-- 		SELECT -->
+<!-- 			ROW_NUMBER() OVER(ORDER BY WI.SHPDCKY) AS ROWNUM -->
+<!-- 		    , WI.SHPDCKY, MW.WHNAMLC -->
+<!-- 		    , WI.SKUMKEY, WI.SKUWEIG, WI.SKUWIDT, WI.SKULENG, WI.SKUTHIC -->
+<!-- 		    , WI.GROSSWG, WI.GROSSLN, WI.GROSSWD, WI.GROSSTH -->
+<!-- 		    , WI.ORDERLN, WI.PURCNUM, WI.STLOTNB -->
+<!-- 		    , MC.CUNAMLC, MG.GRPKYNM, WI.DELVDSR -->
+<!-- 		    , CONCAT(WI.FRAREKY, '  ', WI.FRLOCKY) AS SAVEPOS -->
+<!-- 		    , AI.SKUSTRD, AI.INDIMET, AI.OUTDIMT -->
+<!-- 		FROM -->
+<!-- 		    ${userData.schema}.WSHPIT WI -->
+<!-- 		INNER JOIN ${userData.schema}.MWARMA MW -->
+<!-- 		    ON MW.WAREKEY = WI.WAREKEY -->
+<!-- 		    AND MW.WHUSEYN = 'Y' -->
+<!-- 		LEFT JOIN ${userData.schema}.MCUSMA MC -->
+<!-- 		    ON MC.CUSTKEY = WI.CUSTCOD -->
+<!-- 		    AND MC.CUDELYN = 'Y' -->
+<!-- 		INNER JOIN ${userData.schema}.MREGMA MR -->
+<!-- 		    ON MR.REGIKEY = WI.REGIMOD -->
+<!-- 		    AND MR.REUSEYN = 'Y' -->
+<!-- 		INNER JOIN ${userData.schema}.MGRPMA MG -->
+<!-- 			ON MG.SKUGRKY = WI.SKUGRKY -->
+<!-- 			AND MG.GRUSEYN = 'Y' -->
+<!-- 		LEFT JOIN DO_DY.WASNIT AI 재고 생성되는 경우 asn에 없는 경우 존재 -->
+<!-- 			ON WI.WAREKEY = AI.WAREKEY -->
+<!-- 			AND WI.SKUMKEY = AI.SKUMKEY -->
+<!-- 		WHERE -->
+<!-- 		    WI.WAREKEY = #{param.warekey} -->
+<!-- 		    AND WI.SHPDCKY = #{param.shpdcky} -->
+<!-- 	</select> -->
+	<select id="selectShippingInvoiceItem" resultType="com.kbph.logistics.om.domain.OmReportDTO">
+		/* selectShippingInvoiceItem */
+		SELECT
+			ROW_NUMBER() OVER(ORDER BY WI.SHPDCKY) AS ROWNUM
+		    , WI.SHPDCKY, MW.WHNAMLC
+		    , WI.SKUMKEY, WI.SKUWEIG, WI.SKUWIDT, WI.SKULENG, WI.SKUTHIC
+		    , WI.GROSSWG, WI.GROSSLN, WI.GROSSWD, WI.GROSSTH
+		    , WI.ORDERLN, WI.PURCNUM, WI.STLOTNB
+		    , MC.CUNAMLC, MG.GRPKYNM, WI.DELVDSR
+		    , CONCAT(WI.FRAREKY, '  ', WI.FRLOCKY) AS SAVEPOS
+		    , AI.SKUSTRD, AI.INDIMET, AI.OUTDIMT
+		FROM
+		    ${userData.schema}.WSHPIT WI
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WI.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MREGMA MR
+		    ON MR.REGIKEY = WI.REGIMOD
+		    AND MR.REUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MGRPMA MG
+			ON MG.SKUGRKY = WI.SKUGRKY
+			AND MG.GRUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MCUSMA MC
+		    ON MC.CUSTKEY = WI.CUSTCOD
+		    AND MC.CUDELYN = 'Y'
+		LEFT JOIN DO_DY.WASNIT AI <!-- 재고 생성되는 경우 asn에 없는 경우 존재 -->
+			ON WI.WAREKEY = AI.WAREKEY
+			AND WI.SKUMKEY = AI.SKUMKEY
+		WHERE
+		    WI.WAREKEY = #{param.warekey}
+		    AND WI.SHPDCKY = #{param.shpdcky}
+			AND WI.CUSTNAM = #{param.cunamlc}
+			AND WI.OWNRNAM = #{param.ownrnam}
+			AND WI.REGIMOD = #{param.regimod}
+			AND WI.DEMODNM = #{param.denamlc}
+	</select>
+
+	<!-- 인쇄 로그 카운트 -->
+	<select id="selectOmPrintCnt" resultType="Integer">
+		/* selectOmPrintCnt */
+		SELECT COUNT(PRINTSQ) AS printcount
+		FROM ${userData.schema}.SPRTHI
+		WHERE WAREKEY = #{param.warekey}
+		AND DOCTYPE = #{param.doctype}
+		AND PROGRID = #{param.type}
+		<if test='param.type.equals("doe053")'>
+			AND OUTBOKY = #{param.outboky}
+		</if>
+		<if test='param.type.equals("doe057")'>
+			AND SHPDCKY = #{param.shpdcky}
+		</if>
+	</select>
+
+	<!-- 인쇄 로그 저장 -->
+	<insert id="insertOmPrintLog" parameterType="com.kbph.logistics.om.domain.OmReportDTO">
+		/* insertOmPrintLog */
+		INSERT INTO ${userData.schema}.SPRTHI(
+			 PRINTSQ, WAREKEY, DOCCATE, DOCTYPE, PROGRID
+			 , OUTBOKY, SHPDCKY, PRTDATE, PRTTIME, PRTUSER
+			 , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			   #{saveData.printsq}, #{saveData.warekey}, #{saveData.doccate}
+			 , #{saveData.doctype}, #{saveData.type}
+			 <if test='saveData.type.equals("doe053")'>
+			 	, #{saveData.outboky}, ''
+			 </if>
+			 <if test='saveData.type.equals("doe057")'>
+			 	, '', #{saveData.shpdcky}
+			 </if>
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW()  ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+</mapper>

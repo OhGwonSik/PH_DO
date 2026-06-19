@@ -1,0 +1,2604 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="fragments-comScript">
+<script>
+	/* thymeleaf inline variable */
+	const modifyRollbackMsg = '[[#{ms.modifyRollback}]]';
+	const defaultErrorMsg = '[[#{ms.fetchError}]]';
+	const saveSuccessMsg = '[[#{ms.saveSuccess}]]';
+	const saveErrorMsg = '[[#{ms.saveErr}]]';
+	const deleteSuccessMsg = '[[#{ms.deleteSuccess}]]';
+	const deleteErrorMsg = '[[#{ms.deleteErr}]]';
+	const dataZeroMsg = '[[#{ms.getDataZero}]]';
+	const noDataMsg = '[[#{ms.nodata}]]';
+	const allCategoryMsg = '[[#{pq.toolbar.allFields}]]';
+	const loadingMsg = '[[#{ms.loading}]]';
+	$.fn.bootstrapTooltip = $.fn.tooltip.noConflict();  // pqGrid DOM class bootstrap 충돌방지(pqGrid tutorial 참조 => https://paramquery.com/pro/tutorial#topic-bootstrap)
+</script>
+
+<script>
+    /* Regular Expression */
+    const regEngOnly = /^[a-z|A-Z|0-9]/; // English Only
+    const regKorOnly = /^[ㄱ-ㅎ|가-힣|0-9]/; // Korean Only
+    const regNum15Dot10 = /^\d{0,15}.\d{0,10}$/g; // 100,000,000,000,000.0000000000
+    const regNum15Dot3 = /^\d{1,15}.\d{0,3}$/; // 100,000,000,000,000.000
+    const regNum10Dot3 = /^\d{1,10}.\d{0,3}$/; // 1,000,000,000.000
+    const regNum9Digit = /^\d{1,9}$/; // lower than 1,000,000,000
+    const regTimeFormat = /^(?:\d{6}|([01]?[0-9]|2[0-3]):([0-5]?[0-9]):([0-5]?[0-9]))$/; // 6자리 || 시간:분:초
+    const reg24Time = /^(0\d|1\d|2[0-3])(0[1-9]|[0-5]\d)(0[1-9]|[0-5]\d)$/; // 24:00:00
+    const regDivideTime = /(\d{2})(\d{2})(\d{2})/g; // Time string divide
+    const divideTimeFormat = '$1:$2:$3'; // HH:mm:ss
+    const regDateFormat = /^(?:\d{8}|\d{4}-\d{2}-\d{2})$/; // 8자리  || YYYY-MM-DD
+    const regDivideDataYmd = /^\d{4}\d{2}\d{2}$/ // Date divide YYYYMMDD
+    const regDivideDateYMD = /(\d{4})(\d{2})(\d{2})/g; // Date divide yyyy-mm-dd
+    const regDivideDateYM = /(\d{4})(\d{2})/g; // Date divide yyyy-mm
+    const divideDateFormatYmd = '$1$2$3'; // YYYYMMDD
+    const divideDateFormatYMD = '$1-$2-$3'; // yyyy-mm-dd
+    const divideDateFormatYM = '$1-$2'; // yyyy-mm
+    /* Regular Expression end */
+
+    const weekdayList = ['[[#{grid.sunday}]]', '[[#{grid.monday}]]', '[[#{grid.tuesday}]]', '[[#{grid.wednesday}]]', '[[#{grid.thursday}]]', '[[#{grid.friday}]]', '[[#{grid.saturday}]]'];
+
+  	//============================================================
+    // 날짜 Validation (From to 역전 불가)
+    //============================================================
+    function dateValidation(fromDate, toDate, dateName, settingDate, settingNumber) {
+    	['From', 'To'].forEach((suffix) => {
+    	    const element = document.querySelector('#' + dateName + suffix);
+
+    	    //click
+    	    element.addEventListener('click', function() {
+    	    	fromDate.setAttribute('max', toDate.value);
+    	        toDate.setAttribute('min', fromDate.value);
+    	    });
+
+    	    //change
+    	    element.addEventListener('change', function(e) {
+    	    	if ((fromDate.value > toDate.value) && (fromDate.value && toDate.value)) {
+    	            alert('[[#{ms.dateCheck}]]');
+
+    	            if(settingNumber && settingDate) {
+    	            	fromDate.value = moment().subtract(settingNumber, settingDate).format('YYYY-MM-DD'); // 작일
+        	            toDate.value = moment().format("YYYY-MM-DD");
+    	            }else {
+    	            	fromDate.value = '';
+    	            	toDate.value = '';
+    	            }
+    	                                // 금일
+    	            element.focus();
+    	        }
+    	    });
+
+    	    //keydown
+    	    element.addEventListener('keydown', function(event) {
+    	        if (event.key !== 'Tab' && event.key !== 'Enter') {
+    	            event.preventDefault();
+    	        }
+    	    });
+    	});
+  	}
+
+    //============================================================
+    // 페이지 이동
+    //============================================================
+    function openWindowPop(url){
+        var options = 'top=10, left=10, width=800, height=800, status=no, menubar=no, toolbar=no, resizable=yes';
+        window.open(url, 'test', options);
+    }
+
+    async function logout(){
+    	localStorage.removeItem('accessToken');
+//     	localStorage.removeItem('refreshToken');
+    	sessionStorage.clear();
+		await fetch(rPath + '/logout');
+        window.location.replace(rPath + '/login');
+    }
+
+    //============================================================
+    // 스피너 ON / OFF
+    //============================================================
+    function spinnerOpen(){
+        $('.spinner-wrapper').show();
+        $('#spinner').css('display', 'block');
+    }
+
+    function spinnerClose(){
+        $('#spinner').css('display', 'none');
+        $('.spinner-wrapper').hide();
+    }
+
+    //============================================================
+    // 공통 콤보박스 (GridID, 컬럼키 & ID , Param, URL)
+    //============================================================
+    function Combo (gridnm, colnm, param, url, mapob, type){
+
+        if(!colnm){
+            return false;
+        }
+
+        this.url = url ? url : "/md/common/code/common-code";
+        this.url = rPath + this.url;
+        if(!gridnm){
+            $.getJSON(this.url, param, function (response) {
+                $("#" + colnm + " option").not("[value='']").remove();	//초기화
+                if(mapob != null && mapob.combovl != undefined && mapob.combonm != undefined){
+                    $.each(response, function(key, value) { $('#' + colnm) .append($("<option></option>").attr("value",value[mapob.combovl]).text(value[mapob.combonm])); });
+                }else{
+                    $.each(response, function(key, value) { $('#' + colnm) .append($("<option></option>").attr("value",value.combovl).text(value.combonm)); });
+                }
+            });
+        }else{
+            $.getJSON(this.url, param, function (response) {
+                var grid = pq.grid("#" + gridnm)
+                    , column = grid.getColumn({ dataIndx: colnm });
+
+                var options = response.map(function(obj){
+                    var rObj = {};
+                    if(mapob != null && mapob.combovl != undefined && mapob.combonm != undefined){
+                        rObj[obj[mapob.combovl]] = obj[mapob.combonm];
+                    }else{
+                        rObj[obj.combovl] = obj.combonm;
+                    }
+                    return rObj;
+                });
+                column.editor.options = type === true ? response : options;
+            });
+        }
+    }
+
+    //============================================================
+    //공통 그리드 날짜 달력 오픈 이벤트(년월일)
+    //============================================================
+    function dateEditor(ui) {
+        const $inp = ui.$cell.find("input");
+        const format = ui.column.format || "yy-mm-dd";
+        let val = $inp.val()
+        val ? $.datepicker.formatDate(format, new Date(val)) : '';
+
+        $inp.attr('readonly', 'readonly')
+            .val(val)
+            .datepicker({
+                changeMonth: true,
+                changeYear: true,
+                dateFormat: format,
+                showAnim: '',
+                onSelect: function () {
+                    this.firstOpen = true;
+                },
+                beforeShow: function (input, inst) {
+                    setTimeout(function () {
+                        $('.ui-datepicker').css('z-index', 999999999999);
+                    });
+                },
+                onClose: function () {
+                    this.focus();
+                }
+            });
+    }
+
+    //============================================================
+    //공통 그리드 날짜 달력 오픈 이벤트(년월)
+    //============================================================
+    function monthEditor(ui) {
+        var $inp = ui.$cell.find("input"), format = ui.column.format || "yy-mm"
+        val = $inp.val(), val = val ? $.datepicker.formatDate(format, new Date(val)) : "";
+        $inp.MonthPicker({ Button: false });
+    }
+
+    //============================================================
+    //공통 그리드 시간 오픈 이벤트
+    //============================================================
+    function timeEditor(ui) {
+        var $inp = ui.$cell.find("input");
+        $inp.datetimepicker({
+            format: "HH:mm:ss",
+            stepping: 1,
+            icons: {
+                up: "bi bi-chevron-up",
+                down: "bi bi-chevron-down"
+            }
+        });
+    }
+
+	//============================================================
+	// 함수명 : timeEditor2
+	// 최초 생성일시 : 2023.11
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : ui - pqgrid format binding 객체
+	// 설명 : datetimepicker를 통한 formate 설정 함수. timeEditor 함수와 format 설정 부분이 다름
+	//============================================================
+    function timeEditor2(ui) { // for sustain 6 characters state and no use replace() on DB cols // 23.09.18 Park T. S.
+        ui.$cell.find('input').datetimepicker({
+            format: 'HHmmss',
+            stepping: 1,
+            icons: {
+                up: 'bi bi-chevron-up',
+                down: 'bi bi-chevron-down'
+            }
+        });
+    }
+
+    //============================================================
+    //공통 Ajax
+    //============================================================
+    var AjaxUtil_Order = function(url, params, type, dataType ){
+        if(!url){
+            alert("url 정보가 없습니다.");
+            return null;
+        }
+        // AjaxUtil_Order 생성자 함수를 사용하여 새로운 객체를 생성 할 때, 매개변수(param) url을
+        // this 객체 내부의 url 멤버 변수에 할당시키기 위해 사용
+        // 인스턴스 변수를 생성하여 객체 인스턴스 내부에서 사용 가능
+        this.url = rPath + url;
+
+        var generateJSON = function(params) {
+            if(!params){
+                return "";
+            }
+            return JSON.stringify(params);
+        }
+
+        this.type = type ? type : "POST";
+        this.dataType = dataType ? dataType : "json";
+        this.param = type === "GET" ? params : generateJSON(params);
+
+        this.callbackSuccess = function(json) {
+            var data = JSON.stringify(json);
+        }
+        this.setCallbackSuccess = function(callback) {
+            this.callbackSuccess = callback;
+        }
+
+        this.complete = function() {
+
+        }
+        this.setComplete = function(fun){
+            this.complete = fun;
+        }
+
+        this.err = function(xhr, status, e) {
+            if(xhr.status=="500"){
+                console.log("AjaxUtil_Order 에러 : " + xhr.status);
+            }else{
+                if (xhr.responseJSON) {
+                    var obj = xhr.responseJSON;
+                    alert(obj.code + ":" + obj.message);
+                } else {
+                    alert('AjaxUtil_Order error');
+                    console.log("AjaxUtil_Order url=" + this.url + " 에러 = " + e);
+
+                }
+            }
+        }
+        this.setErr = function(fun){
+            this.err = fun;
+        }
+
+        this.send = function() {
+            $.ajax({
+                type : this.type,
+                url : this.url,
+                dataType : this.dataType,
+                beforeSend : function(xhr) {
+                    xhr.setRequestHeader("Accept", "application/json");
+                    xhr.setRequestHeader("Content-Type","application/json;charset=utf-8");
+                    xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken'));
+                    xhr.setRequestHeader("AJAX", true);
+                },
+                data : this.param,
+                success : this.callbackSuccess,
+                error : this.err,
+                complete : this.complete
+            });
+        }
+    }
+
+    //============================================================
+    //공통 callAjax
+    //============================================================
+    function callAjax(rType, method, tUrl, param){
+        tUrl = rPath + tUrl;
+        var rData;
+        switch(rType)
+        {
+
+            case 'pdf':
+                return new Promise((resolve, reject)=>{
+
+                    $.ajax({
+                        type: method,
+                        url: tUrl,
+                        data: method === "GET" ? param : JSON.stringify(param),
+                        xhrFields: {
+                            responseType: "blob",
+                        },
+                        beforeSend : function(xhr) {
+                            xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken'));
+                        },
+                        contentType: "application/json",
+                        success: function(data, message, xhr) {
+                            resolve({
+                                data: data,
+                                header: xhr.getResponseHeader('Content-Disposition')
+                            });
+                        },
+                        error: function(data) {
+                            reject(data);
+                        }
+                    })
+                })
+
+
+            case "data":
+
+                $.ajax({
+                    type: method,
+                    url: tUrl,
+                    cache: false,
+                    data: param = method === "GET" ? param : JSON.stringify(param),
+                    async: false,
+                    dataType: "json",
+                    beforeSend : function(xhr) {
+                        xhr.setRequestHeader("Accept", "application/json");
+                        xhr.setRequestHeader("Content-Type","application/json;charset=utf-8");
+                        xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken'));
+                        xhr.setRequestHeader("AJAX", true);
+                    },
+                    success: function(data){
+                        rData = data;
+                    },
+                    error: function(xhr, status, error){
+                        if(xhr.status=="500"){
+                            console.log("AjaxUtil_Order 에러 : " + xhr.status);
+
+                        }else{
+                            if (xhr.responseJSON) {
+                                var obj = xhr.responseJSON;
+                                alert(obj.code + ":" + obj.message);
+                            } else {
+                                alert('AjaxUtil_Order error');
+                                console.log("AjaxUtil_Order url=" + this.url + " 에러 = " + e);
+
+                            }
+                        }
+                    },
+                    complete : function(){
+
+                    }
+                });
+
+                return rData;
+                break;
+
+            case "html":
+
+
+
+                $.ajax({
+                    type: method,
+                    url: tUrl,
+                    cache: false,
+                    data: param,
+                    async: false,
+                    dataType: "html",
+                    beforeSend : function(xhr) {
+                        xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken'));
+                    },
+                    success: function(data){
+                        rData = data;
+                    },
+                    error: function(xhr, status, error){
+                        if(xhr.status=="500"){
+                            console.log("AjaxUtil_Order 에러 : " + xhr.status);
+
+                        }else{
+                            if (xhr.responseJSON) {
+                                var obj = xhr.responseJSON;
+                                alert(obj.code + ":" + obj.message);
+                            } else {
+                                alert('AjaxUtil_Order error');
+                                console.log("AjaxUtil_Order url=" + this.url + " 에러 = " + e);
+
+                            }
+                        }
+                    },
+                    complete : function(){
+
+                    }
+                });
+
+                return rData;
+                break;
+
+            case "msg":
+
+                $.ajax({
+                    type: method,
+                    url: tUrl,
+                    cache: false,
+                    data: param,
+                    dataType: "json",
+                    beforeSend : function(xhr) {
+                        xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken'));
+                    },
+                    success: function(data){
+                        alert(data['msg']);
+                        if(data['rUrl'] != null){
+                            location.href= data['rUrl'];
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        if(xhr.status=="500"){
+                            console.log("AjaxUtil_Order 에러 : " + xhr.status);
+                        }else{
+                            if (xhr.responseJSON) {
+                                var obj = xhr.responseJSON;
+                                alert(obj.code + ":" + obj.message);
+                            } else {
+                                alert('AjaxUtil_Order error');
+                                console.log("AjaxUtil_Order url=" + this.url + " 에러 = " + e);
+
+                            }
+                        }
+                    },
+                    complete : function(){
+
+                    }
+                });
+
+                break;
+
+            case "form":
+
+                jQuery.ajaxSettings.traditional = true;
+
+
+                $.ajax({
+                    type: method,
+                    url: tUrl,
+                    cache: false,
+                    data: param,
+                    async: false,
+                    dataType: "json",
+                    enctype: 'multipart/form-data',
+                    contentType : false,
+                    processData : false,
+                    beforeSend : function(xhr) {
+                        spinnerOpen();
+                        xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken'));
+                    },
+                    success: function(data){
+                        rData = data;
+                    },
+                    error: function(xhr, status, error){
+                        if(xhr.status=="500"){
+                            console.log("AjaxUtil_Order 에러 : " + xhr.status);
+
+                        }else{
+                            if (xhr.responseJSON) {
+                                var obj = xhr.responseJSON;
+                                alert(obj.code + ":" + obj.message);
+                            } else {
+                                alert('AjaxUtil_Order error');
+                                console.log("AjaxUtil_Order url=" + this.url + " 에러 = " + e);
+
+                            }
+                        }
+                    },
+                    complete : function(){
+                        spinnerClose();
+                    }
+                });
+
+                return rData;
+                break;
+
+            default:
+
+                $.ajax({
+                    type: method,
+                    url: tUrl,
+                    cache: false,
+                    data: param,
+                    dataType: "json",
+                    beforeSend : function(xhr) {
+                        xhr.setRequestHeader('Authorization', localStorage.getItem('accessToken'));
+                    },
+                    success: function(data){
+                        if(data['rUrl'] != null){
+                            location.href= data['rUrl'];
+                        }
+                    },
+                    error: function(xhr, status, error){
+                        if(xhr.status=="500"){
+                            console.log("AjaxUtil_Order 에러 : " + xhr.status);
+
+                        }else{
+                            if (xhr.responseJSON) {
+                                var obj = xhr.responseJSON;
+                                alert(obj.code + ":" + obj.message);
+                            } else {
+                                alert('AjaxUtil_Order error');
+                                console.log("AjaxUtil_Order url=" + this.url + " 에러 = " + e);
+
+                            }
+                        }
+                    }
+                });
+
+                break;
+        }
+    }
+
+    //============================================================
+    //공통 Javascript 숫자 3자리(천단위) 마다 콤마 찍기
+    //============================================================
+    function comma(num){
+        var parts = num.toString().split('.')
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        return parts.join('.');
+//return val.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    //============================================================
+    //공통 Javascript 숫자 3자리(천단위) 콤마 제거
+    //============================================================
+    function uncomma(num){
+        str = String(num);
+        return Number(str.replace(/[^-+\d]+/g, ''));
+        //return val.replace(/,/g, "");
+    }
+
+    //============================================================
+    //공통 Javascript 숫자(정수)만 가능(양수,음수)
+    //============================================================
+    function onlyNumber(e){
+        var regexp = /^[-]?[0-9]*([0-9]?)?$/;
+        var regexp2 = /\s/g;
+
+        var value = $(e).val().replaceAll(",","");
+        value = value.replace(/^[-]?0+/, "")
+        if(!regexp.test(value)){
+            var result = value.replace(value,"");
+            $(e).val(comma(result));
+            $(e).focus();
+            return false; //
+        }
+        $(e).val(comma(value));
+    }
+
+    //============================================================
+    //공통 Javascript 숫자(양수)만 가능
+    //============================================================
+    function onlyNumberPlus(e){
+        var regexp = /[^0-9]/g;
+
+        var value = $(e).val().replaceAll(",","");
+        value = value.replace(/(^0+)/, "");
+        if(regexp.test(value)){
+            var result = value.replace(value,"");
+            $(e).val(comma(result));
+            $(e).focus();
+            return false;
+        }
+        $(e).val(comma(value));
+    }
+
+    //============================================================
+    //공통 Javascript 숫자(실수)만 가능
+    //============================================================
+    function onlyFloat(e){
+        var regexp = /[^0-9|.]/g;
+        var regexp2 = /\s/g;
+
+        var value = $(e).val().replaceAll(",","");
+
+        if(regexp.test(value)){
+            var result = value.replace(regexp,"");
+            $(e).val(comma(result));
+            $(e).focus();
+            return false;
+        }
+        $(e).val(comma(value));
+    }
+
+    //============================================================
+    //공통 params json 형식으로 리턴
+    //============================================================
+    function paramsJsonData(d){
+        if(d){
+            d = d.replace(/ /g, "");
+            d = d.replace(/{/g, "");
+            d = d.replace(/}/g, "");
+            d = d.split(',');
+            var prams = d.reduce((newObj, obj) => {
+                dobj = obj.split('=');
+                newObj[dobj[0]] = dobj[1];
+                return newObj;
+            }, {});
+            return prams;
+        }else{
+            return null;
+        }
+    }
+
+    //============================================================
+    //검색조건 폼 펼치고 접기 - 2022.09.20 - 퍼블리싱 스크립트 추가
+    //============================================================
+    function bookmarkclick(obj ) {
+        $(obj).toggleClass('active');
+
+        var pprogrid = obj.getAttribute("pprogrid");
+        var bkactive = obj.getAttribute("class").indexOf('active');
+        var bookmark = (bkactive >= 0) ? "Y" : "N";
+
+        //alert(pprogrid);
+
+
+        var data = { progrid : pprogrid, bookmark : bookmark };
+        var aul = new AjaxUtil_Order("/main/userMenuBookmark.do", data, "GET");
+        aul.setCallbackSuccess(function (data){
+            //jsonToMenu(data);
+            var jsonStr = JSON.stringify(data);
+            //alert(jsonStr);
+
+            //북마크 추가
+            if(bookmark=='Y') {
+                //alert(bookmark);
+                //BookmarkAdd(pprogrid, progcmd, menunam, newMenulvl);
+                BookmarkAdd(pprogrid);
+            }
+
+            //북마크 삭제
+            if(bookmark=='N') {
+                //alert(bookmark);
+                BookmarkDelete(pprogrid);
+            }
+
+
+        });
+        aul.send();
+        // ajax[/main/userMenuBookmark.do]
+    }
+
+    $(document).ready(function () {
+        $('.main-search-wrap').each(function(){
+
+            var rowCount = $(this).find('.form-group.row').length;
+
+            if( rowCount < 3 ){
+                $(this).find('.btn-fold-wrap').hide();
+            }
+        })
+
+    });
+    function onSearchExpand(button){
+        var searchWrap = $(button).closest('.main-search-wrap');
+        var rowHeight = searchWrap.find('.form-group.row').outerHeight();
+        var searchForm = searchWrap.find('.search-form');
+        var margin = 17;
+
+
+        if($(button).hasClass('expanded')){
+
+            searchForm.css('max-height',rowHeight*2 + margin)
+            $(button).removeClass('expanded');
+
+        }else{
+
+            searchForm.css('max-height','none')
+            $(button).addClass('expanded');
+
+        }
+    }
+    $(function() {
+        $('.file-input').on('change',function(e){
+            var fileName = $(this)[0].files[0].name;
+            var inputField = $(this).closest('.input-file-group').find('.file-name');
+            inputField.html(fileName)
+        })
+    })
+
+
+    //============================================================
+    //공통 모달 레이어 팝업 호출 - 2022.10.05
+    //============================================================
+    function callModalPopup(progId, param) {
+
+        var url = rPath + "/main/modalLoad?gprogurl=/com/modal/"+progId+".html";
+        var urlParameters = Object.entries(param).map(e => e.join('=')).join('&');
+        var tURL = url+"&"+urlParameters;
+
+        $("#modalCommon").load(tURL);
+    }
+
+    //============================================================
+    //공통 문자열 길이 (영문,숫자=1 한글=2)
+    //============================================================
+    function getStringLength(str) {
+        var len = 0;
+        for (var i = 0; i < str.length; i++) {
+            if (escape(str.charAt(i)).length == 6) {
+                len++;
+            }
+            len++;
+        }
+        return len;
+    }
+    //문자열 자르기
+    function getStrCut(str, len)
+    {
+        var s = 0;
+        for (var i=0; i<str.length; i++) {
+            s += (str.charCodeAt(i) > 128) ? 2 : 1;
+            if (s > len) return str.substring(0,i) + "..";
+        }
+        return str;
+    }
+    //문자열에 공백매꾸기 : n=문저열, digits=공백갯수
+    function setleadingSpaces(n, digits) {
+        var space = '';
+        n = n.toString();
+
+        if (n.length < digits) {
+            for (var i = 0; i < digits - n.length; i++)
+                space += '&nbsp;';
+        }
+        return space + n;
+    }
+    //날자 입력 input에서 del 키누를때 전부 삭제 하기
+    function setInputDateDel(e) {
+        if(event.keyCode==46) // keyboard del key code
+            e.value='';
+    }
+
+    async function _commonInit(target){
+		const selector = [];
+		const activeLocation = window.location.toString();
+		const start = activeLocation.lastIndexOf('/') + 1;
+		const end = activeLocation.indexOf('?') !== -1 ? activeLocation.indexOf('?') : activeLocation.length;
+		const pageId = target || activeLocation.substring(start, end);
+		selector.push(... document.querySelectorAll('select' + '[id*="' + pageId + '"]' + '[data-cb-url][data-cb-val][data-cb-name]:not(.pq-select)'));
+		spinnerOpen();
+        const initList = selector.map(select => {
+								        	const tempFunc = async function() {
+								    			const comboUrl = select.getAttribute('data-cb-url');
+								    			const comboVal = select.getAttribute('data-cb-val');
+								    			const comboName = select.getAttribute('data-cb-name');
+								    			const selectVal = select.getAttribute('data-cb-select');
+								    			const comboVar = select.getAttribute('data-cb-variable');
+								    			const res = await fetchUtil('GET', comboUrl);
+								    			const options = await res.json();
+										        if(comboVar){
+										              window[comboVar] = options;
+										        }
+										        if(comboVal && comboName){
+									    			const optionHtml = select.querySelector('option[value=""]');
+									                let optionChildHtml = optionHtml !== null ? optionHtml.outerHTML : '';
+									                options.forEach(option => {
+									                    let selected = '';
+									                    if(selectVal === option[comboVal]){
+									                        selected = 'selected'
+									                    }
+									                    optionChildHtml += '\r\n<option value="' + option[comboVal] + '" ' + selected + '>' + option[comboName] + '</option>';
+									                });
+									                select.innerHTML = optionChildHtml;
+										        }
+									        };
+									        return tempFunc();
+										});
+        const result = Promise.allSettled(initList);
+		spinnerClose();
+
+		return result;
+    }
+
+	//============================================================
+	// 함수명 : resetSearchConditions
+	// 최초 생성일시 : 2023.08.22
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : intervalFromYear : 날짜포맷 년 간격, intervalFromMonth : 날짜포맷 월 간격, intervalFromDate : 날짜포맷 일 간격, noFromDate : 일 간격 사용 안함
+	// 설명 : 검색영역 내의 input과 select box를 모두 정해진 공통 조건으로 초기화한다.
+	//---------------------------------------------------------------
+	// 수정일자 : 2023.08.24
+	// 수정자 : Park. S. H.
+	// 수정내용 : 세부 조건 및 기능 추가
+	//---------------------------------------------------------------
+	// 수정일자 : 2023.09.18
+	// 수정자 : Park. T. S.
+	// 수정내용 : month type 분기 추가
+	//---------------------------------------------------------------
+	// 수정일자 : 2023.10.18
+	// 수정자 : Park. T. S.
+	// 수정내용 : 일부 초기화 안되는 버그 수정
+	//---------------------------------------------------------------
+	// 수정일자 : 2023.11.20
+	// 수정자 : Park. T. S.
+	// 수정내용 : 날짜 초기화 조건 수정
+	//---------------------------------------------------------------
+	// 수정일자 : 2024.07.17
+	// 수정자 : Park. T. S.
+	// 수정내용 : 버그 수정
+	//============================================================
+    function resetSearchConditions(target, intervalFromYear = 0, intervalFromMonth = 0, intervalFromDate = 1, noFromDate = false){
+		const pageIdList = [];
+ 		const activeLocation = window.location.toString();
+ 		const startString = activeLocation.lastIndexOf('/') + 1;
+ 		const endString = activeLocation.indexOf('?') !== -1 ? activeLocation.indexOf('?') : activeLocation.length;
+ 		const pageId = target || activeLocation.substring(startString, endString);
+		pageIdList.push('[id*=' + pageId + ']');
+
+        const $inputConditionDOMs = $(pageIdList.map(e => '.setting-grid-content input' + e + ',.select-group input' + e + ',.date-wrap input' + e).toString()); // 검색영역 dom 변경시 바꿔줄 부분
+        const $selectConditionDOMs = $(pageIdList.map(e => '.setting-grid-content select' + e + ',.select-group select' + e).toString()); // 검색영역 dom 변경시 바꿔줄 부분
+        // input
+        for(const inputConditionDOM of $inputConditionDOMs){
+            const type = inputConditionDOM.type;
+
+            if('text' === type || 'search' === type || 'number' === type ){ // text type은 단순 초기화
+                inputConditionDOM.value = '';
+            } else if('date' === type || 'month' === type){ // date or month type
+            	if(inputConditionDOM.className === 'emptyValue'){
+            		$(inputConditionDOM).val('');
+            	} else {
+                    const lastDateNode = $(inputConditionDOM).parent().find(':last-child')[0];
+                    const toDate = new Date();
+                    const fromDate = new Date();
+
+                    fromDate.setFullYear(fromDate.getFullYear() - intervalFromYear);
+                    fromDate.setMonth(fromDate.getMonth() - intervalFromMonth);
+                    fromDate.setDate(fromDate.getDate() - ('date' === type ? intervalFromDate : 0)); // month type일 경우 날짜를 1일 빼면 매달 1일에 이전 달이 출력되므로 안되게 분기처리
+
+                    if(inputConditionDOM.isSameNode(lastDateNode)){ // lastChild일 경우
+                        $(inputConditionDOM).val(String(toDate.getFullYear()) + '-' + String((toDate.getMonth()+1)).padStart(2, '0') + String('date' === type ? '-' + String(toDate.getDate()).padStart(2, '0') : ''));
+                    } else {
+                    	let dateValue = String(fromDate.getFullYear()) + '-' + String((fromDate.getMonth()+1)).padStart(2, '0');
+
+                    	if('date' === type){
+                    		dateValue +=  '-' + String(fromDate.getDate()).padStart(2, '0'); // lint에서 로직을 따로 분리하라고 하여 위에서 3항연산자로 사용하지 않음
+                    	}
+
+                    	$(inputConditionDOM).val(!noFromDate ? dateValue : '');
+                    }
+            	}
+            } else if('checkbox' === type){ // 체크박스는 전부 false 처리
+            	inputConditionDOM.checked = false;
+            }
+        }
+
+	 	// select
+        for(const selectConditionDOM of $selectConditionDOMs){
+			const $selectOptionConditionDOMs = $(selectConditionDOM).children('option');
+			const selectedOption = $selectOptionConditionDOMs.filter((_key, value) => value.hasAttribute('selected'));
+			const selectValue = selectedOption.length ? selectedOption[0].value : selectConditionDOM[0]?.value; // selected를 설정한 것이 아니라면 맨 첫번째 값으로 선택
+
+			if('pq-select' === selectConditionDOM.className && $('#' + selectConditionDOM.id).data().hasOwnProperty('paramquery-pqSelect')){
+				const pqSelectInstance = $('#' + selectConditionDOM.id).pqSelect('getInstance').select;
+				if('multiple' === selectConditionDOM.getAttribute('multiple')){
+					pqSelectInstance?.data?.forEach(e => e.selected = false);
+					selectConditionDOM.value = '';
+					$('#' + selectConditionDOM.id).pqSelect('refresh');
+				} else {
+					document.querySelector('#' + selectConditionDOM.id).selectedIndex = 0;
+					$('#' + selectConditionDOM.id).pqSelect('refreshData'); // PQ Single Select시 refreshData 필요!!!!!!!!!
+				}
+			} else {
+				 selectConditionDOM.value = selectValue;
+			}
+	     }
+	 }
+
+    function comboCreateData(gridnm, colnm, obj, mapob) {
+
+        var grid = pq.grid('#' + gridnm);
+        var column = grid.getColumn({ dataIndx: colnm });
+
+        var options = obj.map(function(obj){
+            var rObj = {};
+            if(mapob != null && mapob.combovl != undefined && mapob.combonm != undefined){
+                rObj[obj[mapob.combovl]] = obj[mapob.combonm];
+            }else{
+                rObj[obj.combovl] = obj.combonm;
+            }
+            return rObj;
+        });
+
+        column.editor.options = options;
+    }
+
+    // grid render function. paste시 option === undefined 일 경우 렌더는 '' 이지만 value가 초기화되지 않아 value 초기화 추가.
+    function gridRenderAndValue(ui) {
+        var option = ui.column.editor.options.find(function(obj) {
+            return (obj[ui.cellData] != null);
+        });
+        ui.rowData[ui.dataIndx] = option ? ui.cellData : '';
+        return option ? option[ui.cellData] : '';
+    }
+
+	//============================================================
+	// 함수명 : gridRender
+	// 최초 생성일시 : 2023.10.04
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : ui - grid render binding 객체
+	// 설명 : 그리드 column rendering을 위한 function. gridRenderAndValue에서 cellData 조작 부분 제거한 버전(render에서 cellData 조작시 랜더가 꼬이는 경우가 있어 추가함)
+	//============================================================
+    function gridRender(ui) {
+    	const option = ui?.column?.editor?.options?.find(obj => obj[ui?.cellData]);
+
+    	return {
+    		text: option ? option[ui?.cellData] : ui?.cellData
+    	}
+    }
+
+	//============================================================
+	// 함수명 : makeEmptyGrid
+	// 최초 생성일시 : 2023.10.04
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : gridObj - pq grid 객체
+	// 설명 : pqgrid 내부 함수를 이용한 객체 초기화
+	//============================================================
+    function makeEmptyGrid(gridObj){
+		if(!('object' === typeof gridObj)){
+			alert('Input pqGrid Object');
+
+			return;
+		}
+
+		let pqGrid;
+
+		if(gridObj.__proto__.constructor.hasOwnProperty('name') && 'GridUtil' === gridObj.__proto__.constructor.name){
+	    	pqGrid = gridObj.getGrid();
+		} else if (gridObj.__proto__.hasOwnProperty('namespace') && 'paramquery' === gridObj.__proto__.namespace){
+			pqGrid = gridObj;
+		} else {
+			alert('Input pqGrid Object');
+
+			return;
+		}
+
+    	pqGrid.showLoading();
+    	pqGrid.option( 'dataModel', { data: [] } );
+    	pqGrid.refreshDataAndView();
+    	pqGrid.hideLoading();
+    }
+
+  	//2023.09.25 하주영 추가
+	//출력물 호출 공통 코드 추가
+    async function reportPrint(reportData, type, kind) {
+    	spinnerOpen();
+
+    	const printData = await fetchUtil('POST', '/' + type + '/report/reportlist', reportData);
+
+    	if(printData.status === 200) {
+    		const blob = await printData.blob();
+    		const objectUrl = (window.URL || window.webkitURL).createObjectURL(blob);
+
+    		if(blob.size > 0){
+        		let iframe = document.createElement('iframe');
+        		iframe.style.display = 'none';
+        		iframe.src = objectUrl;
+
+        		document.body.appendChild(iframe);
+        		iframe.contentWindow.focus();
+        		iframe.contentWindow.print();
+        		window.URL.revokeObjectURL(objectUrl);
+    		}
+    	}
+
+		spinnerClose();
+    }
+
+	//grid change List 생성 및 필수값 확인
+    function makeSaveData(grid) {
+		const gridDataList = grid.getData();
+		const gridChange = grid.getChanges({ all : true });
+
+		const checkList = gridDataList.filter(function(e) {
+			return e.state === 'Y';
+		});
+
+		if(!checkList.length && !gridChange.deleteList.length) {
+			alert('[[#{ms.choiceRowZero}]]');
+			return false;
+		}
+
+		// 필수값 체크
+		for(const checkData of checkList) {
+			for(const requiredInput in grid.columns) {
+				if(grid.columns[requiredInput].styleHead && grid.columns[requiredInput].styleHead['background-color'] === '[[#{grid.styleHead01}]]') {
+					if(!checkData[requiredInput] && checkData[requiredInput] !== 0) {
+						alert((checkData.pq_ri + 1) + ' Row ' + '[[#{ms.requiredValue}]]' + ' (' + grid.columns[requiredInput].title + ')');
+						grid.editCell({ rowIndx : checkData.pq_ri, dataIndx : requiredInput });
+						return;
+					}
+				}
+			}
+		}
+
+		const param = {};
+		param.addList = gridChange.addList.filter(function(e) {
+			return e.state === 'Y';
+		});
+
+		param.updateList = gridChange.updateList.filter(function(e) {
+			return e.state === 'Y';
+		});
+
+		param.deleteList = gridChange.deleteList.filter(function(e) {
+			return e.state === 'Y';
+		});
+
+		return param;
+	}
+
+	function makeSearchData(pageId){
+		const searchParams = document.querySelectorAll('input[id*="'+ pageId +'"], select[id*="'+ pageId +'"]');
+		const length = pageId.startsWith('s') ? 5 : 6;
+		const params = {};
+		for(const searchParam of searchParams) {
+			const key = searchParam.id.substring(length).toLowerCase();
+			let value = searchParam.value;
+			if(searchParam.type === 'date'){	//날짜 '-' 제거 하기 위해 추가
+				value = value.replace(/-/g, '');
+			}
+			if(searchParam.className === 'pq-select'){
+				$('#'+ searchParam.id).pqSelect('refreshData');
+			}
+			params[key] = value;
+		}
+		return params;
+	}
+	//============================================================
+	// 함수명 : createDefaultTabObject
+	// 최초 생성일시 : 2023.10.06
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : colModel - pqGrid column model, dataModel  - pqGrid data model
+	// 출력 파라미터 : newObj(Object) - 입력 받은 파라미터를 가지고 새로운 pqGrid tabModel에 사용할 Object 생성
+	// 설명 : pqgrid 내부 함수를 이용한 객체 초기화
+	//============================================================
+	function createDefaultTabObject(colModel, dataModel){
+		const newObj = {
+			name : '[[#{ms.underBar}]]',
+			noRename : true,
+			gridOptions : !colModel && !dataModel ? null : {colModel : colModel, dataModel : dataModel}
+		};
+
+		return newObj;
+	}
+
+	//============================================================
+	// 함수명 : makeDuplicateRowText
+	// 최초 생성일시 : 2023.10.10
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : keys - 중복을 검사했던 key들을 가지고 있는 배열, gridObj - pqGrid 객체, gridCheck - grid에서 선택 된 데이터, gridData - grid 전체 데이터
+	// 출력 파라미터 : rText(String)
+	// 설명 : grid validation을 진행할 때 중복오류가 발생할 경우 보여줄 텍스트를 만드는 function(pqGrid 내부함수 사용)
+	//============================================================
+	function makeDuplicateRowText(keys, gridObj, gridCheck, gridData){
+		let rText = '';
+
+		for(let idx=0; idx<keys.length; idx++){
+			rText += (gridCheck.hasOwnProperty(keys[idx]) && gridCheck[keys[idx]] === gridData[keys[idx]]) ? gridObj.getColumn({dataIndx : keys[idx]}).title + '[[#{ms.col}]] ' +  gridData[keys[idx]] : ' ';
+
+			if(idx !== keys.length-1 && gridCheck.hasOwnProperty(keys[idx]) && gridCheck[keys[idx]] === gridData[keys[idx]]){
+				rText += ' / ';
+			}
+		}
+
+		return rText;
+	}
+
+	//============================================================
+	// 함수명 : isKeyDuplication
+	// 최초 생성일시 : 2023.10.10
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : keys - 중복을 검사할 key들을 가지고 있는 배열, gridCheck - grid에서 선택 된 데이터, gridData - grid 전체 데이터
+	// 출력 파라미터 : bool
+	// 설명 : validation 로직에서 복합키 값 중복 체크
+	//============================================================
+	function isKeyDuplication(keys, gridCheck, gridData){
+		for(const key of keys){
+			if(gridCheck[key] !== gridData[key]){ // 모든 키 컬럼의 값들이 중복되야 함
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	//============================================================
+	// 함수명 : createTabModel
+	// 최초 생성일시 : 2023.10.11
+	// 최초 생성자	: Go. H. R. & Park. T. S.
+	// 입력 파라미터 : rData - 가공 전 데이터, colModel - tabModel서 사용할 pqGrid colModel, groupCols - 그룹으로 지정할 level별 column들,
+	// 						groupBy - 데이터 그룹 기준, groupByName - 각 groupBy 기준에 해당하는 이름, summaryCols - 요약 col 지정, doSkipSingleSummary - 단일 합계 출력할지 여부
+	// 출력 파라미터 : reTabs(Array)
+	// 설명 : 파라미터로 데이터와 조건을 받아 pqGrid Tab Model에 사용할 데이터를 생성함
+	//============================================================
+	function createTabModel(rData, colModel, groupCols, groupBy, groupByName, summaryCols, doSkipSingleSummary=true){ // groupBy는 반드시 key값으로
+		// rData : 가공 전 데이터, colModel : tabModel의 colModel, groupCols : 그룹으로 지정할 level별 column들,
+		// groupBy : 데이터를 가공(묶음) 기준, groupByName : 각 groupBy 기준에 해당하는 이름, summaryCols : 요약 col 지정, doSkipSingleSummary : 단일 합계 출력할지 여부
+		const reTabs = [];
+		const tabsFilterOption = rData.reduce((tab, now) => { // 기존 배열을 순회하면서 새로운 배열을 반환
+			let groupByOption = '';
+
+			for(let groupOrder=0; groupOrder<groupBy.length; groupOrder++){ // 탭 객체에 넣을 데이터를 가공하여 배열 생성
+				if(now.hasOwnProperty(groupBy[groupOrder])){
+					groupByOption += (groupByName && Array.isArray(groupByName) && groupByName[groupOrder] ? now[groupByName[groupOrder]] : now[groupBy[groupOrder]])
+											+ (groupOrder !== groupBy.length-1 ? '_' : '')
+				} // groupByName이 있을경우 groupByName을 이용해 탭을 생성. 없으면 groupBy로 생성
+			}
+
+			tab[groupByOption] ? tab[groupByOption].push(now) : tab[groupByOption] = [now];
+
+			return tab;
+		}, {});
+
+		for(let index of Object.keys(tabsFilterOption)){ // 배열을 돌면서 탭 객체를 생성.
+			reTabs.push( {
+				name: index,
+				hidden: false,
+				noClose: true,
+				noRename: true,
+				gridOptions: {
+					colModel: colModel,
+					dataModel: { data: tabsFilterOption[index] },
+					groupModel: {
+						dataIndx: groupCols || [],
+						showSummary: summaryCols || [],
+						grandSummary: true,
+						merge: true,
+						on: true,
+						header: false,
+						skipSingleSummary: doSkipSingleSummary
+					}
+				}
+			});
+		}
+
+		return reTabs.sort((a, b) => a.name > b.name ? 1 : -1); // 이름으로 오름차순 정렬
+	}
+
+	//============================================================
+	// 함수명 : fabContainer
+	// 최초 생성일시 : 2023.10.11
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : gridObj - pqGrid 객체
+	// 설명 : grid Object가 가지고 있는 탭을 초기화 한다. 탭 초기화(pqgrid 탭은 1개가 무조건 있어야 해서 한 번에 초기화가 안되고 번거롭게 삭제해야함.(히든 포함))
+	//============================================================
+	async function resetTabContainer(gridObj){
+		if(!gridObj){
+			return;
+		}
+
+		const gridTab = gridObj.Tab();
+		const tabModel = gridObj.option('tabModel');
+
+		const startIdxForInit = tabModel.tabs.length-1; // push 전 길이
+
+		tabModel.tabs.push(createDefaultTabObject(gridObj.option('colModel')));
+
+		for(let idx=startIdxForInit; idx<tabModel.tabs.lenght; idx++){
+			gridTab.create(idx);
+		}
+
+		gridTab.activate(startIdxForInit+1); // 추가된 tab 중 첫번째 활성화(기존 탭들을 지우기 위해서 )
+
+		const tabsLength = gridTab.tabs().length; // remove를 하면 length값이 변하기 때문에 고정 값이 필요함
+
+		for(let tIdx=0; tIdx<tabsLength; tIdx++){
+			gridTab.remove(0); // remove를 하게 되면 자동으로 앞으로 당겨짐(빈 탭이 마지막에 추가됐으니 0번째만 순서대로 지움)
+		}
+	}
+
+	//============================================================
+	// 함수명 : turnOnGridGruopSummary
+	// 최초 생성일시 : 2023.10.11
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : gridObj - pqGrid 객체
+	// 설명 : grid Object의 그룹 옵션을 켠다.(pqGrid 내부함수 사용)
+	//============================================================
+	function turnOnGridGruopSummary(gridObj){ // 그리드 그룹옵션 켜기
+		if(!gridObj){
+			return;
+		}
+
+		gridObj.Group().option({ on: true, header: false });
+	}
+
+	//============================================================
+	// 함수명 : getCaseBySummaryTitle
+	// 최초 생성일시 : 2023.11
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : obj(pqGrid summaryTitle 속성 바인딩 cell 객체)
+	// 출력 파라미터 : String
+	// 설명 : pqGrid의 summaryTitle rendering에 사용할 callback 함수
+	//============================================================
+    function getCaseBySummaryTitle(obj){ // grandSummary와 그리드 내부 summary의 랜더(text)
+    	return (obj.attr[0].indexOf('pq-sum-cell') !== -1 ? '[[#{ms.total}]] : ' : '[[#{ms.subtotal}]] : ') + obj.formatVal;
+    }
+
+	//============================================================
+	// 함수명 : setSummaryRowCls
+	// 최초 생성일시 : 2023.11
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : gridObj(pqGrid 객체)
+	// 설명 : summary 강조를 위한 css class 함수(pqGrid 내부함수 사용)
+	//============================================================
+	function setSummaryRowCls(gridObj){ // 그리드 내부 summary의 랜더(cls)
+		if(!gridObj?.Tab()?.tabs()?.length){
+			return;
+		}
+
+		for(const tab of gridObj.Tab().tabs()){
+			for(const tabRow of tab._inst.pdata){
+				if(tabRow.hasOwnProperty('pq_gsummary') && tabRow.pq_gsummary){
+					tab._inst.addClass({
+						rowIndx: tabRow.pq_ri,
+						cls: 'color-gray'
+					});
+				}
+			}
+		}
+	}
+
+	//============================================================
+	// 함수명 : getSummaryCellClass
+	// 최초 생성일시 : 2023.11
+	// 최초 생성자	: Park. T. S.
+	// 입력 파라미터 : ui(pqGrid render 속성 바인딩 객체)
+	// 출력 파라미터 : String
+	// 설명 : summary 표기가 되는 cell의 rendering을 위한 함수
+	//============================================================
+	function getSummaryCellClass(ui){ // 일부 특별한 grid cell을 위한 랜더링(cls)
+		let cellClass = '';
+
+		if(ui?.attr[0].indexOf('pq-sum-cell') === -1 && ui?.rowData?.hasOwnProperty('pq_gsummary') && ui?.rowData?.pq_gsummary){
+			cellClass = 'color-gray';
+		} else if(ui?.attr[0].indexOf('pq-sum-cell') === -1 && typeof ui?.column?.editable === 'function' && ui?.column?.editable(ui)){
+			cellClass = 'color-green'
+		}
+
+		return cellClass;
+	}
+
+	function getSelectBoxWidthCondition(ui, width=150){ // width 150이하는 자동으로 150으로
+		return ui?.column?.width < width ? width : ui?.column?.width;
+	}
+</script>
+
+	<!-- 2023.09.22 fetchAPI.js -->
+	<script>
+	//============================================================
+	// 함수명 : fetchUtil
+	// 최초 생성일시 : 2023.07
+	// 최초 생성자	: WM
+	// 입력 파라미터 : httpMethod - http 메소드명, url - url, data - ajax 통신 보낼 데이터, customErrorHandlerFunc - errorHandling할 function, dataTypeVar - 데이터타입
+	// 출력 파라미터 : Promise 객체 / Object
+	// 설명 : fetch API를 통한 유틸성 ajax 통신 function
+	//--------------------------------------------------------
+	// 수정일시 : 2024.01.02
+	// 수정자 : Park T. S.
+	// 내용 : java 내에서 exception 처리로 반환된 object가 아닐 경우 예외처리 수정
+	//============================================================
+    async function fetchUtil(httpMethod, url, data, customErrorHandlerFunc, dataTypeVar) {
+        if (!url) {
+            alert('no have url');
+
+            return;
+        }
+
+        url = rPath + url; // context path
+
+        const fetchUtilGlobalErrorHandler = async function(responseObj, msg, httpMethodVar) {
+            if (!responseObj) {
+                alert('no obj');
+
+                return;
+            }
+
+            const httpMethod = httpMethodVar ? httpMethodVar.toUpperCase() : 'GET';
+            const errorMsg = msg || defaultErrorMsg;
+
+        	spinnerOpen();
+            try {
+                if (responseObj.status !== 200) { // get 메소드는 aop 처리를 하지 않아 정상이 아니면 error라고 판단
+                    throw new Error(errorMsg); // error 생성(message를 catch 구문으로 보냄)
+                }		// 동기 방식을 사용하여 pending 된 데이터를 받아올 때에는 반드시 사용함수 앞에 await를 붙여아함
+            } catch (err) {
+            	const jsonObj = await responseObj.json();
+            	alert('status : ' + jsonObj.status + '\n' + jsonObj.error + '\n' + jsonObj.timestamp + '\n' + 'message : ' + jsonObj.message);
+            }
+        	spinnerClose();
+        }
+
+        httpMethod = httpMethod?.toUpperCase() || 'GET';
+
+        const dataType = dataTypeVar || 'JSON'; // null or undefined 일 경우 'JSON' 입력
+        const errorHandler = (customErrorHandlerFunc && 'function' === (typeof customErrorHandlerFunc))
+																					            ? customErrorHandlerFunc
+																					            : fetchUtilGlobalErrorHandler
+
+        const headers = function(dataType) {
+            if ('JSON' === dataType) {
+                return {
+           			'Content-Type': 'application/json',
+           			'Authorization': localStorage.getItem('accessToken'),
+           		  	'Accept': 'application/json'
+				};
+            } else if ('FORMDATA' === dataType) { // file 전송시 formdata 형식
+                return {
+       				'Content-Type': 'application/x-www-form-urlencoded',
+					'Authorization': localStorage.getItem('accessToken')
+       			};
+            } else {
+                alert('no support dataType');
+
+                return;
+            }
+        };
+
+        const bodyContent = function(dataType) {
+            if ('JSON' === dataType) {
+                return JSON.stringify(data);
+            } else if ('FORMDATA' === dataType) {
+                return data;
+            } else {
+                alert('no support dataType');
+
+                return;
+            }
+        };
+
+        const resFetch = ('GET' === httpMethod)
+				            ? await fetch(url + (() =>{
+				            	const params = new URLSearchParams(data).toString();
+				            	return params.length ? (url.indexOf('?') === -1 ? '?' : '') + '&' + params : ''
+				            })(), {
+				            	headers: headers(dataType)
+				            })
+				            : await fetch(url, {
+					                method: httpMethod,
+					                headers: headers(dataType),
+					                body: bodyContent(dataType)
+			            		}); // get일 경우 url parameter 생성후 전송, 다른 메소드는 body에 data 넣고 전송
+
+		errorHandler(resFetch, '', httpMethod);
+
+        return resFetch;
+    }
+
+	// GridUtil 공통 필수값 체크 함수
+	function validateEssentialFieldBeforeSaveGridUtil(grid, essentialCols){
+		if(!'object' === typeof grid){
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+
+		let pqGrid;
+		if(grid.__proto__.constructor.hasOwnProperty('name') && 'GridUtil' === grid.__proto__.constructor.name){
+	    	pqGrid = grid.getGrid();
+		} else if (grid.__proto__.hasOwnProperty('namespace') && 'paramquery' === grid.__proto__.namespace){
+			pqGrid = grid;
+		} else {
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+
+		const gridCheck = pqGrid.Checkbox('state').getCheckedNodes();
+
+		if(gridCheck.length===0){
+			alert('[[#{ms.choiceRowZero}]]'); // 선택된 Row가 없습니다
+
+			return false;
+		}
+
+		if(Array.isArray(essentialCols) && essentialCols.length){
+			for(let gCheck of gridCheck){
+	    		for(let checkCol of essentialCols){
+	    			if(null === gCheck[checkCol] || undefined === gCheck[checkCol] || '' === gCheck[checkCol]){
+		    	  		alert((gCheck.pq_ri+1)+' [[#{ms.row}]] '+'[[#{ms.requiredValue}]]' + '(' + pqGrid.getColModel().find(e => e.dataIndx === checkCol).title + ')'); // 필수입력 값을 입력해주세요
+		    	  		pqGrid.focus({
+							rowIndxPage: gCheck.pq_ri,
+							colIndx: pqGrid.getColIndx( { dataIndx: checkCol } )
+						});
+		    	  		if(pqGrid.isEditableCell({ rowIndx : gCheck.pq_ri, dataIndx : checkCol })){
+							//셀 오픈하게 할 의도 -> 아니라면 수정 부탁드립니다.
+		    	  			pqGrid.editCell({ rowIndx : gCheck.pq_ri, dataIndx : checkCol });
+		    	  		}
+		    	  		return false;
+	    			}
+	    		}
+			}
+		}
+
+		return true;
+	}
+
+	// GridUtil 공통 중복 검사 함수
+	function validateDuplicationFieldBeforeSaveGridUtil(grid, keyCols){
+		if(!'object' === typeof grid){
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+
+		let pqGrid;
+
+		if(grid.__proto__.constructor.hasOwnProperty('name') && 'GridUtil' === grid.__proto__.constructor.name){
+	    	pqGrid = grid.getGrid();
+		} else if (grid.__proto__.hasOwnProperty('namespace') && 'paramquery' === grid.__proto__.namespace){
+			pqGrid = grid;
+		} else {
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+
+		const gridCheck = pqGrid.Checkbox('state').getCheckedNodes();
+
+		if(Array.isArray(keyCols) && keyCols.length){
+			for(let gCheck of gridCheck){
+				for(let gData of pqGrid.getData()){
+					if(gCheck.pq_ri !== gData.pq_ri && isKeyDuplication(keyCols, gCheck, gData)){
+						const alertTxt = makeDuplicateRowText(keyCols, pqGrid, gCheck, gData)
+											+ ' [[#{ms.DuplicateKeyErr}]]' + '( ' + (gData.pq_ri+1) + '[[#{ms.row}]] & ' + (gCheck.pq_ri+1) + '[[#{ms.row}]] )';
+
+						alert(alertTxt);
+						pqGrid.focus({
+							rowIndxPage: (gCheck.pq_ri),
+							colIndx: pqGrid.getColIndx({ dataIndx: keyCols[0] } )
+						});
+
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	// GridUtil 공통 저장 함수
+	function refineGridUtilSaveList(grid){
+		if(!'object' === typeof grid){
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+
+		let pqGrid;
+
+		if(grid.__proto__.constructor.hasOwnProperty('name') && 'GridUtil' === grid.__proto__.constructor.name){
+	    	pqGrid = grid.getGrid();
+		} else if (grid.__proto__.hasOwnProperty('namespace') && 'paramquery' === grid.__proto__.namespace){
+			pqGrid = grid;
+		} else {
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+
+		const gridChange = pqGrid.getChanges({ all: true });
+		//updateList 체크 데이터 정제
+		for(let z=0; z<gridChange.updateList.length; z++){
+			if(gridChange.updateList[z]['state'] !== true){
+				gridChange.updateList.splice(z, 1);
+				gridChange.oldList.splice(z, 1);
+			}
+		}
+
+		//addList 체크 데이터 정제
+		gridChange.addList = gridChange.addList.filter(e => e['state'] === true);
+
+		return gridChange;
+	}
+
+	// GridUtil 공통 조회 함수
+	async function getGridUtilList(grid, data, apiUri, httpMethod){
+		if(!'object' === typeof grid){
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+		let pqGrid;
+
+		if(grid.__proto__.constructor.hasOwnProperty('name') &&  'GridUtil' === grid.__proto__.constructor.name){
+	    	pqGrid = grid.getGrid();
+		} else if (grid.__proto__.hasOwnProperty('namespace') && 'paramquery' === grid.__proto__.namespace){
+			pqGrid = grid;
+		} else {
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+		pqGrid.showLoading();
+
+		const res = await fetchUtil(httpMethod || 'GET', apiUri, data);
+
+		if(res.status===200){
+			const resj = await res.json();
+			pqGrid.option( 'dataModel', {
+				data: resj,
+				recIndx: '[[#{common.grid.recIndx}]]'
+			});
+			pqGrid.refreshDataAndView();
+		}
+		pqGrid.hideLoading();
+
+		return res.status===200;
+	}
+
+	async function saveGridUtil(grid, saveData, apiUri, method='POST'){
+		if(Array.isArray(saveData) && !saveData.length){
+			alert('[[#{ms.nodata}]]');
+
+			return false;
+		}
+
+		let pqGrid;
+
+		if(grid.__proto__.constructor.hasOwnProperty('name') &&  'GridUtil' === grid.__proto__.constructor.name){
+	    	pqGrid = grid.getGrid();
+		} else if (grid.__proto__.hasOwnProperty('namespace') && 'paramquery' === grid.__proto__.namespace){
+			pqGrid = grid;
+		} else {
+			alert('Input pqGrid Object');
+
+			return false;
+		}
+
+		pqGrid.showLoading();
+		const res = await fetchUtil(method, apiUri, saveData);
+
+		if(res.status === 200){
+			alert('[[#{ms.saveSuccess}]]');
+			pqGrid.option('dataModel', { data: [] });
+			pqGrid.refreshDataAndView();
+		}
+
+		pqGrid.hideLoading();
+
+		return res.status === 200;
+	}
+
+	function convertCamelCaseToPascalCase(camelString) {
+		  const result = camelString.replace(/([A-Z])/g, '$1');
+
+		  return result.charAt(0).toUpperCase() + result.slice(1);
+	}
+
+	function convertPascalCaseToCamelCase(pascalString) {
+		  const result = pascalString.replace(/([A-Z])/g, '$1');
+
+		  return result.charAt(0).toLocaleLowerCase() + result.slice(1);
+	}
+
+	 // 검색영역 날짜(From-to) change event용 validation
+	function validateFromToDateCondition(fromDateDom, toDateDom){
+	    const currentStartDate = fromDateDom.value;
+	    const currentEndDate = toDateDom.value;
+
+		if(currentEndDate && currentStartDate>currentEndDate){
+			alert('[[#{ms.dateConditionError}]]');
+			fromDateDom.value = '';
+		}
+	};
+
+	// 탭 초기화
+	async function initTab(pageId){
+		document.querySelectorAll('.tab-content .tab-pane[id*="' + pageId+ '"]').forEach(content => {
+			content.classList.remove('active');
+		});
+
+		document.querySelectorAll('#' + pageId + 'Tab' + ' .nav-link').forEach(tab => {
+			tab.addEventListener('click', async () => {
+				setTimeout(()=>{
+					document.querySelectorAll('.tab-content .active .grid-container .pq-grid[id*=' + pageId +']').forEach(targetGrid => {
+	 					pq.grid('#' + targetGrid.id).refresh();
+					}, 100);
+				});
+			});
+		});
+		document.querySelector('.tab-content .tab-pane.show[id*="' + pageId+ '"]').classList.add('active');
+	}
+
+	// window에 리스트 저장
+	function setPreloadDataOnWindow(dataList){
+		if(dataList.length){
+			dataList.forEach(data => {
+				window[data.listName] = data.list;
+			});
+		}
+	}
+	// 창고 - 창고동 관계리스트 공통
+	async function getAreaRelationList(data = {}){
+		const res = await fetchUtil('GET', '/md/organization/area/relation', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+
+	// 창고 - 창고동 - 베드 관계리스트 공통
+	async function getLocationRelationList(data = {}){
+		const res = await fetchUtil('GET', '/md/organization/location/relation', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+
+	// 고객 - 목적지 관계리스트 공통
+	async function getRegistrationRelationList(data = {}){
+		const res = await fetchUtil('GET', '/md/partner/registration/relation', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+
+	// 고객 - 목적지 - 상세착지 관계리스트 공통
+	async function getDestinationRelationList(data = {}){
+		const res = await fetchUtil('GET', '/md/partner/destination/relation', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+
+	// reason code 관계리스트 공통
+	async function getReasonCodeRelationList(data = {}){
+		const res = await fetchUtil('GET', '/md/code/reason-code/relation', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+
+	// 차주-차량 관계리스트 공통
+	async function getVehicelRelationList(data = {}){
+		const res = await fetchUtil('GET', '/md/partner/vehicle/relation', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+
+	// 정산유형 코드
+	async function getBtrcateList(data = {}){
+		const res = await fetchUtil('GET', '/bm/billing/doe079/btrcat', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+
+	//창고동-설비 조회
+	async function getMeqAreaList(data = {}){
+		const res = await fetchUtil('GET', '/md/wae-relations', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+
+	// 설비 매핑 조회
+	async function getMeqlocList(data = {}){
+		const res = await fetchUtil('GET', '/md/organization/equip/relation', data);
+
+		return res.status === 200 ? await res.json() : [];
+	}
+</script>
+
+	<!-- 2023.09.22 n-pqgrid.js-->
+	<script>
+    /**
+     * pqgrid 공동 기능 js
+     */
+//============================================================
+// layoutSetting  : Name Default 셋팅
+//============================================================
+
+    var LOlayoutSave, LOlayoutSetting, LOlayoutReset, LOexport, LOexportCsv, LOexportHtml, LOexportJson, LOexportXlsx
+        , LOnumberCell, LOselectionModel, LOselectionModelCell, LOselectionModelRow, LOfreeze, LOcolsCancel
+        , LOrowsCancel, LOfreezeCol, LOfreezeRow, LOcolumnBorders, LOrowBorders, LOstripeRows, LOaddNodes
+        , LOundo, LOredo, LOgroupModel, LOcopy, LOpaste, TBallFields, TBenterYourKeyword, TBfind, TBadd, TBreset, TBdelete, TBrefresh, TBsave;
+    //============================================================
+    //공통 그리드
+    //============================================================
+    const GridUtil = function(colModel, progrId, gridId){
+        //colModel : 각 열의 속성(title, width, dataIndex..)배열을 정의
+        //progrId : gridId를 생성하는데 사용되는 문자열
+        //gridId : 그리드의 id를 나타냄
+
+        let gridWidth	= "100%";
+    	// gridWidth는 auto로 설정 => 23-10-13 그리드 탭이 많아지면 그리드가 화면을 벗어나 100%로 수정
+
+        if(!colModel || !progrId || !gridId){  // colModel, progrId, gridId 중 하나라도 빈 값이면 alert창 띄우기
+            alert("그리드 정보가 잘못되었습니다.");
+            return;
+        }
+
+    	progrId = progrId === 'Home' ? location.pathname.substring(18) : progrId;	//F5시 url 내 프로그램 ID 셋팅
+
+        // 사용자 그리드 셋팅 & 컬럼 레이아웃 & layoutSetting 툴 Name 가져오기.
+        var data = callAjax("data", "GET", "/sy/syu10/select", { progrid : progrId, pgridid : gridId });
+        this.colModel = colModel;
+        //common.js에 있는 callAjax 함수 호출
+        if(data && data.gridSettingLayout.length > 0){	//gridSettingLayout : SGRIDL테이블 조회
+            var layoutInfos = data.gridSettingLayout;
+            for(var layoutInfo of layoutInfos){
+                this.numberCell = layoutInfo.nubrcel;		//new GridUtil로 생성한 객체의 numberCell(행 번호)의 값은 layoutInfo.nubrcel
+                this.hoverMode = layoutInfo.hovermd;		//new GridUtil로 생성한 객체의 hoverMode의 값은 layoutInfo.hovermd
+                this.freezeCols = layoutInfo.frezcol;		//new GridUtil로 생성한 객체의 freezeCols(고정시킬 총 열 개수 지정)의 값은 layoutInfo.frezcol
+                this.freezeRows = layoutInfo.frezrow;		//new GridUtil로 생성한 객체의 freezeRows(고정시킬 총 행 개수 지정)의 값은 layoutInfo.frezrow
+                this.columnBorders = layoutInfo.colbodr;	//new GridUtil로 생성한 객체의 columnBorders(세로 테두리)의 값은 layoutInfo.colbodr
+                this.rowBorders = layoutInfo.rowbodr;		//new GridUtil로 생성한 객체의 rowBorders(가로 테두리)의 값은 layoutInfo.rowbodr
+                this.stripeRows = layoutInfo.strprow;		//new GridUtil로 생성한 객체의 stripeRows(그리드의 행에 대한 스타일을 교대로 지정하는 기능)의 값은 layoutInfo.strprow
+                this.height = layoutInfo.gheight;			//new GridUtil로 생성한 객체의 height(높이)의 값은 layoutInfo.gheight
+            }
+            this.colModel = setColModel(colModel, data.gridColumnLayout);
+            layoutSettingName(data.layoutSettingName);	//layoutSetting : 언어 설정?
+            // layoutSettingName 함수 호출, data.layoutSettingName을 매개변수로 받음
+        }
+        this.progrId = progrId ? progrId : null;
+        this.gridId = gridId ? gridId : null;
+
+
+        this.setTitle = function(title){	// new GridUtil로 생성한 객체의 title의 값은 해당 객체의 setTitle 함수를 호출해서 매개변수로 입력받은 title 값이다.
+            this.title = title;
+        }
+
+        this.setFreezeCols = function(freezeCols){
+        	this.freezeCols = freezeCols;
+        }
+
+        this.setHeight = function(height){
+        	this.height = height;
+        }
+
+        this.rowHt = 25; // Default: 25
+        this.setRowHt = function(rowHt){
+        	this.rowHt = rowHt;
+        }
+        this.numberCell = function(numberCell){
+        	this.numberCell = numberCell;
+        }
+
+        // create 이벤트 정의/재정의
+        this.create = function() {
+            this.widget().pqTooltip();	// new GridUtil로 객체 생성 후 create 함수를 호출하면 해당 객체의 widget 함수의 pqTooltip 함수가 호출된다.
+        }
+        this.setCreate = function(fun) {  // new GridUtil로 객체 생성 후 setCreate 함수를 호출하면 create 함수는 fun 함수로 재정의된다.
+            this.create = fun;
+        }
+
+        this.setChange = function(fun){		// new GridUtil로 객체 생성 후 setChange 함수를 호출하면 change 함수는 fun 함수로 재정의된다.
+            this.change = fun;
+        }
+
+        this.setSelectChange = function(fun){		// new GridUtil로 객체 생성 후 setSelectChange 함수를 호출하면 selectChange 함수는 fun 함수로 재정의된다.
+            this.selectChange = fun;
+        }
+        this.setSelectEnd = function(fun){
+        	this.selectEnd = fun;
+        }
+
+        // cellSave 이벤트 정의/재정의
+        this.setCellSave = function(fun){		// new GridUtil로 객체 생성 후 setCellSave 함수를 호출하면 cellBeforeSave 함수는 fun 함수로 재정의된다.
+            this.cellSave = fun;
+        }
+
+        this.setCellBeforeSave = function(fun){		// new GridUtil로 객체 생성 후 setCellBeforeSave 함수를 호출하면 cellBeforeSave 함수는 fun 함수로 재정의된다.
+            this.cellBeforeSave = fun;
+        }
+
+        this.setCellClick = function(fun){		// new GridUtil로 객체 생성 후 setCellClick 함수를 호출하면 cellClick 함수는 fun 함수로 재정의된다.
+            this.cellClick = fun;
+        }
+
+        this.setCellKeyDown = function(fun){		// new GridUtil로 객체 생성 후 setCellKeyDown 함수를 호출하면 cellKeyDown 함수는 fun 함수로 재정의된다.
+            this.cellKeyDown = fun;
+        }
+
+        this.setBeforeValidate = function(fun){		// new GridUtil로 객체 생성 후 setBeforeValidate 함수를 호출하면 beforeValidate 함수는 fun 함수로 재정의된다.
+            this.beforeValidate = fun;
+        }
+
+        this.setCheck = function(fun){		// new GridUtil로 객체 생성 후 setCheck 함수를 호출하면 check 함수는 fun 함수로 재정의된다.
+            this.check = fun;
+        }
+
+        this.setBeforeCheck = function(fun){		// new GridUtil로 객체 생성 후 setBeforeCheck 함수를 호출하면 beforeCheck 함수는 fun 함수로 재정의된다.
+            this.beforeCheck = fun;
+        }
+
+        this.setRowDblClick = function(fun){		// new GridUtil로 객체 생성 후 setRowDblClick 함수를 호출하면 rowDblClick 함수는 fun 함수로 재정의된다.
+            this.rowDblClick = fun;
+        }
+
+        this.setEditorBegin = function(fun){		// new GridUtil로 객체 생성 후 setSelectChange 함수를 호출하면 selectChange 함수는 fun 함수로 재정의된다.
+            this.editorBegin = fun;
+        }
+
+        this.setEditorEnd = function(fun){		// new GridUtil로 객체 생성 후 setSelectChange 함수를 호출하면 selectChange 함수는 fun 함수로 재정의된다.
+            this.editorEnd = fun;
+        }
+
+        this.setEditorKeyUp = function(fun){		// new GridUtil로 객체 생성 후 setEditorKeyUp 함수를 호출하면 editorKeyUp 함수는 fun 함수로 재정의된다.
+            this.editorKeyUp = fun;
+        }
+
+        this.setBeforeCheck = function(fun){		// new GridUtil로 객체 생성 후 setBeforeCheck 함수를 호출하면 beforeCheck 함수는 fun 함수로 재정의된다.
+            this.beforeCheck = fun;
+        }
+
+        this.setRowInit = function(fun){	// new GridUtil로 객체 생성 후 setRowInit 함수를 호출하면 rowInit 함수는 fun 함수로 재정의된다.
+            this.rowInit = fun;
+        }
+
+        this.setRowClick = function(fun){	// new GridUtil로 객체 생성 후 setRowInit 함수를 호출하면 rowInit 함수는 fun 함수로 재정의된다.
+            this.rowClick = fun;
+        }
+
+        this.setCellDblClick = function(fun){		// new GridUtil로 객체 생성 후 setCellDblClick 함수를 호출하면 cellDblClick 함수는 fun 함수로 재정의된다.
+            this.cellDblClick = fun;
+        }
+
+        this.setHeaderCellClick = function(fun) {	// new GridUtil로 객체 생성 후 setHeaderCellClick 함수를 호출하면 headerCellClick 함수는 fun 함수로 재정의된다.
+            this.headerCellClick = fun;
+        }
+
+        this.setHistory = function(fun) {
+            this.history = fun;
+        }
+
+        //----------------------------------------//
+        // 24.09.02 복사 기능 관련 추가
+        this.copyModel = {
+        		on: true,
+        		render: false,
+        		header: undefined
+        }
+        this.setCopyModel = function(fun){
+        	this.copyModel = fun;
+        }
+
+        //----------------------------------------//
+        // 24.02.06 tma06 기능 관련 추가
+        this.dragModel = {
+        	on: false
+        };
+        this.setDragModel = function(fun){
+        	this.dragModel = fun;
+        }
+
+        this.dropModel = {
+            	on: false
+        };
+        this.setDropModel = function(fun){
+        	this.dropModel = fun;
+        }
+        //----------------------------------------//
+
+    	this.treeModel = {};
+    	this.setTreeModel = function(treeModel){
+    		this.treeModel = treeModel;
+    	}
+
+    	this.selectionModel = { type: 'cell', mode: 'block'}
+
+    	this.setSelectionModel = function(fun){
+    		this.selectionModel = fun;
+    	}
+
+    	this.contextMenu = {	//그리드 내에서 마우스 우클릭 시 나타나는 메뉴의 속성 설정
+    		    on: true ,
+    		    headItems: layoutSetting ,   //header context menu items.
+    		    cellItems: layoutSetting     //body context menu items
+    	},
+
+    	this.editModel = {};
+    	this.setEditModel = function(editModel){
+        	this.editModel = editModel;
+        }
+
+        this.tabModel = {};
+        this.setTabModel = function (fun){
+            this.tabModel = {
+                noAdd: true,
+				noSortable: true,
+                tabs: [{name : '[[#{ms.underBar}]]', noRename : true}], // 기본 name이 너무 짧을 경우 탭이 어그러짐
+                newTab : function(){
+                	return {
+                		extraCols : 0,
+                		extraRows : 0,
+               			noRename : true
+                	}
+                }
+            }
+            this.contextMenu.on = false; // 탭 모델은 contextMenu 비활성화(오른쪽 버튼)
+        }
+
+        this.groupModel = {	// 그룹화 설정
+            on: false,	// 그룹화 활성화 여부
+            collapsed: [],	// 그룹화된 항목 축소 여부
+            summaryInTitleRow: 'all',	// 그룹화된 항목의 요약정보를 표시할 위치
+            merge: true,	// 그룹화된 항목의 셀 병합 여부
+            grandSummary: true,	// 모든 그룹화된 항목의 총 요약 정보 표시 여부
+            headerMenu : false,
+            showSummary: []	// 그룹화된 항목의 요약 정보 표	시 여부
+        }
+        this.setGroupModel = function(groupModel){
+        	this.groupModel = groupModel;
+        }
+
+        this.setMergeCells = function (fun){
+            this.mergeCells = fun;
+        }
+
+        this.setSort = function (fun){
+            this.sort = fun;
+        }
+
+        // toolbar : find 이벤트 정의/재정의
+        var findTb = false;
+        this.setFind = function(fun){		// findTb가 false로 정의 되어있는데 new GridUtil로 객체 생성 후 setFind 함수를 호출하면 findTb가 true로 재정의된다.
+            findTb = true;
+        }
+
+        // toolbar : custom버튼 이벤트 정의/재정의
+        let customTb = false;
+        let TBcustom = 'custom';
+        let customTbImage = 'add';
+        let customFun = function(evt, ui){
+        }
+        this.setCustom = function(fun, labelName, imageName){
+            customTb = true;
+            if(labelName){
+                TBcustom = labelName;
+            }
+            if(imageName){
+            	customTbImage = imageName;
+            }
+            customFun = fun;
+        }
+
+        // toolbar : add 이벤트 정의/재정의
+        var addTb = false;
+        var addFun = function(evt, ui){
+        }
+        this.setAdd = function(fun){		// addTb가 false로, addFun 함수는 evt, ui를 매개변수로 받는 빈 함수로 정의 되어있는데 new GridUtil로 객체 생성 후 setAdd 함수를 호출하면 addTb는 true로, addFun 함수는 fun 함수로 재정의된다.
+            addTb = true;
+            addFun = fun;
+        }
+
+        // toolbar : reset 이벤트 정의/재정의
+        var resetTb = false;
+        this.setReset = function(fun){ // resetTb가 false로 정의 되어있는데 new GridUtil로 객체 생성 후 setReset 함수를 호출하면 resetTb가 true로 재정의된다.
+            resetTb  = true;
+        }
+
+        // toolbar : delete 이벤트 정의/재정의
+        var deleteTb = false;
+        var deleteFun = function(evt, ui){
+        }
+        this.setDelete = function(fun){		// deleteTb가 false로, deleteFun 함수는 evt, ui를 매개변수로 받는 빈 함수로 정의 되어있는데 new GridUtil로 객체 생성 후 setAdd 함수를 호출하면 deleteTb는 true로, deleteFun 함수는 fun 함수로 재정의된다.
+            deleteTb = true;
+            deleteFun = fun;
+        }
+
+        // toolbar : refresh 이벤트 정의/재정의
+        var refreshTb = false;
+        var refreshFun = function(evt, ui){
+        }
+
+        // toolbar : save 이벤트 정의/재정의
+        var saveTb = false;
+        var saveFun = function(evt, ui){
+        }
+        this.setSave = function(fun){		// saveTb가 false로, saveFun 함수는 evt, ui를 매개변수로 받는 빈 함수로 정의 되어있는데 new GridUtil로 객체 생성 후 setSave 함수를 호출하면 saveTb는 true로, saveFun 함수는 fun 함수로 재정의된다.
+            saveTb = true;
+            saveFun = fun;
+        }
+
+        this.setRefresh = function(fun){	// refreshTb가 false로, refreshFun 함수는 evt, ui를 매개변수로 받는 빈 함수로 정의 되어있는데 new GridUtil로 객체 생성 후 setAdd 함수를 호출하면 refreshTb는 true로, refreshFun 함수는 fun 함수로 재정의된다.
+            refreshTb = true;
+            refreshFun = fun;
+        }
+
+        function toolbarItems(){
+            var items = new Array();	// items 배열 객체 생성
+
+            items.push(  // 아래 구조체들을 items에 push
+                // find 활성화 여부
+                { 	type: 'select',		// type은 select
+                    style: findTb === true ? '' : 'display: none;',		// findTb가 true면 보이고 아니면 안보이게
+                    cls: 'findColumn',			// class이름 findColumn
+                    listener: findHandler,		// findHandlerd 이벤트 발생
+                    options: function (ui) {
+                        var CM = ui.colModel;
+                        var opts = [{ '': TBallFields ? TBallFields : allCategoryMsg }];
+                        for (var column of CM) {
+                            var obj = {};
+                            if(column.dataIndx !== 'state' && column.hidden !== true && column.dataType !== 'integer'){
+                                obj[column.dataIndx] = column.title;
+                                opts.push(obj);
+                            }
+                        }
+                        return opts;
+                    }
+                },
+                { 	type: 'textbox', 	// type은 textbox
+                    style: findTb === true ? '' : 'display: none;',
+                    attr: 'placeholder="' + (TBenterYourKeyword ? TBenterYourKeyword : 'enter your keyword') + '"',
+                    //	placeholor는 TBenterYourKeyword 값이 있다면 TBenterYourKeyword, 값이 없으면 enter your keyword
+                    cls: 'findValue',		// class이름 findValue
+                    listener: { timeout: findHandler }		// timeout:findHandler 이벤트 발생 => 사용자가 검색 기능 사용 시 검색 대상 데이터 찾을 때까지 대기할 시간 지정
+                },
+                { 	type: 'button',		// type은 button
+                    style: findTb === true ? '' : 'display: none;',
+                    label: "<img/>" + " " + (TBfind ? TBfind : '[[#{bt.find}]]') + " ",		//label은 TBfind, 없으면 Find
+                    cls : 'pq-search-btn btn-search btn-navy btn-green',		// class이름 pq-search-btn
+                    listener: focusHandler		//focusHandler 이벤트 발생
+                },
+                // reset 활성화 여부
+                { 	type: 'button',		// type은 button
+                    style: resetTb === true ? 'float: right;' : 'display: none;',		// resetTb true면 float: right; 아니면 안보이게
+                    // resetTb가 true면 float:right, 아니면 안보이게
+                    cls : 'pq-action-btn btn-white',		// class이름 pq-action-btn
+                    label: "<img class='ic-bt-reset'>" + " " + (TBreset ? TBreset : '[[#{bt.reset}]]') + " ",
+                    // label은 <i class='ui-button-icon-primary ui-icon ui-icon-refresh-f'></i> + TBreset(없으면 Reset)
+                    listener: function() {
+                        if(!confirm(modifyRollbackMsg)){
+                            return;
+                        }
+                        this.rollback();	// 이벤트 발생 : rollback 함수 실행 => 이전으로 되돌리기
+                        //this.history({ method: 'reset' });	//이전 상태를 기록하고 이력 관리 수행(사용자가 실수로 데이터를 삭제하거나 변경한 경우, 이전 상태로 되돌릴 수 있다) => 취소/다시실행 기능에서 사용
+                    }
+                },
+                // delete 활성화 여부
+                { 	type: 'button',		// type은 button
+                    style: deleteTb === true ? 'float: right;' : 'display: none;',		// deleteTb true면 float: right; 아니면 안보이게
+                    // deleteTb true면 float:right, 아니면 안보이게
+                    cls : 'pq-action-btn btn-white',		// class이름 pq-action-btn
+                    label: "<img class='ic-bt-delete'>" + " " + (TBdelete ? TBdelete : '[[#{bt.delete}]]') + " ",
+                    // label은 <i class='fa-regular fa-trash-can ui-icon-trash-f'></i> + TBdelete(없으면 Delete)
+                    listener: deleteFun		//  deleteFun 이벤트 발생
+                },
+                // add 활성화 여부
+                { 	type: 'button',		// type은 button
+                    style: addTb === true ? 'float: right;' : 'display: none;',		// addTb true면 float: right; 아니면 안보이게
+                    // addTb true면 float:right, 아니면 안보이게
+                    cls: 'pq-tool-btns pq-action-btn btn-white',		// class이름 pq-tool-btns pq-action-btn
+                    label: "<img class='ic-bt-add'>" + " " + (TBadd ? TBadd : '[[#{bt.add}]]') + " ",
+                    // label은 <i class='ui-button-icon-primary ui-icon ui-icon-add-f'></i> + TBadd(없으면 Add)
+                    listener: addFun		// addFun 이벤트 발생
+                },
+                // custom 버튼 활성화 여부
+                { 	type: 'button',		// type은 button
+                    style: customTb === true ? 'float: right;' : 'display: none;',		// addTb true면 float: right; 아니면 안보이게
+                    // customTb true면 float:right, 아니면 안보이게
+                    cls: 'pq-tool-btns pq-action-btn btn-white',		// class이름 pq-tool-btns pq-action-btn
+                    label: "<img class='ic-bt-" + customTbImage + "'>" + " " + TBcustom + " ",
+                    // label은 <i class='ui-button-icon-primary ui-icon ui-icon-custom-f'></i> + TBCustom(없으면 Custom)
+                    listener: customFun	// customFun 이벤트 발생
+                },
+                // refresh 활성화 여부
+                { 	type: 'button',		//type은 button
+                    style: refreshTb === true ? 'float: right;' : 'display: none;',		// refreshTb true면 float: right; 아니면 안보이게
+                    cls : 'pq-action-btn btn-white',		// class이름 pq-action-btn
+                    label: "<img class='ic-bt-reset'>" + " " + (TBrefresh ? TBrefresh : '[[#{bt.refresh}]]') + " ",
+                    // label은 <i class='ui-button-icon-primary ui-icon ui-icon-refresh-f'></i> + TBrefresh(없으면 Refresh)
+                    listener: refreshFun		// refreshFun 이벤트 발생
+                },
+                // save 활성화 여부
+                { 	type: 'button',		//type은 button
+                    style: saveTb === true ? 'float: right;' : 'display: none;',		// refreshTb true면 float: right; 아니면 안보이게
+                    cls : 'pq-action-btn btn-navy btn-green',		// class이름 pq-action-btn
+                    label: "<img class='ic-bt-save'>" + " " + (TBsave ? TBsave : '[[#{bt.save}]]') + " ",
+                    // label은 <i class='ui-button-icon-primary ui-icon ui-icon-refresh-f'></i> + TBrefresh(없으면 Save)
+                    listener: saveFun	// refreshFun 이벤트 발생
+                }
+            );
+            return items;		// items 배열을 리턴
+        }
+
+        this.open = function(){		// new GridUtil로 생성한 객체의 open 함수 ==> 해당 객체의 속성값 설정
+            var obj = {
+                title: this.title,		//그리드 제목
+                locale : 'kr',
+                toolbar: { cls: "pq-toolbar-search", items: toolbarItems()},	//toolbar 설정
+                warning: { icon: '', style: '', cls: '' },	//경고 메세지 설정
+                bootstrap: { on: false },	//부트스트랩 CSS 사용 여부 false
+                width: gridWidth,	//width는 gridWidth로 설정  ==> 그리드 너비
+                height: this.height || 500,	//그리드 높이, 0으로 설정하면 높이는 500으로 지정됨
+                colModel: this.colModel,	//각 개체가 열 속성에 해당하는 개체의 배열입니다.
+                copyModel: this.copyModel, // 복사 모델
+                contextMenu: this.contextMenu,
+                dragModel: this.dragModel,
+                dropModel: this.dropModel,
+                numberCell: { show: this.numberCell ?? this.numberCell, minWidth: 50 }, 		//row(행)번호
+                // numberCell : {show:(numberCell의 값이 있으면 해당 numbercell, 없으면 false)}
+                hoverMode: this.hoverMode || 'row',             //Mouse Over Mode(selection)
+                // hoverMode : 마우스 오버 시 선택되는 항목의 모드 설정
+                selectionModel: this.selectionModel,
+                // selectionModel : 그리드에서 선택되는 영역의 모드 설정
+                treeModel : this.treeModel,
+				// treeModel : 공통 부모를 기준으로 행을 그룹화하고 계층적으로 표시
+                freezeCols: this.freezeCols ? this.freezeCols : 0,
+                // freezeCols : freezeCols의 값이 있으면 해당 freezeCols 값 만큼 열 고정, 없으면 0
+                freezeRows: this.freezeRows ? this.freezeRows : 0,
+                // freezeRows : freezeRows 값이 있으면 해당 freezeRows 값 만큼 행 고정, 없으면 0
+                columnBorders: this.columnBorders ? this.columnBorders : true,
+                // columnBorders : columnBorders 값이 있으면(true) 열(세로) 테두리 그리기, 없으면 true(테두리 O)
+                rowBorders: this.rowBorders ? this.rowBorders : true,
+                // rowBorders : rowBorders 값이 있으면(true) (행)가로 테두리 그리기, 없으면 true(테두리 O)
+                stripeRows: this.stripeRows ? this.stripeRows : true,
+                // stripeRows : stripeRows 값이 있으면 행에 대한 스타일 교대로 지정, 없으면 true
+                groupModel: this.groupModel,
+                gprogrid: this.progrId, 	//그리드가 속한 프로그램 ID
+                resizable: progrId !== 'main',             //그리드 크기 조절 가능 여부
+                menuIcon: false,             //컬럼 아이콘
+                collapsible: {on: false, toggle: false},	//상단 툴바의 오른쪽 아이콘 두개(크게보기, 줄이기)
+                showTitle: this.title ? true : false,	//타이틀 나오는 상단 툴바
+                showToolbar: (findTb || addTb || resetTb || deleteTb || refreshTb || saveTb) ? true : false,	//버튼 나오는 상단 툴바.
+                hwrap: false,	//줄 바꿈
+                wrap : false,	// true인 경우 셀의 텍스트가 다음 줄로 줄 바꿈되고 그렇지 않으면 넘친 텍스트가 숨겨지고 연속 기호 ...가 끝에 표시됩니다.
+                rowHt: this.rowHt,	//그리드의 모든 행의 높이를 일정하게 설정합니다.
+                trackModel: { on: true },	// 그리드 인라인 추가, 업데이트 및 삭제 작업에 대한 추적 속성을 설정
+                postRenderInterval: -1,	//그리드 보기 새로 고침과 column.postRender 에 대한 첫 번째 호출 사이의 시간 간격(밀리초)을 결정합니다 .
+                scrollModel: { autoFit: false },	//Grid는 스크롤 없이 뷰포트에 모두 맞도록 열의 너비를 변경, 그리드 너비의 모든 크기 조정/변경은 열 너비의 비례 변경
+                editor: { select: true }, 	//전체 그리드에 대한 편집기 속성을 제공합니다.
+//                flex: { on: true, one: true, all: false },	//이 옵션은 모든 셀 내용이 줄 바꿈 없이 한 줄에 표시되는 방식으로 열 또는 열 수를 설정하는 데 도움이 됩니다. 해당 옵션 활성화 시 그리드 레이아웃 설정 불가능.
+                columnTemplate: findTb ? {render: findRender} : false,	//이 옵션은 DRY 원칙에 따라 모든 열에서 속성이 반복되지 않도록 공통 열 속성을 정의합니다(반복하지 않음).
+                create: this.create,	//그리드가 생성될 때 트리거(이벤트 발생)됩니다.
+                change: this.change,	//인라인 셀 편집, 메소드 호출을 통한 행 추가/업데이트/삭제, 행/셀 붙여넣기, 실행 취소, 다시 실행으로 인해 그리드 데이터가 변경된 후 트리거됩니다.
+                selectChange: this.selectChange,	// 선택된 행이 변경될 때 이벤트 발생
+                selectEnd : this.selectEnd,
+                editorBegin : this.editorBegin,
+                editorEnd : this.editorEnd,
+                cellSave : this.cellSave,
+                cellBeforeSave: this.cellBeforeSave,	//인라인 편집 중에 셀이 pqGrid에 저장되기 전에 트리거됩니다. false를 반환하여 데이터 저장을 취소할 수 있습니다.
+                cellClick : this.cellClick,	// 셀을 클릭할 때 이벤트 발생
+                cellKeyDown : this.cellKeyDown,	// 셀에서 키보드를 누를때 이벤트 발생
+                beforeValidate : this.beforeValidate,	// 셀에 입력한 값의 유효성을 검사하기 전에 이벤트 발생
+                check : this.check,	// 체크박스 셀 관리 기능
+                beforeCheck : this.beforeCheck,	// 체크박스를 체크/언체크 하기 전에 이벤트 발생
+                rowDblClick : this.rowDblClick,	// 행 더블클릭 시 이벤트 발생
+                editorKeyUp : this.editorKeyUp,	// 셀 에디터에서 키보드를 눌렀다 떼었을 때 이벤트 발생
+                rowInit : this.rowInit,	// 각각의 행이 초기화 될 때 이벤트 발생
+                rowClick : this.rowClick,
+                cellDblClick : this.cellDblClick,	// 셀을 더블클릭할 때 이벤트 발생
+                headerCellClick: this.headerCellClick,	//헤더셀을 클릭할 때 이벤트 발생
+                history: this.history,	// 히스토리에 접근했을 때 발생
+                editModel: this.editModel, // 에디터 모델
+                tabModel: this.tabModel,	// 탭 UI를 표시하기 위한 속성을 제공합니다.
+                mergeCells: this.mergeCells,
+                sort: this.sort,
+                skipSingleSummary: false, // summary 열이 1개일 시 합계를 스킵함
+                summaryTitle: {avg: "평균 : {0}", count: '개수 : {0}', max: "최대 : {0}", min: "최소 : {0}", sum: getCaseBySummaryTitle } // summary 랜더링,
+            };
+
+            this.gridDom = pq.grid('#' + this.gridId, obj);
+            // new GridUtil로 생성한 객체의 gridDom 값은 pq.grid('#' + this.gridId, obj)
+            // gridDom : 그리드의 뷰를 생성하고 관리하는 객체, pq.grid('#그리드명') ==> #그리드명 : id가 그리드명인 HTML 요소
+
+        };
+
+        //======== 2022.08.30 SWH 추가 ==========
+        //======== grid Destroy =======
+        this.destroy = function(){		// new GridUtil로 생성한 객체의 destroy 함수는 해당 객체의 gridDom의 destroy 함수를 실행
+            this.gridDom.destroy();		// destroy : 해당 그리드 기능을 제거하고 요소를 초기화 전 상태로 되돌림
+        }
+
+        //======== grid dataModel =======
+        this.searchList = function(data){	// new GridUtil로 생성한 객체의 searchList 함수는 해당 객체의 gridDom의 showLoading, option, hideLoading, refreshDataAndView 함수를 실행
+            this.gridDom.showLoading();		// 로딩 보여주기
+            this.gridDom.option( "dataModel", { data: data, recIndx: "rowkey" } );  //recIndx : record index
+            this.gridDom.hideLoading();		//로딩 사라짐
+            this.gridDom.refreshDataAndView();	// 새로고침
+        }
+
+        this.getGrid = function(){		// new GridUtil로 생성한 객체의 getGrid 함수는 해당 객체의 gridDom 값을 리턴
+            return this.gridDom;
+        }
+
+        this.getChanges = function(){		// new GridUtil로 생성한 객체의 getChanges 함수는 해당 객체의 gridDom의 getChanges 함수를 리턴
+            return this.gridDom.getChanges({all:true});	// 그리드에서 변경된 값 가져오기
+        }
+
+        //===========================================
+        // Common Grid Preview (mdu2 참조)
+        //===========================================
+        this.preViewShowPage = function(url, param){	//그리드 뷰의 미리보기 창을 화면에 표시(url : 미리보기 창에 표시할 url)
+
+            var urlParameters = "";
+            var tURL = "";
+
+            $("#"+gridId).closest(".grid-container").addClass("fl-block");	//선택된 gridId로 지정된 id 속성을 가진 HTML 요소에서 가장 가까운 grid-container 클래스를 갖는 요소에 fl-block 클래스 추가
+            $("#"+gridId).closest(".grid-container").find(".grid-preview").addClass("active");	//.find는 선택된 HTML 요소의 하위 요소 중 grid-preview 클래스를 갖는 요소를 선택해서 active 클래스 추가
+
+            if(url != null){
+                if(param != null) urlParameters = Object.entries(param).map(e => e.join('=')).join('&');
+                tURL = url+"&"+urlParameters;
+
+                $("#"+gridId).closest(".grid-container").find(".grid-preview").load(tURL);
+            }
+        }
+
+        this.preViewShow = function(){	// 뷰 페이지 보여주기, 내용 초기화?
+            var gridColDom 		= $("#"+gridId).closest(".row").find(".grid-col");
+            var preViewColDom 	= $("#"+gridId).closest(".row").find(".preview-col");
+
+            preViewColDom.show();  // preViewColDom 보여주기?
+
+            gridColDom.removeClass();	// gridColDom에 클래스 삭제
+            gridColDom.addClass("grid-col col-md-9");	// gridColDom에 클래스 추가
+
+            preViewColDom.removeClass();
+            preViewColDom.addClass("preview-col col-md-3");
+            preViewColDom.find(".grid-preview").children().remove();	// preViewColDom에 grid-preview 클래스를 가진 요소의 자식 요소 삭제
+        }
+
+        this.preViewAppendDom = function(dom){	// 미리보기 창에 새로운 dom 요소 추가
+            var preViewColDom 	= $("#"+gridId).closest(".row").find(".preview-col");
+            preViewColDom.find(".grid-preview").children().remove();
+            preViewColDom.find(".grid-preview").append(dom);	// preViewColDom에 grid-preview 클래스를 가진 요소에 dom 요소 추가
+        }
+
+        this.preViewRemoveDom = function(){	// dom 요소 제거
+            var preViewColDom 	= $("#"+gridId).closest(".row").find(".preview-col");
+            preViewColDom.find(".grid-preview").children().remove();
+        }
+
+        this.preViewHide = function(){	// 미리보기 창 숨기기
+            var gridColDom 		= $("#"+gridId).closest(".row").find(".grid-col");
+            var preViewColDom 	= $("#"+gridId).closest(".row").find(".preview-col");
+
+            gridColDom.removeClass();
+            gridColDom.addClass("grid-col col-md-12");
+
+            preViewColDom.removeClass();
+            preViewColDom.addClass("preview-col");
+            preViewColDom.hide();	// preViewColDom 숨기기?
+            preViewColDom.find(".grid-preview").children().remove();
+        }
+
+        this.preViewRemove = function(){	//미리보기 창 내용 삭제
+            var preViewColDom 	= $("#"+gridId).closest(".row").find(".preview-col");
+            preViewColDom.find(".grid-preview").children().remove();
+        }
+    }
+
+    //	this.removeData
+
+    //>>>>>>>>>>>>>>>>>>>>>>>>>여기까지 GridUtil<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+    //============================================================
+    //공통 그리드 : grid Column Layout 재정의
+    //============================================================
+    function setColModel(colModel, gridColMD){
+        for(var gridCol of gridColMD){
+            for(var idx = 0; idx < colModel.length; idx++){
+                var col = colModel[idx]
+                if(col.dataIndx === gridCol.dataidx){
+                    //hidden 값 추가 부분
+                    if(gridCol.phidden !== null){
+                        col.hidden = gridCol.phidden;
+                    }
+                    //Width 값 추가 부분
+                    if(gridCol.pqwidth !== null){
+                        col.width = gridCol.pqwidth;
+                    }
+                    //순서 바꾸기
+                    var item = colModel.splice(idx, 1);
+                    colModel.splice(gridCol.sortnum, 0, item[0]);
+                }
+            }
+        }
+        return colModel;
+    }
+
+    //============================================================
+    // layoutSetting
+    //============================================================
+    function layoutSetting(evt, ui){
+        return [
+            {
+                name: LOlayoutSave ? LOlayoutSave : 'Layout Save',
+                action: function(){
+                    if(window['setLayoutSetting']){
+                        window['setLayoutSetting'](this);
+                    }
+                }
+            },
+            {
+                name: LOlayoutSetting ? LOlayoutSetting : 'Layout Setting',
+                action: function(){
+                	modalGridLayoutShow(this);
+                }
+            },
+            {
+                name: LOlayoutReset ? LOlayoutReset : 'Layout Reset',
+                action: function(){
+                    if(window['setLayoutReset']){
+                        window['setLayoutReset'](this);
+                    }
+                }
+            },
+            'separator',
+            {
+                name: LOexport ? LOexport : 'Export',
+                subItems: [
+                    {
+                        name: LOexportCsv ? LOexportCsv : 'csv',
+                        action: function(){
+                            exportData.call(this, 'csv');
+                        }
+                    },
+                    {
+                        name: LOexportHtml ? LOexportHtml : 'html',
+                        action: function(){
+                            exportData.call(this, 'html');
+                        }
+                    },
+                    {
+                        name: LOexportJson ? LOexportJson : 'json',
+                        action: function(){
+                            exportData.call(this, 'json');
+                        }
+                    },
+                    {
+                        name: LOexportXlsx ? LOexportXlsx : 'xlsx',
+                        action: function(){
+                            exportData.call(this, 'xlsx');
+                        }
+                    }
+                ]
+            },
+            'separator',
+            {
+                name: LOnumberCell ? LOnumberCell : 'Row Number',
+                action: function(){
+                    var numberCell = this.option( "numberCell" );
+                    this.option("numberCell.show", !numberCell.show);
+                    this.refresh();
+                }
+            },
+            {
+                name: LOselectionModel ? LOselectionModel : 'Selection Model',
+                subItems: [
+                    {
+                        name: LOselectionModelCell ? LOselectionModelCell : 'cell',
+                        action: function( ){
+                            this.option( "hoverMode", "cell");
+                            this.refresh();
+                        }
+                    },
+                    {
+                        name: LOselectionModelRow ? LOselectionModelRow : 'row',
+                        action: function( ){
+                            this.option( "hoverMode", "row");
+                            this.refresh();
+                        }
+                    }
+                ],
+            },
+            {
+                name: LOfreeze ? LOfreeze : 'Freeze',
+                subItems: [
+                    (this.option('freezeCols') ? { name: LOcolsCancel ? LOcolsCancel : 'Cols Cancel', action: function(){ this.option('freezeCols', 0); this.refresh(); } } : null),
+                    (this.option('freezeRows') ? { name: LOrowsCancel ? LOrowsCancel : 'Rows Cancel', action: function(){ this.option('freezeRows', 0); this.refresh(); } } : null),
+                    'separator',
+                    {name: LOfreezeCol ? LOfreezeCol : 'Col Freeze',  action: function(evt, ui){ this.option("freezeCols", ui.colIndx+1); this.refresh();}},
+                    {name: LOfreezeRow ? LOfreezeRow : 'Row Freeze',  action: function(evt, ui){ this.option("freezeRows", ui.rowIndx+1); this.refresh();}}
+                ],
+            },
+            {
+                name: LOcolumnBorders ? LOcolumnBorders : 'Column Borders',
+                action: function(){
+                    var b = this.option( "columnBorders" );
+                    this.option("columnBorders", !b);
+                }
+            },
+            {
+                name: LOrowBorders ? LOrowBorders : 'Row Borders',
+                action: function(){
+                    var b = this.option( "rowBorders" );
+                    this.option("rowBorders", !b);
+                }
+            },
+            {
+                name: LOstripeRows ? LOstripeRows : 'Stripe Rows',
+                icon: 'ui-icon ui-icon-shuffle',
+                action: function(){
+                    var b = this.option( "stripeRows" );
+                    this.option("stripeRows", !b);
+                    this.refresh();
+                }
+            },
+            'separator',
+            {
+                name: LOundo ? LOundo : 'Undo',
+                icon: 'ui-icon ui-icon-arrowrefresh-1-n',
+                disabled: !this.History().canUndo(),
+                action: function(){
+                    this.History().undo();
+                }
+            },
+            {
+                name: LOredo ? LOredo : 'Redo',
+                icon: 'ui-icon ui-icon-arrowrefresh-1-s',
+                disabled: !this.History().canRedo(),
+                action: function(){
+                    this.History().redo();
+                }
+            },
+            'separator',
+            {
+                name: LOgroupModel ? LOgroupModel : 'Data Group',
+                icon: 'ui-icon ui-icon-calculator',
+                action: function () {
+                    var b = this.option( "groupModel.on" );
+                    this.Group().option({ on: !b });
+                }
+            },
+            'separator',
+            {
+                name: LOcopy ? LOcopy : 'Copy',
+                icon: 'ui-icon ui-icon-copy',
+                shortcut: 'Ctrl - C',
+                tooltip: "Works only for copy / paste within the same grid",
+                action: function(){
+                    this.copy();
+                }
+            },
+            {
+                name: LOpaste ? LOpaste : 'Paste',
+                icon: 'ui-icon ui-icon-clipboard',
+                shortcut: 'Ctrl - V',
+                action: function(){
+                    this.paste();
+                }
+            }
+        ]
+    }
+
+    //============================================================
+    // layoutSetting : Layout 툴 Name 재정의
+    //============================================================
+    function layoutSettingName(layoutInfos){
+        for(var layoutInfo of layoutInfos){
+            LOlayoutSave = layoutInfo.layoutSave;
+            LOlayoutSetting = layoutInfo.layoutSetting;
+            LOlayoutReset = layoutInfo.layoutReset;
+            LOexport = layoutInfo.export;
+            LOexportCsv = layoutInfo.exportCsv;
+            LOexportHtml = layoutInfo.exportHtml;
+            LOexportJson = layoutInfo.exportJson;
+            LOexportXlsx = layoutInfo.exportXlsx;
+            LOnumberCell = layoutInfo.numberCell;
+            LOselectionModel = layoutInfo.selectionModel;
+            LOselectionModelCell = layoutInfo.selectionModelCell;
+            LOselectionModelRow = layoutInfo.selectionModelRow;
+            LOfreeze = layoutInfo.freeze;
+            LOcolsCancel = layoutInfo.colsCancel;
+            LOrowsCancel = layoutInfo.rowsCancel;
+            LOfreezeCol = layoutInfo.freezeCol;
+            LOfreezeRow = layoutInfo.freezeRow;
+            LOcolumnBorders = layoutInfo.columnBorders;
+            LOrowBorders = layoutInfo.rowBorders;
+            LOstripeRows = layoutInfo.stripeRows;
+            LOaddNodes = layoutInfo.addNodes;
+            LOundo = layoutInfo.undo;
+            LOredo = layoutInfo.redo;
+            LOgroupModel = layoutInfo.groupModel;
+            LOcopy = layoutInfo.copy;
+            LOpaste = layoutInfo.paste;
+
+            TBallFields = layoutInfo.allFields;
+            TBenterYourKeyword = layoutInfo.enterYourKeyword;
+            TBfind = layoutInfo.find;
+            TBadd = layoutInfo.add;
+            TBreset = layoutInfo.reset;
+            TBdelete = layoutInfo.delete;
+            TBrefresh = layoutInfo.refresh;
+            TBsave = layoutInfo.save;
+        }
+    }
+
+    //============================================================
+    // layoutSetting : export 이벤트 정의
+    //============================================================
+    function exportData(format){	//그리드의 데이터를 다양한 형식으로 내보내기 위한 기능 제공
+        var blob = this.exportData({
+            format : format
+        })
+        if(typeof blob === "string"){
+            blob = new Blob([blob]);
+        }
+        saveAs(blob, "logistics_"+ this.origOptions.gprogrid + "." + format );
+    }
+
+    //============================================================
+    // Grid Find : Data 찾기 이벤트
+    //============================================================
+    var findRules = [];
+
+    function findHandler() {	//이벤트 핸들러 등록 시 해당 함수가 이미 등록되어 있는지 확인하고 이미 등록되어 있다면 해당 함수를 반환하여 중복 등록 방지
+        var $toolbar = this.$top.find('.pq-toolbar-search');
+        var value = $toolbar.find(".findValue").val();
+        var dataIndx = $toolbar.find(".findColumn").val();
+
+        if (dataIndx === "") {
+            var obj = [];
+            this.getColModel().map(function(column){
+                if(column.dataIndx === 'state' || column.hidden === true || column.dataType === 'integer'){
+                    return;
+                }else{
+                    obj.push({ dataIndx: column.dataIndx, value: value });
+                }
+            })
+            findRules = obj;
+        }else {
+            findRules = [{ dataIndx: dataIndx, value: value}];
+        }
+        this.refreshView();
+    }
+
+    function findRender(ui) {	// 특정 텍스트가 발견되면 해당 부분을 하이라이트 표시
+        if(ui.cellData !== null && ui.cellData !== undefined && ui.cellData !== '' && ui.dataIndx !== 'state' && findRules.length > 0 && ui.column.dataType !== 'integer' && ui.column.dataType !== 'date' && ui.column.type !== 'checkbox' && ui.column.dataType !== 'float' && ui.column.dataType !== 'bool'){
+            var valType = typeof ui.cellData;
+            var val = ui.cellData.toString();
+            var valUpper = val.toUpperCase();
+            var col = ui.dataIndx;
+            var indx = -1;
+
+            for(var findRule of findRules){
+                var txt = findRule.value.toUpperCase();
+                indx = valUpper.indexOf(txt);
+                if(col === findRule.dataIndx){
+                    if (indx >= 0) {
+                        var txt1 = val.substring(0, indx);
+                        var txt2 = val.substring(indx, indx + txt.length);
+                        var txt3 = val.substring(indx + txt.length);
+                        return txt1 + "<span style='background:yellow;color:#333;'>" + txt2 + "</span>" + txt3;
+                    }
+                }
+            }
+            return valType === "string" ? val : Number(val);
+        }
+    }
+
+    function getSelectedIdx(focusRules, sel){
+        var selectedIdx = 0;
+        for(var idx = 0; idx < focusRules.length; idx++){
+            if(sel.isSelected({rowIndx: focusRules[idx].rowIndx, colIndx: focusRules[idx].colIndx})){
+                selectedIdx =  idx;
+            }
+        }
+        return selectedIdx;
+    }
+
+    //============================================================
+    // Grid Find : Find Data 포커스 이벤트.
+    //============================================================
+
+    function focusHandler() {
+    	let toolbar = this.$top.find('.pq-toolbar-search');
+    	let value = toolbar.find(".findValue").val();
+        if(!value){
+            return;
+        }
+
+        let datas = this.getData();
+        let val = value?.toString();
+        let valUpper = val?.toUpperCase();
+        let focusRules = [];
+
+        for(let data of datas){
+            for(let findRule of findRules){
+            	let dataVal = !data[findRule.dataIndx] ? '' : data[findRule.dataIndx].toString();
+            	let dataValUpper = dataVal?.toUpperCase();
+                if (dataValUpper.indexOf(valUpper) !== -1) {
+                    focusRules.push({ rowIndx: data.pq_ri, colIndx: this.getColIndx( { dataIndx: findRule.dataIndx } ) });
+                }
+            }
+        }
+        if(focusRules.length){
+        	let sel = this.Selection();
+        	let selectedIdx = getSelectedIdx(focusRules, sel);
+            if(selectedIdx < focusRules.length){
+                this.setSelection( {rowIndx: focusRules[selectedIdx !== focusRules.length-1 ? selectedIdx+1 : 0].rowIndx, colIndx: focusRules[selectedIdx !== focusRules.length-1 ? selectedIdx+1 : 0].colIndx} );
+            }
+        }
+    }
+</script>
+</th:block>

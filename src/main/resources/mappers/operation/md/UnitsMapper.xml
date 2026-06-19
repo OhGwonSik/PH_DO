@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.md.mapper.UnitsMapper">
+	<!-- *************** MSKUWC : 제품 마스터 *************** -->
+	<!-- 제품 리스트 조회 -->
+	<select id="selectMskuwcList" resultType="com.kbph.logistics.md.domain.MskuwcDTO">
+		/* selectMskuwcList */
+		SELECT CONCAT(MS.WAREKEY, MS.OWNERKY, MS.SKUMKEY) AS rowkey
+			, MS.WAREKEY, MS.OWNERKY, MS.SKUMKEY, MS.SKUGRKY, BA.ADDSIKY
+			, MS.SKUDESC, MS.ITEMCOD, MS.SKUWEIG
+			, MS.SKUWIDT, MS.SKULENG, MS.SKUTHIC, MS.SUOMKEY, MS.SKUSTAT
+			, MS.UPDTCHK, MC1.COMCDTX AS ITEMNAM, MC1.COMCDTX AS COMCDTX, MP.GRPKYNM
+            , DATE_FORMAT(MS.CREDATE,'%Y-%m-%d') AS CREDATE
+            , DATE_FORMAT(STR_TO_DATE(MS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+            , ${userData.schema}.FN_SY_USERNAM(MS.CREUSER) AS CREUSER
+            , DATE_FORMAT(MS.LMODATE,'%Y-%m-%d') AS LMODATE
+            , DATE_FORMAT(STR_TO_DATE(MS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+            , ${userData.schema}.FN_SY_USERNAM(MS.LMOUSER) AS LMOUSER
+		 FROM ${userData.schema}.MSKUWC MS
+		INNER JOIN ${userData.schema}.MCODEM MC1
+		   ON MC1.COMCDKY = 'ITEMCOD'
+		  AND MC1.COMCDVL = MS.ITEMCOD
+		  AND MC1.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MGRPMA MP
+		   ON MP.SKUGRKY = MS.SKUGRKY
+		  AND MP.GRUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.BADDCO BA
+			ON MS.ADDCOKY = BA.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC2
+		   ON MC2.COMCDKY = 'ADDSIKY'
+		  AND MC2.COMCDVL = BA.ADDSIKY
+		  AND MC2.COUSEYN = 'Y'
+		<where>
+			<if test='params.warekey != null and params.warekey != ""'>
+				AND MS.WAREKEY = #{params.warekey}
+			</if>
+			<if test='params.ownerky != null and params.ownerky != ""'>
+				AND MS.OWNERKY LIKE CONCAT('%', UPPER(#{params.ownerky}), '%')
+			</if>
+			<if test='params.skugrky != null and params.skugrky != ""'>
+				AND MS.SKUGRKY = #{params.skugrky}
+			</if>
+			<if test='params.addsiky != null and params.addsiky != ""'>
+				AND MC2.COMCDVL = #{params.addsiky}
+			</if>
+			<if test='params.skumkey != null and params.skumkey != ""'>
+				AND UPPER(MS.SKUMKEY) LIKE CONCAT('%', UPPER(#{params.skumkey}), '%')
+			</if>
+			<if test='params.skudesc != null and params.skudesc != ""'>
+				AND UPPER(MS.SKUDESC) LIKE CONCAT('%', UPPER(#{params.skudesc}), '%')
+			</if>
+			<if test='params.itemcod != null and params.itemcod != ""'>
+				AND MS.ITEMCOD = #{params.itemcod}
+			</if>
+			<if test='params.skustat != null and params.skustat != ""'>
+				AND MS.SKUSTAT = #{params.skustat}
+			</if>
+			<if test='params.skumkeyList != null and params.skumkeyList.size > 0'>
+			   AND MS.SKUMKEY IN
+			   	<foreach collection="params.skumkeyList" item="item" index="index" open="(" close=")" separator=",">
+			   	 #{item}
+			   	</foreach>
+			</if>
+		</where>
+		ORDER BY MS.SKUDESC, MS.SKUMKEY, MS.OWNERKY
+	</select>
+
+	<!-- 제품 등록 -->
+	<insert id="insertMskuwc" parameterType="com.kbph.logistics.md.domain.MskuwcDTO">
+		/* insertMskuwc */
+		INSERT INTO ${userData.schema}.MSKUWC (
+	        WAREKEY, OWNERKY, SKUMKEY, SKUGRKY, ADDCOKY
+	        , SKUDESC, ITEMCOD, SKUWEIG, SKUWIDT, SKULENG
+	        , SKUTHIC, SUOMKEY, SKUSTAT, CREDATE, CRETIME
+	        , CREUSER, LMODATE, LMOTIME, LMOUSER
+	    )
+	    VALUES (
+	        #{addData.warekey}, IFNULL(#{addData.ownerky}, ''), #{addData.skumkey}
+	        ,(
+	        	SELECT MG.SKUGRKY
+				FROM ${userData.schema}.MGRPMA MG
+				WHERE ((MG.MINLENG = 0 OR MG.MINLENG <![CDATA[<=]]> #{addData.skuleng}) AND (MG.MAXLENG = 0 OR #{addData.skuleng} <![CDATA[<]]> MG.MAXLENG))
+				AND((MG.MINWIDT = 0 OR MG.MINWIDT <![CDATA[<=]]> #{addData.skuwidt}) AND (MG.MAXWIDT = 0 OR #{addData.skuwidt} <![CDATA[<]]> MG.MAXWIDT))
+				AND MG.GRUSEYN = 'Y'
+        	)
+        	,(
+				 CASE
+				 WHEN (SELECT CDCATE3 FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ITEMCOD' AND COMCDVL = #{addData.itemcod}) = 'PLATE'
+				 THEN (SELECT BA.ADDCOKY
+					     FROM ${userData.schema}.BADDCO BA
+					    WHERE ((BA.MINLENG = 0 OR BA.MINLENG <![CDATA[<=]]> #{addData.skuleng}) AND (BA.MAXLENG = 0 OR #{addData.skuleng} <![CDATA[<]]> BA.MAXLENG))
+					      AND ((BA.MINWIDT = 0 OR BA.MINWIDT <![CDATA[<=]]> #{addData.skuwidt}) AND (BA.MAXWIDT = 0 OR #{addData.skuwidt} <![CDATA[<]]> BA.MAXWIDT))
+					      AND BA.SYSCDYN = 'N'
+					  )
+	    	 	 ELSE (SELECT BAD.ADDCOKY
+	    	 	 		 FROM ${userData.schema}.BADDCO BAD
+	    	 	 		WHERE BAD.SYSCDYN = 'Y'
+			    	  )
+				  END
+			)
+        	, #{addData.skudesc}, #{addData.itemcod}, #{addData.skuweig}, #{addData.skuwidt}
+        	, #{addData.skuleng}, #{addData.skuthic}, #{addData.suomkey}, #{addData.skustat}
+        	, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{userData.useract}
+        	, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{userData.useract}
+	    )
+	</insert>
+
+	<!-- 제품 수정 -->
+	<update id="updateMskuwc" parameterType="com.kbph.logistics.md.domain.MskuwcDTO">
+		/* updateMskuwc */
+		UPDATE ${userData.schema}.MSKUWC SET
+			OWNERKY = #{updateData.ownerky}
+			, SKUGRKY = (
+				SELECT MG.SKUGRKY
+				FROM ${userData.schema}.MGRPMA MG
+				WHERE ((MG.MINLENG = 0 OR MG.MINLENG <![CDATA[<=]]> #{updateData.skuleng}) AND (MG.MAXLENG = 0 OR #{updateData.skuleng} <![CDATA[<]]> MG.MAXLENG))
+				AND((MG.MINWIDT = 0 OR MG.MINWIDT <![CDATA[<=]]> #{updateData.skuwidt}) AND (MG.MAXWIDT = 0 OR #{updateData.skuwidt} <![CDATA[<]]> MG.MAXWIDT))
+				AND MG.GRUSEYN = 'Y'
+			)
+			, ADDCOKY = (
+				 CASE
+				 WHEN (SELECT CDCATE3 FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ITEMCOD' AND COMCDVL = #{updateData.itemcod}) = 'PLATE'
+				 THEN (SELECT BA.ADDCOKY
+					     FROM ${userData.schema}.BADDCO BA
+					    WHERE ((BA.MINLENG = 0 OR BA.MINLENG <![CDATA[<=]]> #{updateData.skuleng}) AND (BA.MAXLENG = 0 OR #{updateData.skuleng} <![CDATA[<]]> BA.MAXLENG))
+					      AND ((BA.MINWIDT = 0 OR BA.MINWIDT <![CDATA[<=]]> #{updateData.skuwidt}) AND (BA.MAXWIDT = 0 OR #{updateData.skuwidt} <![CDATA[<]]> BA.MAXWIDT))
+					      AND BA.SYSCDYN = 'N'
+					  )
+	    	 	 ELSE (SELECT BAD.ADDCOKY
+	    	 	 		 FROM ${userData.schema}.BADDCO BAD
+	    	 	 		WHERE BAD.SYSCDYN = 'Y'
+			    	  )
+				  END
+			)
+			, SKUDESC = #{updateData.skudesc}
+			, ITEMCOD = #{updateData.itemcod}
+			, SKUWEIG = #{updateData.skuweig}
+			, SKUWIDT = #{updateData.skuwidt}
+			, SKULENG = #{updateData.skuleng}
+			, SKUTHIC = #{updateData.skuthic}
+			, SUOMKEY = #{updateData.suomkey}
+			, SKUSTAT = #{updateData.skustat}
+			, LMODATE = to_char(NOW() ,'YYYYMMDD')
+			, LMOTIME = to_char(NOW() ,'hh24miss')
+			, LMOUSER = #{userData.useract}
+			, UPDTCHK = #{updateData.updtchk} + 1
+		WHERE UPDTCHK = #{updateData.updtchk}
+		<choose>
+			<when test='updateData.oldWarekey != null and updateData.oldWarekey != ""'>
+				AND WAREKEY = #{updateData.oldWarekey}
+			</when>
+			<otherwise>
+				AND WAREKEY = #{updateData.warekey}
+			</otherwise>
+		</choose>
+		<choose>
+			<when test='updateData.oldOwnerky != null and updateData.oldOwnerky != ""'>
+				AND OWNERKY = #{updateData.oldOwnerky}
+			</when>
+			<otherwise>
+				AND OWNERKY = #{updateData.ownerky}
+			</otherwise>
+		</choose>
+		<choose>
+			<when test='updateData.oldSkumkey != null and updateData.oldSkumkey != ""'>
+				AND SKUMKEY = #{updateData.oldSkumkey}
+			</when>
+			<otherwise>
+				AND SKUMKEY = #{updateData.skumkey}
+			</otherwise>
+		</choose>
+		<choose>
+			<when test='updateData.oldSkugrky != null and updateData.oldSkugrky != ""'>
+				AND SKUGRKY = #{updateData.oldSkugrky}
+			</when>
+			<otherwise>
+				AND SKUGRKY = #{updateData.skugrky}
+			</otherwise>
+		</choose>
+	</update>
+
+	<!-- 제품 셀렉트박스 조회 -->
+	<select id="selectMskuwcSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMskuwcSelectBox */
+		SELECT SKUMKEY AS combovl, SKUDESC AS combonm
+		FROM ${userData.schema}.MSKUWC
+		WHERE SKUSTAT = '00' <!-- 제품상태 정상 -->
+		<if test='params.warekey != null and params.warekey != ""'>
+			AND WAREKEY = #{params.warekey}
+		</if>
+		<if test='params.ownerky != null and params.ownerky != ""'>
+			AND OWNERKY = #{params.ownerky}
+		</if>
+		<if test='params.skugrky != null and params.skugrky != ""'>
+			AND SKUGRKY = #{params.skugrky}
+		</if>
+		<if test='params.skumkey != null and params.skumkey != ""'>
+			AND SKUMKEY = #{params.skumkey}
+		</if>
+		GROUP BY SKUDESC, SKUMKEY
+		ORDER BY SKUDESC, SKUMKEY
+	</select>
+
+	<!-- *************** MGRPMA : 제품그룹 마스터 *************** -->
+	<!-- 제품그룹 리스트 조회 -->
+	<select id="selectMgrpmaList" resultType="com.kbph.logistics.md.domain.MgrpmaDTO">
+		/* selectMgrpmaList */
+		SELECT SKUGRKY AS rowkey
+			, SKUGRKY, GRPKYNM, MINLENG, MINWIDT, MAXLENG
+			, MAXWIDT, VHCTYPE, SKUGROR, GRUSEYN, UPDTCHK
+			, SZGUBUN
+            , DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+            , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+            , ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+            , DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+            , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+            , ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+		FROM ${userData.schema}.MGRPMA
+		<where>
+			<if test='params.skugrky != null and params.skugrky != ""'>
+				AND SKUGRKY LIKE CONCAT('%', UPPER(#{params.skugrky}), '%')
+			</if>
+			<if test='params.grpkynm != null and params.grpkynm != ""'>
+				AND GRPKYNM LIKE CONCAT('%', UPPER(#{params.grpkynm}), '%')
+			</if>
+			<if test='params.vhctype != null and params.vhctype != ""'>
+				AND VHCTYPE = #{params.vhctype}
+			</if>
+			<if test='params.gruseyn != null and params.gruseyn != ""'>
+				AND GRUSEYN = #{params.gruseyn}
+			</if>
+		</where>
+		ORDER BY SKUGROR, GRPKYNM, SKUGRKY
+	</select>
+
+	<!-- 제품그룹 키 채번 -->
+	<select id="selectSkugrky" resultType="String">
+		/* selectSkugrky */
+		SELECT ${userData.schema}.FN_MD_SKUGRKY() AS SKUGRKY FROM DUAL
+	</select>
+
+	<!-- 제품그룹 등록 -->
+	<insert id="insertMgrpma" parameterType="com.kbph.logistics.md.domain.MgrpmaDTO">
+		/* insertMgrpma */
+		INSERT INTO ${userData.schema}.MGRPMA(
+			SKUGRKY, GRPKYNM, MINLENG, MINWIDT, MAXLENG
+			, MAXWIDT, VHCTYPE, SKUGROR, SZGUBUN, GRUSEYN
+			, CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME
+			, LMOUSER
+		)VALUES(
+			#{addData.skugrky}, #{addData.grpkynm}, #{addData.minleng}
+			, #{addData.minwidt}, #{addData.maxleng}, #{addData.maxwidt}
+			, #{addData.vhctype}, #{addData.skugror}, #{addData.szgubun}, #{addData.gruseyn}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 제품그룹 수정 -->
+	<update id="updateMgrpma" parameterType="com.kbph.logistics.md.domain.MgrpmaDTO">
+		/* updateMgrpma */
+		UPDATE ${userData.schema}.MGRPMA SET
+			GRPKYNM = #{updateData.grpkynm}
+			, MINLENG = #{updateData.minleng}
+			, MINWIDT = #{updateData.minwidt}
+			, MAXLENG = #{updateData.maxleng}
+			, MAXWIDT = #{updateData.maxwidt}
+			, VHCTYPE = #{updateData.vhctype}
+			, SKUGROR = #{updateData.skugror}
+			, SZGUBUN = #{updateData.szgubun}
+			, GRUSEYN = #{updateData.gruseyn}
+			, LMODATE = to_char(NOW() ,'YYYYMMDD')
+			, LMOTIME = to_char(NOW() ,'hh24miss')
+			, LMOUSER = #{userData.useract}
+			, UPDTCHK = #{updateData.updtchk} + 1
+		WHERE UPDTCHK = #{updateData.updtchk}
+		<choose>
+			<when test='updateData.oldSkugrky != null and updateData.oldSkugrky != ""'>
+				AND SKUGRKY = #{updateData.oldSkugrky}
+			</when>
+			<otherwise>
+				AND SKUGRKY = #{updateData.skugrky}
+			</otherwise>
+		</choose>
+	</update>
+
+	<!-- 제품그룹 셀렉트박스 조회 -->
+	<select id="selectMgrpmaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMgrpmaSelectBox */
+		SELECT SKUGRKY AS combovl, GRPKYNM AS combonm
+		FROM ${userData.schema}.MGRPMA
+		WHERE GRUSEYN = 'Y'
+		<if test='params.skugrky != null and params.skugrky != ""'>
+			AND SKUGRKY = #{params.skugrky}
+		</if>
+		GROUP BY SKUGRKY, GRPKYNM
+		ORDER BY SKUGROR, SZGUBUN, GRPKYNM, SKUGRKY
+	</select>
+
+	<!-- *************** MUOMMA : 단위 마스터 *************** -->
+	<!-- 단위 셀렉트박스 조회 -->
+	<select id="selectMuommaSelectBox" resultType="com.kbph.logistics.common.domain.ComboDataDTO">
+		/* selectMuommaSelectBox */
+		SELECT UOMEKEY AS combovl, UOMENAM AS combonm
+		FROM ${userData.schema}.MUOMMA
+		WHERE UOUSEYN = 'Y'
+		<if test='params.uomekey != null and params.uomekey != ""'>
+			AND UOMEKEY = #{params.uomekey}
+		</if>
+		GROUP BY UOMENAM, UOMEKEY
+		ORDER BY UOMENAM, UOMEKEY
+	</select>
+</mapper>

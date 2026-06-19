@@ -1,0 +1,233 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doe013Custkey" class="setting-grid-title">[[#{md.mcusma.custkey}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mcusma.custkey')}"
+							id="doe013Custkey" name="doe013Custkey">
+						</div>
+					</div>
+					<label for="doe013Cunamlc" class="setting-grid-title">[[#{md.mcusma.cunamlc}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('md.mcusma.cunamlc')}"
+							id="doe013Cunamlc" name="doe013Cunamlc">
+						</div>
+					</div>
+					<label for="doe013Cudelyn" class="setting-grid-title">[[#{md.useyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe013Cudelyn" class="pq-select">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doe013BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doe013BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe013}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe013BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe013Grid"></div>
+				</div>
+			</div>
+		<script>
+		!function(){
+			const pageId = '[[${tabPage}]]';
+
+			// 칼럼
+			const doe013GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{md.mcusma.custkey}]]', dataType: 'string', dataIndx: 'custkey', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				},
+				{ title: '[[#{md.mcusma.cunamlc}]]', dataType: 'string', dataIndx: 'cunamlc', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mcusma.cunamko}]]', dataType: 'string', dataIndx: 'cunamko', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mcusma.cunamen}]]', dataType: 'string', dataIndx: 'cunamen', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'cudelyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mcusma.surchyn}]]', dataType: 'string', dataIndx: 'surchyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.regno}]]', dataType: 'string', dataIndx: 'curegno', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.teln}]]', dataType: 'string', dataIndx: 'custeln', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.addr}]]', dataType: 'string', dataIndx: 'cusaddr', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.posbx}]]', dataType: 'string', dataIndx: 'cuposbx', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.poscd}]]', dataType: 'string', dataIndx: 'cuposcd', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.bank}]]', dataType: 'string', dataIndx: 'cusbank', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.acnm}]]', dataType: 'string', dataIndx: 'cusacnm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.repnm}]]', dataType: 'string', dataIndx: 'curepnm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.reptl}]]', dataType: 'string', dataIndx: 'cureptl', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.repem}]]', dataType: 'string', dataIndx: 'curepem', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mannm}]]', dataType: 'string', dataIndx: 'cumannm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mantl}]]', dataType: 'string', dataIndx: 'cumantl', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.manem}]]', dataType: 'string', dataIndx: 'cumanem', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const doe013Grid = new GridUtil(doe013GridCM, 'doe013', 'doe013Grid');
+			doe013Grid.setFind();
+			doe013Grid.setReset();
+
+			// Grid 생성시 이벤트
+			doe013Grid.setCreate(async function(evt, ui) {
+				this.option('freezeCols', 1);
+			});
+
+			// 그리드 행 추가
+			doe013Grid.setAdd(function(evt, ui){
+				const rowData = {
+					state: true,
+					surchyn: 'N',
+					cudelyn: 'Y'
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#doe013Grid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe013Grid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {state: true};
+
+		           		if(updateData.newRow.hasOwnProperty('cudelyn') || updateData.newRow.hasOwnProperty('surchyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	} else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+		    		let custkeyData;
+		    		for(const updateData of ui.updateList){
+
+		    			if(updateData.newRow.hasOwnProperty('custkey') && updateData.oldRow.hasOwnProperty('custkey')){
+		    				custkeyData = updateData.newRow['custkey']?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+		    			this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								custkey: custkeyData ? custkeyData : updateData.rowData.custkey,
+								surchyn: updateData.rowData.surchyn,
+								cudelyn: updateData.rowData.cudelyn
+							},
+							checkEditable : false
+			    		})
+		    		}
+		    		for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.custkey = custkeyData ? custkeyData : addData.rowData.custkey;
+		    			addData.rowData.surchyn = addData?.newRow?.surchyn || 'N';
+		    			addData.rowData.cudelyn = addData?.newRow?.cudelyn || 'Y';
+		    		}
+		    	}
+				doe013Grid.getGrid().refresh();
+			});
+
+			// Grid 객체 생성
+			doe013Grid.open();
+
+			// 검색 버튼
+			document.querySelector('#doe013BtnSearch').addEventListener('click', async function(){
+				await getDoe013List();
+			})
+
+			// 저장 버튼
+			document.querySelector('#doe013BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe013Grid, ['custkey', 'cunamlc'])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe013Grid, ['custkey']);
+				if(!validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doe013Grid, refineGridUtilSaveList(doe013Grid), '/md/doe009/grid');
+				getDoe013List();
+			})
+
+			document.querySelector('#doe013BtnReset').addEventListener('click', async function(){
+				resetSearchConditions(pageId);
+				makeEmptyGrid(doe013Grid);
+			})
+
+			// Grid 데이터 조회 함수
+			async function getDoe013List(){
+				const grid = pq.grid('#doe013Grid');
+				const data = {
+						custkey : document.querySelector('#doe013Custkey').value.toUpperCase(),
+						cunamlc : document.querySelector('#doe013Cunamlc').value.toUpperCase(),
+						cudelyn : document.querySelector('#doe013Cudelyn').value
+				};
+
+				grid.showLoading();
+				const res = await fetchUtil('GET', '/md/doe009/grid', data);
+
+				if(res.status===200){
+					const doe013List = await res.json();
+					grid.option( 'dataModel', {
+						data: doe013List,
+						recIndx: 'rowkey'
+					});
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+
+			const itemList = document.querySelectorAll('.setting-grid input');
+			itemList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			})
+
+			// Enter로 검색
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getDoe013List();
+			    }
+			}
+		}();
+		</script>
+	</div>
+</html>

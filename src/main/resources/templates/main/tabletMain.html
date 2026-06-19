@@ -1,0 +1,50 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<head>
+	<th:block th:replace="~{/main/tabletFragment/comHead.html :: fragments-comHead}"></th:block>
+	<th:block th:replace="~{/main/fragment/comScript.html :: fragments-comScript}"></th:block>
+</head>
+<body>
+<div id="wrapper" class="mobile-wrap">
+	<!-- Header  -->
+	<th:block th:replace="~{/main/tabletFragment/mainHeader.html :: fragments-mainHeader}"></th:block>
+
+	<!-- Sidebar  -->
+	<div id="modal-background"></div>
+	<div id="prevPic" class="modal-con"></div>
+	<div id="mainMenu" class="modal-con">
+		<th:block th:replace="~{/main/tabletFragment/mainSideBar.html :: fragments-mainSideBar}"></th:block>
+	</div>
+<!-- 	<div class="popup"> -->
+<!-- 		<div class="msg-box"> -->
+<!-- 		  	<div class="msg-txt"></div> -->
+<!-- 		</div> -->
+<!-- 		<div class="edit-btn-wrapper"> -->
+<!-- 		  	<button type="button" class="btn-white" id="pdaConfirmCancel">취소</button> -->
+<!-- 		  	<button type="button" class="btn-blue" id="pdaConfirm">확인</button> -->
+<!-- 		</div> -->
+<!-- 	</div> -->
+<!-- 	<div class="popup"> -->
+<!-- 		<div class="msg-box"> -->
+<!-- 		  	<div class="msg-txt"></div> -->
+<!-- 		</div> -->
+<!-- 		<div class="edit-btn-wrapper"> -->
+<!-- 		  	<button type="button" class="btn-blue" id="pdaAlert">확인</button> -->
+<!-- 		</div> -->
+<!-- 	</div> -->
+	<div>
+		<th:block th:replace="${tabletPagePath != null } ? ~{${tabletPagePath} :: fragments-mainContent} : ~{/main/tabletFragment/mainContent.html :: fragments-mainContent}"></th:block>
+		<!-- Footer -->
+		<footer>
+			<th:block th:replace="~{/main/tabletFragment/mainFooter.html :: fragments-mainFooter}"></th:block>
+		</footer>
+		<!-- Footer end  -->
+	</div>
+	<!-- spinner -->
+	<div class="spinner-wrapper">
+		<div class="spinner-background"></div>
+		<div class="spinner-border" role="status"></div>
+	</div>
+	<!-- spinner end -->
+</div>
+</body>
+</html>

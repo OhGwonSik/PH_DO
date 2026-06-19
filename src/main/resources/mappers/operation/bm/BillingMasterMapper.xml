@@ -1,0 +1,3517 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.bm.mapper.BillingMasterMapper">
+	<!-- doe078 : 할증기준 등록 -->
+	<select id="selectBaddcoList" resultType="com.kbph.logistics.bm.domain.BaddcoDTO">
+		/*selectBaddcoList*/	
+		SELECT CONCAT(ADDCOKY) AS ROWKEY
+			 , ADDCOKY, ADDSIKY
+			 , MINLENG, MAXLENG, MINWIDT, MAXWIDT
+			 , ADCOPER,DATE_FORMAT(CREDATE,'%Y-%m-%d') as CREDATE, DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+			 , ${schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+			 , DATE_FORMAT(LMODATE,'%Y-%m-%d') as LMODATE , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') as LMOTIME
+			 , ${schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+			 , UPDTCHK
+		  FROM ${schema}.BADDCO
+		 <where>
+		    <if test='param.addsiky != null and param.addsiky != ""'>
+		        AND ADDSIKY LIKE CONCAT('%', #{param.addsiky}, '%')
+		    </if>
+		    <choose>
+		        <when test='param.syscdyn != null and param.syscdyn != ""'>
+		            AND SYSCDYN = #{param.syscdyn}
+		        </when>
+		        <otherwise>
+		            AND SYSCDYN = 'N'
+		        </otherwise>
+		    </choose>
+		</where>
+		ORDER BY ADDCOKY ASC
+	</select>
+
+	<select id="selectAddCostSizeKey" resultType="com.kbph.logistics.bm.domain.BaddcoDTO">
+		/*selectAddCostSizeKey*/
+		SELECT BA.ADDSIKY, MC.COMCDTX
+		  FROM ${schema}.BADDCO BA
+		 INNER JOIN ${schema}.MCODEM MC
+		    ON BA.ADDSIKY = MC.COMCDVL
+		   AND MC.COMCDKY = 'ADDSIKY'
+		   AND MC.COUSEYN = 'Y'
+		 WHERE BA.SYSCDYN = 'N'
+		 GROUP BY BA.ADDSIKY, MC.COMCDTX
+	     ORDER BY MC.COMCDOR
+	</select>
+
+	<select id="getAddcoky" resultType="String">
+		SELECT ${userInfo.schema}.FN_BM_ADDCOKY() AS ADDCOKY FROM DUAL
+	</select>
+
+	<insert id="insertBaddco" parameterType="com.kbph.logistics.bm.domain.BaddcoDTO">
+		/*insertBaddco*/
+		INSERT
+			INTO ${userInfo.schema}.BADDCO
+				(
+					ADDCOKY, ADDSIKY, MINLENG, MAXLENG, 
+					MINWIDT, MAXWIDT, ADCOPER, CREUSER, 
+					LMODATE, LMOTIME, LMOUSER
+				)
+			VALUES
+				(
+					#{param.addcoky}, ifnull(#{param.addsiky},''), ifnull(#{param.minleng},0), ifnull(#{param.maxleng},0), 
+					ifnull(#{param.minwidt},0), ifnull(#{param.maxwidt},0), ifnull(#{param.adcoper},0), #{userInfo.useract}, 
+					TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+				)
+	</insert>
+
+	<update id="updateBaddco" parameterType="com.kbph.logistics.bm.domain.BaddcoDTO">
+		/*updateBaddco*/
+		UPDATE ${userInfo.schema}.BADDCO
+		SET ADDSIKY = #{param.addsiky} ,
+			MINLENG = #{param.minleng},
+			MAXLENG = #{param.maxleng},
+			MINWIDT = #{param.minwidt},
+			MAXWIDT = #{param.maxwidt},
+			ADCOPER = #{param.adcoper},
+			CREDATE = date_format(NOW(),'%Y%m%d'),
+			CRETIME = date_format(NOW(),'%H%i%s'),
+			CREUSER = #{userInfo.useract},
+			LMODATE = date_format(NOW(),'%Y%m%d'),
+			LMOTIME = date_format(NOW(),'%H%i%s'),
+			LMOUSER = #{userInfo.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE 
+			ADDCOKY = #{param.addcoky}
+		AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<delete id="deleteBaddco" parameterType="com.kbph.logistics.bm.domain.BaddcoDTO">
+		/*deleteBaddco*/
+		DELETE
+			FROM ${userInfo.schema}.BADDCO
+		WHERE
+			ADDCOKY = #{param.addcoky}
+		AND UPDTCHK = #{param.updtchk}
+	</delete>
+
+	<!-- doe079 : 정산유형등록  -->
+	<select id="getBtrcate" resultType="String">
+		SELECT ${userInfo.schema}.FN_BM_BTRCATE() AS BTRCATE FROM DUAL
+
+	</select>
+	
+	<select id="selectBtrcatList" resultType="com.kbph.logistics.bm.domain.BtrcatDTO">
+		/*selectBtrcatList*/
+		SELECT 
+			   BTRCATE, BTRCNAM, BTRFBTP , BTRPBTP, TFONLYN
+			 , PFONLYN, ORWIDYN, DFSTDYN, KSGBUN1 , KSGBUN2
+			 , KSGBUN3
+			 , DATE_FORMAT(CREDATE,'%Y-%m-%d') as CREDATE
+		     , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		     , ${schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+		     , DATE_FORMAT(LMODATE,'%Y-%m-%d') as LMODATE , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') as LMOTIME
+			 , ${schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+			 , UPDTCHK
+		  FROM ${schema}.BTRCAT
+		  <where>
+		  	<if test="param.btrcnam != null and param.btrcnam != ''">
+		  		AND BTRCNAM LIKE CONCAT('%',#{param.btrcnam},'%')
+		  	</if>
+		  	<if test="param.pfonlyn != null and param.pfonlyn != ''">
+		  		AND PFONLYN = #{param.pfonlyn}
+		  	</if>
+		  </where>
+	</select>
+
+	<insert id="insertBtrcat" parameterType="com.kbph.logistics.bm.domain.BtrcatDTO">
+		/*insertBtrcat*/
+		INSERT
+			INTO ${userInfo.schema}.BTRCAT
+				(
+					BTRCATE, BTRCNAM, BTRFBTP, BTRPBTP,
+					TFONLYN, PFONLYN, DFSTDYN, KSGBUN1, 
+					KSGBUN2, KSGBUN3, CREUSER, LMODATE, 
+					LMOTIME, LMOUSER
+				)
+			VALUES
+				(
+					#{param.btrcate}, #{param.btrcnam}, #{param.btrfbtp}, #{param.btrpbtp}, 
+					ifnull(#{param.tfonlyn},'N'), ifnull(#{param.pfonlyn},'N'), ifnull(#{param.dfstdyn},'N'), #{param.ksgbun1}, 
+					#{param.ksgbun2}, #{param.ksgbun3}, #{userInfo.useract} ,TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), 
+					TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+				)
+	</insert>
+
+	<update id="updateBtrcat" parameterType="com.kbph.logistics.bm.domain.BtrcatDTO">
+		/*updateBtrcat*/
+		UPDATE ${userInfo.schema}.BTRCAT
+		   SET BTRCNAM = #{param.btrcnam}
+		   	 , BTRFBTP = #{param.btrfbtp}
+		   	 , BTRPBTP = #{param.btrpbtp}
+		   	 , TFONLYN = ifnull(#{param.tfonlyn},'N')
+		   	 , PFONLYN = ifnull(#{param.pfonlyn},'N')
+		   	 , DFSTDYN = ifnull(#{param.dfstdyn},'N')
+		   	 , KSGBUN1 = ifnull(#{param.ksgbun1},'')
+		   	 , KSGBUN2 = ifnull(#{param.ksgbun2},'')
+		   	 , KSGBUN3 = ifnull(#{param.ksgbun3},'')
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{userInfo.updtchk} + 1
+		 WHERE
+		 	   BTRCATE = #{param.btrcate}
+		   AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<delete id="deleteBtrcat" parameterType="com.kbph.logistics.bm.domain.BtrcatDTO">
+		/*deleteBtrcat*/
+		DELETE
+			FROM ${userInfo.schema}.BTRCAT
+		WHERE
+			BTRCATE = #{param.btrcate}
+		AND UPDTCHK = #{param.updtchk}
+	</delete>
+
+	<!-- doe080 : 이송요율  -->
+	<select id="selectBtrfmaList" resultType="com.kbph.logistics.bm.domain.BtrfmaDTO">
+		/*selectBtrfmaList*/
+		SELECT CONCAT(BT.WAREKEY, BT.BTRFKEY) AS ROWKEY
+			 , BT.WAREKEY, MW.WHNAMLC, BT.BTRFKEY, BT.STNWEIG
+			 , BT.BTRCATE, BT.BTRFITC, BT.BTRFITN, BT.BTRFIGB
+			 , BT.BTRFICT, BT.BTRFITM, BT.BTRFCHR, BT.BTRFPAY
+			 , BT.BTRFSTC, BT.BTRFEYN, BT.SIZGBYN, BT.BTRDFYN
+			 , DATE_FORMAT(STR_TO_DATE(CONCAT(LEFT(BT.BTRFDAF, 4), '-', RIGHT(BT.BTRFDAF, 2)), '%Y-%m'), '%Y-%m') AS BTRFDAF
+		     , DATE_FORMAT(STR_TO_DATE(CONCAT(LEFT(BT.BTRFDAT, 4), '-', RIGHT(BT.BTRFDAT, 2)), '%Y-%m'), '%Y-%m') AS BTRFDAT
+		     , DATE_FORMAT(BT.CREDATE,'%Y-%m-%d') as CREDATE
+		     , DATE_FORMAT(STR_TO_DATE(BT.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		     , ${userInfo.schema}.FN_SY_USERNAM(BT.CREUSER) AS CREUSER
+		     , DATE_FORMAT(BT.LMODATE,'%Y-%m-%d') as LMODATE 
+		     , DATE_FORMAT(STR_TO_DATE(BT.LMOTIME,'%H%i%s'),'%H:%i:%s') as LMOTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BT.LMOUSER) AS LMOUSER
+		     , BT.UPDTCHK
+		  FROM ${userInfo.schema}.BTRFMA BT
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		    ON BT.WAREKEY = MW.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		 <where>
+		 	<if test='param.warekey != null and param.warekey != ""'>
+		 		AND BT.WAREKEY = #{param.warekey}
+		 	</if>
+		 	<if test='param.btrcate != null and param.btrcate != ""'>
+		 		AND BT.BTRCATE = #{param.btrcate}
+		 	</if>
+		 	<if test='param.btrfdaf != null and param.btrfdaf != "" and (param.btrfdat == null or param.btrfdat == "") '>
+		 		AND REPLACE(#{param.btrfdaf}, '-', '') BETWEEN BT.BTRFDAF AND BT.BTRFDAT
+		 	</if>
+		 	<if test='param.btrfdat != null and param.btrfdat != ""'>
+		 		AND (REPLACE(#{param.btrfdaf}, '-', '') BETWEEN BT.BTRFDAF AND BT.BTRFDAT
+		 		 OR REPLACE(#{param.btrfdat}, '-', '') BETWEEN BT.BTRFDAF AND BT.BTRFDAT)
+		 	</if>
+		 	<if test='param.btrfitc != null and param.btrfitc != ""'>
+		 		AND BT.BTRFITC = #{param.btrfitc}
+		 	</if>
+		 	<if test='param.btrfigb != null and param.btrfigb != ""'>
+		 		AND BT.BTRFIGB = #{param.btrfigb}
+		 	</if>
+		 	<if test='param.btrfitm != null and param.btrfitm != ""'>
+		 		AND BT.BTRFITM = #{param.btrfitm}
+		 	</if>
+		 </where>
+		 ORDER BY BT.WAREKEY, BT.BTRCATE, BT.BTRFITC, BT.BTRFITN, BT.BTRFIGB, BT.BTRFICT, BT.BTRFKEY
+	</select>
+
+	<select id="selectBsizpaList" resultType="com.kbph.logistics.bm.domain.BsizpaDTO">
+		/*selectBsizpaList*/
+		SELECT CONCAT(BS.WAREKEY, BS.BTRNKEY, BS.ADDSIKY) AS ROWKEY
+			 , BS.WAREKEY, BS.BTRNKEY, BS.ADDSIKY
+			 , BS.DOCCATE, BS.DOCTYPE, BS.BSIZPAY, MW.WHNAMLC
+			 , MC.COMCDTX, DATE_FORMAT(BS.CREDATE,'%Y-%m-%d') AS CREDATE
+			 , DATE_FORMAT(STR_TO_DATE(BS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME, BS.CREUSER
+			 , DATE_FORMAT(BS.LMODATE,'%Y-%m-%d') AS LMODATE
+			 , DATE_FORMAT(STR_TO_DATE(BS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME, BS.LMOUSER
+			 , BS.UPDTCHK
+		  FROM ${schema}.BSIZPA BS
+		 INNER JOIN ${schema}.BTRFMA BF
+		    ON BS.WAREKEY = BF.WAREKEY
+		   AND BS.BTRNKEY = BF.BTRFKEY
+		 INNER JOIN ${schema}.MCODEM MC
+		    ON MC.COMCDKY = 'ADDSIKY'
+		   AND BS.ADDSIKY = MC.COMCDVL
+		   AND MC.COUSEYN = 'Y'
+		 INNER JOIN ${schema}.MWARMA MW
+		    ON MW.WAREKEY = BS.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		<where>
+			<if test='param.btrnkey != null and param.btrnkey != ""'>
+			   AND BS.BTRNKEY = #{param.btrnkey}
+			</if>
+			<if test='param.doctype != null and param.doctype != ""'>
+			   AND BS.DOCTYPE = #{param.doctype}
+			</if>
+		</where>
+		ORDER BY MC.COMCDOR
+	</select>
+
+	<insert id="insertBsizpa" parameterType="com.kbph.logistics.bm.domain.BsizpaDTO">
+		/*insertBsizpa*/
+		INSERT
+		  INTO ${userInfo.schema}.BSIZPA
+		       (
+		       		WAREKEY, BTRNKEY, ADDSIKY, DOCCATE, 
+		       		DOCTYPE, BSIZPAY, CREUSER, LMODATE, LMOTIME, LMOUSER
+		       )
+		  VALUES
+		       (
+		       		#{param.warekey}, #{param.btrnkey}, #{param.addsiky}, #{param.doccate}
+		       		, #{param.doctype}, #{param.bsizpay}, #{userInfo.useract}, date_format(NOW(),'%Y%m%d')
+		       		, date_format(NOW(),'%H%i%s'), #{userInfo.useract}
+		       )
+	</insert>
+
+	<update id="updateBsizpa" parameterType="com.kbph.logistics.bm.domain.BsizpaDTO">
+		/*updateBsizpa*/
+		UPDATE ${userInfo.schema}.BSIZPA
+		   SET BSIZPAY = #{param.bsizpay}
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		 <where>
+		 	   WAREKEY = #{param.warekey}
+		   AND BTRNKEY = #{param.btrnkey}
+		   AND ADDSIKY = #{param.addsiky}
+		   AND UPDTCHK = #{param.updtchk}
+		 </where>
+	</update>
+
+	<delete id="deleteBsizpa" parameterType="com.kbph.logistics.bm.domain.BsizpaDTO">
+		/*deleteBsizpa*/
+		DELETE
+		  FROM ${userInfo.schema}.BSIZPA
+		 <where>
+		 	    BTRNKEY = #{param.btrnkey}
+			AND ADDSIKY = #{param.addsiky}
+			AND DOCCATE = #{param.doccate}
+			AND DOCTYPE = #{param.doctype}
+			AND UPDTCHK = #{param.updtchk}
+		</where>
+	</delete>
+
+	<select id="getBtrfkey" resultType="String">
+		SELECT ${userInfo.schema}.FN_BM_BTRFKEY() AS ADDCOKY FROM DUAL
+	</select>
+
+	<select id="getBtrflsq" resultType="String">
+		SELECT ${userInfo.schema}.FN_BM_BTRFLSQ() AS BTRFLSQ FROM DUAL
+	</select>
+
+	<insert id="insertBtrfma" parameterType="com.kbph.logistics.bm.domain.BtrfmaDTO">
+		/*insertBtrfma*/
+		INSERT
+		  INTO ${userInfo.schema}.BTRFMA
+		       (
+		       		WAREKEY, BTRFKEY, BTRCATE, BTRFITC
+		       	  , BTRFITN, BTRFIGB, BTRFICT, STNWEIG 
+		       	  , BTRFITM, BTRFCHR, BTRFPAY, BTRFSTC
+		       	  , BTRFEYN, SIZGBYN, BTRDFYN, BTRFDAF
+		       	  , BTRFDAT, CREUSER, LMODATE, LMOTIME
+		       	  , LMOUSER
+		       )
+		  VALUES
+		       (
+		       		#{param.warekey}, #{param.btrfkey}, #{param.btrcate}, #{param.btrfitc}
+		       	  , #{param.btrfitn}, #{param.btrfigb}, #{param.btrfict}, #{param.stnweig}
+		       	  , #{param.btrfitm}, #{param.btrfchr}, #{param.btrfpay}, IFNULL(#{param.btrfstc}, '')
+		       	  , #{param.btrfeyn}, #{param.sizgbyn}, #{param.btrdfyn}, REPLACE(#{param.btrfdaf}, '-', '')
+		       	  , REPLACE(#{param.btrfdat}, '-', ''), #{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		       	  , #{userInfo.useract}
+		       )
+	</insert>
+
+	<insert id="insertBtrfmaLog" parameterType="com.kbph.logistics.bm.domain.BtrfmaDTO">
+		/*insertBtrfmaLog*/
+		INSERT
+		  INTO 	${userInfo.schema}.BTRFLG
+		       (
+		       		WAREKEY, BTRFKEY, BTRFLSQ, BTRCATE
+		       	  , BTRFITC, BTRFITN, BTRFIGB, BTRFICT
+		       	  , STNWEIG, BTRFITM, BTRFCHR, BTRFPAY
+		       	  , BTRFSTC, BTRFEYN, SIZGBYN, BTRDFYN
+		       	  , BTRFDAF, BTRFDAT, CRUDMOD, CREUSER
+		       	  , LMODATE, LMOTIME, LMOUSER
+		       )
+		  VALUES
+		       (
+		       		#{param.warekey}, #{param.btrfkey}, #{param.btrflsq}, #{param.btrcate}
+		       	  , #{param.btrfitc}, #{param.btrfitn}, #{param.btrfigb}, #{param.btrfict}
+		       	  , #{param.stnweig}, #{param.btrfitm}, #{param.btrfchr}, #{param.btrfpay}
+		       	  , IFNULL(#{param.btrfstc}, ''), #{param.btrfeyn}, #{param.sizgbyn}, #{param.btrdfyn}
+		       	  , REPLACE(#{param.btrfdaf}, '-', ''), REPLACE(#{param.btrfdat}, '-', ''), #{param.crudmod}, #{userInfo.useract}
+		       	  , TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+		       )
+	</insert>
+
+	<update id="updateBtrfma" parameterType="com.kbph.logistics.bm.domain.BtrfmaDTO">
+		/*updateBtrfma*/
+		UPDATE ${userInfo.schema}.BTRFMA
+		   SET BTRFCHR = #{param.btrfchr}
+		     , BTRFPAY = #{param.btrfpay}
+		     , BTRFITC = #{param.btrfitc}
+		     , BTRFITM = #{param.btrfitm}
+		     , BTRFITN = #{param.btrfitn}
+		     , BTRFIGB = #{param.btrfigb}
+		     , BTRFICT = #{param.btrfict}
+		     , STNWEIG = #{param.stnweig}
+		     , BTRFSTC = #{param.btrfstc}
+		     , BTRFEYN = #{param.btrfeyn}
+		     , SIZGBYN = #{param.sizgbyn}
+		     , BTRDFYN = #{param.btrdfyn}
+		     , BTRFDAF = REPLACE(#{param.btrfdaf}, '-', '')
+		     , BTRFDAT = REPLACE(#{param.btrfdat}, '-', '')
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		 <where>
+		 	   BTRFKEY = #{param.btrfkey}
+		   AND UPDTCHK = #{param.updtchk}
+		 </where>
+	</update>
+
+	<delete id="deleteBtrfma" parameterType="com.kbph.logistics.bm.domain.BtrfmaDTO" >
+	/*deleteBtrfma*/
+		DELETE
+		  FROM ${userInfo.schema}.BTRFMA
+		 <where>
+		 	    BTRFKEY = #{param.btrfkey}
+			AND UPDTCHK = #{param.updtchk}
+		 </where>
+	</delete>
+
+	<update id="updateBtrfmaSizeyn" parameterType="com.kbph.logistics.bm.domain.BsizpaDTO">
+		/*updateBtrfmaSizeyn*/
+		UPDATE ${userInfo.schema}.BTRFMA
+		   SET SIZGBYN = 'Y'
+		     , UPDTCHK = UPDTCHK + 1
+		 WHERE BTRFKEY = #{param.btrnkey}
+		   AND UPDTCHK = (
+		   					SELECT UPDTCHK
+		   					  FROM BTRFMA
+		   					 WHERE BTRFKEY = #{param.btrnkey}
+		                 )
+	</update>
+
+	<!-- doe081 : 운송요율  -->
+	<select id="selectBtrpmaList" resultType="com.kbph.logistics.bm.domain.BtrpmaDTO">
+	/*selectBtrpmaList*/
+		SELECT
+			CONCAT(BP.WAREKEY, BP.BTRPKEY) AS ROWKEY,
+			BP.WAREKEY, MW.WHNAMLC, BP.BTRPKEY, BP.STNWEIG,
+			BP.BTRCATE, BP.REGIKEY, MR.RENAMLC, BP.BTRPITC,
+			BP.BTRPITN, BP.BTRPIGB, BP.BTRPICT, BP.BTRPVAF,
+			BP.BTRPITM, BP.BTRPCHR, BP.BTRPPAY, BP.BTRPEYN,
+			BP.BTRDFYN, BP.SIZGBYN, BP.BTRDFYN,
+			DATE_FORMAT(STR_TO_DATE(CONCAT(LEFT(BP.BTRPDAF, 4), '-', RIGHT(BP.BTRPDAF, 2)), '%Y-%m'), '%Y-%m') AS BTRPDAF,
+		    DATE_FORMAT(STR_TO_DATE(CONCAT(LEFT(BP.BTRPDAT, 4), '-', RIGHT(BP.BTRPDAT, 2)), '%Y-%m'), '%Y-%m') AS BTRPDAT,
+			DATE_FORMAT(BP.CREDATE,'%Y-%m-%d') as CREDATE,
+		    DATE_FORMAT(STR_TO_DATE(BP.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME,
+		    ${userInfo.schema}.FN_SY_USERNAM(BP.CREUSER) AS CREUSER,
+		    DATE_FORMAT(BP.LMODATE,'%Y-%m-%d') as LMODATE ,
+		    DATE_FORMAT(STR_TO_DATE(BP.LMOTIME,'%H%i%s'),'%H:%i:%s') as LMOTIME,
+			${userInfo.schema}.FN_SY_USERNAM(BP.LMOUSER) AS LMOUSER,
+			BP.UPDTCHK
+		FROM ${userInfo.schema}.BTRPMA BP
+		INNER JOIN ${userInfo.schema}.MWARMA MW
+			ON MW.WAREKEY = BP.WAREKEY
+			AND MW.WHUSEYN ='Y'
+		INNER JOIN ${userInfo.schema}.MREGMA MR
+			ON MR.REGIKEY = BP.REGIKEY
+			AND MR.REUSEYN ='Y'
+		<where>
+			<if test="param.btrpkey != null and param.btrpkey != ''">
+				AND BP.BTRPKEY = #{param.btrpkey}
+			</if>
+			<if test="param.warekey != null and param.warekey != ''">
+				AND BP.WAREKEY = #{param.warekey}
+			</if>
+			<if test="param.btrcate != null and param.btrcate != ''">
+				AND BP.BTRCATE = #{param.btrcate}
+			</if>
+			<if test="param.btrpitc != null and param.btrpitc != ''">
+				AND BP.BTRPITC = #{param.btrpitc}
+			</if>
+			<if test="param.btrpigb != null and param.btrpigb != ''">
+				AND BP.BTRPIGB = #{param.btrpigb}
+			</if>
+			<if test="param.stnweig != null and param.stnweig != ''">
+				AND BP.STNWEIG = #{param.stnweig}
+			</if>
+			<choose>
+				<when test="param.regikeys != null and param.regikeys.size > 0">
+					AND MR.REGIKEY IN
+					<foreach collection="param.regikeys" item="item" index="index" open="(" close=")" separator=",">
+						#{item}
+					</foreach>
+				</when>
+				<when test="param.regikey != null and param.regikey != '' and param.regikeys == null">
+					AND MR.REGIKEY = #{param.regikey}
+				</when>				
+			</choose>
+			<if test="param.btrpvaf != null and param.btrpvaf != ''">
+				AND BP.BTRPVAF = #{param.btrpvaf}
+			</if>
+			<if test="param.sizgbyn != null and param.sizgbyn != ''">
+				AND BP.SIZGBYN = #{param.sizgbyn}
+			</if>
+			<if test='param.btrpdaf != null and param.btrpdaf != "" and (param.btrpdat == null or param.btrpdat == "") '>
+		 		AND REPLACE(#{param.btrpdaf}, '-', '') BETWEEN BP.BTRPDAF AND BP.BTRPDAT
+		 	</if>
+		 	<if test='param.btrpdat != null and param.btrpdat != ""'>
+		 		AND (REPLACE(#{param.btrpdaf}, '-', '') BETWEEN BP.BTRPDAF AND BP.BTRPDAT
+		 		 OR REPLACE(#{param.btrpdat}, '-', '') BETWEEN BP.BTRPDAF AND BP.BTRPDAT)
+		 	</if>
+		 	<if test="param.btrdfyn != null and param.btrdfyn != ''">
+		 		AND BP.BTRDFYN = #{param.btrdfyn}
+		 	</if>
+		 	<if test="param.btrpeyn != null and param.btrpeyn != ''">
+		 		AND BP.BTRPEYN = #{param.btrpeyn}
+		 	</if>
+		 </where>
+		  ORDER BY BP.WAREKEY, BP.REGIKEY, BP.BTRCATE, BP.BTRPITC, BP.BTRPITN, BP.BTRPIGB, BP.BTRPICT, BP.BTRPVAF, BP.BTRPKEY
+	</select>
+
+	<update id="updateBtrpmaSizeyn" parameterType="com.kbph.logistics.bm.domain.BsizpaDTO">
+		/* updateBtrpmaSizeyn */
+		UPDATE ${userInfo.schema}.BTRPMA
+		   SET SIZGBYN = 'Y'
+		     , UPDTCHK = UPDTCHK + 1
+		 WHERE BTRPKEY = #{param.btrnkey}
+		   AND UPDTCHK = (
+		   					SELECT UPDTCHK
+		   					  FROM BTRPMA
+		   					 WHERE BTRPKEY = #{param.btrnkey}
+		                 )
+	</update>
+
+	<select id="selectDoe081BsizpaList" resultType="com.kbph.logistics.bm.domain.BsizpaDTO">
+	/* selectDoe081BsizpaList */
+		SELECT CONCAT(BS.WAREKEY, BS.BTRNKEY, BS.ADDSIKY) AS ROWKEY
+			 , BS.WAREKEY, BS.BTRNKEY, BS.ADDSIKY
+			 , BS.DOCCATE, BS.DOCTYPE, BS.BSIZPAY, MW.WHNAMLC
+			 , MC.COMCDTX, DATE_FORMAT(BS.CREDATE,'%Y-%m-%d') AS CREDATE
+			 , DATE_FORMAT(STR_TO_DATE(BS.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BS.CREUSER)
+			 , DATE_FORMAT(BS.LMODATE,'%Y-%m-%d') AS LMODATE
+			 , DATE_FORMAT(STR_TO_DATE(BS.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BS.LMOUSER)
+			 , BS.UPDTCHK
+		  FROM ${userInfo.schema}.BSIZPA BS
+		 INNER JOIN ${userInfo.schema}.BTRPMA BP
+		    ON BS.WAREKEY = BP.WAREKEY
+		   AND BS.BTRNKEY = BP.BTRPKEY
+		 INNER JOIN ${userInfo.schema}.MCODEM MC
+		    ON MC.COMCDKY = 'ADDSIKY'
+		   AND BS.ADDSIKY = MC.COMCDVL
+		   AND MC.COUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		    ON MW.WAREKEY = BS.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		<where>
+			<if test='param.btrnkey != null and param.btrnkey != ""'>
+			   AND BS.BTRNKEY = #{param.btrnkey}
+			</if>
+			<if test='param.doctype != null and param.doctype != ""'>
+			   AND BS.DOCTYPE = #{param.doctype}
+			</if>
+		</where>
+		ORDER BY MC.COMCDOR
+	</select>
+
+	<select id="getBtrpkey" resultType="String">
+		SELECT ${userInfo.schema}.FN_BM_BTRPKEY() AS BTRPKEY FROM DUAL
+	</select>
+
+	<select id="getBtrplsq" resultType="String">
+		SELECT ${userInfo.schema}.FN_BM_BTRPLSQ() AS BTRPLSQ FROM DUAL
+	</select>
+
+	<insert id="insertBtrpma" parameterType="com.kbph.logistics.bm.domain.BtrpmaDTO">
+	/*insertBtrpma*/
+		INSERT
+		  INTO ${userInfo.schema}.BTRPMA
+		       (
+		       		WAREKEY, BTRPKEY, BTRCATE, REGIKEY, 
+		       		BTRPITC, BTRPITN, BTRPIGB, BTRPICT, 
+		       		STNWEIG, BTRPVAF, BTRPITM, BTRPCHR,
+		       		BTRPPAY, BTRPEYN, SIZGBYN, BTRDFYN, 
+		       		BTRPDAF, BTRPDAT, CREUSER, LMODATE, 
+		       		LMOTIME, LMOUSER
+		       )
+		  VALUES
+		       (
+		       		#{param.warekey}, #{param.btrpkey}, #{param.btrcate}, #{param.regikey}
+		       	  , #{param.btrpitc}, #{param.btrpitn}, #{param.btrpigb}, #{param.btrpict}
+		       	  , #{param.stnweig}, #{param.btrpvaf}, #{param.btrpitm}, #{param.btrpchr}
+		       	  , #{param.btrppay}, #{param.btrpeyn}, #{param.sizgbyn}, #{param.btrdfyn}
+		       	  , REPLACE(#{param.btrpdaf}, '-', ''), REPLACE(#{param.btrpdat}, '-', ''), #{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		       	  , TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+		       )
+	</insert>
+
+	<insert id="insertBtrpmaLog" parameterType="com.kbph.logistics.bm.domain.BtrpmaDTO">
+	/*insertBtrpmaLog*/
+		INSERT
+		  INTO ${userInfo.schema}.BTRPLG
+		       (
+		       		WAREKEY, BTRPLSQ, BTRPKEY, BTRCATE, 
+		       		CRUDMOD, REGIKEY, BTRPITC, BTRPITN, 
+		       		BTRPIGB, BTRPICT, STNWEIG, BTRPVAF, 
+		       		BTRPITM, BTRPCHR, BTRPPAY, BTRPEYN,
+		       		SIZGBYN, BTRDFYN, BTRPDAF, BTRPDAT,
+		       		CREUSER, LMODATE, LMOTIME, LMOUSER 
+		       )
+		  VALUES
+		       (
+		       		#{param.warekey}, #{param.btrplsq}, #{param.btrpkey}, #{param.btrcate}
+		       	  , #{param.crudmod}, #{param.regikey}, #{param.btrpitc}, #{param.btrpitn}
+		       	  , #{param.btrpigb}, #{param.btrpict}, #{param.stnweig}, #{param.btrpvaf}
+		       	  , #{param.btrpitm}, ifnull(#{param.btrpchr},0), ifnull(#{param.btrppay},0), #{param.btrpeyn}
+		       	  , #{param.sizgbyn}, #{param.btrdfyn}, REPLACE(#{param.btrpdaf}, '-', ''), REPLACE(#{param.btrpdat}, '-', '')
+		       	  , #{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+		       )
+	</insert>
+
+	<update id="updateBtrpma" parameterType="com.kbph.logistics.bm.domain.BtrpmaDTO">
+		/*updateBtrpma*/
+		UPDATE ${userInfo.schema}.BTRPMA
+		SET
+			BTRCATE = #{param.btrcate},
+			BTRPITC = #{param.btrpitc},
+			BTRPITN = #{param.btrpitn},
+			BTRPIGB = #{param.btrpigb},
+			BTRPICT = #{param.btrpict},
+			STNWEIG = #{param.stnweig},
+			REGIKEY = #{param.regikey},
+			BTRPVAF = #{param.btrpvaf},
+			BTRPITM = #{param.btrpitm},
+			BTRPCHR = #{param.btrpchr},
+			BTRPPAY = #{param.btrppay},
+			BTRPEYN = #{param.btrpeyn},
+			SIZGBYN = #{param.sizgbyn},
+			BTRDFYN = #{param.btrdfyn},
+			BTRPDAF = REPLACE(#{param.btrpdaf}, '-', ''),
+			BTRPDAT = REPLACE(#{param.btrpdat}, '-', ''),
+			LMODATE = TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"),
+			LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"),
+			LMOUSER = #{userInfo.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+		 	   BTRPKEY = #{param.btrpkey}
+		   AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<delete id="deleteBtrpma" parameterType="com.kbph.logistics.bm.domain.BtrpmaDTO" >
+		/*deleteBtrpma*/
+		DELETE
+		  FROM ${userInfo.schema}.BTRPMA
+		 WHERE
+		 	    BTRPKEY = #{param.btrpkey}
+			AND UPDTCHK = #{param.updtchk}
+	</delete>
+	
+	<!-- doe082 : 이송정산처리  -->
+	<sql id="selectBtrfma">
+	    SELECT BF.WAREKEY, BF.BTRCATE, BF.STNWEIG, BF.BTRFITC
+	    	 , BF.BTRFKEY, BF.BTRFCHR, BF.BTRFPAY, BF.BTRFITM
+	    	 , BF.SIZGBYN, BF.BTRFEYN, BF.BTRDFYN, BF.BTRFSTC
+	    	 , BF.BTRFDAF, BF.BTRFDAT
+         FROM ${userInfo.schema}.BTRFMA BF
+		WHERE BF.WAREKEY = #{param.warekey}
+		<if test="param.poshpdtfrom != null and param.poshpdtfrom != ''">
+           	<![CDATA[
+				AND (DATE_FORMAT(#{param.poshpdtfrom}, '%Y%m') BETWEEN BF.BTRFDAF AND BF.BTRFDAT
+           	    OR DATE_FORMAT(#{param.poshpdtto}, '%Y%m') BETWEEN BF.BTRFDAF AND BF.BTRFDAT)
+           	]]>
+		</if>
+	</sql>
+	
+	<sql id="selectCalculateResults">
+		    SELECT CONCAT(WI.RCVDCKY,WI.RCVDCKY) AS ROWKEY
+		    	 , WI.RCVDCKY, DATE_FORMAT(WI.POSHPDT, '%Y-%m-%d') AS POSHPDT
+		    	 , DATE_FORMAT(STR_TO_DATE(WI.POSHPTM,'%H%i%s'),'%H:%i:%s') AS POSHPTM
+		    	 , WI.BTRFSTC, WI.BTRCATE, BC.BTRCNAM, WI.POSHPDY
+				 , DATE_FORMAT(WI.RCVDCDT, '%Y-%m-%d') AS RCVDCDT
+				 , DATE_FORMAT(STR_TO_DATE(WI.RCVDCTM, '%H%i%s'), '%H:%i:%s') AS RCVDCTM
+		         , WI.WAREKEY, WH.DOCCATE, WH.DOCTYPE, MD.DOCCTNM
+		         , MD.DOCTYNM, WI.RCVDCIT, WI.SKUMKEY, WI.SKUDESC
+		         , WI.INVOICE, WI.ITEMCOD AS BTRFITC, MC.COMCDTX AS BTRFITN, MC.CDCATE1 AS BTRFIGB
+		         , MC.CDATTR1 AS BTRFICT, WI.ADDCOKY, BA.ADDSIKY, WI.RCVITST
+			 	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = IFNULL(TS.BTRFITM, #{param.transfer})) AS BTRFIT1
+		         , TS.BTRFITM AS #{param.transfer}
+		         , TS.BTRFKEY AS BTRFKY1
+		         , TS.BTRFCHR AS BTRFCH1
+		         , (
+		         		CASE 
+							WHEN (COALESCE(SC.STNWEIG, '') = #{param.stnweig} OR SC.STNWEIG IS NULL)  
+								 AND TS.STNWEIG = #{param.stnweig} 
+								 AND LD.STNWEIG = #{param.stnweig} 
+							THEN #{param.grossWgName}
+							ELSE #{param.skuWeigName}
+						 END 
+		          ) AS CALWEIG	<!-- 계산중량 -->
+		         , COALESCE(
+					  CASE 
+					      WHEN TS.SIZGBYN = 'Y' 
+						      THEN COALESCE((
+											      SELECT BSIZPAY 
+											        FROM ${userInfo.schema}.BSIZPA 
+											       WHERE WAREKEY = #{param.warekey} 
+											         AND BTRNKEY = TS.BTRFKEY 
+											         AND ADDSIKY = BA.ADDSIKY
+						    	   ), 0) 
+					  	  ELSE TS.BTRFPAY 
+					   END
+				   , 0) AS BTRFPA1
+		         , COALESCE((
+		         				CASE 
+								    WHEN TS.SIZGBYN = 'Y' 
+								    THEN COALESCE((
+								    					SELECT BSIZPAY 
+														  FROM ${userInfo.schema}.BSIZPA 
+														 WHERE WAREKEY = #{param.warekey} 
+														   AND BTRNKEY = TS.BTRFKEY 
+														   AND ADDSIKY = BA.ADDSIKY
+									     ), 0) 
+								    ELSE TS.BTRFPAY
+								END
+						    ) <!-- 지급단가 --> * 
+							(
+							   CASE 
+								   WHEN TS.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0)
+								   ELSE COALESCE(WI.SKUWEIG, 0) 
+							    END
+				   			) <!-- 중량 --> 
+			       , 0) AS BTRFPC1_CAL <!-- 지급단가 * 중량(이송비)  -->
+		         , (
+					  CASE 
+					      WHEN TS.SIZGBYN = 'Y' 
+						      THEN COALESCE((
+											      SELECT BSIZPAY 
+											        FROM ${userInfo.schema}.BSIZPA 
+											       WHERE WAREKEY = #{param.warekey} 
+											         AND BTRNKEY = TS.BTRFKEY 
+											         AND ADDSIKY = BA.ADDSIKY
+						    	   ), 0) 
+					 	  ELSE TS.BTRFPAY
+					   END
+					) * 
+					(
+					  CASE 
+					      WHEN TS.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0) 
+					      ELSE COALESCE(WI.SKUWEIG, 0) 
+					   END
+					) *
+					(BA.ADCOPER) AS BTRFEP1_CAL <!-- 사이즈 할증 금액(지급) -->
+		         , COALESCE(
+		         				CASE 
+			           				WHEN TS.STNWEIG = #{param.stnweig} THEN (TS.BTRFCHR * WI.GROSSWG) 
+			           				ELSE (TS.BTRFCHR * WI.SKUWEIG) 
+			        			 END 
+			       , 0) AS BTRFCC1_CAL <!-- 항목1(이송비) 청구금액 -->
+			     , COALESCE(
+			     			    CASE
+						            WHEN TS.STNWEIG = #{param.stnweig} THEN (TS.BTRFCHR * WI.GROSSWG * BA.ADCOPER)
+						            ELSE (TS.BTRFCHR * WI.SKUWEIG * BA.ADCOPER)
+			        			 END
+			       , 0) AS BTRFEC1_CAL <!-- 항목1(이송비) 할증 금액(청구) -->
+			 	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = IFNULL(LD.BTRFITM, #{param.loading})) AS BTRFIT2
+			     , IFNULL(LD.BTRFITM, #{param.loading}) AS #{param.loading}
+			     , LD.BTRFKEY AS BTRFKY2
+			     , LD.BTRFCHR AS BTRFCH2
+			     , COALESCE(
+			     				CASE 
+						            WHEN LD.STNWEIG = #{param.stnweig} THEN (LD.BTRFCHR * WI.GROSSWG) 
+						            ELSE (LD.BTRFCHR * WI.SKUWEIG) 
+			        			 END 
+			       , 0) AS BTRFCC2_CAL <!-- 항목2(상하차비) 청구금액 -->
+        		 , COALESCE(
+								CASE 
+								    WHEN LD.SIZGBYN = 'Y' 
+									THEN COALESCE((
+														SELECT BSIZPAY 
+														  FROM ${userInfo.schema}.BSIZPA 
+														 WHERE WAREKEY = #{param.warekey} 
+														   AND BTRNKEY = LD.BTRFKEY 
+														   AND ADDSIKY = BA.ADDSIKY
+										 ), 0) 
+								    ELSE LD.BTRFPAY 
+								END 
+				   , 0 ) AS BTRFPA2 <!-- 항목2(상하차비) 지급단가 -->
+		         , COALESCE(
+		         				CASE 
+								    WHEN LD.SIZGBYN = 'Y' 
+								    THEN COALESCE((
+								    					SELECT BSIZPAY 
+														  FROM ${userInfo.schema}.BSIZPA 
+														 WHERE WAREKEY = #{param.warekey} 
+														   AND BTRNKEY = LD.BTRFKEY 
+														   AND ADDSIKY = BA.ADDSIKY
+									     ), 0) 
+								    ELSE LD.BTRFPAY
+								END 
+				   , 0)
+					* 
+				   (
+					  CASE 
+					      WHEN LD.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0)
+					      ELSE COALESCE(WI.SKUWEIG, 0) 
+					   END
+				   ) AS BTRFPC2_CAL
+			 	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = IFNULL(SC.BTRFITM, #{param.selection})) AS BTRFIT3
+			     , IFNULL(SC.BTRFITM, #{param.selection}) AS #{param.selection}
+			     , SC.BTRFKEY AS BTRFKY3
+			     , SC.BTRFCHR AS BTRFCH3
+			     , COALESCE(
+			     				CASE 
+						            WHEN SC.STNWEIG = #{param.stnweig} THEN (SC.BTRFCHR * WI.GROSSWG) 
+						            ELSE (SC.BTRFCHR * WI.SKUWEIG) 
+        						 END 
+        		   , 0) AS BTRFCC3_CAL <!--항목3(선별비) 청구금액  -->
+        		 , COALESCE(
+								CASE 
+								    WHEN SC.SIZGBYN = 'Y' 
+								    THEN COALESCE((
+								    					SELECT BSIZPAY 
+														  FROM ${userInfo.schema}.BSIZPA 
+														 WHERE WAREKEY = #{param.warekey} 
+														   AND BTRNKEY = SC.BTRFKEY 
+														   AND ADDSIKY = BA.ADDSIKY
+										 ), 0) 
+								    ELSE SC.BTRFPAY 
+								 END
+			       , 0) AS BTRFPA3
+		         , COALESCE(
+		         				(
+									  CASE 
+									      WHEN SC.SIZGBYN = 'Y' 
+										      THEN COALESCE((
+															      SELECT BSIZPAY 
+															        FROM ${userInfo.schema}.BSIZPA 
+															       WHERE WAREKEY = #{param.warekey} 
+															         AND BTRNKEY = SC.BTRFKEY 
+															         AND ADDSIKY = BA.ADDSIKY
+										           ), 0) 
+									      ELSE SC.BTRFPAY
+									   END
+								) 
+								* 
+								(
+								  CASE 
+								      WHEN SC.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0)
+								      ELSE COALESCE(WI.SKUWEIG, 0) 
+								   END
+								) 
+				   , 0) AS BTRFPC3_CAL <!-- 항목3(선별비) 지급 금액 -->
+			     , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = IFNULL(ST.BTRFITM, #{param.storage})) AS BTRFIT4
+			     , IFNULL(ST.BTRFITM,  #{param.storage}) AS #{param.storage}
+			     , ST.BTRFKEY AS BTRFKY4
+			     , ST.BTRFCHR AS BTRFCH4
+			     , COALESCE(
+			     				CASE 
+						            WHEN ST.STNWEIG = #{param.stnweig} THEN (ST.BTRFCHR * WI.GROSSWG) 
+						            ELSE (ST.BTRFCHR * WI.SKUWEIG) 
+			        			 END 
+			       , 0) AS BTRFCC4_CAL <!-- 항목4(보관비) 청구금액 -->
+        		 , COALESCE(
+					    		CASE 
+								    WHEN ST.SIZGBYN = 'Y' 
+								    THEN COALESCE((
+								    					SELECT BSIZPAY 
+														  FROM ${userInfo.schema}.BSIZPA 
+														 WHERE WAREKEY = #{param.warekey} 
+														   AND BTRNKEY = ST.BTRFKEY 
+														   AND ADDSIKY = BA.ADDSIKY
+										 ), 0) 
+								    ELSE ST.BTRFPAY 
+								 END 
+				   , 0) AS BTRFPA4 <!-- 항목4(보관비) 지급단가 -->
+		         , COALESCE(
+		         				(
+									  CASE 
+									      WHEN ST.SIZGBYN = 'Y' 
+										      THEN COALESCE((
+															      SELECT BSIZPAY 
+															        FROM ${userInfo.schema}.BSIZPA 
+															       WHERE WAREKEY = #{param.warekey} 
+															         AND BTRNKEY = ST.BTRFKEY 
+															         AND ADDSIKY = BA.ADDSIKY
+										           ), 0) 
+									      ELSE ST.BTRFPAY
+									   END
+								) 
+								* 
+								(
+								  CASE 
+								    WHEN ST.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0)
+								    ELSE COALESCE(WI.SKUWEIG, 0) 
+								  END
+								) 
+				   , 0) AS BTRFPC4_CAL <!-- 항목4(보관비) 지급 금액 -->
+		     	 , (
+		     	 		CASE 
+		     	 			WHEN <!-- 날짜확인필요(토,일) WEEKDAY(WI.POSHPDT) IN (5,6) --> 
+	               			<![CDATA[ WEEKDAY(WI.POSHPDT) IN (5,6) 
+	               			 		OR
+								    (
+							            TIME(WI.POSHPTM) >= DATE_FORMAT(STR_TO_DATE(WA.HOLTMFM, '%H%i%s'), '%H%i%s') 
+							            OR TIME(WI.POSHPTM) < DATE_FORMAT(STR_TO_DATE(WA.HOLTMTO, '%H%i%s'), '%H%i%s')
+							        )
+	               				 THEN TS.BTRFCHR
+	             					  * 
+									  (
+										    CASE 
+											  	WHEN TS.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0) 
+											  	ELSE COALESCE(WI.SKUWEIG, 0) 
+											 END
+									  )
+									  * (WA.HOLRATE / 100)
+					    ELSE 0
+						 END ]]> 
+		           ) AS HOLICHR <!-- 휴일/야간할증 청구단가 * 중량 * 휴일/야간할증률(5%) -->
+		         , (
+		     	 		CASE 
+		     	 			WHEN <!-- 날짜확인필요(토,일) WEEKDAY(WI.POSHPDT) IN (5,6) --> 
+	               			<![CDATA[ WEEKDAY(WI.POSHPDT) IN (5,6) 
+	               			 		OR
+								    (
+							            TIME(WI.POSHPTM) >= DATE_FORMAT(STR_TO_DATE(WA.HOLTMFM, '%H%i%s'), '%H%i%s') 
+							            OR TIME(WI.POSHPTM) < DATE_FORMAT(STR_TO_DATE(WA.HOLTMTO, '%H%i%s'), '%H%i%s')
+							        )
+	               				 THEN (
+	               				 			CASE 
+											    WHEN TS.SIZGBYN = 'Y' 
+												THEN COALESCE((
+																	SELECT BSIZPAY 
+																	  FROM ${userInfo.schema}.BSIZPA 
+																	 WHERE WAREKEY = #{param.warekey} 
+																	   AND BTRNKEY = TS.BTRFKEY 
+																	   AND ADDSIKY = BA.ADDSIKY
+												     ), 0) 
+											 	ELSE TS.BTRFPAY
+											 END
+	               				      )
+	             					  * 
+									  (
+										    CASE 
+											  	WHEN TS.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0) 
+											  	ELSE COALESCE(WI.SKUWEIG, 0) 
+											 END
+									  )
+									  * (WA.HOLRATE / 100)
+					    ELSE 0
+						 END ]]> 
+		           ) AS HOLIPAY
+		           <!-- 청구처 :이송청구처값이 지정되어있지 않을때 1.OWNERKY가 있을경우 2.판매계약사명이 있을 경우 3.고객명이 있을경우 -->
+		         , IFNULL(
+					    (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = BC.BTRFBTP),
+						    CASE
+						        WHEN TRIM(WI.OWNERKY) != '' OR WI.OWNERKY IS NOT NULL 
+						            THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = WI.OWNERKY)
+						        WHEN TRIM(WI.OWNRNAM) != '' AND WI.OWNRNAM IS NOT NULL
+						            THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE  CUNAMLC = WI.OWNRNAM LIMIT 1)
+						        WHEN TRIM(WI.CUSTNAM) != '' AND WI.CUSTNAM IS NOT NULL
+						            THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = WI.CUSTNAM LIMIT 1)
+						        ELSE ''
+						    END
+						) AS BTRFCBT
+				<!-- 추가청구처 : 1. OWNERKY가 있는경우 2.판매계약사명이 있는 경우 3.고객사명이 있는경우 -->
+				 , (
+				 		CASE
+				        	WHEN TRIM(WI.OWNERKY) != '' OR WI.OWNERKY IS NOT NULL 
+				            	THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = WI.OWNERKY AND SURCHYN ='Y')
+				        	WHEN TRIM(WI.OWNRNAM) != '' AND WI.OWNRNAM IS NOT NULL
+				            	THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = WI.OWNRNAM AND SURCHYN ='Y' LIMIT 1)
+				        	WHEN TRIM(WI.CUSTNAM) != '' AND WI.CUSTNAM IS NOT NULL
+				            	THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = WI.CUSTNAM AND SURCHYN ='Y' LIMIT 1)
+				        	ELSE ''
+				    	END
+				   ) AS SBILLTO
+       			 , BA.ADCOPER, WI.GROSSWD, WI.SKUWIDT, WI.SKULENG
+       			 , WI.SKUWEIG, WI.GROSSWG, WI.REGIORG, WI.REGIMOD
+       			 , WI.GROSSLN, WI.SKUTHIC, WI.INBDATE, WI.INBVHNM
+       			 , WI.OWNERKY, WI.OWNRNAM, WI.CUSTCOD, WI.CUSTNAM
+       			 , WI.DEORGNM, WI.DEMODNM, WI.DEMDMAN, WI.DEMDADR
+			 	 , WI.DEMPOCD, WI.DEMDTLN
+       			 , WH.VOWNKEY AS BTRFPAT , WH.VEHICKY , MV.VONAMLC
+       			 , (SELECT CDATTR1 FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'VHCTNCD' AND COMCDVL = VH.VHCTNCD) AS TRFDFSD
+       			 , VH.VHCFNAM, MR.RENAMLC AS REORGNM
+       			 , RM.RENAMLC AS REMODNM, WI.EOASNKY, WI.EOASNIT
+				 , DATE_FORMAT(WI.CREDATE, '%Y-%m-%d') AS CREDATE
+				 , DATE_FORMAT(STR_TO_DATE(WI.CRETIME, '%H%i%s'), '%H:%i:%s') AS CRETIME
+				 , ${userInfo.schema}.FN_SY_USERNAM(WI.CREUSER) AS CREUSER
+				 , DATE_FORMAT(WI.LMODATE, '%Y-%m-%d') AS LMODATE
+				 , DATE_FORMAT(STR_TO_DATE(WI.LMOTIME, '%H%i%s'), '%H:%i:%s') AS LMOTIME
+				 , ${userInfo.schema}.FN_SY_USERNAM(WI.LMOUSER) AS LMOUSER
+				 , WI.UPDTCHK
+		      FROM ${userInfo.schema}.WRCVIT WI
+		     INNER JOIN ${userInfo.schema}.WRCVHD WH 
+		        ON WH.WAREKEY = WI.WAREKEY 
+		       AND WH.RCVDCKY = WI.RCVDCKY
+		       AND WH.DOCCATE = '400'	<!-- 기타입고 제외 -->
+		       AND WH.DOCTYPE != '490'
+		     INNER JOIN ${userInfo.schema}.BTRCAT BC 
+		        ON BC.BTRCATE = WI.BTRCATE
+		        AND BC.TFONLYN = 'N'	<!-- 이송 실적전용이 아닌것 -->
+		     INNER JOIN ${userInfo.schema}.MDOCMA MD 
+		        ON MD.WAREKEY = WH.WAREKEY 
+		       AND MD.DOCCATE = WH.DOCCATE 
+		       AND MD.DOCTYPE = WH.DOCTYPE
+		     INNER JOIN ${userInfo.schema}.MCODEM MC 
+		        ON MC.COMCDKY = 'ITEMCOD' 
+		       AND MC.COMCDVL = WI.ITEMCOD 
+		       AND MC.COUSEYN = 'Y'
+		     INNER JOIN ${userInfo.schema}.MWARMA WA
+				ON WA.WAREKEY = WI.WAREKEY
+		     INNER JOIN ${userInfo.schema}.BADDCO BA 
+		        ON BA.ADDCOKY = WI.ADDCOKY
+		     LEFT JOIN BTRF TS <!-- 이송비:TRANSFER -->
+		       ON TS.WAREKEY = WI.WAREKEY
+		      AND TS.BTRCATE = WI.BTRCATE 
+		      AND TS.BTRFITC = WI.ITEMCOD 
+		      AND TS.BTRFITM = #{param.transfer}
+		      AND (DATE_FORMAT(WI.POSHPDT , '%Y%m') BETWEEN TS.BTRFDAF AND TS.BTRFDAT)
+		     LEFT JOIN BTRF LD <!-- 상하차비:LOADING -->
+		       ON LD.WAREKEY = WI.WAREKEY 
+		      AND LD.BTRCATE = WI.BTRCATE 
+		      AND LD.BTRFITC = WI.ITEMCOD 
+		      AND LD.BTRFITM = #{param.loading}
+		      AND (DATE_FORMAT(WI.POSHPDT , '%Y%m') BETWEEN LD.BTRFDAF AND LD.BTRFDAT)
+		     LEFT JOIN BTRF SC <!-- 선별비:SELECTION -->
+		       ON SC.WAREKEY = WI.WAREKEY 
+		      AND SC.BTRCATE = WI.BTRCATE 
+		      AND SC.BTRFITC = WI.ITEMCOD
+		      AND SC.BTRFITM = #{param.selection}
+		      AND (SC.BTRFSTC = WI.BTRFSTC OR TRIM(SC.BTRFSTC) = '')			<!-- 요율 선별비의 진도코드가 입고문서의 진도코드와 같거나 선별비의 진도코드가 ''일 경우  --> 
+		      AND (DATE_FORMAT(WI.POSHPDT , '%Y%m') BETWEEN SC.BTRFDAF AND SC.BTRFDAT)
+		     LEFT JOIN BTRF ST	<!-- 보관비:STORAGE -->
+		       ON ST.WAREKEY = WI.WAREKEY 
+		      AND ST.BTRCATE = WI.BTRCATE 
+		      AND ST.BTRFITC = WI.ITEMCOD 
+		      AND ST.BTRFITM = #{param.storage}
+		      AND (DATE_FORMAT(WI.POSHPDT , '%Y%m') BETWEEN ST.BTRFDAF AND ST.BTRFDAT)
+		    INNER JOIN ${userInfo.commonSchema}.MVOWMA MV 
+		       ON MV.VOWNKEY = WH.VOWNKEY
+		       AND MV.VOUSEYN = 'Y'
+		    INNER JOIN ${userInfo.commonSchema}.MVHCMA VH
+		       ON VH.VOWNKEY = WH.VOWNKEY
+		       AND VH.VEHICKY = WH.VEHICKY
+		       AND VH.VHUSEYN = 'Y'
+		    INNER JOIN ${userInfo.schema}.MREGMA MR 
+		       ON MR.REGIKEY = WI.REGIORG
+		       AND MR.REUSEYN = 'Y'
+		    INNER JOIN ${userInfo.schema}.MREGMA RM
+		       ON RM.REGIKEY = WI.REGIMOD
+		       AND RM.REUSEYN = 'Y'
+		WHERE WH.ICLOSYN = 'N'
+			AND WH.RCVDCST = 'RVCMP'
+			AND WI.RCVITST IN ('RVCOMP','RETURN')
+			<if test="param.warekey != null and param.warekey != ''">
+				AND WI.WAREKEY = #{param.warekey}
+			</if>
+			<if test="param.vhcfnam != null and param.vhcfnam != ''">
+				AND VH.VHCFNAM LIKE CONCAT ('%',#{param.vhcfnam},'%')
+			</if>
+			<if test="param.addsiky != null and param.addsiky != ''">
+				AND BA.ADDSIKY = #{param.addsiky}
+			</if>
+			<choose>
+				<when test='param.poshpdtfrom != null and param.poshpdtfrom != "" and param.poshpdtto == ""'>
+					<![CDATA[ AND WI.POSHPDT >= #{param.poshpdtfrom} ]]>
+				</when>
+				<when test='param.poshpdtto != null and param.poshpdtto != "" and param.poshpdtfrom == ""'>
+					<![CDATA[ AND WI.POSHPDT <= #{param.poshpdtto}]]>
+				</when>
+				<when test='param.poshpdtfrom != null and param.poshpdtfrom != "" and param.poshpdtto != null and param.poshpdtto != ""'>
+					AND WI.POSHPDT BETWEEN #{param.poshpdtfrom} AND #{param.poshpdtto}
+				</when>
+			</choose>
+	</sql>
+	
+	<!-- doe082 : 이송정산처리 조회 -->
+	<select id="selectDoe082List" resultType="com.kbph.logistics.bm.domain.BtrfPrcDTO">
+		/* selectDoe082List */
+		WITH BTRF AS (
+			<include refid="selectBtrfma" />
+		),
+		CALCULATED_VALUES AS (
+			<include refid="selectCalculateResults" />
+		)
+	    SELECT FLOOR(CV.BTRFCC1_CAL / 1000) AS BTRFCC1
+	    	 , FLOOR(CV.BTRFPC1_CAL / 1000) AS BTRFPC1
+	    	 , FLOOR(CV.BTRFEC1_CAL / 1000) AS BTRFEC1
+	    	 , FLOOR(CV.BTRFEP1_CAL / 1000) AS BTRFEP1
+	    	 , FLOOR(CV.BTRFCC2_CAL / 1000) AS BTRFCC2
+	    	 , FLOOR(CV.BTRFPC2_CAL / 1000) AS BTRFPC2
+	    	 , FLOOR(CV.BTRFCC3_CAL / 1000) AS BTRFCC3
+	    	 , FLOOR(CV.BTRFPC3_CAL / 1000) AS BTRFPC3
+	    	 , FLOOR(CV.BTRFCC4_CAL / 1000) AS BTRFCC4
+	    	 , FLOOR(CV.BTRFPC4_CAL / 1000) AS BTRFPC4
+	    	 , FLOOR(CV.HOLICHR / 1000) AS HOLICHR
+	    	 , FLOOR(CV.HOLIPAY / 1000) AS HOLIPAY
+	    	 , FLOOR((CV.BTRFCC1_CAL + CV.BTRFEC1_CAL + CV.BTRFCC2_CAL + CV.BTRFCC3_CAL + CV.BTRFCC4_CAL + CV.HOLICHR) / 1000) AS TOTITCH
+	    	 , FLOOR((CV.BTRFPC1_CAL + CV.BTRFEP1_CAL + CV.BTRFPC2_CAL + CV.BTRFPC3_CAL + CV.BTRFPC4_CAL + CV.HOLIPAY) / 1000) AS TOTITPA
+	    	 , IF(CV.BTRFCBT != '',(SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = CV.BTRFCBT), '') AS BTRFBTP
+	    	 , IF(CV.SBILLTO != '',(SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = CV.SBILLTO AND SURCHYN = 'Y'), '') AS SBILLNM
+	    	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'RCVITST' AND COMCDVL = CV.RCVITST) AS RCVITST
+	    	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = CV.ADDSIKY) AS ADCONAM
+	    	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'STNWEIG' AND CDATTR1 = CV.CALWEIG) AS CALWGNM
+	    	 , CV.*
+	     FROM CALCULATED_VALUES CV
+	     ORDER BY CV.POSHPDT, CV.RCVDCKY, CV.RCVDCIT
+	</select>
+	
+	<select id="getBfhdkey" resultType="String">
+		SELECT ${userInfo.schema}.FN_BM_BFHDKEY() AS BFHDKEY FROM DUAL
+	</select>
+	
+	<insert id="insertBtrfit" parameterType="com.kbph.logistics.bm.domain.BtrfPrcDTO">
+		/*insertBtrfit*/
+		INSERT
+			INTO ${userInfo.schema}.BTRFIT
+			(
+				DOCCATE, DOCTYPE, WAREKEY, BFHDKEY,
+				BFHDCIT, BTRCATE, BTRFITC, OWNERKY, 
+				OWNRNAM, CUSTCOD, CUSTNAM, SKUMKEY, 
+				BTRFITN, BTRFIGB, BTRFICT, SKUTHIC,
+				SKULENG, SKUWIDT, SKUWEIG, GROSSLN,
+				GROSSWD, GROSSWG, RCVDATE, RCVDCKY,
+				RCVDCIT, ADDCOKY, BTRFKY1, BTRFIT1,
+				BTRFCH1, BTRFCC1, BTRFPA1, BTRFPC1,
+				BTRFEC1, BTRFEP1, BTRFKY2, BTRFIT2,
+				BTRFCH2, BTRFCC2, BTRFPA2, BTRFPC2,
+				BTRFKY3, BTRFIT3, BTRFCH3, BTRFCC3,
+				BTRFPA3, BTRFPC3, BTRFKY4, BTRFIT4, 
+				BTRFCH4, BTRFCC4, BTRFPA4, BTRFPC4,
+				HOLICHR, HOLIPAY, TOTITCH, TOTITPA,
+				SURCHCO, ADDCHCO, ADDPACO, ADCMEMO, 
+				BTRFCBT, BTRFPAT, SBILLTO, CALWEIG, 
+				CREUSER, LMODATE, LMOTIME, LMOUSER
+			)
+			VALUES
+			(
+				#{param.doccate}, #{param.doctype}, #{param.warekey}, #{param.bfhdkey},
+				#{param.bfhdcit}, #{param.btrcate}, #{param.btrfitc}, #{param.ownerky},
+				#{param.ownrnam}, #{param.custcod}, #{param.custnam}, #{param.skumkey},
+				#{param.btrfitn}, #{param.btrfigb}, #{param.btrfict}, #{param.skuthic},
+				#{param.skuleng}, #{param.skuwidt}, #{param.skuweig}, #{param.grossln},
+				#{param.grosswd}, #{param.grosswg}, DATE_FORMAT(#{param.rcvdcdt},'%Y%m%d'), #{param.rcvdcky},
+				#{param.rcvdcit}, #{param.addcoky}, #{param.btrfky1}, #{param.transfer},
+				#{param.btrfch1}, #{param.btrfcc1}, #{param.btrfpa1}, #{param.btrfpc1}, 
+				#{param.btrfec1}, #{param.btrfep1}, #{param.btrfky2}, #{param.loading}, 
+				#{param.btrfch2}, #{param.btrfcc2}, #{param.btrfpa2}, #{param.btrfpc2}, 
+				#{param.btrfky3}, #{param.selection},#{param.btrfch3}, #{param.btrfcc3}, 
+				#{param.btrfpa3}, #{param.btrfpc3}, #{param.btrfky4}, #{param.storage}, 
+				#{param.btrfch4}, #{param.btrfcc4}, #{param.btrfpa4}, #{param.btrfpc4}, 
+				#{param.holichr}, #{param.holipay},	#{param.totitch}, #{param.totitpa},
+				#{param.surchco}, #{param.addchco}, #{param.addpaco}, #{param.adcmemo}, 
+				#{param.btrfcbt}, #{param.btrfpat}, #{param.sbillto}, #{param.calweig}, 
+				#{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+			)
+	</insert>
+	
+	<insert id="insertBtrfhdFromBtrfit" parameterType="com.kbph.logistics.bm.domain.BtrfhdDTO">
+		/*insertBtrfhdFromBtrfit*/
+			INSERT INTO ${userInfo.schema}.BTRFHD
+			(
+			    WAREKEY, BFHDKEY, VOWNKEY, VEHICKY,
+			    TRFDFSD, TRFDFWG, TRFDFCH, TRFDFPA,
+			    TOORGCH, TOSURCH, TOTCHCO, TOORGPA,
+			    TOSURPA, TOTPACO, BFHYYMM, FCDDATE,
+			    FCDTIME, FCDUSER, FCVRFYN, FCVDATE,
+			    FCVTIME, FCVUSER, FCCFMYN, FCCDATE,
+			    FCCTIME, FCCUSER, DFSTDCH, DFSTDPA,
+			    CREUSER, LMODATE, LMOTIME, LMOUSER
+			)			
+			SELECT BI.WAREKEY, BI.BFHDKEY, MV.VOWNKEY, WH.VEHICKY
+				 , #{param.trfdfsd} AS TRFDFSD <!-- 부적기준중량 -->
+				 , (
+				 		CASE 
+				        <![CDATA[ WHEN #{param.trfdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+				        	ELSE #{param.trfdfsd} - SUM(BI.${param.calweig})
+				         END
+				   ) AS TRFDFWG 	 <!-- 부적중량 -->
+			     , FLOOR(
+			     			CASE 
+					       <![CDATA[ WHEN #{param.trfdfsd} < SUM(BI.${param.calweig})
+					         		 	 THEN 0 ]]>
+					         		 ELSE (#{param.trfdfsd} - SUM(BI.${param.calweig}))
+					         				 * IFNULL(BTRFCHR, BI.BTRFCH1)
+				          	 END / 1000
+				   ) AS TRFDFCH <!-- 부적청구금액 -->
+				 , FLOOR(
+				 			CASE 
+				          <![CDATA[ WHEN #{param.trfdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+				         			ELSE (#{param.trfdfsd} - SUM(BI.${param.calweig}))
+				         					* COALESCE(MAX(CASE WHEN BM.DFSTDYN = 'Y' THEN BM.BTRFPAY END), MAX(BI.BTRFPA1))
+				         	 END / 1000
+				   ) AS TRFDFPA <!-- 부적지급금액 -->
+			     , (
+			     		SUM(BI.TOTITCH) 
+						 +
+					    FLOOR(
+					    		CASE 
+					         <![CDATA[ WHEN #{param.trfdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+					        	 	   ELSE (#{param.trfdfsd} - SUM(BI.${param.calweig})) * IFNULL(BTRFCHR, BI.BTRFCH1)
+					          	 END / 1000
+					    )
+				   ) AS TOORGCH <!-- 총 기본청구금액(총 청구금액(아이템 합산 = 항목별 청구금액 + 할증금액 + 휴일/야간 할증금액) + 부적금액) -->
+			     , SUM(BI.SURCHCO + BI.ADDCHCO) AS TOSURCH 	 <!-- 추가 청구금액 -->
+				 , (
+				 		SUM(BI.TOTITCH + BI.SURCHCO + BI.ADDCHCO) 
+						 +
+					    FLOOR(
+					   			CASE 
+					         <![CDATA[ WHEN #{param.trfdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+					         		   ELSE (#{param.trfdfsd} - SUM(BI.${param.calweig})) * IFNULL(BTRFCHR, BI.BTRFCH1)
+					          	 END / 1000
+					    )
+				   ) AS TOTCHCO <!-- 총 청구금액(총 청구금액(아이템 합산 = 항목별 청구금액 + 할증금액 + 휴일/야간 할증금액) + 추가청구금액 + 추가요금 + 부적금액) -->
+				 , (
+				 		SUM(BI.TOTITPA)
+				    	+
+				   		FLOOR(
+				   				CASE 
+				         	  <![CDATA[ WHEN #{param.trfdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+				         				ELSE (#{param.trfdfsd} - SUM(BI.${param.calweig})) * IFNULL(BTRFPAY, BI.BTRFPA1)
+			    	      		 END / 1000
+			    	    ) 
+			       ) AS TOORGPA <!-- 총 기본지급금액(총 지급금액(아이템 합산 = 항목별 지급금액 + 할증금액 + 휴일/야간 할증금액) + 부적금액) -->
+			     , SUM(BI.ADDPACO) AS TOSURPA <!-- 총 추가지급금액 -->
+			     , (
+			     		SUM(BI.TOTITPA + BI.ADDPACO)
+				    	+
+				   		FLOOR(
+				   				CASE 
+				         	  <![CDATA[ WHEN #{param.trfdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+				         				ELSE (#{param.trfdfsd} - SUM(BI.${param.calweig})) * COALESCE(MAX(CASE WHEN BM.DFSTDYN = 'Y' THEN BM.BTRFPAY END), MAX(BI.BTRFPA1))
+			    	      		 END / 1000
+			    	    ) 
+			      ) AS TOTPACO <!-- 총 지급금액 -->	
+			    , TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMM") AS BFHYYMM
+			    , TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD") AS FCDDATE
+			    , TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS") AS FCDTIME
+			    , #{userInfo.useract}, #{param.fcvrfyn}, IFNULL(#{param.fcvdate}, ''), IFNULL(#{param.fcvtime}, '')
+			    , IFNULL(#{param.fcvuser}, ''), #{param.fccfmyn}, IFNULL(#{param.fccdate}, ''), IFNULL(#{param.fcctime}, '')
+			    , IFNULL(#{param.fccuser}, '')
+			    , COALESCE (
+					(
+						SELECT BTRFCHR 
+				       	  FROM ${userInfo.schema}.BTRFMA B
+				       	 WHERE B.WAREKEY = BI.WAREKEY 
+				       	   AND B.BTRFITM = BI.BTRFIT1 
+				       	   AND B.BTRCATE = (
+					       						CASE WHEN (MIN(BI.BTRCATE) = MAX(BM.BTRCATE)) 
+					       							 THEN MIN(BI.BTRCATE)
+					       							 WHEN (MAX(BI.BTRCATE) = MAX(BM.BTRCATE)) 
+					       							 THEN MAX(BI.BTRCATE)
+					       						ELSE BI.BTRCATE 
+					       						 END
+				       		   )
+					       AND B.BTRFITC = BI.BTRFITC 
+					       AND B.BTRDFYN = 'Y'
+					       AND DATE_FORMAT(#{param.poshpdt},'%Y%m') BETWEEN B.BTRFDAF AND B.BTRFDAT
+					), BI.BTRFCH1) 
+				  AS BTRFCHR
+			    , COALESCE (
+			        (
+			        	SELECT IFNULL(BS.BSIZPAY, B.BTRFPAY)
+			       		  FROM ${userInfo.schema}.BTRFMA B
+			       		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+			       		 	ON BC.BTRCATE = B.BTRCATE
+			       		   AND DFSTDYN = 'Y'
+			       		  LEFT JOIN ${userInfo.schema}.BSIZPA BS
+			       		    ON BS.WAREKEY = B.WAREKEY
+			       		   AND BS.BTRNKEY = B.BTRFKEY
+			       		   AND BS.ADDSIKY = BA.ADDSIKY
+			       		   AND B.SIZGBYN = 'Y'
+			       		 WHERE B.WAREKEY = BI.WAREKEY 
+			       		   AND B.BTRFITM = BI.BTRFIT1 
+			       		   AND B.BTRCATE = (
+			       		   						CASE WHEN (MIN(BI.BTRCATE) = MAX(BM.BTRCATE)) 
+			       		   							 THEN MIN(BI.BTRCATE)
+				       								 WHEN (MAX(BI.BTRCATE) = MAX(BM.BTRCATE)) 
+				       								 THEN MAX(BI.BTRCATE)
+				       						         ELSE BI.BTRCATE 
+				       						     END
+				       		   )
+					       AND B.BTRFITC = BI.BTRFITC 
+					       AND B.BTRDFYN = 'Y'
+					       AND DATE_FORMAT(#{param.poshpdt},'%Y%m') BETWEEN B.BTRFDAF AND B.BTRFDAT
+					), MIN(BI.BTRFPA1)) 
+				  AS BTRFPAY
+			    , #{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+			 FROM ${userInfo.schema}.BTRFIT BI
+			 LEFT JOIN (
+			 	SELECT 
+			 		BC.BTRCATE, BC.DFSTDYN, BF.BTRFCHR, BF.BTRFPAY, 
+			 		BF.BTRFKEY, BF.WAREKEY, BF.BTRFITC, BF.BTRFDAF,
+			 		BF.BTRFDAT
+			 	FROM ${userInfo.schema}.BTRCAT BC
+			 	INNER JOIN ${userInfo.schema}.BTRFMA BF
+				 	ON BF.BTRCATE = BC.BTRCATE
+				 	AND BF.WAREKEY = #{param.warekey}
+				 	AND BC.DFSTDYN = 'Y'
+				 	AND BC.TFONLYN = 'N'
+				 	AND DATE_FORMAT(#{param.poshpdt},'%Y%m') BETWEEN BF.BTRFDAF AND BF.BTRFDAT
+			 	GROUP BY BC.BTRCATE, BC.DFSTDYN, BF.BTRFCHR, BF.BTRFPAY, 
+					  BF.BTRFKEY, BF.WAREKEY, BF.BTRFITC, BF.BTRFDAF, BF.BTRFDAT
+			 ) BM 
+			   ON BM.BTRCATE = BI.BTRCATE
+		      AND BM.BTRFKEY = BI.BTRFKY1
+		      AND BM.BTRFITC = BI.BTRFITC
+			INNER JOIN ${userInfo.commonSchema}.MVOWMA MV
+			   ON MV.VOWNKEY = BI.BTRFPAT	
+			INNER JOIN ${userInfo.schema}.WRCVHD WH
+			   ON WH.WAREKEY = BI.WAREKEY
+			  AND WH.RCVDCKY = BI.RCVDCKY
+			  AND WH.DOCCATE = '400'	<!-- 기타입고 제외 -->
+		      AND WH.DOCTYPE != '490'
+			INNER JOIN ${userInfo.commonSchema}.MVHCMA MM
+			   ON MM.VOWNKEY = BI.BTRFPAT
+			  AND MM.VEHICKY = WH.VEHICKY
+			INNER JOIN ${userInfo.schema}.MCODEM MC
+			   ON MC.COMCDKY = 'VHCTNCD'
+			  AND MC.COMCDVL = MM.VHCTNCD
+			INNER JOIN ${userInfo.schema}.BADDCO BA
+			   ON BA.ADDCOKY = BI.ADDCOKY
+			WHERE BI.WAREKEY = #{param.warekey}
+			  AND BI.BFHDKEY = #{param.bfhdkey}
+			GROUP BY BI.WAREKEY, BI.BFHDKEY, MV.VOWNKEY, WH.VEHICKY
+			       , MC.CDATTR1
+	</insert> 	
+	
+	<!-- doe082 : 입고문서아이템 마감여부 -->
+	<update id="updateWrcvhdCloseyn" parameterType="com.kbph.logistics.bm.domain.BtrfPrcDTO">
+	/* updateWrcvitCloseyn */
+		UPDATE ${userInfo.schema}.WRCVHD
+		<set>
+			 ICLOSYN = #{param.iclosyn}
+			, ICLODAT = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		    , ICLOTIM = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		    , ICLOUSR = #{userInfo.useract}
+		    , ICLOHKY = #{param.bfhdkey}
+			, UPDTCHK = UPDTCHK + 1
+		</set>
+		<where> 
+			RCVDCKY = #{param.rcvdcky}
+		AND WAREKEY = #{param.warekey}
+		AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.WRCVHD WHERE WAREKEY = #{param.warekey} AND RCVDCKY = #{param.rcvdcky})
+		</where>
+	</update>
+	
+	<!-- doe083 : 이송정산검증 (마감 후) -->
+	<select id="selectBtrfhdList" resultType="com.kbph.logistics.bm.domain.BtrfhdDTO">
+	/* selectBtrfhdList */
+		SELECT 
+			   BH.BFHDKEY AS ROWKEY , BH.DFSTDCH, BH.DFSTDPA
+			 , BH.WAREKEY, BH.BFHDKEY, BH.VOWNKEY, BH.VEHICKY
+			 , BH.TRFDFSD, BH.TRFDFWG, BH.TRFDFCH, BH.TRFDFPA
+			 , BH.TOORGCH, BH.TOSURCH, BH.TOTCHCO, BH.TOORGPA
+			 , BH.TOSURPA, BH.TOTPACO, MW.WHNAMLC, MV.VHCFNAM
+			 , BH.BFHMEMO, BI.TOTALWG, MW.HOLRATE
+			 , IF(BI.HOLICHR > 0 OR BI.HOLIPAY > 0, 'Y', 'N') AS HOLIDYN
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = BI.BTRFIT1) AS BTRFIT1
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = BI.BTRFIT2) AS BTRFIT2
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = BI.BTRFIT3) AS BTRFIT3
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = BI.BTRFIT4) AS BTRFIT4
+			 , BI.BTRFCC1, BI.BTRFEC1, BI.BTRFPC1, BI.BTRFEP1
+			 , BI.BTRFCC2, BI.BTRFPC2, BI.BTRFCC3, BI.BTRFPC3
+			 , BI.BTRFCC4, BI.BTRFPC4, BI.HOLICHR, BI.HOLIPAY
+			 , BI.RCVDCKY, BI.POSHPDT, BI.POSHPTM, BI.POSHPDY
+			 , BI.RCVDCTM, BI.HOLICHR AS HOLCHOG, BI.HOLIPAY AS HOLPAOG , BI.DRVERNM	<!-- 입고문서에 등록된 기사명 -->
+			 , DATE_FORMAT(STR_TO_DATE(BH.BFHYYMM, '%Y%m'), '%Y-%m') as BFHYYMM
+			 , DATE_FORMAT(BI.RCVDATE, '%Y-%m-%d') AS RCVDATE
+			 , DATE_FORMAT(BH.FCDDATE, '%Y-%m-%d') AS FCDDATE
+			 , DATE_FORMAT(STR_TO_DATE(BH.FCDTIME, '%H%i%s'), '%H:%i:%s') AS FCDTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.FCDUSER) AS FCDUSER
+			 , BH.FCVRFYN, MO.VONAMLC
+			 , DATE_FORMAT(BH.FCVDATE, '%Y-%m-%d') AS FCVDATE
+			 , IF(BH.FCCTIME IS NULL OR TRIM(BH.FCVTIME) = '', NULL, DATE_FORMAT(STR_TO_DATE(BH.FCVTIME, '%H%i%s'), '%H:%i:%s')) AS FCVTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.FCVUSER) AS FCVUSER
+			 , BH.FCCFMYN
+			 , DATE_FORMAT(BH.FCCDATE, '%Y-%m-%d') AS FCCDATE
+			 , IF(BH.FCCTIME IS NULL OR TRIM(BH.FCCTIME) = '', NULL, DATE_FORMAT(STR_TO_DATE(BH.FCCTIME, '%H%i%s'), '%H:%i:%s')) AS FCCTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.FCCUSER) AS FCCUSER
+			 , DATE_FORMAT(BH.CREDATE,'%Y-%m-%d') as CREDATE
+			 , DATE_FORMAT(STR_TO_DATE(BH.CRETIME,'%H%i%s'),'%H:%i:%s')  AS CRETIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.CREUSER) AS CREUSER
+			 , DATE_FORMAT(BH.LMODATE,'%Y-%m-%d') as LMODATE 
+			 , DATE_FORMAT(STR_TO_DATE(BH.LMOTIME,'%H%i%s'),'%H:%i:%s') as LMOTIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.LMOUSER) AS LMOUSER 
+			 , BH.UPDTCHK
+		  FROM ${userInfo.schema}.BTRFHD BH
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		    ON BH.WAREKEY = MW.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		 INNER JOIN (
+		  SELECT
+			 	A.WAREKEY, A.BFHDKEY, A.RCVDCKY, A.BTRFIT1 ,
+	      		A.BTRFIT2, A.BTRFIT3, A.BTRFIT4, A.CALWEIG , 
+	      		C.DRVERNM, MAX(A.RCVDATE) AS RCVDATE , A.BTRFITC ,
+	      		SUM(A.BTRFCC1) AS BTRFCC1, SUM(A.BTRFEC1) AS BTRFEC1 ,
+	      		SUM(A.BTRFPC1) AS BTRFPC1, SUM(A.BTRFEP1) AS BTRFEP1 ,
+		        SUM(A.BTRFCC2) AS BTRFCC2, SUM(A.BTRFPC2) AS BTRFPC2 ,
+		        SUM(A.BTRFCC3) AS BTRFCC3, SUM(A.BTRFPC3) AS BTRFPC3 ,
+		        SUM(A.BTRFCC4) AS BTRFCC4, SUM(A.BTRFPC4) AS BTRFPC4 ,
+		        SUM(A.HOLICHR) AS HOLICHR, SUM(A.HOLIPAY) AS HOLIPAY ,
+		        SUM(CASE WHEN A.CALWEIG = #{param.grossWgName} THEN A.GROSSWG ELSE A.SKUWEIG END) AS TOTALWG,
+		        MAX(A.BTRFCH1) AS BTRFCH1, MAX(A.BTRFPA1) AS BTRFPA1,
+		        DATE_FORMAT(B.POSHPDT,'%Y-%m-%d') AS POSHPDT , B.POSHPDY,
+		        DATE_FORMAT(STR_TO_DATE(B.POSHPTM, '%H%i%s'),'%H:%i:%s') AS POSHPTM,
+		        DATE_FORMAT(STR_TO_DATE(B.RCVDCTM, '%H%i%s'),'%H:%i:%s') AS RCVDCTM
+		  FROM ${userInfo.schema}.BTRFIT A
+		  INNER JOIN ${userInfo.schema}.WRCVIT B
+		  	ON B.WAREKEY = A.WAREKEY
+		  	AND B.RCVDCKY = A.RCVDCKY
+		  	AND B.RCVDCIT = A.RCVDCIT
+		  INNER JOIN ${userInfo.schema}.WRCVHD C
+		  	ON C.RCVDCKY = B.RCVDCKY
+		  	AND C.WAREKEY = B.WAREKEY
+		  WHERE A.WAREKEY = #{param.warekey}
+		  GROUP BY A.WAREKEY, A.BFHDKEY, A.RCVDCKY, A.BTRFIT1
+		 		 , A.BTRFIT2, A.BTRFIT3, A.BTRFIT4, A.CALWEIG
+		 		 , C.DRVERNM
+		 	 ) BI
+		    ON BI.WAREKEY = BH.WAREKEY
+		   AND BI.BFHDKEY = BH.BFHDKEY
+		 INNER JOIN ${userInfo.commonSchema}.MVOWMA MO
+		    ON MO.VOWNKEY = BH.VOWNKEY
+		   AND MO.VOUSEYN = 'Y' 
+		 INNER JOIN ${userInfo.commonSchema}.MVHCMA MV 
+		    ON MV.VOWNKEY = BH.VOWNKEY
+		   AND MV.VEHICKY = BH.VEHICKY
+		   AND MV.VHUSEYN = 'Y'
+		<where>
+			<if test='param.warekey != null and param.warekey != ""'>
+				AND BH.WAREKEY = #{param.warekey}
+			</if>
+			<if test='param.rcvdcky != null and param.rcvdcky != ""'>
+				AND BI.RCVDCKY LIKE CONCAT ('%', #{param.rcvdcky}, '%')
+			</if>
+			<choose>
+				<when test='param.fcddatefrom != null and param.fcddatefrom != "" and param.fcddateto == ""'>
+					<![CDATA[ AND BH.FCDDATE >= #{param.fcddatefrom} ]]>
+				</when>
+				<when test='param.fcddateto != null and param.fcddateto != "" and param.fcddatefrom == ""'>
+					<![CDATA[ AND BH.FCDDATE <= #{param.fcddateto}]]>
+				</when>
+				<when test='param.fcddatefrom != null and param.fcddatefrom != "" and param.fcddateto != null and param.fcddateto != ""'>
+					AND BH.FCDDATE BETWEEN #{param.fcddatefrom} AND #{param.fcddateto}
+				</when>
+			</choose>
+			<choose>
+				<when test='param.fcvdatefrom != null and param.fcvdatefrom != "" and param.fcvdateto == ""'>
+					<![CDATA[ AND BH.FCVDATE >= #{param.fcvdatefrom} ]]>
+				</when>
+				<when test='param.fcvdateto != null and param.fcvdateto != "" and param.fcvdatefrom == ""'>
+					<![CDATA[ AND BH.FCVDATE <= #{param.fcvdateto}]]>
+				</when>
+				<when test='param.fcvdatefrom != null and param.fcvdatefrom != "" and param.fcvdateto != null and param.fcvdateto != ""'>
+					AND BH.FCVDATE BETWEEN #{param.fcvdatefrom} AND #{param.fcvdateto}
+				</when>
+			</choose>
+			<if test="param.fcvrfyn != null and param.fcvrfyn != ''">
+				AND BH.FCVRFYN = #{param.fcvrfyn}
+			</if>
+			<choose>
+				<when test='param.btrstat != null and param.btrstat != "" and param.btrstat == "FCVRFYN"'>
+					AND BH.${param.btrstat} = 'Y'
+					AND BH.FCCFMYN = 'N'
+				</when>
+				<when test='param.btrstat != null and param.btrstat != "" and param.btrstat == "FCCFMYN"'>
+					AND BH.FCVRFYN = 'Y'
+					AND BH.${param.btrstat} = 'Y'
+				</when>
+			</choose>
+		</where>
+		ORDER BY BH.BFHDKEY DESC
+	</select>
+	
+	<select id="selectBtrfitList" resultType="com.kbph.logistics.bm.domain.BtrfitDTO">
+	/* selectBtrfitList */
+		SELECT 
+			   CONCAT(BI.BFHDKEY,BI.BFHDCIT) AS ROWKEY , BC.BTRCNAM
+			 , BI.WAREKEY, BI.BFHDKEY, BI.BFHDCIT, BI.BTRCATE
+			 , BI.DOCCATE, BI.DOCTYPE, BI.BTRFITC, BI.BTRFITN
+			 , BI.OWNERKY, BI.OWNRNAM, BI.CUSTCOD, BI.CUSTNAM 
+			 , BI.SKUMKEY, BI.BTRFIGB, BI.BTRFICT
+			 , BI.SKUTHIC, BI.SKULENG, BI.SKUWIDT, BI.SKUWEIG
+			 , BI.GROSSLN, BI.GROSSWD, BI.GROSSWG, BI.CALWEIG
+			 , DATE_FORMAT(BI.RCVDATE , '%Y-%m-%d') AS RCVDATE
+			 , BI.RCVDCKY, BI.ADDCOKY, BI.BTRFKY1
+			 , BI.BTRFCH1, BI.BTRFCC1, BI.BTRFPA1, BI.BTRFPC1
+			 , BI.BTRFEC1, BI.BTRFEP1, BI.BTRFKY2, BI.BTRFCH2
+			 , BI.BTRFCC2, BI.BTRFPA2, BI.BTRFPC2, BI.BTRFKY3
+			 , BI.BTRFCH3, BI.BTRFCC3, BI.BTRFPA3, BI.BTRFPC3
+			 , BI.BTRFKY4, BI.BTRFCH4, BI.BTRFCC4, BI.BTRFPA4
+			 , BI.BTRFPC4, BI.SURCHCO, BI.ADDCHCO, BI.ADDPACO
+			 , BI.HOLICHR, BI.HOLIPAY, BI.TOTITCH, BI.TOTITPA
+			 , BI.ADCMEMO, BI.BTRFCBT, BI.SBILLTO, BA.ADCOPER
+			 , (SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = BI.SBILLTO AND CUDELYN = 'Y' <!-- AND SURCHYN = 'Y' -->) AS SBILLNM
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'STNWEIG' AND CDATTR1 = BI.CALWEIG) AS CALWGNM
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = BA.ADDSIKY) AS ADCONAM
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = BI.BTRFIT1) AS BTRFIT1
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = BI.BTRFIT2) AS BTRFIT2
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = BI.BTRFIT3) AS BTRFIT3
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRFITM' AND COMCDVL = BI.BTRFIT4) AS BTRFIT4
+			 , MV.VONAMLC AS BTRFPAT, MD.DOCCTNM, MD.DOCTYNM, MW.WHNAMLC, MVC.VHCFNAM
+			 , BH.TRFDFCH , BH.TRFDFPA
+			 <!-- WRCVIT, --> 
+			 , DATE_FORMAT(WI.POSHPDT, '%Y-%m-%d') AS POSHPDT
+			 , DATE_FORMAT(STR_TO_DATE(WI.POSHPTM, '%H%i%s'),'%H:%i:%s') AS POSHPTM
+			 , WI.POSHPDY, WI.INVOICE, WI.BTRFSTC
+			 , WI.DEORGNM, WI.DEMODNM, WI.DEMDMAN, WI.DEMDADR
+			 , WI.DEMPOCD, WI.DEMDTLN
+			 , (SELECT RENAMLC FROM ${userInfo.schema}.MREGMA WHERE REGIKEY = WI.REGIORG AND REUSEYN = 'Y') AS REORGNM
+			 , (SELECT RENAMLC FROM ${userInfo.schema}.MREGMA WHERE REGIKEY = WI.REGIMOD AND REUSEYN = 'Y') AS REMODNM
+			 , DATE_FORMAT(WI.RCVDCDT, '%Y-%m-%d') AS RCVDCDT
+			 , DATE_FORMAT(STR_TO_DATE(WI.RCVDCTM, '%H%i%s'), '%H:%i:%s') AS RCVDCTM
+			 , WI.REGIORG, WI.REGIMOD
+			 , (SELECT RENAMLC FROM ${userInfo.schema}.MREGMA WHERE REGIKEY = WI.REGIORG) AS RENAMLC
+			 , DATE_FORMAT(BH.FCCDATE,'%Y-%m-%d') AS FCCDATE
+			 , DATE_FORMAT(STR_TO_DATE(BH.FCCTIME,'%H%i%s'),'%H:%i:%s')  AS FCCTIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.FCCUSER) AS FCCUSER
+			 , DATE_FORMAT(BI.CREDATE,'%Y-%m-%d') AS CREDATE
+			 , DATE_FORMAT(STR_TO_DATE(BI.CRETIME,'%H%i%s'),'%H:%i:%s')  AS CRETIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BI.CREUSER) AS CREUSER
+			 , DATE_FORMAT(BI.LMODATE,'%Y-%m-%d') AS LMODATE 
+			 , DATE_FORMAT(STR_TO_DATE(BI.LMOTIME,'%H%i%s'),'%H:%i:%s') as LMOTIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BI.LMOUSER) AS LMOUSER , BI.UPDTCHK
+		  FROM ${userInfo.schema}.BTRFIT BI
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		    ON MW.WAREKEY = BI.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.WRCVIT WI
+			ON WI.WAREKEY = BI.WAREKEY
+		   AND WI.RCVDCKY = BI.RCVDCKY
+		   AND WI.RCVDCIT = BI.RCVDCIT
+		   AND WI.BTRCATE = BI.BTRCATE
+		   AND WI.ITEMCOD = BI.BTRFITC
+		   AND WI.SKUMKEY = BI.SKUMKEY
+		   AND WI.OWNERKY = BI.OWNERKY
+	     INNER JOIN ${userInfo.schema}.BADDCO BA
+			ON BA.ADDCOKY = WI.ADDCOKY
+		 INNER JOIN ${userInfo.commonSchema}.MVOWMA MV 
+			ON MV.VOWNKEY = BI.BTRFPAT
+		   AND MV.VOUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MDOCMA MD
+			ON MD.DOCCATE = BI.DOCCATE
+		   AND MD.DOCTYPE = BI.DOCTYPE
+		   AND MD.WAREKEY = BI.WAREKEY
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		 	ON BC.BTRCATE = BI.BTRCATE
+		 	AND BC.TFONLYN = 'N'
+	     INNER JOIN ${userInfo.schema}.BTRFHD BH
+	        ON BH.WAREKEY = BI.WAREKEY
+	       AND BH.BFHDKEY = BI.BFHDKEY
+	     INNER JOIN ${userInfo.commonSchema}.MVHCMA MVC
+	        ON MVC.VOWNKEY = BH.VOWNKEY
+	       AND MVC.VEHICKY = BH.VEHICKY
+		<where>
+			<if test="param.warekey != null and param.warekey != ''">
+				AND BI.WAREKEY = #{param.warekey}
+			</if>
+			<if test="param.rcvdcky != null and param.rcvdcky != ''">
+				AND BI.RCVDCKY LIKE CONCAT('%', #{param.rcvdcky}, '%') 
+			</if>
+			<if test="param.bfhdkey != null and param.bfhdkey != ''">
+				AND BI.BFHDKEY LIKE CONCAT('%', #{param.bfhdkey}, '%') 
+			</if>
+			<if test='param.btrcate != null and param.btrcate != ""'>
+				AND BI.BTRCATE = #{param.btrcate}
+			</if>
+			<if test='param.itemcod != null and param.itemcod != ""'>
+				AND BI.BTRFITC = #{param.itemcod}
+			</if>
+			<if test='param.btrfcbt != null and param.btrfcbt != ""'>
+				AND BI.BTRFCBT = #{param.btrfcbt}
+			</if>
+			<if test='param.btrfpat != null and param.btrfpat != ""'>
+				AND MVC.VEHICKY = #{param.btrfpat}
+			</if>
+			<if test='param.sbillto != null and param.sbillto != ""'>
+				AND BI.SBILLTO = #{param.sbillto}
+			</if>
+			<if test='param.addsiky != null and param.addsiky != ""'>
+				AND BA.ADDSIKY = #{param.addsiky}
+			</if>
+			<if test='param.custnam != null and param.custnam != ""'>
+				AND BI.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+			</if>
+			<if test='param.deorgnm != null and param.deorgnm != ""'>
+				AND WI.DEORGNM LIKE CONCAT ('%',#{param.deorgnm},'%')
+			</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 0">
+					AND BI.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+			</choose>
+			<!-- 청구처 일괄 수정 탭에서 itemgrid 날짜 걸때 사용 -->
+			<choose>
+				<when test="param.fcddatefrom != null and param.fcddatefrom != '' and param.fcddateto == ''">
+					<![CDATA[ AND BH.FCDDATE >= #{param.fcddatefrom} ]]>
+				</when>
+				<when test="param.fcddateto != null and param.fcddateto != '' and param.fcddatefrom == ''">
+					<![CDATA[ AND BH.FCDDATE <= #{param.fcddateto}]]>
+				</when>
+				<when test="param.fcddatefrom != null and param.fcddatefrom != '' and param.fcddateto != null and param.fcddateto != ''">
+					AND BH.FCDDATE BETWEEN #{param.fcddatefrom} AND #{param.fcddateto}
+				</when>
+			</choose>
+			<if test="param.fcvrfyn != null and param.fcvrfyn != ''">
+				AND BH.FCVRFYN = #{param.fcvrfyn}
+			</if>
+			<!-- 확정화면 검색조건 -->
+			<choose>
+				<when test="param.confirmdatefrom != null and param.confirmdatefrom != '' and param.confirmdateto == ''">
+					<![CDATA[ AND BH.FCCDATE >= #{param.confirmdatefrom} ]]>
+				</when>
+				<when test="param.confirmdatefrom != null and param.confirmdateto != '' and param.confirmdatefrom == ''">
+					<![CDATA[ AND BH.FCCDATE <= #{param.confirmdateto}]]>
+				</when>
+				<when test="param.confirmdatefrom != null and param.confirmdatefrom != '' and param.confirmdateto != null and param.confirmdateto != ''">
+					AND BH.FCCDATE BETWEEN #{param.confirmdatefrom} AND #{param.confirmdateto}
+				</when>
+			</choose>
+			<if test="param.fccfmyn != null and param.fccfmyn != ''">
+				AND BH.FCCFMYN = #{param.fccfmyn}
+			</if>
+		</where>
+		 ORDER BY BI.BFHDKEY, BI.BFHDCIT
+	</select>
+	
+	<!-- doe083 : 이송정산헤더 검증여부 업데이트 (검증완료)  -->
+	<update id="updateBtrfhdList" parameterType="com.kbph.logistics.bm.domain.BtrfhdDTO">
+	/* updateBtrfhdList */
+		UPDATE ${userInfo.schema}.BTRFHD
+		   SET TRFDFSD = #{param.trfdfsd}
+		     , TRFDFWG = #{param.trfdfwg}
+		     , TRFDFCH = #{param.trfdfch}
+		     , TRFDFPA = #{param.trfdfpa}
+		     , TOORGCH = #{param.toorgch}
+		     , TOORGPA = #{param.toorgpa}
+		     , TOSURCH = #{param.tosurch}
+		     , TOSURPA = #{param.tosurpa}
+		     , TOTCHCO = #{param.totchco}
+		     , TOTPACO = #{param.totpaco}
+		     , BFHMEMO = #{param.bfhmemo}
+		     , FCVRFYN = #{param.fcvrfyn}
+		     , FCVDATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , FCVTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , FCVUSER = #{userInfo.useract}
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		WHERE WAREKEY = #{param.warekey}
+		  AND BFHDKEY = #{param.bfhdkey}
+		  AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<update id="updateBtrfitList" parameterType="com.kbph.logistics.bm.domain.BtrfitDTO">
+		/* updateBtrfitList */
+		UPDATE ${userInfo.schema}.BTRFIT
+		   SET SURCHCO = #{param.surchco}
+		     , ADDCHCO = #{param.addchco}
+		     , HOLICHR = #{param.holichr}
+		     , HOLIPAY = #{param.holipay}
+		     , TOTITCH = BTRFCC1 + BTRFEC1 + BTRFCC2 + BTRFCC3 + BTRFCC4 + #{param.surchco} + #{param.addchco} + #{param.holichr}
+		     , ADDPACO = #{param.addpaco}
+		     , TOTITPA = BTRFPC1 + BTRFEP1 + BTRFPC2 + BTRFPC3 + BTRFPC4 + #{param.addpaco} + #{param.holipay}
+		     , ADCMEMO = ifnull(#{param.adcmemo},'')
+		     , BTRFCBT = #{param.btrfcbt}
+		     , SBILLTO = #{param.sbillto}
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		 WHERE BFHDKEY = #{param.bfhdkey}
+		   AND BFHDCIT = #{param.bfhdcit}
+		   AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<delete id="deleteBtrfhd" parameterType="com.kbph.logistics.bm.domain.BtrfhdDTO">
+		/*deleteBtrfhd*/
+		DELETE FROM ${userInfo.schema}.BTRFHD
+		 WHERE BFHDKEY = #{param.bfhdkey}
+		   AND WAREKEY = #{param.warekey}
+		   AND UPDTCHK = #{param.updtchk}
+	</delete>
+	
+	<delete id="deleteBtrfit" parameterType="com.kbph.logistics.bm.domain.BtrfPrcDTO">
+		/*deleteBtrfhd*/
+		DELETE FROM ${userInfo.schema}.BTRFIT
+		 WHERE BFHDKEY = #{param.bfhdkey}
+		   AND WAREKEY = #{param.warekey}
+		<if test="param.updtchk != null and param.updtchk != 0">
+			AND UPDTCHK = #{param.updtchk}
+		</if>
+	</delete>
+	
+	<!-- 청구처 수정 update -->
+	<update id="updateDoe083BtrfcbtList" parameterType="com.kbph.logistics.bm.domain.BtrfitDTO">
+		UPDATE ${userInfo.schema}.BTRFIT
+			SET BTRFCBT = #{param.btrfcbt}
+			  , UPDTCHK = UPDTCHK + 1
+		WHERE WAREKEY = #{param.warekey}
+		  AND BFHDKEY = #{param.bfhdkey}
+		  AND BFHDCIT = #{param.bfhdcit} 
+		  AND SKUMKEY = #{param.skumkey}
+		  AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<update id="updateBtrfhdConfirm" parameterType="com.kbph.logistics.bm.domain.BtrfhdDTO">
+		/* updateBtrfhdConfirm */
+		UPDATE ${userInfo.schema}.BTRFHD
+		   SET FCCFMYN = #{param.fccfmyn}
+		     , FCCDATE = TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		     , FCCTIME = TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		     , FCCUSER = #{userInfo.useract}
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		 WHERE WAREKEY = #{param.warekey}
+		   AND BFHDKEY = #{param.bfhdkey}
+		   AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<update id="updateDoe084BtrfhdPayadyn" parameterType="com.kbph.logistics.bm.domain.BtrfhdDTO">
+		UPDATE ${userInfo.schema}.BTRFHD
+		   SET PAYADYN = IFNULL(#{param.payadyn},'N')
+			 , UPDTCHK = #{param.updtchk} + 1
+		 WHERE WAREKEY = #{param.warekey}
+		   AND BFHDKEY = #{param.bfhdkey}
+		   AND UPDTCHK = #{param.updtchk}
+		   AND FCCFMYN = 'Y'
+	</update>
+	
+	<update id="updateDoe084WrcvhdPayadyn" parameterType="com.kbph.logistics.bm.domain.BtrfhdDTO">
+		UPDATE ${userInfo.schema}.WRCVHD
+		   SET PAYADYN = IFNULL(#{param.payadyn},'N')
+			 , UPDTCHK = UPDTCHK + 1
+		 WHERE WAREKEY = #{param.warekey}
+		   AND RCVDCKY = #{param.rcvdcky}
+		   AND ICLOHKY = #{param.bfhdkey}
+		   AND ICLOSYN = 'Y'
+		   AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.WRCVHD WHERE WAREKEY = #{param.warekey} AND RCVDCKY = #{param.rcvdcky})
+	</update>
+	
+	<select id="selectDoe084VerifySummary" resultType="com.kbph.logistics.bm.domain.BtrfhdDTO">
+		/* selectDoe084VerifySummary */
+		SELECT CONCAT(BI.WAREKEY, BI.BTRCATE, BI.BTRFIGB) AS ROWKEY
+			 , BI.WAREKEY, BC.BTRCNAM AS BTRCATE, BI.BTRFIGB
+			 , SUM(SKUWEIG) AS TOTALWG
+			 , SUM(BI.TOTITCH) AS TOTALCH
+			 , SUM(BI.TOTITPA) AS TOTALPA
+			 , SUM(BI.BTRFCC1) AS TOTCIT1
+			 , SUM(BI.BTRFCC2) AS TOTCIT2
+			 , SUM(BI.BTRFCC3) AS TOTCIT3
+			 , SUM(BI.BTRFCC4) AS TOTCIT4
+			 , SUM(BI.BTRFPC1) AS TOTPIT1
+			 , SUM(BI.BTRFPC2) AS TOTPIT2
+			 , SUM(BI.BTRFPC3) AS TOTPIT3
+			 , SUM(BI.BTRFPC4) AS TOTPIT4
+			 , SUM(BI.BTRFEC1) AS TOTEXCH
+			 , SUM(BI.BTRFEP1) AS TOTEXPA
+			 , SUM(BI.HOLICHR) AS TOTHOCH
+			 , SUM(BI.HOLIPAY) AS TOTHOPA
+		  FROM ${userInfo.schema}.BTRFIT BI
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		    ON BI.BTRCATE = BC.BTRCATE
+		    AND BC.TFONLYN = 'N'
+		 INNER JOIN ${userInfo.schema}.BTRFHD BH
+		    ON BH.WAREKEY = BI.WAREKEY
+		   AND BH.BFHDKEY = BI.BFHDKEY
+		  <where>
+		  	AND BI.WAREKEY = #{param.warekey}
+			<choose>
+				<when test='param.fcvdatefrom != null and param.fcvdatefrom != "" and param.fcvdateto == ""'>
+					<![CDATA[ AND BH.FCVDATE >= #{param.fcvdatefrom} ]]>
+				</when>
+				<when test='param.fcvdateto != null and param.fcvdateto != "" and param.fcvdatefrom == ""'>
+					<![CDATA[ AND BH.FCVDATE <= #{param.fcvdateto}]]>
+				</when>
+				<when test='param.fcvdatefrom != null and param.fcvdatefrom != "" and param.fcvdateto != null and param.fcvdateto != ""'>
+					AND BH.FCVDATE BETWEEN #{param.fcvdatefrom} AND #{param.fcvdateto}
+				</when>
+			</choose>
+			AND BH.FCVRFYN = 'Y'
+		 </where>
+		 GROUP BY BI.WAREKEY, BI.BTRCATE, BC.BTRCNAM, BI.BTRFIGB
+		 ORDER BY BI.WAREKEY, BI.BTRCATE, BC.BTRCNAM, BI.BTRFIGB
+	</select>
+	
+	<!-- 운송요율 -->
+	<sql id="selectBtrpma">
+		SELECT BP.WAREKEY, BP.BTRCATE, BP.BTRPKEY, BP.REGIKEY
+		     , BP.BTRPITC, BP.BTRPITM, BP.BTRPITN, BP.BTRPIGB
+		     , BP.BTRPICT, BP.STNWEIG, BP.BTRPVAF, BP.BTRPCHR
+		     , BP.BTRPPAY, BP.BTRPEYN, BP.SIZGBYN, BP.BTRDFYN
+		  FROM  ${userInfo.schema}.BTRPMA BP
+		 WHERE BP.WAREKEY = #{param.warekey}
+		<if test="param.bildatefrom != null and param.bildatefrom != '' and param.bildateto != null and param.bildateto != ''">
+        	AND (DATE_FORMAT(#{param.bildatefrom}, '%Y%m') BETWEEN BP.BTRPDAF AND BP.BTRPDAT
+             OR DATE_FORMAT(#{param.bildatefrom}, '%Y%m') BETWEEN BP.BTRPDAF AND BP.BTRPDAT)
+		</if>
+	</sql>
+	
+	<sql id="selectBtrpCalculateResults">
+		SELECT
+			 CONCAT(TI.VHPLNKY, TI.VHPLNIT) AS ROWKEY, TI.WAREKEY, TI.VHPLNKY, TI.VHPLNIT
+		     , TH.VOWNKEY, VO.VOWAFFI, TH.DOCCATE, TH.DOCTYPE
+		     , MD.DOCCTNM, MD.DOCTYNM, TI.SKUMKEY, TI.SKUDESC
+		     , TI.ITEMCOD AS BTRPITC, MI.CDCATE2 AS BTRPIGB
+		     , MI.CDATTR1 AS BTRPICT , TI.BTRFSTC, TI.SKUTHIC
+		     , TI.SKUWIDT, TI.SKULENG, TI.SKUWEIG, TI.GROSSLN
+		     , TI.GROSSWG, TI.GROSSWD, TI.REGIORG, TI.REGIMOD
+		     , TI.TPISTAT, TI.CUSTCOD, TI.OWNERKY, TI.OWNRNAM
+		     , TI.CUSTNAM, TI.ADDCOKY, TI.DEORGNM, TI.DEMODNM
+		     , TI.DEMDMAN, TI.DEMDADR , TI.DEMPOCD, TI.DEMDTLN
+		     , DATE_FORMAT(TI.BILDATE,'%Y-%m-%d') AS BILDATE
+		     , TI.POSHPDY, DATE_FORMAT(TI.POSHPDT, '%Y-%m-%d') AS POSHPDT
+		     , DATE_FORMAT(STR_TO_DATE(TI.POSHPTM, '%H%i%s'), '%H:%i:%s') AS POSHPTM
+		     , VH.VHCFNAM, BA.ADDSIKY, TI.BTRCATE, BC.BTRCNAM
+		     , BA.ADCOPER, VO.VONAMLC, BO.BTRPKEY AS BPCHKEY 
+		     , DATE_FORMAT(TI.TRNCPDT, '%Y-%m-%d') AS TRNCPDT
+		     , TI.TRNCPDT AS TRNINDT
+		     , TI.TRNCPTM AS TRNINTM
+		     , IF(TH.PAYADYN = 'Y', '선지급완료', '') AS PAYADST
+		     , TH.PAYADYN, DATE_FORMAT(STR_TO_DATE(TI.TRNCPTM, '%H%i%s'), '%H:%i:%s') AS TRNCPTM
+		     , IFNULL(BO.BTRPITM, #{param.btrpitm}) AS BTRPITM
+		     , BO.BTRPITN
+		     , DATE_FORMAT(WS.SPEIDAT,'%Y-%m-%d') AS SPEIDAT
+		     , DATE_FORMAT(STR_TO_DATE(WS.SPEITIM,'%H%i%s'),'%H:%i:%s') AS SPEITIM 
+		     , (SELECT RENAMLC FROM ${userInfo.schema}.MREGMA WHERE REGIKEY = TI.REGIORG AND REUSEYN = 'Y') AS REORGNM
+		     , (SELECT RENAMLC FROM ${userInfo.schema}.MREGMA WHERE REGIKEY = TI.REGIMOD AND REUSEYN = 'Y') AS REMODNM
+		     , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRPITM' AND COMCDVL = IFNULL(BO.BTRPITM,#{param.btrpitm})) AS BILLITM
+		     , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = BA.ADDSIKY) AS ADCONAM
+		     , (
+		          CASE 
+				      WHEN (COALESCE(BO.STNWEIG, '') = #{param.stnweig} OR BO.STNWEIG IS NULL) 
+				      	  THEN #{param.grossWgName}
+				  ELSE #{param.skuWeigName}
+			       END 
+			   ) AS CALWEIG <!-- 계산중량 --> 
+			<!-- 지급 -->
+			<choose>
+				<when test='param.payadyn != null and param.payadyn != "" and param.payadyn == "Y"'> 		<!-- 선지급 O -->
+					, BP.BPPAKEY AS BPPAKEY
+					, BP.BTRPPAT AS BTRPPAT
+					, BP.BTRPPAY AS BTRPPAY
+					, BP.BTRPPCO AS BTRPPCO
+					, BP.BTRPEPC AS BTRPEPC
+					, BP.TOTITPA AS TOTITPA
+					, BP.HOLIPAY AS HOLIPAY
+					, DATE_FORMAT(BP.CREDATE,'%Y-%m-%d') AS PAYADDT
+				</when>
+				<when test='param.payadyn != null and param.payadyn != "" and param.payadyn == "N"'> 		<!-- 선지급 X -->
+					, PO.BTRPKEY AS BPPAKEY
+					, TH.VOWNKEY AS BTRPPAT
+					, (
+						 CASE 
+						     WHEN PO.REGIKEY IS NOT NULL AND PO.SIZGBYN = 'Y' 
+								  THEN COALESCE((
+									  				SELECT BSIZPAY 
+													  FROM ${userInfo.schema}.BSIZPA 
+													 WHERE WAREKEY = #{param.warekey} 
+													   AND BTRNKEY = PO.BTRPKEY 
+													   AND ADDSIKY = BA.ADDSIKY
+								       ), 0)
+							 WHEN PO.REGIKEY IS NOT NULL AND PO.SIZGBYN = 'N' 
+							 	 THEN PO.BTRPPAY 
+						  	 ELSE PO.BTRPPAY 
+						  END
+					   ) AS BTRPPAY <!-- 지급단가 -->
+					 , (
+						  CASE 
+						      WHEN PO.REGIKEY IS NOT NULL AND PO.SIZGBYN = 'Y' 
+							       THEN COALESCE((
+												    SELECT BSIZPAY 
+												      FROM ${userInfo.schema}.BSIZPA 
+												     WHERE WAREKEY = #{param.warekey} 
+												       AND BTRNKEY = PO.BTRPKEY 
+												       AND ADDSIKY = BA.ADDSIKY
+							    	    ), 0)
+						  	  WHEN PO.REGIKEY IS NOT NULL AND PO.SIZGBYN = 'N' 
+						  	      THEN PO.BTRPPAY 
+					  	  	  ELSE PO.BTRPPAY 
+						   END
+						*
+						  CASE 
+						      WHEN PO.STNWEIG = #{param.stnweig} 
+						      	  THEN COALESCE(TI.GROSSWG, 0) 
+						      ELSE COALESCE(TI.SKUWEIG, 0) 
+						   END
+					   ) AS BTRPPCO_CAL <!-- 지급단가 * 기준중량 -->
+					 , (
+						  CASE 
+						      WHEN PO.REGIKEY IS NOT NULL AND PO.SIZGBYN = 'Y' 
+							      THEN COALESCE((
+												   SELECT BSIZPAY 
+												     FROM ${userInfo.schema}.BSIZPA 
+												    WHERE WAREKEY = #{param.warekey} 
+												      AND BTRNKEY = PO.BTRPKEY 
+												      AND ADDSIKY = BA.ADDSIKY
+							    	   ), 0)
+							  WHEN PO.REGIKEY IS NOT NULL AND PO.SIZGBYN = 'N' THEN PO.BTRPPAY 
+						  	  ELSE PO.BTRPPAY 
+						   END
+						*
+						  CASE 
+						      WHEN BO.STNWEIG = #{param.stnweig} 
+						      	  THEN COALESCE(TI.GROSSWG, 0) 
+						      ELSE COALESCE(TI.SKUWEIG, 0) 
+						   END
+					   ) * BA.ADCOPER AS BTRPEPC_CAL <!-- 할증 지급 금액 -->
+			         , (
+			     	 		CASE 
+			     	 			WHEN <!--  직송 AND 날짜확인필요(토,일) WEEKDAY(TI.POSHPDT) IN (5,6) OR POSHPTM --> 
+		               			<![CDATA[ TH.DOCTYPE = '810' AND (WEEKDAY(TI.POSHPDT) IN (5,6) 
+		               			 		OR
+									    (
+								            TIME(TI.POSHPTM) >= DATE_FORMAT(STR_TO_DATE(MW.HOLTMFM, '%H%i%s'), '%H%i%s') 
+								            OR TIME(TI.POSHPTM) < DATE_FORMAT(STR_TO_DATE(MW.HOLTMTO, '%H%i%s'), '%H%i%s')
+								        ))
+		               				 THEN (
+		               				 			CASE 
+												    WHEN PO.SIZGBYN = 'Y' 
+													THEN COALESCE((
+																		SELECT BSIZPAY 
+																		  FROM ${userInfo.schema}.BSIZPA 
+																		 WHERE WAREKEY = #{param.warekey} 
+																		   AND BTRNKEY = PO.BTRPKEY 
+																		   AND ADDSIKY = BA.ADDSIKY
+													     ), 0) 
+												 	ELSE PO.BTRPPAY
+												 END
+		               				      )
+		             					  * 
+										  (
+											    CASE 
+												  	WHEN PO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0) 
+												  	ELSE COALESCE(TI.SKUWEIG, 0) 
+												 END
+										  )
+										  * (MW.HOLRATE / 100)
+						    ELSE 0
+							 END ]]> 
+			          ) AS HOLIPAY
+				</when>
+			</choose>
+			 <!-- 청구 -->
+			 , BO.BTRPCHR AS BTRPCHR <!-- 청구단가 -->
+			 , IFNULL(BO.BTRPCHR, 0)
+			   *
+			   (
+			   		CASE 
+				        WHEN BO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0) 
+				        ELSE COALESCE(TI.SKUWEIG, 0) 
+				     END
+			   ) AS BTRPCCO_CAL <!-- 청구금액 -->
+			 , IFNULL(BO.BTRPCHR, 0)
+			   *
+			   (
+			   		CASE 
+				        WHEN BO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0) 
+				        ELSE COALESCE(TI.SKUWEIG, 0) 
+				     END
+				) 
+			   * 
+			   BA.ADCOPER AS BTRPECC_CAL <!-- 할증청구금액 -->
+			 , COALESCE( <![CDATA[ 
+			   				CASE WHEN TI.REGIORG != TI.REGIMOD AND BO.BTRPCHR < PO.BTRPCHR
+	        					 THEN (
+	        					 			PO.BTRPCHR 
+	        					  	       		* 
+		        					  		(
+				        					  	CASE 
+						      						WHEN PO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0) 
+						      						ELSE COALESCE(TI.SKUWEIG, 0) 
+						   						 END
+											)
+									  )
+		        					  -
+		         					  (
+		         					 		BO.BTRPCHR 
+		         					       		* 
+									        (
+									           CASE 
+											     	WHEN BO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0) 
+											    	ELSE COALESCE(TI.SKUWEIG, 0) 
+											    END
+											)
+									  )
+							END
+	         , 0) ]]> AS SURCHCO_CAL	<!-- 추가 청구 금액 -->
+	         , (
+	         		CASE 
+	               		WHEN 
+	               			 <!-- 날짜확인필요(토,일) WEEKDAY(TI.POSHPTM) IN (5,6)--> <![CDATA[ 
+	               			 TH.DOCTYPE = '810' AND (WEEKDAY(TI.POSHPDT) IN (5,6)
+              			 	 OR
+						     (
+						    	TIME(TI.POSHPTM) >= DATE_FORMAT(STR_TO_DATE(MW.HOLTMFM, '%H%i%s'), '%H%i%s') 
+					            OR 
+					            TIME(TI.POSHPTM) < DATE_FORMAT(STR_TO_DATE(MW.HOLTMTO, '%H%i%s'), '%H%i%s')
+					         ))
+	               			THEN BO.BTRPCHR 
+	               			     * 
+							 (
+								CASE 
+								  	WHEN BO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0) 
+								  	ELSE COALESCE(TI.SKUWEIG, 0) 
+								 END
+							 )
+							     *
+							 (MW.HOLRATE / 100)
+					    ELSE 0
+					 END  ]]>
+	           ) AS HOLICHR <!-- 휴일할증청구 -->
+	          , IFNULL(
+			 			(SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = BC.BTRPBTP)
+			 		  , (			 		  		
+					 			CASE
+					 				WHEN TRIM(TI.OWNERKY) != '' OR TI.OWNERKY IS NOT NULL 
+					 					THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = TI.OWNERKY)
+					 				WHEN TRIM(TI.OWNRNAM) != '' OR TI.OWNRNAM IS NOT NULL
+					 					THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = TI.OWNRNAM LIMIT 1)
+					 				WHEN TRIM(TI.CUSTNAM) != '' OR TI.CUSTNAM IS NOT NULL
+					 					THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = TI.CUSTNAM LIMIT 1)
+					 				ELSE ''
+				 				 END			 		  	
+			 		  	)
+		       ) AS BTRPCBT
+			 , (			 		  		
+					 			CASE
+					 				WHEN TRIM(TI.OWNERKY) != '' OR TI.OWNERKY IS NOT NULL 
+					 					 THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = TI.OWNERKY AND SURCHYN = 'Y')
+					 				WHEN TRIM(TI.OWNRNAM) != '' OR TI.OWNRNAM IS NOT NULL
+					 					 THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = TI.OWNRNAM AND SURCHYN = 'Y' LIMIT 1)
+					 				WHEN TRIM(TI.CUSTNAM) != '' OR TI.CUSTNAM IS NOT NULL
+					 					 THEN (SELECT CUSTKEY FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = TI.CUSTNAM AND SURCHYN = 'Y' LIMIT 1)
+					 				ELSE ''
+				 				 END			 
+		       ) AS SBILLTO
+			 , (			 		  		
+					 			CASE
+					 				WHEN TRIM(TI.OWNERKY) != '' OR TI.OWNERKY IS NOT NULL 
+					 					 THEN (SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = TI.OWNERKY AND SURCHYN = 'Y')
+					 				WHEN TRIM(TI.OWNRNAM) != '' OR TI.OWNRNAM IS NOT NULL
+					 					 THEN (SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = TI.OWNRNAM AND SURCHYN = 'Y' LIMIT 1)
+					 				WHEN TRIM(TI.CUSTNAM) != '' OR TI.CUSTNAM IS NOT NULL
+					 					 THEN (SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUNAMLC = TI.CUSTNAM AND SURCHYN = 'Y' LIMIT 1)
+					 				ELSE ''
+				 				 END			 	
+		       ) AS SBILLNM
+	         , DATE_FORMAT(TI.CREDATE, '%Y-%m-%d') AS CREDATE
+	         , DATE_FORMAT(STR_TO_DATE(TI.CRETIME, '%H%i%s'), '%H:%i:%s') AS CRETIME
+	         , ${userInfo.schema}.FN_SY_USERNAM(TI.CREUSER) AS CREUSER
+	         , DATE_FORMAT(TI.LMODATE, '%Y-%m-%d') AS LMODATE
+	         , DATE_FORMAT(STR_TO_DATE(TI.LMOTIME, '%H%i%s'), '%H:%i:%s') AS LMOTIME
+	         , ${userInfo.schema}.FN_SY_USERNAM(TI.LMOUSER) AS LMOUSER
+	         , TI.UPDTCHK
+		 FROM ${userInfo.schema}.TPLNIT TI
+		 LEFT JOIN ${userInfo.schema}.WSHPIT WS	<!-- 출고 테이블 임시 LEFT JOIN -->
+		 	ON WS.WAREKEY = TI.WAREKEY
+		 	AND WS.SKUMKEY = TI.SKUMKEY
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		    ON MW.WAREKEY = TI.WAREKEY
+		 INNER JOIN ${userInfo.schema}.TPLNHD TH
+			ON TH.WAREKEY = TI.WAREKEY 
+		   AND TH.VHPLNKY = TI.VHPLNKY
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+			ON BC.BTRCATE = TI.BTRCATE
+			AND BC.PFONLYN = 'N'		<!-- 운송(출고) 실적전용이 아닌것 -->
+		 INNER JOIN ${userInfo.schema}.BADDCO BA
+			ON BA.ADDCOKY = TI.ADDCOKY
+		 INNER JOIN ${userInfo.schema}.MDOCMA MD
+			ON MD.WAREKEY = TH.WAREKEY 
+	       AND MD.DOCCATE  = TH.DOCCATE 
+		   AND MD.DOCTYPE  = TH.DOCTYPE
+		 INNER JOIN ${userInfo.schema}.MCODEM MI
+			ON MI.COMCDKY = 'ITEMCOD'
+		   AND MI.COMCDVL = TI.ITEMCOD
+		 INNER JOIN ${userInfo.commonSchema}.MVOWMA VO
+			ON VO.VOWNKEY = TH.VOWNKEY 
+		   AND VOUSEYN = 'Y'
+		 INNER JOIN ${userInfo.commonSchema}.MVHCMA VH
+			ON VH.VOWNKEY = VO.VOWNKEY
+		   AND VH.VEHICKY = TH.VEHICKY
+		   AND VH.VHUSEYN = 'Y'
+		  <!-- 청구요율 :청구는 출하일자 기준-->
+		  LEFT JOIN (
+		  				SELECT WAREKEY, BTRCATE, BTRPKEY, REGIKEY
+				 		     , BTRPITC, BTRPITM, BTRPITN, BTRPIGB
+				 		     , BTRPICT, STNWEIG, BTRPVAF, BTRPCHR
+				 		     , BTRPPAY, BTRPEYN, BTRDFYN, BTRPDAF
+				 		     , BTRPDAT
+				 		  FROM ${userInfo.schema}.BTRPMA BP
+				 		 WHERE WAREKEY = #{param.warekey}
+		  ) BO 
+		    ON BO.WAREKEY = TI.WAREKEY 
+		   AND BO.BTRCATE = TI.BTRCATE
+		   AND BO.BTRPVAF = VO.VOWAFFI
+		   AND BO.REGIKEY = TI.REGIORG
+		   AND BO.BTRPITC = TI.ITEMCOD
+		   AND (DATE_FORMAT(TI.POSHPDT,'%Y%m') BETWEEN BO.BTRPDAF AND BO.BTRPDAT) 
+		   <!-- 지급요율: 지급 운송완료일자 기준  -->
+		  LEFT JOIN (
+		 				SELECT WAREKEY, BTRCATE, BTRPKEY, REGIKEY
+						     , BTRPITC, STNWEIG, BTRPVAF, BTRPCHR
+						     , BTRPPAY, BTRPEYN, SIZGBYN, BTRDFYN
+						     , BTRPDAF, BTRPDAT
+						  FROM ${userInfo.schema}.BTRPMA BP
+						 WHERE WAREKEY = #{param.warekey}
+		  ) PO 
+		    ON PO.WAREKEY = TI.WAREKEY 
+		   AND PO.BTRCATE = TI.BTRCATE
+		   AND PO.BTRPVAF = VO.VOWAFFI
+		   AND PO.REGIKEY = TI.REGIMOD
+		   AND PO.BTRPITC = TI.ITEMCOD
+		   AND (DATE_FORMAT(TI.BILDATE,'%Y%m') BETWEEN PO.BTRPDAF AND PO.BTRPDAT)
+		   <if test='param.payadyn != null and param.payadyn != "" and param.payadyn == "Y"'>
+		  	INNER JOIN ${userInfo.schema}.BPPAIT BP
+		  	   ON BP.WAREKEY = TI.WAREKEY
+		  	  AND BP.VHPLNKY = TI.VHPLNKY
+		  	  AND BP.VHPLNIT = TI.VHPLNIT
+		  </if>
+		 WHERE TH.TPNSTAT IN ('FINISH','INVCMP')	<!-- 운송완료 ,송장발행완료 -->
+		   AND TI.TPISTAT IN ('ARRIVE','INVCMP')	<!-- 운송완료 ,송장발행완료 -->
+		   AND TH.TCLOSYN = 'N'
+		<if test="param.payadyn != null and param.payadyn != ''">
+		   AND TH.PAYADYN = #{param.payadyn}
+		</if>
+	 	<if test="param.warekey != null and param.warekey != ''">
+		   AND TI.WAREKEY = #{param.warekey}
+		</if>
+		<if test="param.doctype != null and param.doctype != ''">
+			AND TH.DOCTYPE = #{param.doctype}
+		</if>
+		<if test="param.vhcfnam != null and param.vhcfnam != ''"><!-- MVHCMA join -->
+			AND VH.VHCFNAM LIKE CONCAT('%',#{param.vhcfnam},'%')
+		</if>
+		<if test="param.addsiky != null and param.addsiky != ''"><!-- BADDCO join -->
+		 	AND TI.ADDSIKY = #{param.addsiky}
+		</if>
+		<choose>
+			<when test='param.bildatefrom != null and param.bildatefrom != "" and param.bildateto == ""'>
+				<![CDATA[ AND TI.BILDATE >= #{param.bildatefrom} ]]>
+			</when>
+			<when test='param.bildateto != null and param.bildateto != "" and param.bildatefrom == ""'>
+				<![CDATA[ AND TI.BILDATE <= #{param.bildateto}]]>
+			</when>
+			<when test='param.bildatefrom != null and param.bildatefrom != "" and param.bildateto != null and param.bildateto != ""'>
+				AND TI.BILDATE BETWEEN #{param.bildatefrom} AND #{param.bildateto}
+			</when>
+		</choose>
+		<choose>
+			<when test="param.custkeys != null and param.custkeys.size > 0">
+				AND TI.CUSTCOD IN
+				<foreach collection="param.custkeys" item="item" index="index" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+			</when>
+			<when test="param.custkey != null and param.custkey != '' and param.custkeys == null">
+				AND TI.CUSTCOD = #{param.custkey}
+			</when>				
+		</choose>
+	</sql>
+		
+	<select id="selectDoe085List" resultType="com.kbph.logistics.bm.domain.BtrpPrcDTO">
+		/* selectDoe085List */
+		WITH CALCULATED_VALUES AS (
+			<include refid="selectBtrpCalculateResults" />
+		)
+	    SELECT
+	    <choose>
+			<when test='param.payadyn != null and param.payadyn != "" and param.payadyn == "Y"'>
+			    CV.BTRPPCO	<!-- 기본지급금액 -->
+			  , CV.BTRPEPC <!-- 할증지급금액 -->
+			  , CV.HOLIPAY <!-- 야간/휴일 할증 지급금액 --> 
+			  , CV.TOTITPA <!-- 총지급금액 -->
+			</when>
+			<when test='param.payadyn != null and param.payadyn != "" and param.payadyn == "N"'>
+				FLOOR(CV.BTRPPCO_CAL / 1000) AS BTRPPCO
+	    	  , FLOOR(CV.BTRPEPC_CAL / 1000) AS BTRPEPC
+	    	  , FLOOR(CV.HOLIPAY/1000) AS HOLIPAY
+	    	  , FLOOR((CV.BTRPPCO_CAL + CV.BTRPEPC_CAL + CV.HOLIPAY) / 1000) AS TOTITPA
+			</when>	    
+	    </choose> 
+	    	 , FLOOR(CV.BTRPCCO_CAL / 1000) AS BTRPCCO
+	    	 , FLOOR(CV.BTRPECC_CAL / 1000) AS BTRPECC
+	    	 , FLOOR(CV.HOLICHR / 1000) AS HOLICHR
+	    	 , FLOOR((CV.BTRPCCO_CAL + CV.BTRPECC_CAL + CV.HOLICHR + CV.SURCHCO_CAL) / 1000) AS TOTITCH <!-- 청구금액 + 할증청구 + 휴일/야간할증 + 추가청구 **이송과 상이함. -->
+	    	 , FLOOR(CV.SURCHCO_CAL / 1000) AS SURCHCO
+	    	 , IFNULL(
+	    	 	(SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = CV.BTRPCBT),
+	    	 	(SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = CV.OWNERKY)) AS BTRPBTP
+	    	 , CV.BTRPCBT
+	    	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'TPISTAT' AND COMCDVL = CV.TPISTAT) AS TPISTAT
+	    	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = CV.ADDSIKY) AS ADCONAM
+	    	 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'STNWEIG' AND CDATTR1 = CV.CALWEIG) AS CALWGNM
+	    	 , CV.*
+	     FROM CALCULATED_VALUES CV
+	     ORDER BY CV.VHPLNKY, CV.VHPLNIT ASC
+	</select>
+	
+	<insert id="insertBtrpitList" parameterType="com.kbph.logistics.bm.domain.BtrpPrcDTO">
+		/* insertBtrpitList */
+		INSERT INTO ${userInfo.schema}.BTRPIT
+		(
+			WAREKEY, BPHDKEY, BPHDCIT, DOCCATE,
+			DOCTYPE, BPCHKEY, BPPAKEY, BTRCATE, 
+			BTRPITC, BTRPITN, BTRPICT, BTRPIGB,
+			OWNERKY, OWNRNAM, CUSTCOD, CUSTNAM, 
+			SKUMKEY, SKUTHIC, SKULENG, SKUWIDT, 
+			SKUWEIG, GROSSLN, GROSSWD, GROSSWG, 
+			CALWEIG, TRNINDT, TRNINTM, REGIORG, 
+			REGIMOD, ADDCOKY, BTRPITM, BTRPCHR, 
+			BTRPCCO, BTRPPAY, BTRPPCO, BTRPECC, 
+			BTRPEPC, SURCHCO, ADDCHCO, ADDPACO,
+			HOLICHR, HOLIPAY, ADCMEMO, BTRPCBT, 
+			BTRPPAT, SBILLTO, VHPLNKY, VHPLNIT, 
+			TOTITCH, TOTITPA,
+			CREUSER, LMODATE, LMOTIME, LMOUSER
+		) 
+		VALUES 
+		(
+			#{param.warekey}, #{param.bphdkey}, #{param.bphdcit}, #{param.doccate},
+			#{param.doctype}, #{param.bpchkey}, #{param.bppakey}, #{param.btrcate}, 
+			#{param.btrpitc}, #{param.btrpitn}, #{param.btrpict}, #{param.btrpigb}, 
+			#{param.ownerky}, #{param.ownrnam}, #{param.custcod}, #{param.custnam}, 
+			#{param.skumkey}, #{param.skuthic}, #{param.skuleng}, #{param.skuwidt}, 
+			#{param.skuweig}, #{param.grossln}, #{param.grosswd}, #{param.grosswg}, 
+			#{param.calweig}, #{param.trnindt}, #{param.trnintm}, #{param.regiorg}, 
+			#{param.regimod}, #{param.addcoky}, #{param.btrpitm}, #{param.btrpchr}, 
+			#{param.btrpcco}, #{param.btrppay}, #{param.btrppco}, #{param.btrpecc},
+			#{param.btrpepc}, #{param.surchco}, #{param.addchco}, #{param.addpaco},
+			#{param.holichr}, #{param.holipay}, #{param.adcmemo}, #{param.btrpcbt}, 
+			#{param.btrppat}, #{param.sbillto}, #{param.vhplnky}, #{param.vhplnit}, 
+			#{param.totitch}, #{param.totitpa},
+			#{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+		)
+	</insert>
+
+	<insert id="insertBtrphdFromBtrpit" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		/* insertBtrphdFromBtrpit */
+		INSERT INTO ${userInfo.schema}.BTRPHD
+		(
+			WAREKEY, BPHDKEY, VOWNKEY, VEHICKY
+		  , TRPDFSD, TRPDFWG, TRPDFCH, TRPDFPA
+		  , DFSTDCH, DFSTDPA, TOORGCH, TOSURCH
+		  , TOTCHCO, TOORGPA, TOSURPA, TOTPACO
+		  , BPHYYMM, PCDDATE, PCDTIME, PCDUSER
+		  , PCVRFYN, PCVDATE, PCVTIME, PCVUSER
+		  , PCCFMYN, PCCDATE, PCCTIME, PCCUSER
+		  , CREUSER, LMODATE, LMOTIME, LMOUSER
+		  , PAYADYN
+		)
+		SELECT BI.WAREKEY, BI.BPHDKEY, BI.BTRPPAT, VH.VEHICKY
+			, #{param.trpdfsd} AS TRPDFSD
+			, (
+			 		CASE 
+			        <![CDATA[ WHEN #{param.trpdfsd}  < SUM(BI.${param.calweig}) THEN 0 ]]>
+			        	ELSE #{param.trpdfsd} - SUM(BI.${param.calweig})
+			         END
+			   ) AS TRPDFWG 	 <!-- 부적중량 -->
+		    <!-- 정산유형 내 부적우선기준 유형이 Y인 BM.BTRPCHR  -->
+		    , FLOOR(
+	     			CASE 
+			      <![CDATA[ WHEN #{param.trpdfsd} < SUM(BI.${param.calweig}) OR TH.DOCTYPE != '810' THEN 0 ]]>
+			                  ELSE (#{param.trpdfsd} - SUM(BI.${param.calweig})) * IFNULL(BM.BTRPCHR, BI.BTRPCHR)
+		             END / 1000
+			   ) AS TRPDFCH <!-- 부적청구금액 -->
+			 , FLOOR(
+		 			CASE 
+		          <![CDATA[ WHEN #{param.trpdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+		         			ELSE (#{param.trpdfsd} - SUM(BI.${param.calweig}))
+		         					* COALESCE(MAX(CASE WHEN BM.DFSTDYN = 'Y' THEN BM.BTRPPAY END), MAX(BI.BTRPPAY))
+		         	 END / 1000
+			   ) AS TRPDFPA <!-- 부적지급금액 -->
+			 , COALESCE (
+					(
+					  SELECT B.BTRPCHR 
+				       	FROM ${userInfo.schema}.BTRPMA B
+				       WHERE B.WAREKEY = BI.WAREKEY 
+				       	 AND B.BTRPITM = BI.BTRPITM
+				       	 AND B.BTRPKEY = BI.BPCHKEY
+				       	 AND B.BTRCATE = (
+				       	 					CASE WHEN (MIN(BI.BTRCATE) = MAX(BM.BTRCATE)) THEN MIN(BI.BTRCATE)
+									       		 WHEN (MAX(BI.BTRCATE) = MAX(BM.BTRCATE)) THEN MAX(BI.BTRCATE)
+									       		 ELSE BI.BTRCATE 
+									       	 END
+					         )
+			       		 AND B.BTRPITC = BI.BTRPITC 
+			       		 AND B.BTRDFYN = 'Y'
+			       		 AND DATE_FORMAT(#{param.poshpdt},'%Y%m') BETWEEN B.BTRPDAF AND B.BTRPDAT), BI.BTRPCHR
+			    ) AS DFSTDCH
+		      , COALESCE (
+			       (
+			       	 SELECT B.BTRPPAY
+			       	   FROM ${userInfo.schema}.BTRPMA B
+			       	  WHERE B.WAREKEY = BI.WAREKEY 
+			       	    AND B.BTRPITM = BI.BTRPITM
+			         	AND B.BTRPKEY = BI.BPPAKEY
+			       	    AND B.BTRCATE = (
+			       	    					CASE WHEN (MIN(BI.BTRCATE) = MAX(BM.BTRCATE)) THEN MIN(BI.BTRCATE)
+				       							 WHEN (MAX(BI.BTRCATE) = MAX(BM.BTRCATE)) THEN MAX(BI.BTRCATE)
+				       						ELSE BI.BTRCATE 
+				       						 END
+				       		)
+			       	    AND B.BTRPITC = BI.BTRPITC 
+			       		AND B.BTRDFYN = 'Y'
+			       		AND DATE_FORMAT(#{param.trncpdt},'%Y%m') BETWEEN B.BTRPDAF AND B.BTRPDAT)
+			    , BI.BTRPPAY ) AS DFSTDPA
+		     , (SUM(BI.TOTITCH - BI.SURCHCO) + 
+		     	FLOOR(CASE 
+			      <![CDATA[ WHEN #{param.trpdfsd} < SUM(BI.${param.calweig}) OR TH.DOCTYPE != '810' THEN 0 ]]>
+			                  ELSE (#{param.trpdfsd} - SUM(BI.${param.calweig})) * IFNULL(BM.BTRPCHR, BI.BTRPCHR)
+		             END / 1000)) AS TOORGCH <!-- 총 기본청구금액(아이템 청구금액 합산 - 추가청구) + 부적금액 -->
+		     , SUM(BI.SURCHCO + BI.ADDCHCO) AS TOSURCH 	 <!-- 추가 청구금액 -->
+			 , (SUM(BI.TOTITCH + BI.ADDCHCO) + 
+				FLOOR(CASE 
+			      <![CDATA[ WHEN #{param.trpdfsd} < SUM(BI.${param.calweig}) OR TH.DOCTYPE != '810' THEN 0 ]]>
+			                  ELSE (#{param.trpdfsd} - SUM(BI.${param.calweig})) * IFNULL(BM.BTRPCHR, BI.BTRPCHR)
+		             END / 1000)) AS TOTCHCO <!-- 총 청구금액(아이템 청구금액 합산(기본청구금액 + 추가청구금액 + 할증 + 휴일/야간할증) + 추가요금 + 부적금액) -->
+			 , (SUM(BI.TOTITPA) + 
+			 	FLOOR(CASE 
+		          <![CDATA[ WHEN #{param.trpdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+		         			ELSE (#{param.trpdfsd} - SUM(BI.${param.calweig}))
+		         					* COALESCE(MAX(CASE WHEN BM.DFSTDYN = 'Y' THEN BM.BTRPPAY END), MAX(BI.BTRPPAY))
+		         	 END / 1000)
+		         ) AS TOORGPA 			 <!-- 총 기본지급금액(항목1 지급금액 + 할증금액 + 부적금액) -->
+		     , SUM(BI.ADDPACO) AS TOSURPA 				 <!-- 총 추가지급금액 -->
+		     , (SUM(BI.TOTITPA + BI.ADDPACO) + 
+		     	FLOOR(CASE 
+		          <![CDATA[ WHEN #{param.trpdfsd} < SUM(BI.${param.calweig}) THEN 0 ]]>
+		         			ELSE (#{param.trpdfsd} - SUM(BI.${param.calweig}))
+		         					* COALESCE(MAX(CASE WHEN BM.DFSTDYN = 'Y' THEN BM.BTRPPAY END), MAX(BI.BTRPPAY))
+		         	 END / 1000)
+		         ) AS TOTPACO <!-- 총 지급금액 -->	
+		    , TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMM") AS BPHYYMM
+		    , TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD") AS PCDDATE
+		    , TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS") AS PCDTIME
+		    , #{userInfo.useract}, #{param.pcvrfyn}, IFNULL(#{param.pcvdate}, ''), IFNULL(#{param.pcvtime}, '')
+		    , IFNULL(#{param.pcvuser}, ''), #{param.pccfmyn}, IFNULL(#{param.pccdate}, ''), IFNULL(#{param.pcctime}, '')
+		    , IFNULL(#{param.pccuser}, '')
+			, #{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD"), TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS"), #{userInfo.useract}
+			, TH.PAYADYN
+	     FROM ${userInfo.schema}.BTRPIT BI
+	     INNER JOIN ${userInfo.schema}.TPLNHD TH
+		      ON TH.WAREKEY = BI.WAREKEY
+		     AND TH.VHPLNKY = BI.VHPLNKY
+		   INNER JOIN ${userInfo.schema}.TPLNIT TI
+		      ON TI.WAREKEY = BI.WAREKEY
+		     AND TI.VHPLNKY = BI.VHPLNKY
+		     AND TI.VHPLNIT = BI.VHPLNIT
+		     AND TI.SKUMKEY = BI.SKUMKEY
+		   INNER JOIN ${userInfo.commonSchema}.MVOWMA MV
+			  ON MV.VOWNKEY = BI.BTRPPAT
+		   INNER JOIN ${userInfo.commonSchema}.MVHCMA VH
+			  ON VH.VOWNKEY = BI.BTRPPAT
+			 AND VH.VEHICKY = TH.VEHICKY
+		   INNER JOIN ${userInfo.schema}.MCODEM MC
+			  ON MC.COMCDKY = 'VHCTNCD'
+			 AND MC.COMCDVL = VH.VHCTNCD
+	     LEFT JOIN (	<!-- 부적운임 기준단가를 위한 join :부적운임 기준 여부가 'Y'인 요율을 갖고옴 -->
+			 	SELECT 
+			 		BC.BTRCATE, BC.DFSTDYN, BP.BTRPCHR, MAX(IFNULL(BS.BSIZPAY,BP.BTRPPAY)) AS BTRPPAY,
+                    BP.BTRPKEY, BP.WAREKEY, BP.BTRPITC, BP.BTRPDAF,
+                    BP.BTRPDAT, BP.BTRPVAF, BS.ADDSIKY
+			 	FROM ${userInfo.schema}.BTRPMA BP 
+			 	INNER JOIN ${userInfo.schema}.BTRCAT BC
+				 	ON BP.BTRCATE = BC.BTRCATE
+				 	AND BC.DFSTDYN = 'Y'
+				 	AND BC.PFONLYN = 'N'
+				LEFT JOIN ${userInfo.schema}.BSIZPA BS		<!-- 사이즈 지급단가가 있을경우 BSIZPAY 갖고옴 -->
+					ON BS.WAREKEY = BP.WAREKEY
+					AND BS.BTRNKEY = BP.BTRPKEY
+				WHERE BP.WAREKEY = #{param.warekey}
+				 	AND BP.BTRDFYN = 'Y'
+			 	GROUP BY BC.BTRCATE, BC.DFSTDYN, BP.BTRPCHR, BTRPPAY, 
+				 		 BP.BTRPKEY, BP.WAREKEY, BP.BTRPITC, BP.BTRPDAF,
+				 		 BP.BTRPDAT, BP.BTRPVAF, BS.ADDSIKY
+		 ) BM ON BM.BTRCATE = BI.BTRCATE
+			  AND BM.BTRPKEY = BI.BPCHKEY 
+              AND BM.BTRPKEY = BI.BPPAKEY
+              AND BM.ADDSIKY = BI.ADDCOKY
+			 AND BM.BTRPVAF = MV.VOWAFFI
+		   WHERE BI.WAREKEY = #{param.warekey}
+			 AND BI.BPHDKEY = #{param.bphdkey}
+		   GROUP BY BI.WAREKEY, BI.BPHDKEY, MV.VOWNKEY, VH.VEHICKY
+	</insert>
+	
+	<update id="updateTplnhdCloseyn" parameterType="com.kbph.logistics.bm.domain.BtrpPrcDTO">
+	/*updateTplnhdCloseyn*/
+		UPDATE ${userInfo.schema}.TPLNHD
+			<set>
+			   TCLOSYN = #{param.tclosyn}
+			 , TCLODAT = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , TCLOTIM = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , TCLOUSR = #{userInfo.useract}
+		     , TCLOHKY = #{param.bphdkey}
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+			 , UPDTCHK = UPDTCHK + 1
+			</set>
+			<where> 
+				VHPLNKY = #{param.vhplnky}
+			AND WAREKEY = #{param.warekey}
+			AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.TPLNHD WHERE WAREKEY = #{param.warekey} AND VHPLNKY = #{param.vhplnky})
+			</where>
+	</update>
+	
+	<select id="selectBtrphdList" resultType="com.kbph.logistics.bm.domain.BtrphdDTO">
+	/* selectBtrphdList */
+		SELECT 
+			   BH.BPHDKEY AS ROWKEY, BH.DFSTDCH, BH.DFSTDPA
+			 , BH.WAREKEY, BH.BPHDKEY, BH.VOWNKEY, BH.VEHICKY
+			 , BH.TRPDFSD, BH.TRPDFWG, BH.TRPDFCH, BH.TRPDFPA
+			 , BH.TOORGCH, BH.TOSURCH, BH.TOTCHCO, BH.TOORGPA
+			 , BH.TOSURPA, BH.TOTPACO, BH.BPHMEMO, MW.WHNAMLC
+			 , MV.VHCFNAM, BI.TOTALWG AS TOTALWG , TH.DOCTYPE
+			 , MD.DOCTYNM, TH.PAYADYN, TH.PAYADYN  AS PAYADOG, TH.PAYADYN AS PAYADMD
+			 , IF(BI.HOLICHR > 0 OR BI.HOLIPAY > 0, 'Y', 'N') AS HOLIDYN
+			 , MW.HOLRATE
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRPITM' AND COMCDVL = BI.BTRPITM) AS BTRPITM
+			 , BI.BTRPCCO, BI.BTRPECC, BI.BTRPPCO, BI.BTRPEPC
+			 , BI.HOLICHR, BI.HOLIPAY, BI.HOLICHR AS HOLCHOG, BI.HOLIPAY AS HOLPAOG
+			 , BI.VHPLNKY, TH.DRVERNM, MW.WHNAMLC
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'VOWAFFI' AND COMCDVL = MO.VOWAFFI) AS VOWAFFI
+			 , DATE_FORMAT(STR_TO_DATE(BH.BPHYYMM, '%Y%m'), '%Y-%m') AS BPHYYMM
+			 , DATE_FORMAT(BI.TRNINDT, '%Y-%m-%d') AS TRNINDT
+			 , DATE_FORMAT(BH.PCDDATE, '%Y-%m-%d') AS PCDDATE
+			 , DATE_FORMAT(STR_TO_DATE(BH.PCDTIME, '%H%i%s'), '%H:%i:%s') AS PCDTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.PCDUSER) AS PCDUSER
+			 , BH.PCVRFYN, MO.VONAMLC
+			 , DATE_FORMAT(BH.PCVDATE, '%Y-%m-%d') AS PCVDATE
+			 , IF(BH.PCCTIME IS NULL OR TRIM(BH.PCVTIME) = '', NULL, DATE_FORMAT(STR_TO_DATE(BH.PCVTIME, '%H%i%s'), '%H:%i:%s')) AS PCVTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.PCVUSER) AS PCVUSER
+			 , BH.PCCFMYN
+			 , DATE_FORMAT(BH.PCCDATE, '%Y-%m-%d') AS PCCDATE
+			 , IF(BH.PCCTIME IS NULL OR TRIM(BH.PCCTIME) = '', NULL, DATE_FORMAT(STR_TO_DATE(BH.PCCTIME, '%H%i%s'), '%H:%i:%s')) AS PCCTIME
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.PCCUSER) AS PCCUSER
+			 , MV.DRVERNM
+			 , DATE_FORMAT(BH.CREDATE,'%Y-%m-%d') AS CREDATE
+			 , DATE_FORMAT(STR_TO_DATE(BH.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.CREUSER) AS CREUSER
+			 , DATE_FORMAT(BH.LMODATE,'%Y-%m-%d') AS LMODATE 
+			 , DATE_FORMAT(STR_TO_DATE(BH.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.LMOUSER) AS LMOUSER 
+			 , BH.UPDTCHK
+		  FROM ${userInfo.schema}.BTRPHD BH
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		    ON BH.WAREKEY = MW.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		 INNER JOIN (
+						  SELECT
+							 	WAREKEY, BPHDKEY, VHPLNKY, BTRPITM
+					      	  , CALWEIG, MAX(TRNINDT) AS TRNINDT
+					      	  , SUM(BTRPCCO) AS BTRPCCO, SUM(BTRPECC) AS BTRPECC
+					      	  , SUM(BTRPPCO) AS BTRPPCO, SUM(BTRPEPC) AS BTRPEPC 
+					      	  , SUM(HOLICHR) AS HOLICHR, SUM(HOLIPAY) AS HOLIPAY
+					      	  , SUM(SURCHCO) AS SURCHCO, SUM(ADDCHCO) AS ADDCHCO
+					      	  , SUM(ADDPACO) AS ADDPACO, SUM(GROSSWG) AS GROSSWG
+					      	  , SUM(SKUWEIG) AS SKUWEIG
+					      	  , SUM(CASE WHEN CALWEIG = #{param.grossWgName} THEN GROSSWG ELSE SKUWEIG END) AS TOTALWG
+						   FROM ${userInfo.schema}.BTRPIT
+						  WHERE WAREKEY = #{param.warekey}
+						  GROUP BY WAREKEY, BPHDKEY, VHPLNKY, BTRPITM , CALWEIG
+		 		    ) BI
+		    ON BI.WAREKEY = BH.WAREKEY
+		   AND BI.BPHDKEY = BH.BPHDKEY
+		 INNER JOIN ${userInfo.schema}.TPLNHD TH
+		 	ON TH.WAREKEY = BI.WAREKEY
+		 	AND TH.VHPLNKY = BI.VHPLNKY
+		 INNER JOIN ${userInfo.commonSchema}.MVOWMA MO
+		    ON MO.VOWNKEY = BH.VOWNKEY
+		   AND MO.VOUSEYN = 'Y' 
+		 INNER JOIN ${userInfo.commonSchema}.MVHCMA MV 
+		    ON MV.VOWNKEY = BH.VOWNKEY
+		   AND MV.VEHICKY = BH.VEHICKY
+		   AND MV.VHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MDOCMA MD
+		 	ON MD.WAREKEY = TH.WAREKEY
+		 	AND MD.DOCCATE = TH.DOCCATE
+		 	AND MD.DOCTYPE = TH.DOCTYPE
+		<where>
+			<if test='param.warekey != null and param.warekey != ""'>
+				AND BH.WAREKEY = #{param.warekey}
+			</if>
+			<if test='param.vhplnky != null and param.vhplnky != ""'>
+				AND BI.VHPLNKY LIKE CONCAT('%', #{param.vhplnky}, '%') 
+			</if>
+			<choose>
+				<when test='param.btrpdaffrom != null and param.btrpdaffrom != "" and param.btrpdafto == ""'>
+					<![CDATA[ AND BH.PCDDATE >= #{param.btrpdaffrom} ]]>
+				</when>
+				<when test='param.btrpdafto != null and param.btrpdafto != "" and param.btrpdaffrom == ""'>
+					<![CDATA[ AND BH.PCDDATE <= #{param.btrpdafto}]]>
+				</when>
+				<when test='param.btrpdaffrom != null and param.btrpdaffrom != "" and param.btrpdafto != null and param.btrpdafto != ""'>
+					AND BH.PCDDATE BETWEEN #{param.btrpdaffrom} AND #{param.btrpdafto}
+				</when>
+			</choose>
+			<choose>
+				<when test='param.pcvdatefrom != null and param.pcvdatefrom != "" and param.pcvdateto == ""'>
+					<![CDATA[ AND BH.PCVDATE >= #{param.pcvdatefrom} ]]>
+				</when>
+				<when test='param.pcvdateto != null and param.pcvdateto != "" and param.pcvdatefrom == ""'>
+					<![CDATA[ AND BH.PCVDATE <= #{param.pcvdateto}]]>
+				</when>
+				<when test='param.pcvdatefrom != null and param.pcvdatefrom != "" and param.pcvdateto != null and param.pcvdateto != ""'>
+					AND BH.PCVDATE BETWEEN #{param.pcvdatefrom} AND #{param.pcvdateto}
+				</when>
+			</choose>
+			<if test="param.pcvrfyn != null and param.pcvrfyn != ''">
+				AND BH.PCVRFYN = #{param.pcvrfyn}	<!-- 검증여부 -->
+			</if>
+			<choose>
+				<!-- PCCFMYN 확정여부 -->
+				<when test='param.btrstat != null and param.btrstat != "" and param.btrstat == "PCCFMYN"'>
+					AND BH.PCCFMYN = 'Y'
+				</when>
+				<otherwise>
+					AND BH.PCCFMYN = 'N'
+				</otherwise>
+			</choose>
+		</where>
+		ORDER BY BH.BPHDKEY DESC
+	</select>
+	
+	<select id="selectBtrpitList" resultType="com.kbph.logistics.bm.domain.BtrpitDTO">
+		/* selectBtrpitList */
+		SELECT 
+			   CONCAT(BI.BPHDKEY, BI.BPHDCIT) AS ROWKEY, BC.BTRCNAM
+			 , BI.WAREKEY, BI.BPHDKEY, BI.BPHDCIT, BI.BTRCATE
+			 , BI.DOCCATE, BI.DOCTYPE, BI.BTRPITC, BI.BTRPITN
+			 , BI.SKUMKEY, BI.BTRPIGB, BI.BTRPICT, BI.SKUTHIC
+			 , BI.SKULENG, BI.SKUWIDT, BI.SKUWEIG, BI.GROSSLN
+			 , BI.GROSSWD, BI.GROSSWG, BI.CALWEIG, BI.VHPLNKY
+			 , BI.ADDCOKY, BI.BPCHKEY, BI.BPPAKEY, BI.BTRPCHR
+			 , BI.BTRPCCO, BI.BTRPPAY, BI.BTRPPCO, BI.BTRPECC
+			 , BI.BTRPEPC, BI.SURCHCO, BI.ADDCHCO, BI.HOLICHR
+			 , BI.HOLIPAY, BI.ADDPACO, BI.ADCMEMO, TI.CUSTCOD
+			 , BI.BPHDCIT, BI.SBILLTO, BA.ADCOPER, BI.VHPLNIT
+			 , MVC.VHCFNAM, BI.BTRPCBT, BI.BTRPCBT, BI.CUSTNAM
+			 , BI.OWNERKY , BI.OWNRNAM, BI.REGIORG, BI.REGIMOD
+			 , BI.TOTITCH , BI.TOTITPA 
+			 , BH.TRPDFCH, BH.TRPDFPA
+			 , TI.DEORGNM, TI.DEMODNM
+		     , TI.DEMDMAN, TI.DEMDADR , TI.DEMPOCD, TI.DEMDTLN
+			 , IF(TH.PAYADYN = 'Y','선지급완료','') AS PAYADST, TH.PAYADYN
+			 , (SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = BI.BTRPCBT AND CUDELYN = 'Y') AS BTCBTNM
+			 , (SELECT CUNAMLC FROM ${userInfo.schema}.MCUSMA WHERE CUSTKEY = BI.SBILLTO AND CUDELYN = 'Y') AS SBILLNM
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = BA.ADDSIKY) AS ADCONAM
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'BTRPITM' AND COMCDVL = BI.BTRPITM) AS BTRPITM
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'STNWEIG' AND CDATTR1 = BI.CALWEIG) AS CALWGNM
+			 , (SELECT COMCDTX FROM ${userInfo.schema}.MCODEM WHERE COMCDKY = 'TPISTAT' AND COMCDVL = TI.TPISTAT) AS TPISTAT
+			 , (SELECT RENAMLC FROM ${userInfo.schema}.MREGMA WHERE REGIKEY = BI.REGIORG AND REUSEYN = 'Y') AS REORGNM
+			 , (SELECT RENAMLC FROM ${userInfo.schema}.MREGMA WHERE REGIKEY = BI.REGIMOD AND REUSEYN = 'Y') AS REMODNM
+			 , MV.VONAMLC AS BTRPPAT , MD.DOCCTNM ,MD.DOCTYNM
+			 , MW.WHNAMLC, TI.BTRFSTC, TI.POSHPDY
+			 , DATE_FORMAT(TI.POSHPDT, '%Y-%m-%d') AS POSHPDT
+			 , DATE_FORMAT(STR_TO_DATE(TI.POSHPTM, '%H%i%s'), '%H:%i:%s') AS POSHPTM
+			 , DATE_FORMAT(BI.TRNINDT, '%Y-%m-%d') AS TRNINDT
+			 , DATE_FORMAT(STR_TO_DATE(BI.TRNINTM, '%H%i%s'), '%H:%i:%s') AS TRNINTM
+			 , DATE_FORMAT(WS.SPEIDAT, '%Y-%m-%d') AS SPEIDAT
+			 , DATE_FORMAT(STR_TO_DATE(WS.SPEITIM, '%H%i%s'), '%H:%i:%s') AS SPEITIM
+			 , DATE_FORMAT(BH.PCCDATE,'%Y-%m-%d') AS PCCDATE
+			 , DATE_FORMAT(STR_TO_DATE(BH.PCCTIME,'%H%i%s'),'%H:%i:%s')  AS PCCTIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BH.PCCUSER) AS PCCUSER
+			 , DATE_FORMAT(BI.CREDATE,'%Y-%m-%d') AS CREDATE
+			 , DATE_FORMAT(STR_TO_DATE(BI.CRETIME,'%H%i%s'),'%H:%i:%s')  AS CRETIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BI.CREUSER) AS CREUSER
+			 , DATE_FORMAT(BI.LMODATE,'%Y-%m-%d') AS LMODATE 
+			 , DATE_FORMAT(STR_TO_DATE(BI.LMOTIME,'%H%i%s'),'%H:%i:%s') as LMOTIME 
+			 , ${userInfo.schema}.FN_SY_USERNAM(BI.LMOUSER) AS LMOUSER , BI.UPDTCHK
+		  FROM ${userInfo.schema}.BTRPIT BI
+		 INNER JOIN ${userInfo.schema}.MWARMA MW
+		    ON MW.WAREKEY = BI.WAREKEY
+		   AND MW.WHUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		 	ON BC.BTRCATE = BI.BTRCATE
+		 	AND BC.PFONLYN = 'N'
+		 INNER JOIN ${userInfo.schema}.TPLNHD TH
+			ON TH.WAREKEY = BI.WAREKEY
+		   AND TH.VHPLNKY = BI.VHPLNKY
+		 INNER JOIN ${userInfo.schema}.TPLNIT TI
+			ON TI.WAREKEY = BI.WAREKEY
+		   AND TI.VHPLNKY = BI.VHPLNKY
+		   AND TI.VHPLNIT = BI.VHPLNIT
+		   AND TI.BTRCATE = BI.BTRCATE
+		   AND TI.ITEMCOD = BI.BTRPITC
+		   AND TI.SKUMKEY = BI.SKUMKEY
+		 LEFT JOIN ${userInfo.schema}.WSHPIT WS
+		 	ON WS.WAREKEY = TI.WAREKEY
+		 	AND WS.SKUMKEY = TI.SKUMKEY
+	     INNER JOIN ${userInfo.schema}.BADDCO BA
+			ON BA.ADDCOKY = BI.ADDCOKY
+		 INNER JOIN ${userInfo.commonSchema}.MVOWMA MV 
+			ON MV.VOWNKEY = BI.BTRPPAT
+		   AND MV.VOUSEYN = 'Y'
+		 INNER JOIN ${userInfo.schema}.MDOCMA MD
+			ON MD.DOCCATE = TH.DOCCATE
+		   AND MD.DOCTYPE = TH.DOCTYPE
+		   AND MD.WAREKEY = TH.WAREKEY
+		 INNER JOIN ${userInfo.schema}.BTRPHD BH
+		    ON BI.WAREKEY = BH.WAREKEY
+		   AND BI.BPHDKEY = BH.BPHDKEY
+		 INNER JOIN ${userInfo.commonSchema}.MVHCMA MVC
+		    ON MVC.VOWNKEY = BH.VOWNKEY
+		   AND MVC.VEHICKY = BH.VEHICKY
+		<where>
+			<if test="param.warekey != null and param.warekey != ''">
+				AND BI.WAREKEY = #{param.warekey}
+			</if>
+			<if test="param.bphdkey != null and param.bphdkey != ''">
+				AND BI.BPHDKEY LIKE CONCAT('%', #{param.bphdkey}, '%') 
+			</if>
+			<if test='param.btrcate != null and param.btrcate != ""'>
+				AND BI.BTRCATE = #{param.btrcate}
+			</if>
+			<if test='param.itemcod != null and param.itemcod != ""'>
+				AND BI.BTRPITC = #{param.itemcod}
+			</if>
+			<if test='param.btrfcbt != null and param.btrfcbt != ""'>
+				AND BI.BTRPCBT = #{param.btrfcbt}
+			</if>
+			<if test='param.btrfpat != null and param.btrfpat != ""'>
+				AND MVC.VEHICKY = #{param.btrfpat}
+			</if>
+			<if test='param.sbillto != null and param.sbillto != ""'>
+				AND BI.SBILLTO = #{param.sbillto}
+			</if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND BI.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test="param.skumkey != null and param.skumkey != ''">
+					AND BI.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<!-- 청구처 수정 검색조건  -->
+			<choose>
+				<when test='param.btrpdaffrom != null and param.btrpdaffrom != "" and param.btrpdafto == ""'>
+					<![CDATA[ AND BH.PCDDATE >= #{param.btrpdaffrom} ]]>
+				</when>
+				<when test='param.btrpdafto != null and param.btrpdafto != "" and param.btrpdaffrom == ""'>
+					<![CDATA[ AND BH.PCDDATE <= #{param.btrpdafto}]]>
+				</when>
+				<when test='param.btrpdaffrom != null and param.btrpdaffrom != "" and param.btrpdafto != null and param.btrpdafto != ""'>
+					AND BH.PCDDATE BETWEEN #{param.btrpdaffrom} AND #{param.btrpdafto}
+				</when>
+			</choose>
+			<if test="param.pcvrfyn != null and param.pcvrfyn != ''">
+				AND BH.PCVRFYN = #{param.pcvrfyn}	<!-- 검증여부 -->
+			</if>
+			<if test='param.custnam != null and param.custnam != ""'>
+				AND BI.CUSTNAM LIKE CONCAT('%',#{param.custnam},'%')
+			</if>
+			<if test='param.deorgnm != null and param.deorgnm != ""'>
+				AND TI.DEORGNM LIKE CONCAT ('%',#{param.deorgnm},'%')
+			</if>
+			<!-- 확정페이지 검색조건 -->
+			<choose>
+				<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto == ""'>
+					<![CDATA[ AND BH.PCCDATE >= #{param.confirmdatefrom} ]]>
+				</when>
+				<when test='param.confirmdatefrom != null and param.confirmdateto != "" and param.confirmdatefrom == ""'>
+					<![CDATA[ AND BH.PCCDATE <= #{param.confirmdateto}]]>
+				</when>
+				<when test='param.confirmdatefrom != null and param.confirmdatefrom != "" and param.confirmdateto != null and param.confirmdateto != ""'>
+					AND BH.PCCDATE BETWEEN #{param.confirmdatefrom} AND #{param.confirmdateto}
+				</when>
+			</choose>
+			<if test='param.pccfmyn != null and param.pccfmyn != ""'>
+				AND BH.PCCFMYN = #{param.pccfmyn}
+			</if>
+		</where>
+		 ORDER BY BI.BPHDKEY, BI.BPHDCIT
+	</select>
+	
+	<!-- 선지급 이력 INSERT -->
+		<!-- 선지급 이력 INSERT -->
+	<insert id="insertBppahdList" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+	/* insertBppahdList */
+	INSERT INTO ${userInfo.schema}.BPPAHD
+		(
+			WAREKEY , VHPLNKY , VOWNKEY , VEHICKY,
+			TRPDFSD , TRPDFWG , DFSTDPA , TRPDFPA, 
+			TOORGPA , TOSURPA , TOTPACO , BPHYYMM, 
+			BPHMEMO , PCDDATE , PCDTIME , PCDUSER, 
+			PCVRFYN , PCVDATE , PCVTIME , PCVUSER, 
+			PCCFMYN , PCCDATE , PCCTIME , PCCUSER,
+			PAYADYN , CREUSER , LMODATE , LMOTIME,
+			LMOUSER
+		)
+	SELECT
+			BH.WAREKEY , BI.VHPLNKY , BH.VOWNKEY , BH.VEHICKY,
+			BH.TRPDFSD , BH.TRPDFWG , BH.DFSTDPA , BH.TRPDFPA, 
+			BH.TOORGPA , BH.TOSURPA , BH.TOTPACO , BH.BPHYYMM,
+			BH.BPHMEMO , BH.PCDDATE , BH.PCDTIME , BH.PCDUSER,
+			BH.PCVRFYN , BH.PCVDATE , BH.PCVTIME , BH.PCVUSER,
+			BH.PCCFMYN , BH.PCCDATE , BH.PCCTIME , BH.PCCUSER,
+			BH.PAYADYN , BH.CREUSER , BH.LMODATE , BH.LMOTIME,
+			BH.LMOUSER
+		FROM ${userInfo.schema}.BTRPHD BH
+		INNER JOIN (
+			SELECT WAREKEY , BPHDKEY, VHPLNKY 
+			FROM ${userInfo.schema}.BTRPIT
+			WHERE 	WAREKEY = #{param.warekey}
+				AND VHPLNKY = #{param.vhplnky}
+				AND BPHDKEY = #{param.bphdkey}
+			GROUP BY WAREKEY, VHPLNKY , BPHDKEY) BI
+			ON BI.WAREKEY = BH.WAREKEY
+			AND BI.BPHDKEY = BH.BPHDKEY
+		WHERE BH.WAREKEY = #{param.warekey}
+			AND BH.BPHDKEY = #{param.bphdkey}
+			AND BI.VHPLNKY = #{param.vhplnky}
+	</insert>
+	
+	<insert id="insertBppaitList" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+	/* insertBppaitList */
+	INSERT INTO ${userInfo.schema}.BPPAIT
+		(
+			WAREKEY, VHPLNKY, VHPLNIT, DOCCATE,
+			DOCTYPE, BPCHKEY, BTRCATE, BTRPITC,
+			BTRPITN, BTRPICT, BTRPIGB, OWNERKY,
+			OWNRNAM, CUSTCOD, CUSTNAM, SKUMKEY,
+			SKUTHIC, SKULENG, SKUWIDT, SKUWEIG,
+			GROSSLN, GROSSWD, GROSSWG, CALWEIG,
+			TRNINDT, TRNINTM, REGIORG, REGIMOD,
+			ADDCOKY, BTRPITM, BTRPPAY, BTRPPCO,
+			BTRPEPC, HOLICHR, HOLIPAY, SURCHCO, 
+			ADDPACO, TOTITPA, ADCMEMO, BTRPCBT, 
+			BTRPPAT, SBILLTO, CREUSER, LMODATE,
+			LMOTIME, LMOUSER
+		)
+		SELECT 
+			WAREKEY, VHPLNKY, VHPLNIT, DOCCATE,
+			DOCTYPE, BPCHKEY, BTRCATE, BTRPITC,
+			BTRPITN, BTRPICT, BTRPIGB, OWNERKY,
+			OWNRNAM, CUSTCOD, CUSTNAM, SKUMKEY,
+			SKUTHIC, SKULENG, SKUWIDT, SKUWEIG,
+			GROSSLN, GROSSWD, GROSSWG, CALWEIG,
+			TRNINDT, TRNINTM, REGIORG, REGIMOD,
+			ADDCOKY, BTRPITM, BTRPPAY, BTRPPCO,
+			BTRPEPC, HOLICHR, HOLIPAY, SURCHCO, 
+			ADDPACO, TOTITPA, ADCMEMO, BTRPCBT, 
+			BTRPPAT, SBILLTO, CREUSER, LMODATE, 
+			LMOTIME, LMOUSER
+		FROM ${userInfo.schema}.BTRPIT
+		WHERE WAREKEY = #{param.warekey}
+			AND BPHDKEY = #{param.bphdkey}
+			AND VHPLNKY = #{param.vhplnky}
+	</insert>
+	
+	<delete id="deleteBppahd" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		DELETE 
+			FROM ${userInfo.schema}.BPPAHD
+		WHERE
+			WAREKEY = #{param.warekey}
+		AND VHPLNKY = #{param.vhplnky}
+	</delete>
+	
+	<delete id="deleteBppait" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		DELETE 
+			FROM ${userInfo.schema}.BPPAIT
+		WHERE
+			WAREKEY = #{param.warekey}
+		AND VHPLNKY = #{param.vhplnky}
+	</delete>
+	
+	<update id="updateTplnhdPayadyn" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		UPDATE ${userInfo.schema}.TPLNHD
+		SET PAYADYN = ifnull(#{param.payadmd},'N'),
+			UPDTCHK = UPDTCHK + 1
+		WHERE 
+			WAREKEY = #{param.warekey}
+		AND VHPLNKY = #{param.vhplnky}
+		AND UPDTCHK = (SELECT UPDTCHK FROM ${userInfo.schema}.TPLNHD WHERE WAREKEY = #{param.warekey} AND VHPLNKY = #{param.vhplnky})
+	</update>
+	
+	<update id="updateBtrphdPayadyn" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		UPDATE ${userInfo.schema}.BTRPHD
+		SET PAYADYN = ifnull(#{param.payadyn},'N'),
+			UPDTCHK = UPDTCHK + 1
+		WHERE 
+			WAREKEY = #{param.warekey}
+		AND BPHDKEY = #{param.bphdkey}
+		AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<delete id="deleteBtrphd" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		/*deleteBtrphd*/
+		DELETE
+			FROM ${userInfo.schema}.BTRPHD
+		WHERE
+			BPHDKEY = #{param.bphdkey}
+		AND WAREKEY = #{param.warekey}
+		AND UPDTCHK = #{param.updtchk}
+	</delete>
+	
+	<delete id="deleteBtrpit" parameterType="com.kbph.logistics.bm.domain.BtrpitDTO">
+		/*deleteBtrpit*/
+		DELETE
+			FROM ${userInfo.schema}.BTRPIT
+		WHERE
+			BPHDKEY = #{param.bphdkey}
+		AND WAREKEY = #{param.warekey}
+	</delete>
+	
+	<select id="getBphdkey" resultType="String">
+		SELECT ${userInfo.schema}.FN_BM_BPHDKEY() AS BPHDKEY FROM DUAL
+	</select>
+	
+	<update id="updateDoe086Validate" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		/* updateDoe086Validate */
+		UPDATE ${userInfo.schema}.BTRPHD
+		   SET TRPDFSD = #{param.trpdfsd}
+		     , TRPDFWG = #{param.trpdfwg}
+		     , TRPDFCH = #{param.trpdfch}
+		     , TRPDFPA = #{param.trpdfpa}
+		     , TOORGCH = #{param.toorgch}
+		     , TOORGPA = #{param.toorgpa}
+		     , TOSURCH = #{param.tosurch}
+		     , TOSURPA = #{param.tosurpa}
+		     , TOTCHCO = #{param.totchco}
+		     , TOTPACO = #{param.totpaco}
+		     , PCVRFYN = #{param.pcvrfyn}
+		     , BPHMEMO = #{param.bphmemo} 
+		     , PCVDATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , PCVTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , PCVUSER = #{userInfo.useract}
+		     , PAYADYN = ifnull(#{param.payadyn},'N')
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		 WHERE WAREKEY = #{param.warekey}
+		   AND BPHDKEY = #{param.bphdkey}
+		   AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<update id="updateDoe086Item" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		UPDATE ${userInfo.schema}.BTRPIT
+		   SET SURCHCO = #{param.surchco}
+		     , ADDCHCO = #{param.addchco}
+		     , HOLICHR = #{param.holichr}
+		     , HOLIPAY = #{param.holipay}
+		     , TOTITCH = BTRPCCO + BTRPECC + #{param.surchco} + #{param.addchco} + #{param.holichr}
+		     , ADDPACO = #{param.addpaco}
+		     , TOTITPA = BTRPPCO + BTRPEPC + #{param.addpaco} + #{param.holipay}
+		     , ADCMEMO = #{param.adcmemo}
+		     , BTRPCBT = #{param.btrpcbt}
+		     , SBILLTO = #{param.sbillto}
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = #{param.updtchk} + 1
+		 WHERE WAREKEY = #{param.warekey}
+		   AND BPHDKEY = #{param.bphdkey}
+		   AND BPHDCIT = #{param.bphdcit}
+		   AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<!-- 운송 청구처 수정 update -->
+	<update id="updateDoe086BtrpcbtList" parameterType="com.kbph.logistics.bm.domain.BtrpitDTO">
+		UPDATE ${userInfo.schema}.BTRPIT
+			SET BTRPCBT = #{param.btrpcbt}
+			  , UPDTCHK = UPDTCHK + 1
+		WHERE WAREKEY = #{param.warekey}
+		  AND BPHDKEY = #{param.bphdkey}
+		  AND BPHDCIT = #{param.bphdcit} 
+		  AND SKUMKEY = #{param.skumkey}
+		  AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<select id="selectDoe087VerifySummary" resultType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		/* selectDoe087VerifySummary */
+		SELECT CONCAT(BI.WAREKEY, BI.BTRCATE, BI.BTRPIGB) AS ROWKEY
+			 , BI.WAREKEY, BC.BTRCNAM AS BTRCATE, BI.BTRPIGB, MC.COMCDTX
+			 , SUM(SKUWEIG) AS TOTALWG
+			 , SUM(BI.TOTITCH) AS TOTALCH
+			 , SUM(BI.TOTITPA) AS TOTALPA
+			 , SUM(BI.BTRPCCO) AS TOTCITM
+			 , SUM(BI.BTRPPCO) AS TOTPITM
+			 , SUM(BI.BTRPECC) AS TOTEXCH
+			 , SUM(BI.BTRPEPC) AS TOTEXPA
+			 , SUM(BI.HOLICHR) AS TOTHOCH
+			 , SUM(BI.HOLIPAY) AS TOTHOPA
+		  FROM ${userInfo.schema}.BTRPIT BI
+		 INNER JOIN ${userInfo.schema}.BTRCAT BC
+		    ON BI.BTRCATE = BC.BTRCATE
+		    AND BC.PFONLYN = 'N'
+		 INNER JOIN ${userInfo.schema}.BTRPHD BH
+		    ON BH.WAREKEY = BI.WAREKEY
+		   AND BH.BPHDKEY = BI.BPHDKEY
+		 INNER JOIN ${userInfo.commonSchema}.MVOWMA MV
+		    ON BH.VOWNKEY = MV.VOWNKEY
+		 INNER JOIN ${userInfo.schema}.MCODEM MC
+		    ON MC.COMCDKY = 'VOWAFFI'
+		   AND MC.COMCDVL = MV.VOWAFFI
+		  <where>
+		  	AND BI.WAREKEY = #{param.warekey}
+			<choose>
+				<when test='param.pcvdatefrom != null and param.pcvdatefrom != "" and param.pcvdateto == ""'>
+					<![CDATA[ AND BH.PCVDATE >= #{param.pcvdatefrom} ]]>
+				</when>
+				<when test='param.pcvdateto != null and param.pcvdateto != "" and param.pcvdatefrom == ""'>
+					<![CDATA[ AND BH.PCVDATE <= #{param.pcvdateto}]]>
+				</when>
+				<when test='param.pcvdatefrom != null and param.pcvdatefrom != "" and param.pcvdateto != null and param.pcvdateto != ""'>
+					AND BH.PCVDATE BETWEEN #{param.pcvdatefrom} AND #{param.pcvdateto}
+				</when>
+			</choose>
+			AND BH.PCVRFYN = 'Y'
+		 </where>
+		 GROUP BY BI.WAREKEY, BI.BTRCATE, BC.BTRCNAM, BI.BTRPIGB, MC.COMCDTX
+		 ORDER BY BI.WAREKEY, BI.BTRCATE, BC.BTRCNAM, BI.BTRPIGB, MC.COMCDTX
+	</select>
+	
+	<update id="updateBtrphdYnList" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		/* updateBtrfhdConfirm */
+		UPDATE ${userInfo.schema}.BTRPHD
+		   SET PCVRFYN = #{param.pcvrfyn}
+		     , PCVDATE = TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		     , PCVTIME = TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		     , PCVUSER = #{userInfo.useract}
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = UPDTCHK + 1
+		 WHERE WAREKEY = #{param.warekey}
+		   AND BPHDKEY = #{param.bphdkey}
+	   	   AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	<update id="updateBtrphdConfirm" parameterType="com.kbph.logistics.bm.domain.BtrphdDTO">
+		/* updateBtrfhdConfirm */
+		UPDATE ${userInfo.schema}.BTRPHD
+		   SET PAYADYN = IFNULL(#{param.payadmd},'N')
+		   	 , PCCFMYN = #{param.pccfmyn}
+		     , PCCDATE = TO_CHAR(CURRENT_TIMESTAMP(),"YYYYMMDD")
+		     , PCCTIME = TO_CHAR(CURRENT_TIMESTAMP(),"HH24MISS")
+		     , PCCUSER = #{userInfo.useract}
+		     , LMODATE = TO_CHAR(CURRENT_TIMESTAMP(), "YYYYMMDD")
+		     , LMOTIME = TO_CHAR(CURRENT_TIMESTAMP(), "HH24MISS")
+		     , LMOUSER = #{userInfo.useract}
+		     , UPDTCHK = UPDTCHK + 1
+		 WHERE WAREKEY = #{param.warekey}
+		   AND BPHDKEY = #{param.bphdkey}
+		   AND UPDTCHK = #{param.updtchk}
+	</update>
+	
+	
+	<select id="selectDoe088Md8SummaryList" resultType="com.kbph.logistics.bm.domain.BtrfPrcDTO">
+		/* selectDoe088Md8SummaryList */
+	     WITH BTRF AS (
+	     	<include refid="selectBtrfma"/>
+		 ),<!-- 이송 -->
+         WRCVTIT_LIST AS (
+           SELECT BC.BTRCNAM, WI.DOCCATE, WI.DOCTYPE, WI.ITEMCOD 
+                , MD.DOCCTNM, MD.DOCTYNM
+                , SUM( 
+                			CASE 
+						    WHEN TS.STNWEIG = #{param.stnweig} 
+						    	THEN COALESCE(WI.GROSSWG, 0)
+						    ELSE COALESCE(WI.SKUWEIG, 0) 
+		   	  			END
+		   	      ) AS DAYWEIG
+		   	 	, TS.BTRFCHR AS BTRFCH1
+		   	 	, SUM(COALESCE((
+		   	 						CASE
+										WHEN TS.STNWEIG = #{param.stnweig} 
+											THEN (TS.BTRFCHR * WI.GROSSWG)
+										ELSE (TS.BTRFCHR * WI.SKUWEIG)
+									 END), 0
+			   	  )) AS BTRFCC1_CAL
+				 , COALESCE(
+							    CASE 
+								    WHEN TS.SIZGBYN = 'Y' 
+									    THEN COALESCE((
+									    					SELECT BSIZPAY 
+														      FROM ${userInfo.schema}.BSIZPA 
+														     WHERE WAREKEY = #{param.warekey}
+														       AND BTRNKEY = TS.BTRFKEY 
+														       AND ADDSIKY = BA.ADDSIKY
+										      ), 0) 
+									ELSE TS.BTRFPAY 
+								 END, 0
+				   ) AS BTRFPA1
+				 , SUM(COALESCE((
+				 				CASE
+									WHEN TS.SIZGBYN = 'Y' 
+										THEN COALESCE(
+									             (
+									             SELECT BSIZPAY
+									             FROM ${userInfo.schema}.BSIZPA
+									             WHERE WAREKEY = #{param.warekey}
+									             AND BTRNKEY = TS.BTRFKEY
+									             AND ADDSIKY = BA.ADDSIKY), 0)
+									ELSE TS.BTRFPAY
+								END 
+							) 
+							* 
+							(
+								CASE
+									WHEN TS.STNWEIG = #{param.stnweig} 
+										THEN COALESCE(WI.GROSSWG, 0)
+									ELSE
+									  COALESCE(WI.SKUWEIG, 0)
+								 END 
+							), 0)
+				   ) AS BTRFPC1_CAL
+				 , SUM((
+						(	
+							CASE
+								WHEN TS.SIZGBYN = 'Y' 
+									THEN COALESCE((
+														SELECT BSIZPAY
+											              FROM ${userInfo.schema}.BSIZPA
+										                 WHERE WAREKEY = #{param.warekey}
+										                   AND BTRNKEY = TS.BTRFKEY
+										                   AND ADDSIKY = BA.ADDSIKY) 
+										 , 0)
+								ELSE TS.BTRFPAY
+							 END 
+					    ) 
+						* 
+						(
+							CASE
+								WHEN TS.STNWEIG = #{param.stnweig} 
+									THEN COALESCE(WI.GROSSWG, 0)
+								ELSE COALESCE(WI.SKUWEIG, 0)
+							 END 
+						) 
+						* 
+						(BA.ADCOPER)
+				  )) AS BTRFEP1_CAL
+			     , SUM(COALESCE(
+			    				CASE
+									WHEN TS.STNWEIG = #{param.stnweig} 
+										THEN (TS.BTRFCHR * WI.GROSSWG * BA.ADCOPER)
+						  		ELSE (TS.BTRFCHR * WI.SKUWEIG * BA.ADCOPER)
+						  		 END, 0
+				   )) AS BTRFEC1_CAL
+				 , LD.BTRFCHR AS BTRFCH2
+				 , SUM(COALESCE(
+				 				CASE
+									WHEN LD.STNWEIG = #{param.stnweig} 
+										THEN (LD.BTRFCHR * WI.GROSSWG)
+			  						ELSE (LD.BTRFCHR * WI.SKUWEIG)
+			  					END, 0
+			  	   )) AS BTRFCC2_CAL
+			  	 , (
+			  	 		CASE
+							WHEN LD.SIZGBYN = 'Y' 
+								THEN COALESCE((
+													SELECT BSIZPAY
+									                  FROM ${userInfo.schema}.BSIZPA
+									                 WHERE WAREKEY = #{param.warekey}
+									                   AND BTRNKEY = LD.BTRFKEY
+									                   AND ADDSIKY = BA.ADDSIKY)
+									 , 0)
+							ELSE LD.BTRFPAY
+						 END 
+				   ) AS BTRFPA2
+				 , SUM(( 
+				 		CASE
+							WHEN LD.SIZGBYN = 'Y' 
+								THEN COALESCE((
+									               SELECT BSIZPAY
+									               FROM ${userInfo.schema}.BSIZPA
+									               WHERE WAREKEY = #{param.warekey}
+									               AND BTRNKEY = LD.BTRFKEY
+									               AND ADDSIKY = BA.ADDSIKY)
+									 , 0)
+						    ELSE LD.BTRFPAY
+						END 
+				   ) 
+					* 
+				   (
+				   		CASE
+							WHEN LD.STNWEIG = #{param.stnweig} 
+								THEN COALESCE(WI.GROSSWG, 0)
+							ELSE COALESCE(WI.SKUWEIG, 0)
+						 END 
+				   )) AS BTRFPC2_CAL
+		         , SC.BTRFCHR AS BTRFCH3
+		         , SUM(COALESCE(
+		         				CASE
+									WHEN SC.STNWEIG = #{param.stnweig} 
+										THEN (SC.BTRFCHR * WI.GROSSWG)
+									ELSE (SC.BTRFCHR * WI.SKUWEIG)
+								 END, 0
+				   )) AS BTRFCC3_CAL
+				 , COALESCE(
+				 				CASE
+							  		WHEN SC.SIZGBYN = 'Y' 
+							  			THEN COALESCE((
+							  								SELECT BSIZPAY
+						             	 					  FROM ${userInfo.schema}.BSIZPA
+						              						 WHERE WAREKEY = #{param.warekey}
+												               AND BTRNKEY = SC.BTRFKEY
+												               AND ADDSIKY = BA.ADDSIKY
+												      )
+						             		, 0)
+							  	ELSE SC.BTRFPAY
+							     END, 0
+			       ) AS BTRFPA3
+			     , SUM(COALESCE((
+			     				CASE
+									WHEN SC.SIZGBYN = 'Y' 
+										THEN COALESCE((
+															SELECT BSIZPAY
+									              			  FROM ${userInfo.schema}.BSIZPA
+									              			 WHERE WAREKEY = #{param.warekey}
+												               AND BTRNKEY = SC.BTRFKEY
+												               AND ADDSIKY = BA.ADDSIKY ), 0)
+									ELSE SC.BTRFPAY
+								 END 
+						    ) 
+			  				* 
+			  				(
+			  					CASE
+								    WHEN SC.STNWEIG = #{param.stnweig}
+								    	THEN COALESCE(WI.GROSSWG, 0)
+								  	ELSE COALESCE(WI.SKUWEIG, 0)
+								 END), 0
+				   )) AS BTRFPC3_CAL
+				 , ST.BTRFCHR AS BTRFCH4
+				 , SUM(COALESCE(
+				 				CASE
+									WHEN ST.STNWEIG = #{param.stnweig} 
+										THEN (ST.BTRFCHR * WI.GROSSWG)
+									ELSE (ST.BTRFCHR * WI.SKUWEIG)
+								 END, 0
+				   )) AS BTRFCC4_CAL
+				 , COALESCE(
+				 				CASE
+									WHEN ST.SIZGBYN = 'Y' 
+										THEN COALESCE((
+															SELECT BSIZPAY
+									              			  FROM ${userInfo.schema}.BSIZPA
+									                         WHERE WAREKEY = #{param.warekey}
+												               AND BTRNKEY = ST.BTRFKEY
+												               AND ADDSIKY = BA.ADDSIKY)
+									         , 0)
+									ELSE ST.BTRFPAY
+				  				 END, 0
+				   ) AS BTRFPA4
+				 , SUM(COALESCE((
+				 				CASE
+			  						WHEN ST.SIZGBYN = 'Y' 
+			  							THEN COALESCE((
+			  												SELECT BSIZPAY
+								              				  FROM ${userInfo.schema}.BSIZPA
+												             WHERE WAREKEY = #{param.warekey}
+												               AND BTRNKEY = ST.BTRFKEY
+												               AND ADDSIKY = BA.ADDSIKY )
+										     , 0)
+			  						ELSE ST.BTRFPAY
+			  					 END 
+			  			    ) 
+							* 
+							(
+								CASE
+									WHEN ST.STNWEIG = #{param.stnweig}
+									    THEN COALESCE(WI.GROSSWG, 0)
+									ELSE COALESCE(WI.SKUWEIG, 0)
+								 END 
+						    ), 0
+				   )) AS BTRFPC4_CAL
+				   ,SUM( CASE 
+		     	 			WHEN <!-- 날짜확인필요(토,일) WEEKDAY(WI.POSHPDT) IN (5,6) --> 
+	               			<![CDATA[ WEEKDAY(WI.POSHPDT) IN (5,6) 
+	               			 		OR
+								    (
+							            TIME(WI.POSHPTM) >= DATE_FORMAT(STR_TO_DATE(WA.HOLTMFM, '%H%i%s'), '%H%i%s') 
+							            OR TIME(WI.POSHPTM) < DATE_FORMAT(STR_TO_DATE(WA.HOLTMTO, '%H%i%s'), '%H%i%s')
+							        )
+	               				 THEN TS.BTRFCHR
+	             					  * 
+									  (
+										    CASE 
+											  	WHEN TS.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0) 
+											  	ELSE COALESCE(WI.SKUWEIG, 0) 
+											 END
+									  )
+									  * (WA.HOLRATE / 100)
+					    ELSE 0
+						 END ]]> 
+		           ) AS HOLICHR <!-- 휴일/야간할증 청구단가 * 중량 * 휴일/야간할증률(5%) -->
+		         , SUM(
+	     	 		CASE 
+	     	 			WHEN <!-- 날짜확인필요(토,일) WEEKDAY(WI.POSHPDT) IN (5,6) --> 
+               			<![CDATA[ WEEKDAY(WI.POSHPDT) IN (5,6) 
+               			 		OR
+							    (
+						            TIME(WI.POSHPTM) >= DATE_FORMAT(STR_TO_DATE(WA.HOLTMFM, '%H%i%s'), '%H%i%s') 
+						            OR TIME(WI.POSHPTM) < DATE_FORMAT(STR_TO_DATE(WA.HOLTMTO, '%H%i%s'), '%H%i%s')
+						        )
+               				 THEN (
+               				 			CASE 
+										    WHEN TS.SIZGBYN = 'Y' 
+											THEN COALESCE((
+																SELECT BSIZPAY 
+																  FROM ${userInfo.schema}.BSIZPA 
+																 WHERE WAREKEY = #{param.warekey} 
+																   AND BTRNKEY = TS.BTRFKEY 
+																   AND ADDSIKY = BA.ADDSIKY
+											     ), 0) 
+										 	ELSE TS.BTRFPAY
+										 END
+               				      )
+             					  * 
+								  (
+									    CASE 
+										  	WHEN TS.STNWEIG = #{param.stnweig} THEN COALESCE(WI.GROSSWG, 0) 
+										  	ELSE COALESCE(WI.SKUWEIG, 0) 
+										 END
+								  )
+								  * (WA.HOLRATE / 100)
+				    ELSE 0
+					 END ]]> 
+		           ) AS HOLIPAY
+	          FROM ${userInfo.schema}.WRCVIT WI
+	         INNER JOIN ${userInfo.schema}.WRCVHD WH
+			    ON WH.WAREKEY = WI.WAREKEY
+			   AND WH.RCVDCKY = WI.RCVDCKY
+			   AND WH.DOCCATE = '400'	<!-- 기타입고 제외 -->
+		       AND WH.DOCTYPE != '490'
+			 INNER JOIN ${userInfo.schema}.MWARMA WA
+			 	ON WA.WAREKEY = WI.WAREKEY
+			 	AND WA.WHUSEYN = 'Y'
+			 INNER JOIN ${userInfo.schema}.BTRCAT BC
+			    ON BC.BTRCATE = WI.BTRCATE
+			    AND BC.TFONLYN = 'N'
+			 INNER JOIN ${userInfo.schema}.BADDCO BA
+				ON BA.ADDCOKY = WI.ADDCOKY
+			 INNER JOIN ${userInfo.schema}.MDOCMA MD 
+				ON MD.WAREKEY = WI.WAREKEY
+			   AND MD.DOCCATE = WI.DOCCATE
+			   AND MD.DOCTYPE = WI.DOCTYPE
+			  LEFT JOIN BTRF TS <!-- 이송비:TRANSFER -->
+				ON TS.WAREKEY = WI.WAREKEY
+				AND TS.BTRCATE = WI.BTRCATE
+				AND TS.BTRFITC = WI.ITEMCOD
+				AND TS.BTRFITM = #{param.transfer}
+				AND (DATE_FORMAT(WI.POSHPDT , '%Y%m') BETWEEN TS.BTRFDAF AND TS.BTRFDAT)
+			   LEFT JOIN BTRF LD <!-- 상하차비:LOADING -->
+			     ON LD.WAREKEY = WI.WAREKEY 
+			    AND LD.BTRCATE = WI.BTRCATE 
+			    AND LD.BTRFITC = WI.ITEMCOD 
+			    AND LD.BTRFITM = #{param.loading}
+			    AND (DATE_FORMAT(WI.POSHPDT , '%Y%m') BETWEEN LD.BTRFDAF AND LD.BTRFDAT)
+			   LEFT JOIN BTRF SC <!-- 선별비:SELECTION -->
+			     ON SC.WAREKEY = WI.WAREKEY 
+			    AND SC.BTRCATE = WI.BTRCATE 
+			    AND SC.BTRFITC = WI.ITEMCOD 
+			    AND SC.BTRFSTC = WI.BTRFSTC
+			    AND SC.BTRFITM = #{param.selection} 
+			    AND (DATE_FORMAT(WI.POSHPDT , '%Y%m') BETWEEN SC.BTRFDAF AND SC.BTRFDAT)
+			   LEFT JOIN BTRF ST	<!-- 보관비:STORAGE -->
+			     ON ST.WAREKEY = WI.WAREKEY 
+			    AND ST.BTRCATE = WI.BTRCATE 
+			    AND ST.BTRFITC = WI.ITEMCOD 
+			    AND ST.BTRFITM = #{param.storage}
+			    AND (DATE_FORMAT(WI.POSHPDT , '%Y%m') BETWEEN ST.BTRFDAF AND ST.BTRFDAT)
+		     <where>
+		     	<if test="param.warekey != null and param.warekey != ''">
+					AND WI.WAREKEY = #{param.warekey}
+				</if>
+				<choose>
+					<when test='param.poshpdtfrom != null and param.poshpdtfrom != "" and param.poshpdtto == ""'>
+						<![CDATA[ AND WI.RCVDCDT >= #{param.poshpdtfrom} ]]>
+					</when>
+					<when test='param.poshpdtto != null and param.poshpdtto != "" and param.poshpdtfrom == ""'>
+						<![CDATA[ AND WI.RCVDCDT <= #{param.poshpdtto}]]>
+					</when>
+					<when test='param.poshpdtfrom != null and param.poshpdtfrom != "" and param.poshpdtto != null and param.poshpdtto != ""'>
+						AND WI.RCVDCDT BETWEEN #{param.poshpdtfrom} AND #{param.poshpdtto}
+					</when>
+				</choose>
+				   AND WH.RCVDCST = 'RVCMP'
+		     	   AND WI.RCVITST IN ('RVCOMP','RETURN')
+	     	</where>
+	     	  GROUP BY BC.BTRCNAM, WI.DOCCATE, WI.DOCTYPE, WI.ITEMCOD
+	     	         , MD.DOCCTNM, MD.DOCTYNM, TS.BTRFCHR, BTRFPA1, LD.BTRFCHR
+	     	         , BTRFPA2, SC.BTRFCHR, BTRFPA3, ST.BTRFCHR, BTRFPA4  
+	     	  ),
+     		<!-- 운송 -->
+			TPLNIT_LIST AS (
+				SELECT BC.BTRCNAM, TH.DOCCATE, TH.DOCTYPE, TI.ITEMCOD 
+				     , MD.DOCCTNM, MD.DOCTYNM
+				     , SUM(( 
+				     			CASE 
+								    WHEN PO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0)
+								    ELSE COALESCE(TI.SKUWEIG, 0) 
+								 END
+					   )) AS DAYWEIG
+					 , ( 
+					 		CASE
+								WHEN BO.REGIKEY IS NOT NULL AND BO.SIZGBYN = 'Y' 
+									THEN COALESCE(( 
+														SELECT BSIZPAY FROM ${userInfo.schema}.BSIZPA 
+														 WHERE WAREKEY = #{param.warekey} 
+														   AND BTRNKEY = BO.BTRPKEY 
+														   AND ADDSIKY = BA.ADDSIKY
+										 ), 0)
+								WHEN BO.REGIKEY IS NOT NULL AND BO.SIZGBYN = 'N' 
+									THEN BO.BTRPPAY
+								ELSE PO.BTRPPAY
+							END 
+					   ) AS BTRPPAY 
+					 , SUM(( 
+					 		CASE
+								WHEN BO.REGIKEY IS NOT NULL AND BO.SIZGBYN = 'Y' 
+									THEN COALESCE((
+														SELECT BSIZPAY 
+														  FROM ${userInfo.schema}.BSIZPA 
+														 WHERE WAREKEY = #{param.warekey} 
+														   AND BTRNKEY = BO.BTRPKEY 
+														   AND ADDSIKY = BA.ADDSIKY 
+										 ), 0)
+								WHEN BO.REGIKEY IS NOT NULL	AND BO.SIZGBYN = 'N' 
+									THEN BO.BTRPPAY
+								ELSE PO.BTRPPAY
+							 END 
+							 * 
+							 ( 
+							 	CASE
+									WHEN BO.STNWEIG = #{param.stnweig} 
+										THEN COALESCE(TI.GROSSWG, 0)
+									ELSE COALESCE(TI.SKUWEIG, 0)
+								 END 
+						     )
+					   )) AS BTRPPCO_CAL
+					 , SUM(( 
+							CASE
+								WHEN BO.REGIKEY IS NOT NULL AND BO.SIZGBYN = 'Y' 
+									THEN COALESCE(( 
+														SELECT BSIZPAY 
+														  FROM ${userInfo.schema}.BSIZPA 
+														 WHERE WAREKEY = #{param.warekey} 
+														   AND BTRNKEY = BO.BTRPKEY 
+														   AND ADDSIKY = BA.ADDSIKY
+									     ), 0)
+								WHEN BO.REGIKEY	IS NOT NULL AND BO.SIZGBYN = 'N' 
+									THEN BO.BTRPPAY
+								ELSE PO.BTRPPAY
+							END
+							* 
+							( 
+								CASE
+									WHEN BO.STNWEIG = #{param.stnweig} 
+										THEN COALESCE(TI.GROSSWG, 0)
+									ELSE COALESCE(TI.SKUWEIG, 0)
+								 END 
+							)
+					   )) * (BA.ADCOPER) AS BTRPEPC_CAL
+					 , PO.BTRPCHR AS BTRPCHR
+					 , SUM(IFNULL(PO.BTRPCHR, 0) 
+					 	* 
+					 	( 
+					 		CASE
+								WHEN PO.STNWEIG	= #{param.stnweig} 
+									THEN COALESCE(TI.GROSSWG, 0)
+								ELSE COALESCE(TI.SKUWEIG, 0)
+							 END 
+					   )) AS BTRPCCO_CAL
+					 , SUM(IFNULL(PO.BTRPCHR, 0) 
+					 	* 
+					 	( 
+					 		CASE
+								WHEN PO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0)
+								ELSE COALESCE(TI.SKUWEIG, 0)
+							 END 
+						) * (BA.ADCOPER)) AS BTRPECC_CAL
+					 , <![CDATA[ 
+					   SUM(COALESCE(
+			   				CASE WHEN TI.REGIORG != TI.REGIMOD AND PO.BTRPCHR < BO.BTRPCHR 
+								 THEN (
+								 			BO.BTRPCHR 
+												* 
+											(CASE WHEN BO.STNWEIG = #{param.stnweig} 
+													  THEN COALESCE(TI.GROSSWG, 0) 
+												  ELSE COALESCE(TI.SKUWEIG, 0) 
+											  END ))
+												- 
+											(PO.BTRPCHR 
+												* 
+												(CASE WHEN BO.STNWEIG = #{param.stnweig} 
+													  	  THEN COALESCE(TI.GROSSWG, 0) 
+													  ELSE COALESCE(TI.SKUWEIG, 0) 
+												  END)
+									   ) 
+									END, 0
+					   )) AS SURCHCO_CAL ]]>
+					,  SUM(
+						CASE WHEN <!-- 날짜확인필요(토,일) WEEKDAY(TI.POSHPTM) IN (5,6) --> <![CDATA[ 
+	               			 TH.DOCTYPE = '810' AND (WEEKDAY(TI.POSHPDT) IN (5,6)
+	             			 	 OR
+						     (
+						    	TIME(TI.POSHPTM) >= DATE_FORMAT(STR_TO_DATE(MW.HOLTMFM, '%H%i%s'), '%H%i%s') 
+					            OR 
+					            TIME(TI.POSHPTM) < DATE_FORMAT(STR_TO_DATE(MW.HOLTMTO, '%H%i%s'), '%H%i%s')
+					         ))
+	               			THEN BO.BTRPCHR 
+	               			     * 
+							 (
+								CASE 
+								  	WHEN BO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0) 
+								  	ELSE COALESCE(TI.SKUWEIG, 0) 
+								 END
+							 )
+							     *
+							 (MW.HOLRATE / 100)
+					    ELSE 0
+					 END  ]]>
+					) AS HOLICHR <!-- 휴일할증청구 -->
+					, SUM(
+						CASE WHEN <!-- 날짜확인필요(토,일) WEEKDAY(TI.POSHPDT) IN (5,6) --> 
+               				<![CDATA[ TH.DOCTYPE = '810' AND (WEEKDAY(TI.POSHPDT) IN (5,6) 
+               			 		OR
+							    (
+						            TIME(TI.POSHPTM) >= DATE_FORMAT(STR_TO_DATE(MW.HOLTMFM, '%H%i%s'), '%H%i%s') 
+						            OR TIME(TI.POSHPTM) < DATE_FORMAT(STR_TO_DATE(MW.HOLTMTO, '%H%i%s'), '%H%i%s')
+						        ))
+               				 THEN (
+               				 			CASE 
+										    WHEN PO.SIZGBYN = 'Y' 
+											THEN COALESCE((
+																SELECT BSIZPAY 
+																  FROM ${userInfo.schema}.BSIZPA 
+																 WHERE WAREKEY = #{param.warekey} 
+																   AND BTRNKEY = PO.BTRPKEY 
+																   AND ADDSIKY = BA.ADDSIKY
+											     ), 0) 
+										 	ELSE PO.BTRPPAY
+										 END
+               				      )
+             					  * 
+								  (
+									    CASE 
+										  	WHEN PO.STNWEIG = #{param.stnweig} THEN COALESCE(TI.GROSSWG, 0) 
+										  	ELSE COALESCE(TI.SKUWEIG, 0) 
+										 END
+								  )
+								  * (MW.HOLRATE / 100)
+				    ELSE 0
+					 END ]]>
+					) AS HOLIPAY
+				FROM ${userInfo.schema}.TPLNIT TI
+					INNER JOIN ${userInfo.schema}.TPLNHD TH
+						ON TH.WAREKEY = TI.WAREKEY
+						AND TH.VHPLNKY = TI.VHPLNKY
+					INNER JOIN ${userInfo.schema}.MWARMA MW
+					 	ON MW.WAREKEY = TI.WAREKEY
+					 	AND MW.WHUSEYN = 'Y'
+					INNER JOIN ${userInfo.schema}.BTRCAT BC
+						ON BC.BTRCATE = TI.BTRCATE
+						AND BC.PFONLYN = 'N'
+					INNER JOIN ${userInfo.schema}.BADDCO BA
+						ON BA.ADDCOKY = TI.ADDCOKY
+					INNER JOIN ${userInfo.schema}.MDOCMA MD
+						ON MD.WAREKEY = TH.WAREKEY
+						AND MD.DOCCATE = TH.DOCCATE
+						AND MD.DOCTYPE = TH.DOCTYPE
+					INNER JOIN ${userInfo.commonSchema}.MVOWMA VO
+						ON VO.VOWNKEY = TH.VOWNKEY
+						AND VOUSEYN = 'Y'
+					<!-- 청구요율 :청구는 출하일자 기준-->
+					LEFT JOIN (
+					  				SELECT WAREKEY, BTRCATE, BTRPKEY, REGIKEY
+							 		     , BTRPITC, BTRPITM, BTRPITN, BTRPIGB
+							 		     , BTRPICT, STNWEIG, BTRPVAF, BTRPCHR
+							 		     , BTRPPAY, BTRPEYN, BTRDFYN, BTRPDAF
+							 		     , BTRPDAT, SIZGBYN
+							 		  FROM ${userInfo.schema}.BTRPMA BP
+							 		 WHERE WAREKEY = #{param.warekey}
+					  ) BO 
+					    ON BO.WAREKEY = TI.WAREKEY 
+					   AND BO.BTRCATE = TI.BTRCATE
+					   AND BO.BTRPVAF = VO.VOWAFFI
+					   AND BO.REGIKEY = TI.REGIORG
+					   AND BO.BTRPITC = TI.ITEMCOD
+					   AND (DATE_FORMAT(TI.POSHPDT,'%Y%m') BETWEEN BO.BTRPDAF AND BO.BTRPDAT)
+					 <!-- 지급요율: 지급 운송완료일자 기준  -->
+					  LEFT JOIN (
+					 				SELECT WAREKEY, BTRCATE, BTRPKEY, REGIKEY
+									     , BTRPITC, STNWEIG, BTRPVAF, BTRPCHR
+									     , BTRPPAY, BTRPEYN, SIZGBYN, BTRDFYN
+									     , BTRPDAF, BTRPDAT
+									  FROM ${userInfo.schema}.BTRPMA BP
+									 WHERE WAREKEY = #{param.warekey}
+				     ) PO 
+					   ON PO.WAREKEY = TI.WAREKEY 
+					  AND PO.BTRCATE = TI.BTRCATE
+					  AND PO.BTRPVAF = VO.VOWAFFI
+					  AND PO.REGIKEY = TI.REGIMOD
+					  AND PO.BTRPITC = TI.ITEMCOD
+					  AND (DATE_FORMAT(IFNULL(TI.TRNCPDT,TI.BILDATE),'%Y%m') BETWEEN PO.BTRPDAF AND PO.BTRPDAT) 
+					<where>
+						<if test="param.warekey != null and param.warekey != ''">
+							AND TI.WAREKEY = #{param.warekey}
+						</if>
+						<choose>
+							<when test='param.poshpdtfrom != null and param.poshpdtfrom != "" and param.poshpdtto == ""'>
+								<![CDATA[ AND TI.BILDATE >= #{param.poshpdtfrom} ]]>
+							</when>
+							<when test='param.poshpdtto != null and param.poshpdtto != "" and param.poshpdtfrom == ""'>
+								<![CDATA[ AND TI.BILDATE <= #{param.poshpdtto}]]>
+							</when>
+							<when test='param.poshpdtfrom != null and param.poshpdtfrom != "" and param.poshpdtto != null and param.poshpdtto != ""'>
+								AND TI.BILDATE BETWEEN #{param.poshpdtfrom} AND #{param.poshpdtto}
+							</when>
+						</choose>
+						AND TH.TPNSTAT IN ('FINISH','INVCMP')	<!-- 운송완료 ,송장발행완료 -->
+						AND TI.TPISTAT IN ('ARRIVE','INVCMP')	<!-- 운송완료 ,송장발행완료 -->
+					</where>
+		     		GROUP BY BC.BTRCNAM, TH.DOCCATE, TH.DOCTYPE, TI.ITEMCOD 
+		     		       , MD.DOCCTNM, MD.DOCTYNM, BTRPPAY, PO.BTRPCHR 
+		            )
+	            SELECT WR.BTRCNAM, WR.DOCCATE, WR.DOCTYPE, WR.DOCCTNM
+	            	 , WR.DOCTYNM, WR.ITEMCOD, WR.DAYWEIG
+	            	 , FLOOR((WR.BTRFCC1_CAL + WR.BTRFCC2_CAL + WR.BTRFCC3_CAL + WR.BTRFCC4_CAL)/1000) AS DAYTOCH
+	            	 , FLOOR(WR.BTRFEC1_CAL/1000) AS DAYEXCO
+	            	 , FLOOR((WR.BTRFCC1_CAL + WR.BTRFCC2_CAL + WR.BTRFCC3_CAL + WR.BTRFCC4_CAL + WR.BTRFEC1_CAL)/1000) AS TOTCHCO
+	            	 , FLOOR((WR.BTRFPC1_CAL + WR.BTRFPC2_CAL + WR.BTRFPC3_CAL + WR.BTRFPC4_CAL)/1000) AS DAYTOPA
+	            	 , FLOOR(WR.BTRFEP1_CAL/1000) AS DAYEXPA
+	            	 , FLOOR((WR.BTRFPC1_CAL + WR.BTRFPC2_CAL + WR.BTRFPC3_CAL + WR.BTRFPC4_CAL + WR.BTRFEP1_CAL)/1000) AS TOTPACO
+	            	 , FLOOR(WR.HOLICHR/1000) AS DAYHOCH
+	            	 , FLOOR(WR.HOLIPAY/1000) AS DAYHOPA
+	              FROM WRCVTIT_LIST WR
+	            UNION ALL 
+	            SELECT TP.BTRCNAM, TP.DOCCATE, TP.DOCTYPE , TP.DOCCTNM
+	            	 , TP.DOCTYNM, TP.ITEMCOD, TP.DAYWEIG
+	            	 , FLOOR(TP.BTRPCCO_CAL/1000) AS DAYTOCH
+	            	 , FLOOR(TP.BTRPECC_CAL/1000) AS DAYEXCO
+	            	 , FLOOR((TP.BTRPCCO_CAL + TP.BTRPECC_CAL)/1000) AS TOTCHCO
+	            	 , FLOOR(TP.BTRPPCO_CAL/1000) AS DAYTOPA
+	            	 , FLOOR(TP.BTRPEPC_CAL/1000) AS DAYEXPA
+	            	 , FLOOR((TP.BTRPPCO_CAL + TP.BTRPPCO_CAL)/1000) AS TOTPACO
+	            	 , FLOOR(TP.HOLICHR/1000) AS DAYHOCH
+	            	 , FLOOR(TP.HOLIPAY/1000) AS DAYHOPA
+	              FROM TPLNIT_LIST TP
+	</select>
+</mapper>

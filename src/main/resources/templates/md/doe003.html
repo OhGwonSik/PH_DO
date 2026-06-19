@@ -1,0 +1,565 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doe003Warekey" class="setting-grid-title ic-title-nece">[[#{menu.md.dom001}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe003Warekey" name="doe003Warekey"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+							data-cb-select="" data-cb-variable="warekeyList">
+							</select>
+						</div>
+					</div>
+					<label for="doe003Areanam" class="setting-grid-title">[[#{search.areanam}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('search.areanam')}"
+							id="doe003Areanam" name="doe003Areanam">
+						</div>
+					</div>
+					<label for="doe003Locakey" class="setting-grid-title">[[#{search.locakey}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('search.locakey')}"
+							id="doe003Locakey" name="doe003Locakey">
+						</div>
+					</div>
+					<label for="doe003Locanam" class="setting-grid-title">[[#{search.locanam}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('search.locanam')}"
+							id="doe003Locanam" name="doe003Locanam">
+						</div>
+					</div>
+					<label for="doe003Loctype" class="setting-grid-title">[[#{md.mlocma.loctype}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe003Loctype" name="doe003Loctype"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=loctype"
+							data-cb-select="" data-cb-variable="loctypeList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe003Locstat" class="setting-grid-title">[[#{md.mlocma.locstat}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe003Locstat" name="doe003Locstat"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=locstat"
+							data-cb-select="" data-cb-variable="locstatList">
+								<option value="">[[#{ms.chooseAll}]]</option>
+							</select>
+						</div>
+					</div>
+					<label for="doe003Louseyn" class="setting-grid-title">[[#{md.useyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe003Louseyn" class="pq-select">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doe003BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doe003BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe003}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe003BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe003Grid"></div>
+				</div>
+			</div>
+		<script>
+		/* LOUSEYN = 'N' 시 MEQLOC 내 해당 베드 매핑 사용여부 N (ELUSEYN = 'N') 이후 API 콜 API_MLOCMA
+		   query id = selectEquipkyByLoc 데이터 송신.
+		*/
+		!function(){
+			let doe003CurrentWarekey; // 현재 warekey 검색값 저장
+			let doe003warAreaRelArr = []; // 창고와 창고동 관계 조회
+			const pageId = '[[${tabPage}]]';
+			let doe003InitData = {};
+
+			// 칼럼
+			const doe003GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {	all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{menu.md.dom001}]]', dataType: 'string', dataIndx: 'warekey', editable: false,
+					editor: { options: [] }, render : gridRenderAndValue
+		         },
+				{ title: '[[#{md.area}]]', dataType: 'string', dataIndx: 'areakey', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+		        	 editor: {
+							type: 'select',
+			        		 init: function (ui) {
+			        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+			        			 setTimeout(function () {
+			        				 ui.$cell.find('select').pqSelect('open');
+		        				 }, 250);
+		        			 },
+		        			 options: ui => {
+		        				 return window['areaRelList']?.map(e => {
+									if(e.warekey === ui.rowData.warekey){
+										const obj = {};
+										obj[e.areakey] = e.areanam;
+
+										return obj;
+									}
+								}).filter(e => e);
+		        			 }
+						},
+						render: ui => {
+							const target = window['areaRelList']?.find(e => e.warekey === ui.rowData.warekey && e['areakey'] === ui.cellData );
+	 						return { text: target ? target['combonm'] : ui.cellData };
+						},
+		             editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				},
+				{ title: '[[#{grid.locakey}]]', dataType: 'string', dataIndx: 'locakey', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editable: ui => !ui.rowData['[[#{common.grid.recIndx}]]']
+				},
+				{ title: '[[#{grid.locanam}]]', dataType: 'string', dataIndx: 'locanam', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mlocma.loctype}]]', dataType: 'string', dataIndx: 'loctype', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mlocma.locstat}]]', dataType: 'string', dataIndx: 'locstat', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.widt}]]', dataType: 'integer', dataIndx: 'locwidt', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.leng}]]', dataType: 'integer', dataIndx: 'locleng', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.heig}]]', dataType: 'integer', dataIndx: 'locheig', format: '#,###', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.cubi}]]', dataType: 'double', dataIndx: 'loccubi', format: '#,###.000', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'louseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.memo}]]', dataType: 'string', dataIndx: 'locmemo', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mlocma.sizepri}]]', dataType: 'string', dataIndx: 'sizepri' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mlocma.btrcpri}]]', dataType: 'string', dataIndx: 'btrcpri' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: true, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mlocma.itdtpri}]]', dataType: 'string', dataIndx: 'itdtpri' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: true, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mlocma.custpri}]]', dataType: 'string', dataIndx: 'custpri' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: true, width: 250 });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mlocma.regipri}]]', dataType: 'string', dataIndx: 'regipri' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: true, width: 250 });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : gridRenderAndValue
+				},
+				{ title: '[[#{md.mlocma.destpri}]]', dataType: 'string', dataIndx: 'destpri' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editor: {
+						type: 'select',
+		        		 init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: true, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+						prepend: { '': ' ' },
+					    options: ui => {
+								return window['destRelList']?.map(e => {
+									if(e.ownerky === ui.rowData.custpri && e.regikey === ui.rowData.regipri){
+										const obj = {};
+										obj[e.destkey] = e.denamlc;
+										return obj;
+									}
+							}).filter(e => e);
+						}
+					},
+					render: ui => {
+						const target = window['destRelList']?.find( e => e.ownerky === ui.rowData.custpri && e.regikey === ui.rowData.regipri);
+ 						return {
+ 							cls : target ? '' : 'color-gray pq-cell-disable'
+ 						};
+					},
+					editable: ui => {
+						const target = window['destRelList']?.find( e => e.ownerky === ui.rowData.custpri && e.regikey === ui.rowData.regipri);
+						return target.length
+					}
+				},
+				{ title: '[[#{md.mlocma.inbopri}]]', dataType: 'integer', dataIndx: 'inbopri' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mlocma.oubopri}]]', dataType: 'integer', dataIndx: 'oubopri' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const doe003Grid = new GridUtil(doe003GridCM, pageId, pageId + 'Grid');
+			doe003Grid.setFind();
+			doe003Grid.setReset();
+
+			// Grid 생성시 이벤트
+			doe003Grid.setCreate(async function(evt, ui) {
+				const relationList = await Promise.allSettled([
+					getAreaRelationList(),
+					getDestinationRelationList()
+				]);
+				await _commonInit(pageId);
+				comboCreateData(pageId + 'Grid', 'warekey', warekeyList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'loctype', loctypeList, { combovl : 'combovl', combonm : 'combonm' });
+				comboCreateData(pageId + 'Grid', 'locstat', locstatList, { combovl : 'combovl', combonm : 'combonm' });
+
+				// 전략 관련 init 데이터
+				const doe003InitRes = await fetchUtil('GET', '/md/' + pageId + '/init');
+				doe003InitData = await doe003InitRes.json();
+
+				comboCreateData(pageId + 'Grid', 'sizepri', doe003InitData.item.sizepriList, { combovl : 'combovl', combonm : 'combonm' }); // 사이즈 우선순위
+				comboCreateData(pageId + 'Grid', 'itdtpri', doe003InitData.item.itdtpriList, { combovl : 'comcdvl', combonm : 'comcdvl' }); // 품목세부 우선순위
+				comboCreateData(pageId + 'Grid', 'btrcpri', doe003InitData.item.btrcpriList, { combovl : 'btrcate', combonm : 'btrcnam' }); // 정산유형 우선순위
+				comboCreateData(pageId + 'Grid', 'custpri', doe003InitData.item.custpriList, { combovl : 'combovl', combonm : 'combonm' }); // 고객사 우선순위
+				comboCreateData(pageId + 'Grid', 'regipri', doe003InitData.item.regipriList, { combovl : 'combovl', combonm : 'combonm' }); // 목적지 우선순위
+
+				await _commonInit(pageId);
+
+				const dataList = [
+					{ listName: 'areaRelList' },
+					{ listName: 'destRelList' }
+				];
+
+				for(let idx=0; idx < relationList.length; idx++){
+					const target = dataList[idx];
+					target['list'] = relationList[idx].value;
+				}
+
+				setPreloadDataOnWindow(dataList);
+				resetSearchConditions(pageId, 0, 0, 1);
+				this.option('freezeCols', 1);
+			});
+
+			// 그리드 행 추가
+			doe003Grid.setAdd(function(evt, ui){
+				if(!doe003CurrentWarekey){
+					alert('[[#{ms.noSearchError}]]');
+					return;
+				}
+
+				const rowData = {
+					state: true,
+					warekey: doe003CurrentWarekey,
+					locwidt: 0,
+					locleng: 0,
+					locheig: 0,
+					loccubi: 0,
+					sizepri: '',
+					btrcpri: '',
+					itdtpri: '',
+					custpri: '',
+					regipri: '',
+					destpri: '',
+					inbopri: 0,
+					oubopri: 0,
+					louseyn: 'Y'
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx : rowIndx });
+				this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'Grid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe003Grid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = {state: true};
+
+		           		if(updateData.newRow.hasOwnProperty('louseyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	}else if('edit' === ui.source || 'paste' === ui.source || 'undo' === ui.source || 'redo' === ui.source || 'clear' === ui.source){
+		    		const updateRowList = [];
+		    		let locakeyData, areakeyData, loctypeData, locstatData, sizepriData, btrcpriData, destpriData;
+		    		for(const updateData of ui.updateList){
+		    			const newRow = { state: true };
+
+		   				if(updateData.newRow.hasOwnProperty('locakey') && updateData.oldRow.hasOwnProperty('locakey')){
+		   					locakeyData = updateData.newRow['locakey']?.toUpperCase().replaceAll(/\s/g, '');
+		    			}
+
+		    			if(updateData.newRow.hasOwnProperty('areakey') && updateData.oldRow.hasOwnProperty('areakey')){
+		    				areakeyData = doe003warAreaRelArr.find(function(data){
+	    						return(data.areanam === updateData.newRow['areakey'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('loctype') && updateData.oldRow.hasOwnProperty('loctype')){
+		    				loctypeData = loctypeList.find(function(data){
+	    						return(data.combonm === updateData.newRow['loctype'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('locstat') && updateData.oldRow.hasOwnProperty('locstat')){
+		    				locstatData = locstatList.find(function(data){
+	    						return(data.combonm === updateData.newRow['locstat'])
+	    					})
+	    				}
+
+		    			if(updateData.newRow.hasOwnProperty('sizepri') && updateData.oldRow.hasOwnProperty('sizepri')){
+		    				sizepriData = doe003InitData.item.sizepriList.find(function(data){
+		    					return(data.combonm === updateData.newRow['sizepri'])
+		    				})
+		    			}
+
+		    			/* if(updateData.newRow.hasOwnProperty('btrcpri') && updateData.oldRow.hasOwnProperty('btrcpri')){
+		    				btrcpriData = window['btrcateList'].find(function(data){
+		    					return(data.btrcnam === updateData.newRow['btrcpri'])
+		    				})
+		    			} */
+
+		    			if((updateData.newRow.hasOwnProperty('custpri') && updateData.oldRow.hasOwnProperty('custpri'))
+		    				|| (updateData.newRow.hasOwnProperty('regipri') && updateData.oldRow.hasOwnProperty('regipri'))){
+		    				newRow['destpri'] = '';
+		    			}
+
+			        	updateRowList.push({
+							rowIndx: updateData.rowIndx,
+							newRow: newRow
+						});
+
+		    			this.updateRow({
+							rowIndx : updateData.rowIndx,
+							rowList: updateRowList,
+							newRow : {
+								state: true,
+								warekey: doe003CurrentWarekey,
+								areakey: areakeyData ? areakeyData.areakey : updateData.rowData.areakey,
+								locakey: locakeyData ? locakeyData : updateData.rowData.locakey,
+								loctype: loctypeData ? loctypeData.combovl : updateData.rowData.loctype,
+								locstat: locstatData ? locstatData.combovl : updateData.rowData.locstat,
+								louseyn: updateData.rowData.louseyn,
+								locwidt: updateData.rowData.locwidt,
+								locleng: updateData.rowData.locleng,
+								locheig: updateData.rowData.locheig,
+								loccubi: updateData.rowData.loccubi,
+								sizepri: sizepriData ? sizepriData.combovl : updateData.rowData.sizepri,
+								btrcpri: btrcpriData ? btrcpriData.btrcate : updateData.rowData.btrcpri,
+								itdtpri: updateData.rowData.itdtpri,
+								destpri: destpriData ? destpriData.combovl : updateData.rowData.destpri,
+								inbopri: updateData.rowData.inbopri,
+								oubopri: updateData.rowData.oubopri
+							},
+							checkEditable : false
+		    			})
+		    		}
+		    		for(const addData of ui.addList){
+		    			addData.rowData.state = true;
+		    			addData.rowData.warekey = doe003CurrentWarekey;
+		    			addData.rowData.areakey = areakeyData ? areakeyData.areakey : addData.rowData.areakey;
+		    			addData.rowData.locakey = locakeyData || addData.rowData.locakey;
+		    			addData.rowData.loctype = loctypeData ? loctypeData.combovl : addData.rowData.loctype;
+		    			addData.rowData.locstat = locstatData ? locstatData.combovl : addData.rowData.locstat;
+		    			addData.rowData.louseyn = addData?.newRow?.louseyn || 'Y';
+		    			addData.rowData.locwidt = addData?.newRow?.locwidt || 0;
+		    			addData.rowData.locleng = addData?.newRow?.locleng || 0;
+		    			addData.rowData.locheig = addData?.newRow?.locheig || 0;
+		    			addData.rowData.loccubi = addData?.newRow?.loccubi || 0.000;
+		    			addData.rowData.sizepri = addData?.newRow?.sizepri || '';
+		    			addData.rowData.btrcpri = addData?.newRow?.btrcpri || '';
+		    			addData.rowData.itdtpri = addData?.newRow?.itdtpri || '';
+		    			addData.rowData.custpri = addData?.newRow?.custpri || '';
+		    			addData.rowData.regipri = addData?.newRow?.regipri || '';
+		    			addData.rowData.destpri = addData?.newRow?.destpri || '';
+		    			addData.rowData.inbopri = addData?.newRow?.inbopri || 0;
+		    			addData.rowData.oubopri = addData?.newRow?.oubopri || 0;
+		    		}
+		    	}
+		    	doe003Grid.getGrid().refresh();
+			});
+
+			// Grid 객체 생성
+			doe003Grid.open();
+
+			// 검색 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+				await getDoe003List();
+			})
+
+			// 저장 버튼
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe003Grid, ['warekey', 'areakey', 'locakey', 'locanam', 'loctype', 'locstat', 'locwidt', 'locleng', 'locheig', 'loccubi'])
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe003Grid, ['locakey'])					// 베드키
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe003Grid, ['areakey', 'locakey'])		// 창고동키, 베드키
+									&& validateDuplicationFieldBeforeSaveGridUtil(doe003Grid, ['warekey', 'locakey']);		// 창고키, 베드키
+				if( !validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doe003Grid, refineGridUtilSaveList(doe003Grid), '/md/' + pageId + '/grid');
+				getDoe003List();
+
+			})
+
+			// 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', async function(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+				makeEmptyGrid(doe003Grid);
+				resetSearchConditions(pageId);
+			})
+
+			// 창고 변경시 자동조회
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				const grid = pq.grid('#' + pageId + 'Grid');
+				if(doe003CurrentWarekey && grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						this.value = doe003CurrentWarekey;
+						return;
+					}
+				}
+				await getDoe003List();
+			});
+
+			// Grid 데이터 조회 함수
+			async function getDoe003List(){
+			    const grid = pq.grid('#' + pageId + 'Grid');
+			    const data = {
+			        warekey: document.querySelector('#' + pageId + 'Warekey').value.toUpperCase(),
+			        areanam: document.querySelector('#' + pageId + 'Areanam').value.toUpperCase(),
+			        locakey: document.querySelector('#' + pageId + 'Locakey').value.toUpperCase(),
+			        locanam: document.querySelector('#' + pageId + 'Locanam').value.toUpperCase(),
+			        loctype: document.querySelector('#' + pageId + 'Loctype').value,
+			        locstat: document.querySelector('#' + pageId + 'Locstat').value,
+			        louseyn: document.querySelector('#' + pageId + 'Louseyn').value
+			    };
+
+			    doe003CurrentWarekey = data.warekey;
+
+			    grid.showLoading();
+			    const res = await fetchUtil('GET', '/md/' + pageId + '/grid', data);
+
+			    if (res.status === 200) {
+			        const doe003List = await res.json();
+			        grid.option('dataModel', {
+			            data: doe003List,
+			            recIndx: 'rowkey'
+			        });
+			        grid.refreshDataAndView();
+			    }
+			    grid.hideLoading();
+			}
+
+			const itemList = document.querySelectorAll('.setting-grid input');
+			itemList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			})
+
+			// Enter로 검색
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getDoe003List();
+			    }
+			}
+		}();
+		</script>
+	</div>
+</html>

@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.api.mapper.LookupForApiMapper">
+	<!-- 차주조회 -->
+	<select id="selectVehicleInformationForApi" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectVehicleInformationForApi */
+		SELECT MV.VOWNKEY
+			 , MV.VEHICKY
+			 , MV.VHCSNAM
+			 , MV.VHCFNAM
+			 , MV.DLVTYPE
+			 , MV.VHCOPTY
+			 , MV.VHCTYPE
+			 , MV.VHCTNCD
+			 , MV.VHCMAXW
+			 , MV.DRVERNM
+			 , MV.DRVERPH
+			 , MV.VHCMEMO
+	    <if test ='(param.eoasnky != null and param.eoasnky != "") or (param.outboky != null and param.outboky != "")'>
+			 , WA.WAREKEY
+		 </if>
+		FROM ${common.commonSchema}.MVHCMA MV
+	    <if test ='param.eoasnky != null and param.eoasnky != ""'>
+		    INNER JOIN ${common.schema}.WASNHD WA
+		       ON WA.VEHICKY = MV.VEHICKY
+	    </if>
+	    <if test ='param.outboky != null and param.outboky != ""'>
+		    INNER JOIN ${common.schema}.OOUBHD WA
+		       ON WA.VEHICKY = MV.VEHICKY
+	    </if>
+	    <where>
+		   <if test ='param.eoasnky != null and param.eoasnky != ""'>
+			 	AND WA.EOASNKY = #{param.eoasnky}
+		   </if>
+		   <if test ='param.outboky != null and param.outboky != ""'>
+			 	AND WA.OUTBOKY = #{param.outboky}
+		   </if>
+		   <if test='param.vhcfnam != null and param.vhcfnam != ""'>
+		   	 	AND MV.VHCFNAM = #{param.vhcfnam}
+		   </if>
+		  		AND MV.VHUSEYN = 'Y'
+		</where>
+	</select>
+
+	<!-- 차량-기사 매핑 -->
+	<select id="selectVehicleDriverMappingForApi" resultType="com.kbph.logistics.tm.domain.TmDispatchDTO">
+		/* selectVehicleDriverMappingForApi */
+		SELECT SU.USERKEY
+			 , SU.USERACT
+			 , SU.VOWNKEY
+			 , SU.VEHICKY
+			 , SM.USERNAM
+			 , SM.TELPHNM
+		FROM ${common.commonSchema}.SUSRVH SU
+		INNER JOIN ${common.commonSchema}.SUSRMA SM
+			ON SM.USERKEY = SU.USERKEY
+		   AND SM.USERACT = SU.USERACT
+		WHERE SU.VOWNKEY = #{param.vownkey}
+		  AND SU.VEHICKY = #{param.vehicky}
+		  AND SU.VHUSEYN = 'Y'
+	</select>
+
+	<!-- 출고오더 조회 -->
+	<select id="selectOutboundOrderHeaderListForApi" resultType="com.kbph.logistics.om.domain.OoubhdDTO">
+		/* selectOutboundOrderHeaderListForApi */
+		SELECT
+			<!-- P. K. -->
+			OUTBOKY,
+			<!-- Columns -->
+			WAREKEY, DOCCATE, DOCTYPE, VOWNKEY,
+			VEHICKY, RSNCODE, PARSNNM, SHPWEIG,
+			OBODATE, OBOTIME, OBOSTAT, ENTDATE,
+			ENTTIME, EXTDATE, EXTTIME,
+			<!-- Common Columns -->
+			CREDATE, CRETIME, CREUSER, LMODATE,
+			LMOTIME, LMOUSER, UPDTCHK
+		FROM
+			${common.schema}.OOUBHD OBH
+		WHERE
+			OBH.OUTBOKY = #{param.outboky}
+		GROUP BY
+			<!-- P. K. -->
+			OUTBOKY,
+			<!-- Columns -->
+			WAREKEY, DOCCATE, DOCTYPE, VOWNKEY,
+			VEHICKY, RSNCODE, PARSNNM, SHPWEIG,
+			OBODATE, OBOTIME, OBOSTAT, ENTDATE,
+			ENTTIME, EXTDATE, EXTTIME,
+			<!-- Common Columns -->
+			CREDATE, CRETIME, CREUSER, LMODATE,
+			LMOTIME, LMOUSER, UPDTCHK
+	</select>
+
+	<!-- 출고오더 아이템조회 -->
+	<select id="selectOutboundOrderItemListForApi" resultType="com.kbph.logistics.om.domain.OoubitDTO">
+		/* selectOutboundOrderItemListForApi */
+			SELECT
+			<!-- P. K. -->
+			OBI.OUTBOKY, OBI.OUTBOIT,
+			<!-- Columns -->
+			OBI.DOCCATE, OBI.DOCTYPE, OBI.WAREKEY, OBI.POSHPDT,
+			OBI.POSHPTM, OBI.POSHPDY, OBI.OWNERKY, OBI.OWNRNAM,
+			OBI.CUSTCOD, OBI.CUSTNAM, OBI.FNCUSKY, OBI.REGIORG,
+			OBI.DESTORG, OBI.REGIMOD, OBI.DESTMOD, OBI.DEORGNM,
+			OBI.DEMODNM, OBI.DEMODYN, OBI.DEMDMAN, OBI.DEMDADR,
+			OBI.DEMPOCD, OBI.DEMDTLN, OBI.OBOMEMO, OBI.OUBRQDT,
+			OBI.OUBRQTM, OBI.SKUGRKY, OBI.SKUMKEY, OBI.SKUDESC,
+			OBI.SKUWEIG, OBI.SKUWIDT, OBI.SKULENG, OBI.SKUTHIC,
+			OBI.GROSSWG, OBI.GROSSWD, OBI.GROSSLN, OBI.GROSSTH,
+			OBI.FRAREKY, OBI.FRLOCKY, OBI.FRLAYER, OBI.SHLOCKY,
+			OBI.RGITQTY, OBI.SHCFQTY, OBI.SUOMKEY, OBI.SHPPLKY,
+			OBI.SHPPLIT, OBI.VHPLNKY, OBI.VHPLNIT, OBI.PLNSIZE,
+			OBI.OBOITST, OBI.ITEMCOD, OBI.PURCNUM, OBI.ORDERLN,
+			OBI.STLOTNB, OBI.SHPLIMT, OBI.DELVDSR, OBI.BTRFSTC,
+			OBI.BTRCATE, OBI.ADDCOKY,
+			OBI.PARSNCD, OBI.PARSNNM, OBI.CREDATE, OBI.CRETIME,
+			OBI.CREUSER, OBI.LMODATE, OBI.LMOTIME, OBI.LMOUSER,
+			OBI.UPDTCHK
+		FROM ${common.schema}.OOUBIT OBI
+		GROUP BY
+			<!-- P. K. -->
+			OBI.OUTBOKY, OBI.OUTBOIT,
+			<!-- Columns -->
+			OBI.DOCCATE, OBI.DOCTYPE, OBI.WAREKEY, OBI.POSHPDT,
+			OBI.POSHPTM, OBI.POSHPDY, OBI.OWNERKY, OBI.OWNRNAM,
+			OBI.CUSTCOD, OBI.CUSTNAM, OBI.FNCUSKY, OBI.REGIORG,
+			OBI.DESTORG, OBI.REGIMOD, OBI.DESTMOD, OBI.DEORGNM,
+			OBI.DEMODNM, OBI.DEMODYN, OBI.DEMDMAN, OBI.DEMDADR,
+			OBI.DEMPOCD, OBI.DEMDTLN, OBI.OBOMEMO, OBI.OUBRQDT,
+			OBI.OUBRQTM, OBI.SKUGRKY, OBI.SKUMKEY, OBI.SKUDESC,
+			OBI.SKUWEIG, OBI.SKUWIDT, OBI.SKULENG, OBI.SKUTHIC,
+			OBI.GROSSWG, OBI.GROSSWD, OBI.GROSSLN, OBI.GROSSTH,
+			OBI.FRAREKY, OBI.FRLOCKY, OBI.FRLAYER, OBI.SHLOCKY,
+			OBI.RGITQTY, OBI.SHCFQTY, OBI.SUOMKEY, OBI.SHPPLKY,
+			OBI.SHPPLIT, OBI.VHPLNKY, OBI.VHPLNIT, OBI.PLNSIZE,
+			OBI.OBOITST, OBI.ITEMCOD, OBI.PURCNUM, OBI.ORDERLN,
+			OBI.STLOTNB, OBI.SHPLIMT, OBI.DELVDSR, OBI.BTRFSTC,
+			OBI.BTRCATE, OBI.ADDCOKY,
+			OBI.PARSNCD, OBI.PARSNNM, OBI.CREDATE, OBI.CRETIME,
+			OBI.CREUSER, OBI.LMODATE, OBI.LMOTIME, OBI.LMOUSER,
+			OBI.UPDTCHK
+	</select>
+
+	<!-- 상태변경을 위한 중량테이블 검색 -->
+	<select id="checkShipmentCompletionStatusForApi" resultType="com.kbph.logistics.om.domain.WshphdDTO">
+		/* checkShipmentCompletionStatusForApi */
+		SELECT
+		    TP.SHPPLKY
+		FROM
+		    ${common.schema}.TPWPWG TP
+		INNER JOIN ${common.schema}.WPLNHD WP
+		    ON WP.SHPPLKY = TP.SHPPLKY
+		WHERE
+		    TP.VHPLNKY = #{param.vhplnky}
+		    AND TP.SHPPLKY = #{param.shpplky}
+		    AND TP.PLNSIZE = #{param.plnsize}
+		    AND TP.WPLCFYN = 'Y'
+		    AND TP.OOUCFYN = 'Y'
+		    AND TP.SHPCFYN = 'Y'
+		    AND WP.REMWEIG = 0
+		GROUP BY
+		    TP.SHPPLKY
+	</select>
+
+	<!-- 출고문서 조회 -->
+	<select id="selectCmpTargetWshpit" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* selectCmpTargetWshpit */
+		SELECT
+			SHPDCKY, WAREKEY
+		FROM
+			${common.schema}.WSHPIT
+		WHERE
+			OUTBOKY = #{param.outboky}
+			AND SKUMKEY = #{param.skumkey}
+			AND SHPITST != 'CANCEL'
+		GROUP BY
+			SHPDCKY, WAREKEY
+	</select>
+
+	<!-- 출고문서 배차계획, 출고계획키 검색 -->
+	<select id="selectShpplkyAndVhplnkyForApi" resultType="com.kbph.logistics.om.domain.OoubitDTO">
+		/* selectShpplkyAndVhplnkyForApi */
+		SELECT
+		    OBI.SHPPLKY, OBI.VHPLNKY, OBI.PLNSIZE
+		FROM
+		    ${common.schema}.OOUBIT OBI
+		WHERE
+		    OBI.OUTBOKY = #{param.outboky}
+		    AND OBI.SKUMKEY = #{param.skumkey}
+	</select>
+
+	<!-- 재고확인 -->
+	<select id="hasStockForApi" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* hasStockForApi */
+		SELECT
+            WS.STOCKKY, WS.WAREKEY
+            , WS.AREAKEY, WS.LOCAKEY
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY
+            , WS.CUSTCOD, WS.SKUMKEY, WS.SKUDESC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIORG, WS.DESTORG, WS.REGIMOD, WS.DESTMOD
+            , WS.ITEMCOD, WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY
+            , WS.SUOMKEY, WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02
+            , WS.LOTAT03, WS.STKSTAT, WS.EMSKUYN
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT, WS.CREDATE, WS.CRETIME, WS.CREUSER
+            , WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WS.UPDTCHK
+        FROM
+            ${common.schema}.WSTKKY WS
+        WHERE
+			WS.SKUMKEY = #{param.skumkey}
+			<if test='param.warekey != null and param.warekey != ""'>
+           	AND WS.WAREKEY = #{param.warekey}
+           	</if>
+			<if test='param.stockky != null and param.stockky != ""'>
+				AND WS.STOCKKY = #{param.stockky}
+			</if>
+           	<if test='param.areakey != null and param.areakey != ""'>
+           		AND WS.AREAKEY = #{param.areakey}
+           	</if>
+           	<if test='param.locakey != null and param.locakey != ""'>
+           		AND WS.LOCAKEY = #{param.locakey}
+           	</if>
+           	<if test='param.lolayer != null and param.lolayer != ""'>
+           		AND WS.LOLAYER = #{param.lolayer}
+           	</if>
+           	<if test='param.frareky != null and param.frareky != ""'>
+           		AND WS.AREAKEY = #{param.frareky}
+           	</if>
+           	<if test='param.frlocky != null and param.frlocky != ""'>
+           		AND WS.LOCAKEY = #{param.frlocky}
+           	</if>
+           	<if test='param.frlayer != null and param.frlayer != ""'>
+           		AND WS.LOLAYER = #{param.frlayer}
+           	</if>
+           	<if test='param.stlayer != null and param.stlayer != ""'>
+           		AND WS.LOLAYER = #{param.stlayer}
+           	</if>
+           GROUP BY WS.STOCKKY, WS.WAREKEY
+            , WS.AREAKEY, WS.LOCAKEY
+            , WS.LOLAYER, WS.LOTNMKY, WS.OWNERKY
+            , WS.CUSTCOD, WS.SKUMKEY, WS.SKUDESC
+            , WS.SKUWEIG, WS.SKUWIDT, WS.SKULENG, WS.SKUTHIC
+            , WS.STLOTNB, WS.PURCNUM, WS.ORDERLN
+            , WS.REGIORG, WS.DESTORG, WS.REGIMOD, WS.DESTMOD
+            , WS.ITEMCOD, WS.STOTQTY, WS.SALLQTY, WS.SBLOQTY
+            , WS.SUOMKEY, WS.RCVDCDT, WS.LOTAT01, WS.LOTAT02
+            , WS.LOTAT03, WS.STKSTAT, WS.EMSKUYN
+            , WS.BLOCKID, WS.RCVDCKY
+            , WS.RCVDCIT, WS.ADJSOKY, WS.ADJSOIT, WS.PHYSOKY
+            , WS.PHYSOIT, WS.SHPDCKY, WS.SHPDCIT, WS.TASKOKY
+            , WS.TASKOIT, WS.CREDATE, WS.CRETIME, WS.CREUSER
+            , WS.LMODATE, WS.LMOTIME, WS.LMOUSER, WS.UPDTCHK
+	</select>
+
+	<!-- 출고문서번호 채번 -->
+	<select id="selectShpdckyForApi" resultType="String">
+		/* selectShpdckyForApi */
+		SELECT ${common.schema}.FN_OM_SHPDCKY() AS SHPDCKY FROM DUAL
+	</select>
+
+	<!-- 출고문서아이템번호 채번 -->
+	<select id="selectShpdcitForApi" resultType="Integer">
+		/* selectShpdcitForApi */
+		SELECT ${common.schema}.FN_OM_SHPDCIT(#{shpdcky}) AS SHPDCIT FROM DUAL
+	</select>
+
+		<!-- 작업문서번호 채번 -->
+    <select id="selectTaskokyForApi" resultType="String">
+     	/* selectTaskokyForApi */
+     	select ${common.schema}.fn_sm_taskoky() as taskoky from dual
+    </select>
+
+    <!-- 작업문서아이템번호 채번 -->
+    <select id="selectTaskoitForApi" resultType="Integer">
+     	/* selectTaskoitForApi */
+     	select ${common.schema}.fn_sm_taskoit(#{taskoky}) as taskoit from dual
+    </select>
+
+    <!-- 배차아이템리스트 상태 개수 조회 -->
+    <select id="selectTplnitCountValidationListForApi">
+		/* selectTplnitCountValidationListForApi */
+		SELECT
+			COUNT(VHPLNKY)
+		FROM
+			${common.schema}.TPLNIT
+		WHERE
+			VHPLNKY IN(
+								SELECT
+									VHPLNKY
+								FROM
+									${common.schema}.OOUBIT
+								WHERE
+									OUTBOKY = #{param.outboky}
+								GROUP BY
+									VHPLNKY
+							)
+			AND TPISTAT = 'PLAN'
+		GROUP BY
+			WAREKEY, VHPLNKY
+	</select>
+
+	<!-- 작업문서 리스트(검증용) -->
+	<select id="selectWtakitListForApiValidation" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* selectWtakitListForApiValidation */
+		SELECT
+			<!-- P.K. -->
+		    WTK.TASKOKY, WTK.TASKOIT,
+			<!-- Columns -->
+		    WTK.WAREKEY, WTK.TASKDAT,
+		    WTK.DOCCATE, WTK.DOCTYPE, WTK.TASKSTS, WTK.LOTNMKY,
+		    OWNRNAM, WTK.OWNERKY, WTK.CUSTCOD, WTK.CUSTNAM,
+		    WTK.SKUMKEY, WTK.SKUDESC, WTK.FRAREKY, WTK.FRLOCKY,
+		    WTK.FRLAYER, WTK.TOAREKY, WTK.TOLOCKY, WTK.TOLAYER,
+		    WTK.EQUIPKY, WTK.FORDQTY, WTK.TCMPQTY, WTK.ALLGRKY,
+		    WTK.MVSTDAT, WTK.MVSTTIM, WTK.MVEDDAT, WTK.MVEDTIM,
+		    WTK.PARSNCD, WTK.PARSNNM, WTK.PKRSNCD, WTK.PKRSNNM,
+		    WTK.STOCKKY, WTK.PLNSIZE, WTK.EOASNKY, WTK.EOASNIT,
+		    WTK.COSTRKY, WTK.COSTRIT, WTK.RCVDCKY, WTK.RCVDCIT,
+		    WTK.OUTBOKY, WTK.OUTBOIT, WTK.SHPDCKY, WTK.SHPDCIT,
+		    WTK.VHPLNKY, WTK.VHPLNIT,
+			<!-- Common Columns -->
+		    WTK.CREDATE, WTK.CRETIME, WTK.CREUSER,
+		    WTK.LMODATE, WTK.LMOTIME, WTK.LMOUSER,
+		    WTK.UPDTCHK
+		FROM
+		    ${common.schema}.WTAKIT WTK
+		WHERE
+		    WTK.WAREKEY = #{param.warekey}
+		    AND WTK.SHPDCKY = #{param.shpdcky}
+	</select>
+</mapper>

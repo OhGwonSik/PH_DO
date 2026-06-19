@@ -1,0 +1,700 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{/main/fragment/defaultLayout}">
+<div class="tab-contents" layout:fragment="content">
+	<div class="location"></div>
+	<div class="search-conditions con-box">
+		<div class="setting-grid">
+			<label for="doe027Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe027Warekey" name="doe027Warekey" data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse" data-cb-variable="warekeyList">
+					</select>
+				</div>
+			</div>
+			<label for="doe027Eoasnky" class="setting-grid-title">[[#{im.doe027.eoasnky}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-wrapper">
+					<input type="text" th:placeholder="${#messages.msg('im.doe027.eoasnky')}" id="doe027Eoasnky" name="doe027Eoasnky" onkeyup="doe027KeyupEvt()">
+				</div>
+			</div>
+			<label for="doe027Vhpdate" class="setting-grid-title">[[#{im.doe027.vhcfnam}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-wrapper">
+					<input type="text" th:placeholder="${#messages.msg('im.doe027.vhcfnam')}" id="doe027Vhcfnam" name="doe027Vhcfnam" onkeyup="doe027KeyupEvt()">
+				</div>
+			</div>
+			<label for="doe027Purcnum" class="setting-grid-title">[[#{grid.purcnum}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-wrapper">
+					<input type="text" th:placeholder="${#messages.msg('grid.purcnum')}" id="doe027Purcnum" name="doe027Purcnum" onkeyup="doe027KeyupEvt()">
+				</div>
+			</div>
+			<label for="doe027Orderln" class="setting-grid-title">[[#{grid.orderln}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-wrapper">
+					<input type="text" th:placeholder="${#messages.msg('grid.orderln')}" id="doe027Orderln" name="doe027Orderln" onkeyup="doe027KeyupEvt()">
+				</div>
+			</div>
+			<label for="doe027Asndate" class="setting-grid-title">[[#{im.doe027.asndate}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-date-group">
+					<input type="date" id="doe027AsndateFrom">
+					<span>~</span>
+					<input type="date" id="doe027AsndateTo">
+				</div>
+			</div>
+		</div>
+		<div class="search-btn-group">
+			<button type="button" class="btn-search btn-navy btn-green" id="doe027Search">
+				<img>[[#{bt.search}]]
+			</button>
+			<button type="button" class="btn-clear btn-white" id="doe027Reset">
+				<img>[[#{bt.reset}]]
+			</button>
+		</div>
+	</div>
+	<div class="search-list">
+		<div class="list-top">
+			<div class="list-title ic-title-mark">
+				<span>[[#{menu.im.doe027}]]</span>
+			</div>
+			<div class="edit-btn-wrapper">
+				<button type="button" class="btn-navy btn-green" id="doe027HeadSavePass">
+					<img class="ic-bt-save">[[#{bt.pass}]]
+				</button>
+				<button type="button" class="btn-navy btn-green" id="doe027HeadSaveFail">
+					<img class="ic-bt-save">[[#{bt.fail}]]
+				</button>
+			</div>
+		</div>
+		<div class="list-grid-wrapper con-box">
+			<div id="doe027HeadGrid"></div>
+		</div>
+	</div>
+	<div class="search-list">
+		<div class="list-grid-wrapper con-box">
+			<div id="doe027ItemGrid"></div>
+		</div>
+	</div>
+	<script>
+		!function() {
+			let doe027CurrentWarekey;
+			const pageId = '[[${tabPage}]]';
+
+			// 날짜 세팅
+			const yesterday = moment().subtract(1, 'd').format('YYYY-MM-DD');
+			const today = moment().format('YYYY-MM-DD');
+			const asndateFrom = document.querySelector('#' + pageId + 'AsndateFrom');
+			const asndateTo = document.querySelector('#' + pageId + 'AsndateTo');
+			asndateFrom.value = yesterday;
+			asndateTo.value = today;
+			dateValidation(asndateFrom, asndateTo, pageId + 'Asndate', 'd', 1);
+
+			//헤드그리드(사유코드 매핑)
+			const doe027HeadGridCM = [
+				{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+					, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N', maxCheck: 1},
+					nodrag: true, nodrop: true, paste: false,
+					editable: ui => 'ACONF' === ui.rowData.asnstat || 'PCONF' === ui.rowData.asnstat,
+					render: ui => {
+ 						return {
+  							cls: ui?.column?.editable(ui) ? '' : 'color-gray pq-cell-disable'
+ 						};
+					}
+				},
+				{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+				{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true },
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{im.doe027.eoasnky}]]', dataType: 'string', dataIndx: 'eoasnky', editable: false }, //hidden
+				{ title: '[[#{im.doe027.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false, hidden: true }, //hidden
+				{ title: '[[#{im.doe027.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false, hidden: true },
+				{ title: '[[#{im.doe027.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{im.doe027.vehicky}]]', dataType: 'string', dataIndx: 'vehicky', editable: false, hidden: true },
+				{ title: '[[#{im.doe027.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+				{ title: '[[#{im.doe027.asnstat}]]', dataType: 'string', dataIndx: 'asnstat', editable: false, hidden: true },
+				{ title: '[[#{im.doe027.asnstat}]]', dataType: 'string', dataIndx: 'asnstnm', editable: false },
+				{ title: '[[#{im.doe027.asndate}]]', dataType: 'string', dataIndx: 'asndate', editable: false },
+				{ title: '[[#{im.doe027.asntime}]]', dataType: 'string', dataIndx: 'asntime', editable: false },
+				{ title: '[[#{im.doe027.itemcnt}]]', dataType: 'integer', dataIndx: 'itemcnt', editable: false },
+				{ title: '[[#{im.doe027.ttldqty}]]', dataType: 'integer', dataIndx: 'ttldqty', editable: false },
+				{ title: '[[#{bm.common.totalwg}]]', dataType: 'double', dataIndx: 'ttlweig', editable: false,
+					format: '#,###',
+					summary: {
+						type: 'sum'
+					}
+				},{
+					title: '[[#{im.wasnhd.entdate}]]',
+					dataType: 'string',
+					dataIndx: 'entdate',
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'yymmdd',
+			        editor: {
+						type: 'textbox',
+						init: dateEditor,
+			        },
+					editable: false,
+					render: ui => {
+						const formattedText = ui.cellData && regDivideDateYMD.test(ui.cellData)
+											? ui.cellData.replace(regDivideDateYMD, divideDateFormatYMD)
+											: '';
+
+						return {
+							text: formattedText
+						};
+					}
+				}, {
+					title: '[[#{im.wasnhd.enttime}]]',
+					dataType: 'string',
+					dataIndx: 'enttime',
+			        cls: 'pq-calendar pq-side-icon',
+			        format: 'yymmdd',
+			        editor: {
+						type: 'textbox',
+						init: timeEditor2,
+			        },
+					editable: false,
+					render: ui => {
+						const formattedText = ui.cellData && regDivideTime.test(ui.cellData)
+											? ui.cellData.replace(regDivideTime, divideTimeFormat)
+											: '';
+
+						return {
+							text: formattedText
+						};
+					}
+				},
+				{ title: '[[#{im.doe027.rsncode}]]', dataType: 'string', dataIndx: 'rsncode',
+					styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' },
+					editor: {
+						type: 'select',
+			            init: function (ui) {
+			            	ui.$cell.find('select').pqSelect({ checkbox : true });
+			                setTimeout(function () {
+			                	ui.$cell.find('select').pqSelect('open');
+				        	}, 250);
+						},
+						options: ui => {
+							return window['rsncodeRelationList']?.map(e => {
+								if(e.warekey === ui.rowData.warekey && e.doccate === ui.rowData.doccate && e.doctype === ui.rowData.doctype){
+									const obj = {};
+									obj[e.rsncode] =  e.rsncdnm;
+
+									return obj;
+								}
+							}).filter(e => e);
+						}
+					},
+					render: ui => {
+ 						return {
+							text: window['rsncodeRelationList']?.find( e =>  e[ui.dataIndx] === ui.cellData)?.rsncdnm || '',
+							cellData: window['rsncodeRelationList']?.find( e =>  e[ui.dataIndx] === ui.cellData)?.rsncode || '',
+  							cls: ui?.column?.editable(ui) ? '' : 'color-gray pq-cell-disable'
+ 						};
+					},
+					editable: ui => 'ACONF' === ui.rowData.asnstat || 'PCONF' === ui.rowData.asnstat
+				}, {
+					title: '[[#{im.doe027.parsnnm}]]',
+					dataType: 'string',
+					dataIndx: 'parsnnm',
+					styleHead: {
+						'background-color' : '[[#{grid.styleHead02}]]'
+					},
+					editable: ui => 'ACONF' === ui.rowData.asnstat || 'PCONF' === ui.rowData.asnstat,
+					render: ui => {
+ 						return {
+  							cls: ui?.column?.editable(ui) ? '' : 'color-gray pq-cell-disable'
+ 						};
+					}
+				},
+				{ title: '[[#{md.mrscma.rscate1}]]', dataType: 'string', dataIndx: 'rscate1', editable: false, hidden: true},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', edtiable: false, hidden: true },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			const doe027HeadGrid = new GridUtil(doe027HeadGridCM,'[[${tabPage}]]', pageId + 'HeadGrid');
+			doe027HeadGrid.setReset();		//head grid resetBtn
+			doe027HeadGrid.setCreate(async function() {
+				await _commonInit(pageId);
+				this.option('freezeCols', 1);
+			});
+
+			doe027HeadGrid.setChange(async function(evt, ui){
+				if(ui.source === 'edit' || ui.source === 'paste'){
+					for(const updateData of ui.updateList){
+						if(updateData.newRow.hasOwnProperty('rsncode') && updateData.newRow.rsncode){
+
+							const rsncodeFilter = window['rsncodeRelationList'].find(function(data){
+								return data.rsncode === updateData.newRow.rsncode;
+							});
+
+							updateData.rowData.rscate1 = rsncodeFilter?.rscate1;
+							this.updateRow({
+								rowIndx : updateData.rowIndx,
+								newRow : {
+									state : 'Y',
+									rsncode : rsncodeFilter.rsncode,
+									rscate1 : rsncodeFilter?.rscate1
+								},
+								checkEditable : false
+							})
+						}
+					}
+				}
+			});
+
+			doe027HeadGrid.setCellDblClick(async function(evt, ui) {
+
+				if(ui.dataIndx === 'rsncode' || ui.dataIndx === 'parsnnm'){
+					return;
+				}
+				this.updateRow({
+					rowIndx : ui.rowIndx,
+					newRow : {state : 'Y'},
+					checkEditable : false
+				})
+
+			});
+
+			doe027HeadGrid.setRowInit(function(ui){
+				const rsncdnmOptions = this.getColumn({dataIndx : 'rsncode'}).editor.options(ui);
+				if(rsncdnmOptions.length) {
+					ui.rowData.rsncode = ui.rowData.rsncode || Object.keys(rsncdnmOptions[0])[0];
+					ui.rowData.rscate1 = window['rsncodeRelationList']?.find( e => e['rsncode'] === ui.rowData.rsncode)?.rscate1;
+				}
+			});
+
+			doe027HeadGrid.setCheck(async function(evt, ui){
+				if(ui.check){
+
+					// 아이템 변경 이력 확인
+					const gridChange = doe027ItemGrid.getGrid().getChanges({ all : true });
+
+					if(gridChange.updateList.length && !confirm('[[#{ms.modifyRollback}]]')){
+						this.updateRow({
+							rowIndx : ui.rowIndx,
+							newRow : {state : 'N'},
+							checkEditable : false
+						});
+						return;
+					}else{
+						this.Checkbox('state').getCheckedNodes().forEach(e=>{
+							if(e.eoasnky !== ui.rowData.eoasnky){
+								this.updateRow({
+									rowIndx : e.pq_ri,
+									newRow : {state : 'N'},
+									checkEditable : false
+								});
+							}
+						});
+
+						const param = {
+								warekey : document.querySelector('#doe027Warekey').value,
+								eoasnky : ui.rowData.eoasnky
+						}
+
+						const itemGrid = pq.grid('#doe027ItemGrid');
+
+						itemGrid.showLoading();
+
+						const itemResponse = await fetchUtil('GET', '/im/inbound/doe027/grid/item', param);
+						const detailAsnList = await itemResponse.json();
+
+						itemGrid.option('dataModel', {data: detailAsnList, recIndx: 'rowkey'});
+
+						itemGrid.refreshDataAndView();
+						itemGrid.hideLoading();
+					}
+				}
+			});
+
+			doe027HeadGrid.open();
+			initFunc();
+			//아이템 그리드
+			const doe027ItemGridCM = [
+				{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{im.doe027.eoasnky}]]', dataType: 'string', dataIndx: 'eoasnky', editable: false }, //hidden
+				{ title: '[[#{im.doe027.eoasnit}]]', dataType: 'string', dataIndx: 'eoasnit', editable: false }, //hidden
+				{title: '[[#{im.doe027.stlayer}]]', dataType: 'integer', dataIndx: 'stlayer',
+					styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' }, paste: false,
+				},
+				{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcate', editable: false, hidden : true },
+				{ title: '[[#{grid.btrcnam}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+				{ title: '[[#{bm.baddco.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false, hidden : true},
+				{ title: '[[#{bm.baddco.addconm}]]', dataType: 'string', dataIndx: 'addconm', editable: false },
+				{ title: '[[#{grid.skugrky}]]', dataType: 'string', dataIndx: 'skugrky', editable: false, hidden : true},
+				{ title: '[[#{grid.grpkynm}]]', dataType: 'string', dataIndx: 'grpkynm', editable: false},
+				{ title: '[[#{im.doe027.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+				{ title: '[[#{grid.skuthic}]]', format: '#,###.000', dataType: 'float', dataIndx: 'skuthic', editable: false, summary: { type: 'max' } },
+				{ title: '[[#{grid.skuwidt}]]', format: '#,###.0', dataType: 'float', dataIndx: 'skuwidt', editable: false, summary: { type: 'max' } },
+				{ title: '[[#{grid.skuleng}]]', format: '#,###', dataType: 'integer', dataIndx: 'skuleng', editable: false, summary: { type: 'max' } },
+				{ title: '[[#{grid.skuweig}]]', format: '#,###', dataType: 'integer', dataIndx: 'skuweig', editable: false, summary: { type: 'sum' }},
+				{ title: '[[#{grid.grossth}]]', format: '#,###.000', dataType: 'float', dataIndx: 'grossth', editable: false, summary: { type: 'max' }  },
+				{ title: '[[#{grid.grosswd}]]', format: '#,###.0', dataType: 'float', dataIndx: 'grosswd', editable: false, summary: { type: 'max' }  },
+				{ title: '[[#{grid.grossln}]]', format: '#,###',  dataType: 'integer', dataIndx: 'grossln', editable: false, summary: { type: 'max' }  },
+				{ title: '[[#{grid.grosswg}]]', format: '#,###', dataType: 'integer', dataIndx: 'grosswg', editable: false , summary: { type: 'sum' }},
+				{ title: '[[#{im.doe027.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false, hidden: true }, //hidden
+				{ title: '[[#{grid.ownamlc}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+				{ title: '[[#{im.doe027.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false, hidden: true  },
+				{ title: '[[#{im.doe027.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+				{ title: '[[#{im.doe027.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false },
+				{ title: '[[#{im.doe027.rgorgnm}]]', dataType: 'string', dataIndx: 'rgorgnm', editable: false },
+				{ title: '[[#{im.doe027.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false },
+				{ title: '[[#{im.doe027.rgmodnm}]]', dataType: 'string', dataIndx: 'rgmodnm', editable: false },
+				{ title: '[[#{im.doe027.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false, hidden: true },
+				{ title: '[[#{im.doe027.denamlc}]]', dataType: 'string', dataIndx: 'denamlc', editable: false },
+				{ title: '[[#{im.doe027.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false, hidden: true },
+				{ title: '[[#{im.doe027.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+				{ title: '[[#{im.wasnit.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+				{ title: '[[#{im.wasnit.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+				{ title: '[[#{im.wasnit.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+				{ title: '[[#{im.doe027.asnitst}]]', dataType: 'string', dataIndx: 'asnitst', editable: false, hidden: true }, //hidden
+				{ title: '[[#{im.doe027.asnitst}]]', dataType: 'string', dataIndx: 'asnitsn', editable: false },
+				{ title: '[[#{im.doe027.skudesc}]]', dataType: 'string', dataIndx: 'skudesc', editable: false },
+				{ title: '[[#{im.doe027.invoice}]]', dataType: 'string', dataIndx: 'invoice', editable: false }, //hidden
+				{ title: '[[#{im.doe027.skustrd}]]', dataType: 'string', dataIndx: 'skustrd', editable: false },
+				{ title: '[[#{im.doe027.ullocky}]]', dataType: 'string', dataIndx: 'ullocky', editable: false , hidden: true},
+				{ title: '[[#{im.doe027.toareky}]]', dataType: 'string', dataIndx: 'toareky', editable: false , hidden: true},
+				{ title: '[[#{im.doe027.tolocky}]]', dataType: 'string', dataIndx: 'tolocky', editable: false, hidden: true},
+				{ title: '[[#{im.doe027.tolayer}]]', dataType: 'string', dataIndx: 'tolayer', editable: false},
+				{ title: '[[#{im.doe027.suomkey}]]', dataType: 'string', dataIndx: 'suomkey', editable: false },
+				{ title: '[[#{im.doe027.asndqty}]]', dataType: 'integer', dataIndx: 'asndqty', editable: false },
+				{ title: '[[#{im.doe027.rchsqty}]]', dataType: 'integer', dataIndx: 'rchsqty', editable: false },
+				{ title: '[[#{im.doe027.itemcod}]]', dataType: 'string', dataIndx: 'itemcod', editable: false },
+				{ title: '[[#{im.doe027.purcnum}]]', dataType: 'string', dataIndx: 'purcnum', editable: false },
+				{ title: '[[#{im.doe027.orderln}]]', dataType: 'string', dataIndx: 'orderln', editable: false },
+				{ title: '[[#{im.doe027.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+				{ title: '[[#{im.doe027.stlotnb}]]', dataType: 'string', dataIndx: 'stlotnb', editable: false },
+				{ title: '[[#{im.doe027.shplimt}]]', dataType: 'string', dataIndx: 'shplimt', editable: false },
+				{ title: '[[#{im.doe027.delvdsr}]]', dataType: 'string', dataIndx: 'delvdsr', editable: false },
+				{ title: '[[#{im.doe027.restkyn}]]', dataType: 'string', dataIndx: 'restkyn', editable: false },
+				{ title: '[[#{im.doe027.skustat}]]', dataType: 'string', dataIndx: 'skustat', editable: false, hidden: true },
+				{ title: '[[#{im.doe027.skustat}]]', dataType: 'string', dataIndx: 'skustnm', editable: false },
+				{ title: '[[#{md.mrscma.rscate1}]]', dataType: 'string', dataIndx: 'rscate1', editable: false, hidden: true},
+				{ title: '[[#{im.doe027.costrky}]]', dataType: 'string', dataIndx: 'costrky', editable: false, hidden: true },
+				{ title: '[[#{im.doe027.costrit}]]', dataType: 'integer', dataIndx: 'costrit', editable: false, hidden: true },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', edtiable: false, hidden: true },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			const doe027ItemGrid = new GridUtil(doe027ItemGridCM,'[[${tabPage}]]', pageId + 'ItemGrid');
+
+			doe027ItemGrid.setFind();
+
+			doe027ItemGrid.setChange(async function(evt, ui){
+				if(ui.source === 'edit' || ui.source === 'paste'){
+					for(const updateData of ui.updateList){
+						if(updateData.newRow.hasOwnProperty('rsncode') && updateData.newRow){
+
+							const rsncodeFilter = window['rsncodeRelationList'].find(function(data){
+								return data.combovl === updateData.newRow.rsncode;
+							});
+
+							updateData.rowData.rscate1 = rsncodeFilter?.rscate1;
+						}
+					}
+				}
+			});
+
+			doe027ItemGrid.setReset();
+			doe027ItemGrid.open();
+
+			// Grid 객체 생성
+			async function initFunc(){
+				const relationList = await Promise.allSettled([
+					getReasonCodeRelationList(),
+				]);
+
+				const dataList = [
+					{
+						listName: 'rsncodeRelationList'
+					}];
+
+				for(let idx=0; idx < relationList.length; idx++){
+					const target = dataList[idx];
+					target['list'] = relationList[idx].value;
+				}
+
+				setPreloadDataOnWindow(dataList);
+				resetSearchConditions(pageId, 0, 0, 1);
+			};
+
+			//초기화
+			document.querySelector('#' + pageId + 'Reset').addEventListener('click', function () {
+				const grid = pq.grid('#' + pageId + 'HeadGrid');
+				if(grid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						return;
+					}
+				}
+				makeEmptyGrid(doe027HeadGrid);
+				makeEmptyGrid(doe027ItemGrid);
+				resetSearchConditions(pageId, 0, 0, 1); //공통 초기화함수
+			});
+
+			document.querySelector('#' + pageId + 'Search').addEventListener('click', function() {
+				getDoe027HdGridData();
+			});
+
+			async function getDoe027HdGridData() {
+				const headGrid = pq.grid('#doe027HeadGrid');
+				const itemGrid = pq.grid('#doe027ItemGrid');
+				const searchParams = document.querySelectorAll('input[id*="doe027"], select[id*="doe027"]');
+				const params = {};
+
+				//input, selectbox 검색 조건 params.
+				for(const searchParam of searchParams) {
+					const key = searchParam.id.substring(6).toLowerCase();
+					params[key] = searchParam.value;
+				}
+				params.forExamFlag = true;
+
+				headGrid.showLoading();
+				params.orderlnList = params.orderln.split(' ');
+				doe027CurrentWarekey = params.warekey;
+				const doe027Response = await fetchUtil('GET', '/im/inbound/doe027/grid/head', params);
+				const asnVehickyList = await doe027Response.json();
+
+				headGrid.option('dataModel', {data: asnVehickyList,recIndx: 'rowkey'});
+
+				headGrid.refreshDataAndView();
+
+				itemGrid.showLoading();
+				itemGrid.option('dataModel', {data: []});
+				itemGrid.refreshDataAndView();
+				itemGrid.hideLoading();
+
+				headGrid.hideLoading();
+			}
+
+			//합격 버튼 클릭 시(헤더)
+			document.querySelector('#doe027HeadSavePass').addEventListener('click', function(){
+				saveHeadPassDoe027('/im/inbound/doe027/head/pass');
+			});
+
+			//불합격 버튼 클릭 시 - 입고예정오더 확정 취소(헤드)
+			document.querySelector('#doe027HeadSaveFail').addEventListener('click', function(){
+				saveHeadFailDoe027('/im/inbound/doe027/head/fail')
+			});
+
+			async function saveHeadPassDoe027(url){
+				const headGrid = pq.grid('#doe027HeadGrid');
+				const itemGrid = pq.grid('#doe027ItemGrid');
+
+				const headParams = makeSaveData(headGrid);
+
+				if(!headParams){
+					return;
+				}
+
+				const isMatchRsncode = await matchPassAndFailRsncode(headParams, url);
+
+				if(!isMatchRsncode){
+					alert('[[#{ms.rsncode.error.invalid}]]');
+					return;
+				}
+
+				const param = {};
+				// 단수 필수값입력, 중복 벨리데이션
+				const validation = await essentialValueVaildate();
+
+				if(!validation){
+					return;
+				}
+				const duplicateStlayer = await essentialValueDuplicationVaildate();
+
+				if(!duplicateStlayer){
+					return;
+				}
+
+				const itemGridData = itemGrid.getData();
+				param['headParam'] = headParams.updateList[0];
+				param['itemParam'] = itemGridData;
+
+				if(confirm('[[#{ms.checksave}]]')) {
+					itemGrid.showLoading();
+					const response = await fetchUtil('POST', url, param);
+
+					if(response.status === 200){
+						makeEmptyGrid(doe027HeadGrid);
+						makeEmptyGrid(doe027ItemGrid);
+					}
+
+					itemGrid.hideLoading();
+				}
+			}
+
+			async function saveHeadFailDoe027(url){
+				const headGrid = pq.grid('#doe027HeadGrid');
+				const itemGrid = pq.grid('#doe027ItemGrid');
+
+				const headParams = makeSaveData(headGrid);
+
+				if(!headParams){
+					return;
+				}
+
+				const isMatchRsncode = await matchPassAndFailRsncode(headParams, url);
+
+				if(!isMatchRsncode){
+					alert('[[#{ms.rsncode.error.invalid}]]');
+					return;
+				}
+
+				if(confirm('[[#{ms.checksave}]]')) {
+					itemGrid.showLoading();
+					const response = await fetchUtil('POST', url, headParams);
+
+					if(response.status === 200){
+						resetSearchConditions(pageId, 0, 0, 1);
+						makeEmptyGrid(doe027HeadGrid);
+						makeEmptyGrid(doe027ItemGrid);
+					}
+
+					itemGrid.hideLoading();
+				}
+			}
+
+			async function saveDoe027(url){
+				const headGrid = pq.grid('#doe027HeadGrid');
+				const itemGrid = pq.grid('#doe027ItemGrid');
+
+				const headParams = headGrid.SelectRow().getSelection()[0]?.rowData;
+				const itemParams = makeSaveData(itemGrid);
+
+				if(!headParams || !itemParams){
+					return;
+				}
+
+				const isMatchRsncode = await matchPassAndFailRsncode(itemParams, url);
+
+				if(!isMatchRsncode){
+					alert('[[#{ms.rsncode.error.invalid}]]');
+					return;
+				}
+				if(!validateEssentialFieldBeforeSaveGridUtil(itemGrid, ['stlayer', 'rsncode'])){
+					return false;
+				}
+
+				if(confirm('[[#{ms.checksave}]]')) {
+					itemGrid.showLoading();
+					const response = await fetchUtil('POST', url, {headGrid : headParams, itemGrid : itemParams});
+
+					if(response.status === 200){
+						makeEmptyGrid(doe027HeadGrid);
+						makeEmptyGrid(doe027ItemGrid);
+					}
+
+					itemGrid.hideLoading();
+				}
+			}
+
+			async function matchPassAndFailRsncode(itemParams, url){
+				const isPass = url.substring(url.lastIndexOf('/')+1) === 'pass';
+
+				if(isPass){
+					const hasInvalidCode = itemParams.updateList.some(function (data){
+						return data.rscate1 === 'CANCEL';
+					});
+
+					if(hasInvalidCode){
+						return false;
+					}
+				}else{
+					const hasInvalidCode = itemParams.updateList.some(function(data){
+						return data.rscate1 === 'NORMAL';
+					});
+
+					if(hasInvalidCode){
+						return false;
+					}
+				}
+				return true;
+			}
+
+			//필수값 벨리데이션
+			async function essentialValueVaildate(){
+				const essentialCols = ['stlayer'];
+				const grid = doe027ItemGrid.getGrid();
+				const gridCheck = grid.getData();
+
+				if(!gridCheck.length){
+					alert('[[#{ms.noItemGridData}]]');
+					return false;
+				}
+
+				for(let gCheck of gridCheck){
+		    		for(let checkCol of essentialCols){
+		    			if(!gCheck[checkCol] || null === gCheck[checkCol] || undefined === gCheck[checkCol] || 0 === gCheck[checkCol]){
+		    				const msg = (gCheck.pq_ri+1)+' [[#{ms.row}]] '+'[[#{ms.requiredValue}]]' + '(' + grid.getColModel().find(e => e.dataIndx === checkCol).title + ')'; // 필수입력 값을 입력해주세요
+			    	  		alert(msg);
+			    	  		grid.editCell({ rowIndx : gCheck.pq_ri, dataIndx : checkCol });
+			    	  		return false;
+		    			}
+		    		}
+				}
+				return true;
+			}
+
+			//필수값 중복
+			async function essentialValueDuplicationVaildate(){
+				const essentialCols = ['stlayer'];
+				const grid = doe027ItemGrid.getGrid();
+				const gridCheck = grid.getData();
+
+				if(!gridCheck.length){
+					alert('[[#{ms.noItemGridData}]]');
+					return false;
+				}
+
+				for(let gCheck of gridCheck){
+					for(let gData of grid.getData()){
+						if(gCheck.pq_ri !== gData.pq_ri && isKeyDuplication(essentialCols, gCheck, gData)){
+							const alertTxt = makeDuplicateRowText(essentialCols, grid, gCheck, gData)
+												+ ' [[#{ms.DuplicateKeyErr}]]' + '( ' + (gData.pq_ri+1) + '[[#{ms.row}]] & ' + (gCheck.pq_ri+1) + '[[#{ms.row}]] )';
+
+							alert(alertTxt);
+							grid.editCell({ rowIndx : gData.pq_ri, dataIndx : 'stlayer' });
+
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+
+			//keyup
+			doe027KeyupEvt = async function (){
+				const key = this.event.key || this.event.keyCode;
+				if(key === 'Enter' || key === 13) {
+					makeEmptyGrid(doe027ItemGrid);
+					await getDoe027HdGridData();
+				}
+			}
+
+			// 창고 변경시 자동조회
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				const headGrid = pq.grid('#doe027HeadGrid');
+				if(doe027CurrentWarekey && headGrid.pdata.length > 0){
+					if (!confirm('[[#{ms.listViewRollback}]]')) {
+						this.value = doe027CurrentWarekey;
+						return;
+					}
+				}
+				makeEmptyGrid(doe027ItemGrid);
+				await getDoe027HdGridData();
+			});
+		}();
+		</script>
+</div>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Language" content="ko">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="-1">
+<script th:src="@{/js/scripts/jquery-3.6.0.min.js}"></script>
+<!-- 파비콘 -->
+<link rel="manifest" th:href="@{/manifests/manifest_tablet.json}" />
+<link id="rPath" th:data-contextPath="${contextPath}" />
+<title>[[#{title.platform}]]</title>
+<!-- CSS -->
+<link rel="stylesheet" th:href="@{/design/css/main.css}">
+<style>
+.wrapper {
+	min-width: auto;
+	min-height: auto;
+}
+
+.login-wrapper .login-wrap {
+	position: relative;
+}
+
+.errmsg {
+	color: red;
+	font-weight: bold;
+	text-align: center;
+	position: absolute;
+	/* 			top: 40%; */
+	left: 50%;
+	transform: translateX(-50%);
+	width: 100%;
+}
+</style>
+</head>
+<body>
+	<div class="wrapper login-wrapper">
+		<div class="login-wrap con-box">
+			<div class="login-title-wrap">
+				<img src="" alt="" class="img-logo">
+				<div class="login-title">
+					경북포항 <span>스마트물류플랫폼</span>
+				</div>
+			</div>
+			<div id="errMsg" th:if="${param.error}">
+				<p class="errmsg">[[${param.exception}]]</p>
+			</div>
+			<div class="input-login-wrapper">
+				<input type="text" name="useract" id="useract" class="ic-id" placeholder="아이디">
+				<input type="password" name="passwrd" id="passwrd" class="ic-pw" placeholder="비밀번호" >
+				<input type="hidden" name="langkey" id="langkey" th:value="ko">
+				<button type="button" class="btn-login" id="login-button">로그인</button>
+				<div class="join-find">
+					<a href="">비밀번호 찾기</a>
+					<div class="v-line"></div>
+					<a href="#" id="signup">회원등록</a>
+				</div>
+			</div>
+			<div class="copyright">Copyright © 스마트물류플랫폼 All right reserved.</div>
+		</div>
+	</div>
+</body>
+<script th:inline="javascript">
+!function(){
+	const contextPath = /*[[${contextPath}]]*/'';
+	sessionStorage.activeProgramList = [];
+
+	document.getElementById('signup').addEventListener('click', () => {
+		window.location.href = contextPath + '/signup';
+	});
+
+	document.getElementById('login-button').addEventListener('click', async () => {
+		await login();
+	});
+
+	document.getElementById('useract').focus();
+
+	document.querySelector('.input-login-wrapper').addEventListener('keypress', async function(e) {
+		if (e.keyCode === 13) {
+			await login();
+		}
+	});
+
+	async function login(){
+		const param = {
+			useract: document.getElementById('useract').value,
+			passwrd: document.getElementById('passwrd').value
+		};
+
+		const res = await fetch(contextPath + '/auth/login', {
+			method: 'POST',
+  			credentials: 'include',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(param)
+		});
+
+
+		if(!res.ok){
+			const errorRes = await res.json();
+			await alert('Time : ' + errorRes.timestamp + '\n' + 'Error : ' + errorRes.status + '/' + errorRes.error + '\n' + 'Message : ' + errorRes.message);
+			window.location.replace(errorRes.redirectUrl || (contextPath + '/login'));
+
+			return;
+		} else {
+			const resJson = await res.json();
+			await localStorage.setItem('accessToken', resJson.accessToken);
+			window.location.replace(resJson.redirectUrl ? (resJson.redirectUrl + (resJson.langkey ? '?langkey=' + resJson.langkey : '')) : (contextPath + '/main'));
+		}
+
+	}
+}();
+</script>
+</html>

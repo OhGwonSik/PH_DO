@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12">
+    <g transform="translate(-103 -8)">
+        <path transform="translate(103 8)" style="fill:none" d="M0 0h12v12H0z"/>
+        <circle data-name="타원 3576" cx="1.25" cy="1.25" r="1.25" transform="translate(103 12.75)" style="fill:#c2c5c8"/>
+        <circle data-name="타원 3577" cx="1.25" cy="1.25" r="1.25" transform="translate(107.75 12.75)" style="fill:#c2c5c8"/>
+        <circle data-name="타원 3578" cx="1.25" cy="1.25" r="1.25" transform="translate(112.5 12.75)" style="fill:#c2c5c8"/>
+    </g>
+</svg>

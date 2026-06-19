@@ -1,0 +1,16 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<script>
+			document.addEventListener('DOMContentLoaded', function() {
+				alert('[[#{${alertMsg}}]]'); 
+				const activeProgramList = sessionStorage.activeProgramList ? JSON.parse(sessionStorage.activeProgramList) : [];
+				const activePage = activeProgramList.find(function(data) {
+					return data.active === true;
+				});
+				
+				location.href = rPath + (activePage ? activePage.prgmurl : '/main');
+			});
+		</script>
+	</div>
+</html>

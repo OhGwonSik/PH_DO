@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10">
+    <path transform="rotate(180 5 5)" style="fill:none" d="M0 0h10v10H0z"/>
+    <path data-name="선 43" transform="rotate(-135 3.4 3.374)" style="stroke:#5c7099;stroke-linecap:round;stroke-width:1.6px;fill:none" d="M0 4.475V0"/>
+    <path data-name="선 44" transform="rotate(-135 4.327 1.137)" style="stroke:#5c7099;stroke-linecap:round;stroke-width:1.6px;fill:none" d="M4.475 0H0"/>
+</svg>

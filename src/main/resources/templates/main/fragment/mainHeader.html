@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div class="header" id="mainHeader" th:fragment="fragments-mainHeader">
+	<div class="header-logo" style="cursor: pointer">
+		<img th:src="@{/design/assets/img_logo@3x.png}" alt="" width="19" height="19"> [[#{header.kpslp}]]
+	</div>
+	<div class="header-center">
+		<ul class="main-menu">
+		</ul>
+		<div class="header-info">
+			<div class="user-info"></div>
+			<button class="btn-logout">[[#{bt.logout}]]</button>
+		</div>
+	</div>
+	<div class="header-favorite" style="cursor: pointer">
+		<img th:src="@{/design/assets/ic_bookmark_on@3x.png}" alt="" width="16" height="16"> [[#{header.favorite}]]
+	</div>
+	<script>
+	!(function(){
+		document.querySelector('.btn-logout').addEventListener('click', async function() {
+			await logout();
+		});
+
+		document.querySelector('.header-favorite').addEventListener('click', function() {
+			bookMarkAdd();
+		});
+
+		function setUsernam() {
+			document.querySelector('.header-info .user-info').innerText = userAttr.usernam;
+		}
+
+		document.querySelector('.header-logo').addEventListener('click', async function() {
+			document.querySelector('#home_btn_area').click();
+		});
+
+		setUsernam();
+	})();
+	</script>
+</div>
+</html>

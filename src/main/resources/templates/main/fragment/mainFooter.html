@@ -1,0 +1,19 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<div id="mainFooter" th:fragment="fragments-mainFooter">
+	<!--  Footer 시작  -->
+	<!--  Copyright 시작  -->
+	<div class="footer">Copyright © 스마트물류플랫폼 All right reserved.</div>
+	<!--  Copyright 종료  -->
+	<!-- Modal 공통 DIV start -->
+	<div id="modalCommon"></div>
+	<div id="modalsyu10"></div>
+	<div id="modalDestinationChange"></div>
+<script>
+	!function(){
+		$("#modalsyu10").load(rPath + '/main/modalLoad?gprogurl=/com/modal/syu10.html');
+		$("#modalDestinationChange").load(rPath + '/main/modalLoad?gprogurl=/com/modal/destinationChange.html');
+	}();
+</script>
+<!--  Footer 종료  -->
+</div>
+</html>

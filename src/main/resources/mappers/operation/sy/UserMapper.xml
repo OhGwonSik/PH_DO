@@ -1,0 +1,624 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.sy.mapper.UserMapper">
+
+	 <select id="selectUserApplication" resultType="String">
+	 	SELECT SM.APNAMEN
+	 	  FROM ${commonSchema}.SUSRMA SU
+	 	 INNER JOIN ${commonSchema}.SUSRAP SA
+	 	    ON SU.USERKEY = SA.USERKEY
+	 	   AND SU.USERACT = SA.USERACT
+	 	 INNER JOIN ${commonSchema}.SAPPMA SM
+	 	    ON SA.APPLKEY = SM.APPLKEY
+	 	 WHERE SU.USERACT= #{useract}
+	 </select>
+
+	 <select id="selectInformationSchema" resultType="com.kbph.logistics.sy.domain.SchemaDTO">
+	 	SELECT SCHEMA_NAME
+		  FROM INFORMATION_SCHEMA.SCHEMATA
+		 WHERE SCHEMA_NAME LIKE CONCAT ('%', #{apnamen}, '%')
+	 </select>
+
+     <select id="selectUserCompanyAccount" resultType="com.kbph.logistics.sy.domain.UserVO">
+        SELECT SU.USERKEY, SU.USERACT, SU.PASSWRD, SU.USERNAM
+	        , SU.ADDRESS, SU.CITYCOD, SU.RSONKEY, SU.POSTCOD, SU.NATN2KY
+	        , SU.TELPHNM, SU.EMAILAD, SU.DEPARTM, SU.EMPLOID
+	        , SU.ACAPDOC
+	        , SU.USERGR1, SU.USERGR2, SU.USERGR3, SU.LANGKEY
+	        , SU.DATEFMT, SU.TIMEFMT, SU.DECIFMT, SU.UTIMZON
+	        , SU.IDEXPDT, SU.PWEXPDT, SU.PWERCNT, SU.ALOCKED
+	        , SU.ALOCKMO, SU.POLPRYN, SU.POLSVYN
+	        , SU.POLSMYN, SU.POLEMYN, SU.POLDATE, SU.POLTIME
+	        , SU.APPROYN, SU.SIGUPYN, SU.APUSEYN, SU.ACTIVYN
+	        , SU.USRMEMO, SU.SOTAPYN, SU.SOTDATE
+	        , SU.SOTTIME, SU.CREDATE, SU.CRETIME, SU.CREUSER
+	        , SU.LMODATE, SU.LMOTIME, SU.LMOUSER, SU.UPDTCHK
+	        , SU.FCMTOKN
+	        <if test='isAppUser != "Y"'>
+	        	, SS.USERTYP, SS.ROLGKEY
+	        </if>
+         FROM ${commonSchema}.SUSRMA SU
+       	<if test='isAppUser != "Y"'>
+	        INNER JOIN ${schema}.SUSRSH SS
+	           ON SU.USERKEY = SS.USERKEY
+	          AND SU.USERACT = SS.USERACT
+       	</if>
+	        WHERE SU.USERACT = #{useract}
+	          AND SU.ACTIVYN = 'Y'
+	        <if test='isAppUser == "Y"'>
+	        	AND SU.APUSEYN = 'Y'
+	        </if>
+    </select>
+
+	<select id="selectMainHeaderList" resultType="com.kbph.logistics.sy.domain.SmnghdDTO">
+		/* selectMainHeaderList */
+		SELECT SH.MNHDKEY, SH.MNHDNAM, SH.MNHDLKY
+		  FROM ${commonSchema}.SUSRMA SU
+		 INNER JOIN ${schema}.SUSRSH SS
+		    ON SS.USERKEY = SU.USERKEY
+		 INNER JOIN ${schema}.SROLGR SR
+		    ON SR.ROLGKEY = SS.ROLGKEY
+		   AND SR.RLUSEYN = 'Y'
+		 INNER JOIN ${schema}.SMNGHD SH
+			ON SH.HDUSEYN = 'Y'
+		 INNER JOIN ${schema}.SMNUMA SA
+			ON SA.MNHDKEY = SH.MNHDKEY
+		   AND SA.MNUSEYN = 'Y'
+		 INNER JOIN ${schema}.SROLMN SL
+			ON SL.MENUKEY = SA.MENUKEY
+		   AND SL.ROLGKEY = SR.ROLGKEY
+		   AND SS.ROLGKEY = SR.ROLGKEY
+		   AND SL.RMUSEYN = 'Y'
+		 WHERE SU.USERKEY = #{userkey}
+		   AND SU.USERACT = #{useract}
+		GROUP BY SH.MNHDKEY, SH.MNHDNAM, SH.MNHDLKY
+	</select>
+
+    <select id="selectUserMenuList" resultType="com.kbph.logistics.sy.domain.SmnumaDTO">
+    	/* selectUserMenuList */
+    	SELECT SM.MNHDKEY, SM.MENUKEY, SM.MENUFID,
+    		'BOOKMARK' AS MENUGBN, SM.MENUNAM, SM.MENUSEQ, SM.MENULKY,
+    		SM.PROGRID, SM.PRGMURL, CONCAT('1-', SM.MNHDKEY, '-', LPAD(SM.MENUSEQ, 5, '0')) AS ORDRSEQ
+          FROM ${commonSchema}.SUSRMA SU
+         INNER JOIN ${schema}.SMNUBM SA
+            ON SU.USERKEY = SA.USERKEY
+           AND SA.USERACT = SU.USERACT
+         INNER JOIN ${schema}.SMNUMA SM
+			ON SM.PROGRID = SA.PROGRID
+		   AND SM.MNUSEYN = 'Y'
+	     WHERE SU.USERKEY = #{userkey}
+	       AND SU.USERACT = #{useract}
+		   AND SM.MENUKEY IS NOT NULL
+        UNION ALL
+        SELECT DISTINCT
+               SM.MNHDKEY, SM.MENUKEY, SM.MENUFID,
+               SM.MENUGBN, SM.MENUNAM, SM.MENUSEQ, SM.MENULKY,
+               SM.PROGRID, SM.PRGMURL, CONCAT('2-', SM.MNHDKEY, LPAD(SM.MENUSEQ, 5, '0')) AS ORDRSEQ
+		  FROM ${schema}.SMNUMA SM
+         INNER JOIN
+         (
+               SELECT SA.MENUFID, SA.MENUKEY
+                FROM ${commonSchema}.SUSRMA SU
+               INNER JOIN ${schema}.SUSRSH SS
+                  ON SS.USERKEY = SU.USERKEY
+                 AND SS.USERACT = SU.USERACT
+               INNER JOIN ${schema}.SROLGR SR
+                  ON SR.ROLGKEY = SS.ROLGKEY
+                 AND SR.RLUSEYN = 'Y'
+               INNER JOIN ${schema}.SMNGHD SH
+                  ON SH.HDUSEYN = 'Y'
+               INNER JOIN ${schema}.SMNUMA SA
+                  ON SA.MNHDKEY = SH.MNHDKEY
+                 AND SA.MNUSEYN = 'Y'
+               INNER JOIN ${schema}.SROLMN SL
+                  ON SL.MENUKEY = SA.MENUKEY
+                 AND SL.ROLGKEY = SR.ROLGKEY
+                 AND SS.ROLGKEY = SR.ROLGKEY
+                 AND SL.RMUSEYN = 'Y'
+               WHERE SU.USERKEY = #{userkey}
+                 AND SU.USERACT = #{useract}
+          ) SY
+            ON (SM.MENUKEY = SY.MENUKEY OR SM.MENUKEY = SY.MENUFID)
+           AND SY.MENUKEY IS NOT NULL
+        ORDER BY ORDRSEQ
+    </select>
+
+    <!-- 사용자 프로그램 실행 이력정보 저장 -->
+	<insert id="insertUserProgram" parameterType="HashMap">
+		insert
+		  into SUPAHI (USRPGSQ, USERACT, PROGRID, MENUNAM, THEMETY, CREUSER)
+		values (fn_sy_usrpgsq(), #{useract}, #{progrid}, #{menunam}, #{themety}, #{useract} )
+ 	</insert>
+
+ 	<!-- 사용자 Grid Setting Layout 조회 -->
+ 	<select id="selectGridSettingLayout" resultType="com.kbph.logistics.sy.domain.GridSettingLayoutDTO">
+		select PROGRID, PGRIDID, NUBRCEL, HOVERMD, FREZCOL, FREZROW, COLBODR, ROWBODR, STRPROW, GHEIGHT
+		  from ${userData.schema}.SGRIDH
+		 <where>
+		   and USERKEY = #{userData.userkey}
+		   and USERACT = #{userData.useract}
+		   and PROGRID = #{param.progrid}
+		   and PGRIDID = #{param.pgridid}
+		 </where>
+    </select>
+
+ 	<!-- 사용자 Grid Column Layout 조회 -->
+ 	<select id="selectGridColumnLayout" resultType="com.kbph.logistics.sy.domain.GridColumnLayoutDTO">
+		select PROGRID, PGRIDID, DATAIDX, SORTNUM, PHIDDEN, PQALIGN, DATATYP, PQWIDTH
+		  from ${userData.schema}.SGRIDL
+		<where>
+		   and USERKEY = #{userData.userkey}
+		   and USERACT = #{userData.useract}
+		   and PROGRID = #{param.progrid}
+		   and PGRIDID = #{param.pgridid}
+		</where>
+		 order by SORTNUM asc
+    </select>
+
+    <!-- 사용자 Grid Setting Layout 저장 -->
+    <insert id="mergeSettingLayout" parameterType="com.kbph.logistics.sy.domain.GridSettingLayoutDTO">
+	   insert
+	     into ${userData.schema}.SGRIDH (
+		      USERKEY, USERACT, PROGRID, PGRIDID, NUBRCEL, HOVERMD
+		    , FREZCOL, FREZROW, COLBODR, ROWBODR, STRPROW, GHEIGHT
+		    , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER)
+	   values (
+	   		  #{userData.userkey}, #{userData.useract}, #{param.progrid}, #{param.pgridid}, #{param.nubrcel}, #{param.hovermd}
+	  		, #{param.frezcol}, #{param.frezrow}, #{param.colbodr}, #{param.rowbodr}, #{param.strprow}, #{param.gheight}
+	  		, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+    	ON DUPLICATE KEY UPDATE
+    		  NUBRCEL = values(NUBRCEL), HOVERMD = values(HOVERMD), FREZCOL = values(FREZCOL)
+    	    , FREZROW = values(FREZROW), COLBODR = values(COLBODR), ROWBODR = values(ROWBODR)
+    	    , STRPROW = values(STRPROW), GHEIGHT = values(GHEIGHT)
+    		, LMODATE = values(LMODATE), LMOTIME = values(LMOTIME), LMOUSER = values(LMOUSER)
+    </insert>
+
+    <!-- 사용자 Grid Column Layout 저장 -->
+    <insert id="mergeColumnLayout" parameterType="com.kbph.logistics.sy.domain.GridColumnLayoutDTO">
+	   insert
+	     into ${userData.schema}.SGRIDL (
+		       USERKEY, USERACT, PROGRID, PGRIDID, DATAIDX
+		     , SORTNUM, PHIDDEN, PQALIGN, DATATYP, PQWIDTH
+		     , CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER)
+	   values
+			<foreach collection="list" item="item"  separator=",">
+	  		(  #{userData.userkey}, #{userData.useract}, #{progrid}, #{pgridid}, #{item.dataidx}
+	  		 , #{item.sortnum}, #{item.phidden}, #{item.pqalign}, #{item.datatyp}, #{item.pqwidth}
+	  		 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract}
+			 , to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{userData.useract} )
+    		</foreach>
+    	ON DUPLICATE KEY UPDATE
+    		  SORTNUM = values(SORTNUM), PHIDDEN = values(PHIDDEN), PQALIGN = values(PQALIGN)
+    	    , DATATYP = values(DATATYP), PQWIDTH = values(PQWIDTH)
+    		, LMODATE = values(LMODATE), LMOTIME = values(LMOTIME), LMOUSER = values(LMOUSER)
+    </insert>
+
+    <!-- 사용자 Grid Column Layout 삭제 -->
+    <delete id="deleteColumnLayout" parameterType="com.kbph.logistics.sy.domain.GridColumnLayoutDTO">
+	   delete
+	     from ${userData.schema}.SGRIDL
+	    where USERKEY = #{userData.userkey}
+	      and USERACT = #{userData.useract}
+		  and PROGRID = #{progrid}
+		  and PGRIDID = #{pgridid}
+    </delete>
+
+    <!-- 사용자 Grid Setting Layout 삭제 -->
+    <delete id="deleteSettingLayout" parameterType="com.kbph.logistics.sy.domain.GridSettingLayoutDTO">
+	   delete
+	     from ${userData.schema}.SGRIDH
+	    where USERKEY = #{userData.userkey}
+	      and USERACT = #{userData.useract}
+		  and PROGRID = #{progrid}
+		  and PGRIDID = #{pgridid}
+    </delete>
+
+	<!-- 사용자 정보 조회 -->
+	<select id="selectUserList" resultType="com.kbph.logistics.sy.domain.UserDTO">
+		/* selectUserList */
+		SELECT CONCAT(SU.USERKEY, SU.USERACT) AS rowkey
+			, SU.USERKEY, SU.USERACT, SU.PASSWRD, SU.USERNAM, SU.ADDRESS
+			, SU.CITYCOD, SU.RSONKEY, SU.POSTCOD, SU.NATN2KY, SU.TELPHNM
+			, SU.EMAILAD, SU.DEPARTM, SU.EMPLOID, SU.ACAPDOC, '' AS USERTYP
+			, SU.USERGR1, SU.USERGR2, SU.USERGR3, SU.LANGKEY, SU.DATEFMT
+			, SU.TIMEFMT, SU.DECIFMT, SU.UTIMZON, SU.IDEXPDT, SU.PWEXPDT
+			, SU.PWERCNT, SU.ALOCKED, SU.ALOCKMO, '' AS ROLGKEY, SU.POLPRYN
+			, SU.POLSVYN, SU.POLSMYN, SU.POLEMYN, SU.POLDATE, SU.POLTIME
+			, SU.APPROYN, SU.SIGUPYN, SU.APUSEYN, SU.ACTIVYN, SU.USRMEMO
+			, SU.SOTAPYN, SU.SOTDATE, SU.SOTTIME, SU.UPDTCHK, 0 AS updtchk2
+			, DATE_FORMAT(SU.CREDATE,'%Y-%m-%d') AS CREDATE
+			, DATE_FORMAT(STR_TO_DATE(SU.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+			, ${userData.schema}.FN_SY_USERNAM(SU.CREUSER) AS CREUSER
+			, DATE_FORMAT(SU.LMODATE,'%Y-%m-%d') AS LMODATE
+			, DATE_FORMAT(STR_TO_DATE(SU.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+			, ${userData.schema}.FN_SY_USERNAM(SU.LMOUSER) AS LMOUSER
+		FROM ${userData.commonSchema}.SUSRMA SU
+		<where>
+			SU.APUSEYN = 'Y' AND SU.APPROYN = 'Y'
+			<if test='param.useract != null and param.useract != ""'>
+				AND UPPER(SU.USERACT) LIKE CONCAT('%' , UPPER(#{param.useract}) , '%')
+			</if>
+			<if test='param.usernam != null and param.usernam != ""'>
+				AND UPPER(SU.USERNAM) LIKE CONCAT('%' , UPPER(#{param.usernam}) , '%')
+			</if>
+			<if test='param.usertyp != null and param.usertyp != ""'>
+				AND SH.USERTYP = #{param.usertyp}
+			</if>
+			<if test='param.rolgkey != null and param.rolgkey != ""'>
+				AND SH.ROLGKEY = #{param.rolgkey}
+			</if>
+			<if test='param.activyn != null and param.activyn != ""'>
+				AND SU.ACTIVYN = #{param.activyn}
+			</if>
+		</where>
+		UNION ALL
+		SELECT CONCAT(SU.USERKEY, SU.USERACT) AS rowkey
+			, SU.USERKEY, SU.USERACT, SU.PASSWRD, SU.USERNAM, SU.ADDRESS
+			, SU.CITYCOD, SU.RSONKEY, SU.POSTCOD, SU.NATN2KY, SU.TELPHNM
+			, SU.EMAILAD, SU.DEPARTM, SU.EMPLOID, SU.ACAPDOC, SH.USERTYP AS USERTYP
+			, SU.USERGR1, SU.USERGR2, SU.USERGR3, SU.LANGKEY, SU.DATEFMT
+			, SU.TIMEFMT, SU.DECIFMT, SU.UTIMZON, SU.IDEXPDT, SU.PWEXPDT
+			, SU.PWERCNT, SU.ALOCKED, SU.ALOCKMO, SH.ROLGKEY AS ROLGKEY, SU.POLPRYN
+			, SU.POLSVYN, SU.POLSMYN, SU.POLEMYN, SU.POLDATE, SU.POLTIME
+			, SU.APPROYN, SU.SIGUPYN, 'N' as APUSEYN, SU.ACTIVYN, SU.USRMEMO
+			, SU.SOTAPYN, SU.SOTDATE, SU.SOTTIME, SU.UPDTCHK, SH.UPDTCHK AS updtchk2
+			, DATE_FORMAT(SU.CREDATE,'%Y-%m-%d') AS CREDATE
+			, DATE_FORMAT(STR_TO_DATE(SU.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+			, ${userData.schema}.FN_SY_USERNAM(SU.CREUSER) AS CREUSER
+			, DATE_FORMAT(SU.LMODATE,'%Y-%m-%d') AS LMODATE
+			, DATE_FORMAT(STR_TO_DATE(SU.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+			, ${userData.schema}.FN_SY_USERNAM(SU.LMOUSER) AS LMOUSER
+		FROM ${userData.commonSchema}.SUSRMA SU
+		INNER JOIN ${userData.commonSchema}.SUSRAP SA ON SU.USERKEY = SA.USERKEY
+		INNER JOIN ${userData.schema}.SUSRSH SH ON SU.USERKEY = SH.USERKEY
+		<where>
+			SA.APPLKEY = ( SELECT APPLKEY FROM ${userData.commonSchema}.SAPPMA WHERE APNAMEN = #{param.apnamen} )
+			AND SU.APPROYN = 'Y'
+			<if test='param.useract != null and param.useract != ""'>
+				AND UPPER(SU.USERACT) LIKE CONCAT('%' , UPPER(#{param.useract}) , '%')
+			</if>
+			<if test='param.usernam != null and param.usernam != ""'>
+				AND UPPER(SU.USERNAM) LIKE CONCAT('%' , UPPER(#{param.usernam}) , '%')
+			</if>
+			<if test='param.usertyp != null and param.usertyp != ""'>
+				AND SH.USERTYP = #{param.usertyp}
+			</if>
+			<if test='param.rolgkey != null and param.rolgkey != ""'>
+				AND SH.ROLGKEY = #{param.rolgkey}
+			</if>
+			<if test='param.activyn != null and param.activyn != ""'>
+				AND SU.ACTIVYN = #{param.activyn}
+			</if>
+		</where>
+		GROUP BY SU.USERKEY, SU.USERACT
+	</select>
+
+	<!-- 가입승인요청 모달 조회 -->
+	<select id="selectUserApproveList" resultType="com.kbph.logistics.sy.domain.UserDTO">
+		/* selectUserApproveList */
+		SELECT CONCAT(USERKEY, USERACT) AS rowkey
+			, USERKEY, USERACT, PASSWRD, USERNAM, ADDRESS
+			, CITYCOD, RSONKEY, POSTCOD, NATN2KY, TELPHNM
+			, EMAILAD, DEPARTM, EMPLOID, ACAPDOC, USERGR1
+			, USERGR2, USERGR3, LANGKEY, DATEFMT, TIMEFMT
+			, DECIFMT, UTIMZON, IDEXPDT, PWEXPDT, PWERCNT
+			, ALOCKED, ALOCKMO, POLPRYN, POLSVYN, POLSMYN
+			, POLEMYN, POLDATE, POLTIME, APPROYN, SIGUPYN
+			, APUSEYN, ACTIVYN, USRMEMO, SOTAPYN, SOTDATE
+			, SOTTIME
+			, DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+			, DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+			, ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+			, DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+			, DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+			, ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+			, UPDTCHK
+		FROM ${userData.commonSchema}.SUSRMA
+		WHERE APPROYN = 'N'
+			AND SIGUPYN = 'Y'
+			AND APUSEYN = 'Y'
+		ORDER BY CREDATE, CRETIME
+	</select>
+
+    <!-- 아이디 중복 확인 -->
+    <select id="selectUserCntByUseract" resultType="int">
+    	SELECT COUNT(*) FROM PH_COMMON.SUSRMA WHERE USERACT = #{useract};
+    </select>
+
+    <!-- 유저키 채번 -->
+   <select id="selectUserkey" resultType="String">
+      SELECT PH_COMMON.FN_SY_USERKEY() AS USERKEY FROM DUAL
+   </select>
+
+    <!-- 차주 기사 회원가입 -->
+    <insert id="insertSusrma" parameterType="com.kbph.logistics.sy.domain.UserDTO">
+    	/* insertSusrma */
+		INSERT INTO PH_COMMON.SUSRMA(
+			USERKEY, USERACT, PASSWRD, USERNAM, ADDRESS
+			, CITYCOD, RSONKEY, POSTCOD, NATN2KY, TELPHNM
+			, EMAILAD, DEPARTM, EMPLOID, ACAPDOC, USERGR1
+			, USERGR2, USERGR3, LANGKEY, DATEFMT, TIMEFMT
+			, DECIFMT, IDEXPDT, PWEXPDT, ALOCKED, ALOCKMO
+			, POLPRYN, POLSVYN, POLSMYN, POLEMYN, POLDATE
+			, POLTIME, APPROYN, SIGUPYN, APUSEYN, ACTIVYN
+			, USRMEMO, SOTAPYN, SOTDATE, SOTTIME, CREDATE
+			, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			#{userkey}, #{useract}, #{passwrd}, #{usernam}, #{address}
+			, #{citycod}, #{rsonkey}, #{postcod}, #{natn2ky}, #{telphnm}
+			, #{emailad}, #{departm}, #{emploid}, #{acapdoc}, #{usergr1}
+			, #{usergr2}, #{usergr3}, #{langkey}, #{datefmt}, #{timefmt}
+			, #{decifmt}, '20991231', '20991231', #{alocked}, #{alockmo}
+			, #{polpryn}, #{polsvyn}, #{polsmyn}, #{polemyn}, to_char(NOW() ,'YYYYMMDD')
+			, to_char(NOW() ,'hh24miss'), #{approyn}, #{sigupyn}, #{apuseyn}, #{activyn}
+			, #{usrmemo}, #{sotapyn}, #{sotdate}, #{sottime}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{useract}
+			, to_char(NOW() ,'YYYYMMDD'), to_char(NOW() ,'hh24miss'), #{useract}
+		)
+    </insert>
+
+    <!-- 신규 사용자 추가 (관리자용) -->
+    <insert id="insertSusrmaAdmin" parameterType="com.kbph.logistics.sy.domain.UserDTO">
+    	/* insertSusrmaAdmin */
+		INSERT INTO ${userData.commonSchema}.SUSRMA
+		(
+			  USERKEY, USERACT, PASSWRD, USERNAM
+			, ADDRESS, CITYCOD, RSONKEY, POSTCOD
+			, NATN2KY, TELPHNM, EMAILAD, DEPARTM
+			, EMPLOID, ACAPDOC, USERGR1, USERGR2
+			, USERGR3, LANGKEY, DATEFMT, TIMEFMT
+			, DECIFMT, IDEXPDT, PWEXPDT, ALOCKED
+			, ALOCKMO, POLPRYN, POLSVYN, POLSMYN
+			, POLEMYN, POLDATE, POLTIME, APPROYN
+			, SIGUPYN, APUSEYN, ACTIVYN, USRMEMO
+			, SOTAPYN, SOTDATE, SOTTIME, USERTYP
+			, ROLGKEY, CREUSER, LMODATE, LMOTIME
+			, LMOUSER
+		)
+		VALUES
+		(
+			  #{saveData.userkey}, #{saveData.useract}, #{saveData.passwrd}, #{saveData.usernam}
+		    , #{saveData.address}, #{saveData.citycod}, #{saveData.rsonkey}, #{saveData.postcod}
+		    , #{saveData.natn2ky}, #{saveData.telphnm}, #{saveData.emailad}, #{saveData.departm}
+			, #{saveData.emploid}, #{saveData.acapdoc}, #{saveData.usergr1}, #{saveData.usergr2}
+			, #{saveData.usergr3}, #{saveData.langkey}, #{saveData.datefmt}, #{saveData.timefmt}
+			, #{saveData.decifmt}, '20991231', '20991231', #{saveData.alocked}
+			, #{saveData.alockmo}, #{saveData.polpryn}, #{saveData.polsvyn}, #{saveData.polsmyn}
+			, #{saveData.polemyn}, TO_CHAR(CURRENT_TIMESTAMP() ,'YYYYMMDD'), TO_CHAR(CURRENT_TIMESTAMP() ,'HH24MISS'), #{saveData.approyn}
+			, #{saveData.sigupyn}, #{saveData.apuseyn}, #{saveData.activyn}, #{saveData.usrmemo}
+			, #{saveData.sotapyn}, #{saveData.sotdate}, #{saveData.sottime}, #{saveData.usertyp}
+			, #{saveData.rolgkey}, #{userData.useract}, TO_CHAR(CURRENT_TIMESTAMP() ,'YYYYMMDD'), TO_CHAR(CURRENT_TIMESTAMP() ,'HH24MISS')
+			, #{userData.useract}
+		)
+    </insert>
+
+	<!-- syu04 사용자관리 페이지에서만 사용 (원래 쿼리에서 APUSEYN만 삭제) -->
+    <update id="updateSyu04Susrma" parameterType="com.kbph.logistics.sy.domain.UserDTO">
+    	/* updateSyu04Susrma */
+    	UPDATE ${userData.commonSchema}.SUSRMA SET
+			PASSWRD = #{saveData.passwrd}
+			, USERNAM = #{saveData.usernam}
+			, ADDRESS = #{saveData.address}
+			, CITYCOD = #{saveData.citycod}
+			, RSONKEY = #{saveData.rsonkey}
+			, POSTCOD = #{saveData.postcod}
+			, NATN2KY = #{saveData.natn2ky}
+			, TELPHNM = #{saveData.telphnm}
+			, EMAILAD = #{saveData.emailad}
+			, DEPARTM = #{saveData.departm}
+			, EMPLOID = #{saveData.emploid}
+			, ACAPDOC = #{saveData.acapdoc}
+			, USERTYP = #{saveData.usertyp}
+			, USERGR1 = #{saveData.usergr1}
+			, USERGR2 = #{saveData.usergr2}
+			, USERGR3 = #{saveData.usergr3}
+			, LANGKEY = #{saveData.langkey}
+			, DATEFMT = #{saveData.datefmt}
+			, TIMEFMT = #{saveData.timefmt}
+			, DECIFMT = #{saveData.decifmt}
+			, UTIMZON = #{saveData.utimzon}
+			, IDEXPDT = #{saveData.idexpdt}
+			, PWEXPDT = #{saveData.pwexpdt}
+			, PWERCNT = #{saveData.pwercnt}
+			, ALOCKED = #{saveData.alocked}
+			, ALOCKMO = #{saveData.alockmo}
+			, ROLGKEY = #{saveData.rolgkey}
+			, POLPRYN = #{saveData.polpryn}
+			, POLSVYN = #{saveData.polsvyn}
+			, POLSMYN = #{saveData.polsmyn}
+			, POLEMYN = #{saveData.polemyn}
+			, POLDATE = #{saveData.poldate}
+			, POLTIME = #{saveData.poltime}
+			, APPROYN = #{saveData.approyn}
+			, SIGUPYN = #{saveData.sigupyn}
+			, ACTIVYN = #{saveData.activyn}
+			, USRMEMO = #{saveData.usrmemo}
+			, SOTAPYN = #{saveData.sotapyn}
+			, SOTDATE = #{saveData.sotdate}
+			, SOTTIME = #{saveData.sottime}
+			, LMODATE = to_char(NOW() ,'YYYYMMDD')
+			, LMOTIME = to_char(NOW() ,'hh24miss')
+			, LMOUSER = #{userData.useract}
+			, UPDTCHK = #{saveData.updtchk} + 1
+		WHERE UPDTCHK = #{saveData.updtchk} AND USERACT = #{saveData.useract}
+		<choose>
+			<when test='saveData.oldUserkey != null and saveData.oldUserkey != ""'>
+				AND USERKEY = #{saveData.oldUserkey}
+			</when>
+			<otherwise>
+				AND USERKEY = #{saveData.userkey}
+			</otherwise>
+		</choose>
+    </update>
+
+    <update id="updateSusrma" parameterType="com.kbph.logistics.sy.domain.UserDTO">
+    	/* updateSusrma */
+    	UPDATE ${userData.commonSchema}.SUSRMA SET
+			PASSWRD = #{saveData.passwrd}
+			, USERNAM = #{saveData.usernam}
+			, ADDRESS = #{saveData.address}
+			, CITYCOD = #{saveData.citycod}
+			, RSONKEY = #{saveData.rsonkey}
+			, POSTCOD = #{saveData.postcod}
+			, NATN2KY = #{saveData.natn2ky}
+			, TELPHNM = #{saveData.telphnm}
+			, EMAILAD = #{saveData.emailad}
+			, DEPARTM = #{saveData.departm}
+			, EMPLOID = #{saveData.emploid}
+			, ACAPDOC = #{saveData.acapdoc}
+			, USERTYP = #{saveData.usertyp}
+			, USERGR1 = #{saveData.usergr1}
+			, USERGR2 = #{saveData.usergr2}
+			, USERGR3 = #{saveData.usergr3}
+			, LANGKEY = #{saveData.langkey}
+			, DATEFMT = #{saveData.datefmt}
+			, TIMEFMT = #{saveData.timefmt}
+			, DECIFMT = #{saveData.decifmt}
+			, UTIMZON = #{saveData.utimzon}
+			, IDEXPDT = #{saveData.idexpdt}
+			, PWEXPDT = #{saveData.pwexpdt}
+			, PWERCNT = #{saveData.pwercnt}
+			, ALOCKED = #{saveData.alocked}
+			, ALOCKMO = #{saveData.alockmo}
+			, ROLGKEY = #{saveData.rolgkey}
+			, POLPRYN = #{saveData.polpryn}
+			, POLSVYN = #{saveData.polsvyn}
+			, POLSMYN = #{saveData.polsmyn}
+			, POLEMYN = #{saveData.polemyn}
+			, POLDATE = #{saveData.poldate}
+			, POLTIME = #{saveData.poltime}
+			, APPROYN = #{saveData.approyn}
+			, SIGUPYN = #{saveData.sigupyn}
+			, APUSEYN = #{saveData.apuseyn}
+			, ACTIVYN = #{saveData.activyn}
+			, USRMEMO = #{saveData.usrmemo}
+			, SOTAPYN = #{saveData.sotapyn}
+			, SOTDATE = #{saveData.sotdate}
+			, SOTTIME = #{saveData.sottime}
+			, LMODATE = to_char(NOW() ,'YYYYMMDD')
+			, LMOTIME = to_char(NOW() ,'hh24miss')
+			, LMOUSER = #{userData.useract}
+			, UPDTCHK = #{saveData.updtchk} + 1
+		WHERE UPDTCHK = #{saveData.updtchk} AND USERACT = #{saveData.useract}
+		<choose>
+			<when test='saveData.oldUserkey != null and saveData.oldUserkey != ""'>
+				AND USERKEY = #{saveData.oldUserkey}
+			</when>
+			<otherwise>
+				AND USERKEY = #{saveData.userkey}
+			</otherwise>
+		</choose>
+    </update>
+
+    <insert id="insertSusrsh" parameterType="com.kbph.logistics.sy.domain.SusrshDTO">
+    	/* insertSusrsh */
+    	INSERT INTO ${userData.schema}.SUSRSH(
+			USERKEY, USERACT, USERTYP, ROLGKEY, CREDATE
+			, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			#{saveData.userkey}, #{saveData.useract}, #{saveData.usertyp}, #{saveData.rolgkey}
+			, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{userData.useract}
+			, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{userData.useract}
+		)
+    </insert>
+
+    <update id="updateSusrsh" parameterType="com.kbph.logistics.sy.domain.SusrshDTO">
+    	/* updateSusrsh */
+    	UPDATE ${userData.schema}.SUSRSH SET
+			USERTYP = #{saveData.usertyp}
+			, ROLGKEY = #{saveData.rolgkey}
+			, LMODATE = to_char(NOW() ,'YYYYMMDD')
+			, LMOTIME = to_char(NOW() ,'hh24miss')
+			, LMOUSER = #{userData.useract}
+			, UPDTCHK = #{saveData.updtchk} + 1
+		WHERE UPDTCHK = #{saveData.updtchk} AND USERACT = #{saveData.useract}
+		<choose>
+			<when test='saveData.oldUserkey != null and saveData.oldUserkey != ""'>
+				AND USERKEY = #{saveData.oldUserkey}
+			</when>
+			<otherwise>
+				AND USERKEY = #{saveData.userkey}
+			</otherwise>
+		</choose>
+    </update>
+
+    <insert id="insertSusrap" parameterType="com.kbph.logistics.sy.domain.SusrapDTO">
+    	/* insertSusrap */
+    	INSERT INTO ${userData.commonSchema}.SUSRAP(
+			USERKEY, USERACT, APPLKEY, CREDATE, CRETIME
+			, CREUSER, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			#{saveData.userkey}, #{saveData.useract}
+			, ( SELECT APPLKEY FROM ${userData.commonSchema}.SAPPMA WHERE APNAMEN = #{saveData.apnamen} )
+			, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{userData.useract}
+			, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{userData.useract}
+		)
+    </insert>
+
+    <insert id="insertSusrvh" parameterType="com.kbph.logistics.sy.domain.SusrvhDTO">
+    	/* insertSusrvh */
+    	INSERT INTO ${userData.commonSchema}.SUSRVH (
+			USERKEY, USERACT, VOWNKEY, VEHICKY, VHOWNYN, VHUSEYN, CREDATE
+			, CRETIME, CREUSER, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			#{saveData.userkey},#{saveData.useract}, #{saveData.vownkey}, #{saveData.vehicky}, #{saveData.vhownyn}, #{saveData.vhuseyn}
+			, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{userData.useract}
+			, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{userData.useract}
+		)
+    </insert>
+
+    <insert id="insertUserLoginHistory" parameterType="com.kbph.logistics.sy.domain.UserVO">
+    	/* insertUserLoginHistory */
+    	INSERT INTO ${commonSchema}.SUSRLG (
+			USERACT, USRLGIP, USRLGDM,
+			USCHEMA,
+			CREUSER, LMODATE, LMOTIME, LMOUSER
+		)VALUES(
+			#{useract}, #{usrlgip}, ifnull(#{usrlgdm},'')
+			, <choose>
+				<when test='isAppUser == "Y"'>
+					'APP'
+				</when>
+				<otherwise>
+					#{uschema}
+				</otherwise>
+			</choose>
+		   , #{useract}, to_char(NOW(), 'YYYYMMDD'), to_char(NOW(), 'HH24MISS'), #{useract}
+		)
+    </insert>
+
+    <insert id="insertCopyGridHeader" parameterType="com.kbph.logistics.sy.domain.UserDTO">
+    	INSERT
+          INTO ${userData.schema}.SGRIDH
+          (
+          		USERKEY, USERACT, PROGRID, PGRIDID
+          	  , NUBRCEL, HOVERMD, FREZCOL, FREZROW
+          	  , COLBODR, ROWBODR, STRPROW, GHEIGHT
+          )
+          SELECT #{saveData.userkey}, #{saveData.useract}, PROGRID, PGRIDID
+               , NUBRCEL, HOVERMD, FREZCOL, FREZROW
+               , COLBODR, ROWBODR, STRPROW, GHEIGHT
+            FROM ${userData.schema}.SGRIDH
+          <where>
+          	 AND USERACT = #{saveData.standardUseract}
+          </where>
+    </insert>
+
+    <insert id="insertCopyGridLayout" parameterType="com.kbph.logistics.sy.domain.UserDTO">
+    	INSERT
+          INTO ${userData.schema}.SGRIDL
+          (
+          		USERKEY, USERACT, PROGRID, PGRIDID
+          	  , DATAIDX, SORTNUM, PHIDDEN, PQALIGN
+          	  , DATATYP, PQWIDTH
+          )
+          SELECT #{saveData.userkey}, #{saveData.useract}, PROGRID, PGRIDID
+          	   , DATAIDX, SORTNUM, PHIDDEN, PQALIGN
+          	   , DATATYP, PQWIDTH
+            FROM ${userData.schema}.SGRIDL
+          <where>
+          	 AND USERACT = #{saveData.standardUseract}
+          </where>
+    </insert>
+</mapper>

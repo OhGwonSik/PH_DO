@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.api.mapper.ApiMapper">
+	<insert id="insertShipping" parameterType="com.kbph.logistics.api.domain.ApiCommonDTO">
+		/*insertShipping*/
+		INSERT
+			INTO ${apiCommon.schema}.OOUBHD_TMP
+			(
+				OUTBOKY, VEHICKY, VHCFNAM, ENTDATE
+			  , ENTTIME, CREUSER, LMODATE, LMOTIME
+			  , LMOUSER
+			)
+			VALUES
+			<foreach collection="apiCommon.apiData" item="data" separator=";">
+			(
+				#{data.outboky}, #{data.vehicky}, #{data.vhcfnam}, #{data.entdate}
+			  , #{data.enttime}, #{apiCommon.useract}, DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s')
+			  , #{apiCommon.useract}
+			)
+			</foreach>
+	</insert>
+</mapper>

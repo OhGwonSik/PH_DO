@@ -1,0 +1,434 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents dashboard" layout:fragment="content">
+		<div class="location"></div>
+		<div class="board-1col con-box area_inout">
+			<div class="col-top">
+		    	<div class="col-title">[[#{sy.main.inOutboundStatistics}]]</div>
+		  	</div>
+		  	<div class="col-content">
+		    	<div class="flex-1">
+		      		<div class="box-title ic-title-mark"><span>[[#{sy.main.todayInbound}]]</span></div>
+		      		<div class="box-content">
+		        		<canvas id="inboundBar" width="300" height="200"></canvas>
+		        		<canvas id="inboundDoughnut" width="400" height="200"></canvas>
+		      		</div>
+		    	</div>
+		    	<div class="v-line"></div>
+		    	<div class="flex-1">
+		      		<div class="box-title ic-title-mark"><span>[[#{sy.main.todayOutbound}]]</span></div>
+		      		<div class="box-content">
+		        		<canvas id="outboundBar" width="300" height="200"></canvas>
+		        		<canvas id="outboundDoughnut" width="400" height="200"></canvas>
+		      		</div>
+		    	</div>
+		  	</div>
+		</div>
+		<div class="board-2col area_notice">
+		  	<div class="con-box flex-1 flex-col">
+				<div class="col-top"><span>[[#{sy.main.transportStatistics}]]</span></div>         <!-- 차후 재고or정산 현황 등으로 변경 소지 -->
+		    	<div class="box-title ic-title-mark">[[#{sy.main.todayTransport}]]</div>
+		    	<div class="box-content">
+       		  		<div class="grid-wrapper" >
+       		  			<div id="mainTransGrid"></div>
+			  		</div>
+			  		<!-- <canvas id="transPie" width="350" height="180"></canvas> -->
+	      		</div>
+		  	</div>
+		  	<div class="con-box flex-1 flex-col">
+				<div class="col-top"><span>[[#{sy.main.equipmentTask}]]</span></div>
+		    	<div class="box-title ic-title-mark">[[#{sy.main.todayEquipmentTask}]]</div>
+		    	<div class="box-content">
+			    	<div id="equipmentTaskGrid"></div>
+		    	</div>
+		  	</div>
+		</div>
+		<div class="board-2col area_notice">
+			<div class="con-box flex-1 flex-col">
+				<div class="col-top"><span>[[#{sy.main.averageStayTime}]]</span></div>
+		    	<div class="box-title ic-title-mark">[[#{sy.main.lastThreeMonth}]]</div>
+		    	<div class="box-content">
+			  		<canvas id="stayedYardBar" width="400" height="105px"></canvas>
+			  		<div class="edit-btn-wrapper" style="display: flex;flex-direction: column; margin-left : 15px;">
+						<span id="inbRate"></span>
+						<span id="oubRate"></span>
+					</div>
+	      		</div>
+		  	</div>
+		  	<div class="con-box flex-1 flex-col">
+		    	<div class="col-top">[[#{sy.main.manualDownload}]]</div>
+		    	<div class="flex-col">
+		      		<div class="box-title ic-title-mark">[[#{sy.main.manual}]]</div>
+			      	<div class="btn-box-group margin-b">
+			      		<div id="md" style="cursor: pointer">[[#{header.md}]]</div>
+			      		<div id="rm" style="cursor: pointer">[[#{header.rm}]]</div>
+			      		<div id="im" style="cursor: pointer">[[#{header.im}]]</div>
+			      		<div id="sm" style="cursor: pointer">[[#{header.sm}]]</div>
+			      		<div id="om" style="cursor: pointer">[[#{header.om}]]</div>
+			      		<div id="tm" style="cursor: pointer">[[#{header.tm}]]</div>
+			      		<div id="bm" style="cursor: pointer">[[#{header.bm}]]</div>
+			      		<div id="tablet" style="cursor: pointer">[[#{header.tablet}]]</div>
+			      		<div id="tmapp" style="cursor: pointer">[[#{header.tmapp}]]</div>
+			      	</div>
+		    	</div>
+		  	</div>
+		</div>
+<script>
+
+!async function() {
+	const pageId = location.pathname.substring(location.pathname.lastIndexOf('/') + 1);
+
+	document.querySelectorAll('.btn-box-group.margin-b>div').forEach(function(element) {
+		element.addEventListener('click', async function() {
+
+         const response = await fetchUtil('GET', '/sy/file/' + element.id);
+         const responseBlob = await response.blob();
+
+         const contentDisposition = response.headers.get('Content-Disposition');
+         const fileNameMatch = contentDisposition && contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+         const fileName = fileNameMatch[1].replace(/['"]/g, '');
+
+			const objectURL = window.URL.createObjectURL(responseBlob);
+         const downloadLink = document.createElement('a');
+
+         downloadLink.href = objectURL;
+         downloadLink.download = decodeURIComponent(fileName); //파일명
+         document.body.appendChild(downloadLink);
+         downloadLink.click();
+         downloadLink.remove();
+         window.URL.revokeObjectURL(objectURL);
+		});
+	});
+
+	const response = await fetchUtil('GET', '/sy/main/dashboard');
+	if(response.status !== 200) {
+		return;
+	}
+	const initData = await response.json();
+	const inboundBarLabels = ['[[#{sy.main.inboundTotalOrder}]]', '[[#{sy.main.totalWeight}]]', '[[#{sy.main.totalGrossWeight}]]'];
+	const outboundBarLabels = ['[[#{sy.main.outboundTotalOrder}]]', '[[#{sy.main.totalWeight}]]', '[[#{sy.main.totalGrossWeight}]]'];
+
+	function getPreviousMonth(set) {
+	  const currentMonth = getMonth();
+	  const adjustedMonth = (currentMonth - set - 1 + 12) % 12 + 1;
+	  return adjustedMonth;
+	}
+	const stayedYardBarLabels = [getPreviousMonth(2) + '[[#{sy.main.month}]]', getPreviousMonth(1) + '[[#{sy.main.month}]]', getMonth() + '[[#{sy.main.month}]]' ];
+
+	await setBar('inboundBar', initData.inboundBarData, inboundBarLabels);
+	await setBar('outboundBar', initData.outboundBarData, outboundBarLabels);
+	await setBar2('stayedYardBar', initData.stayedYardBarData, stayedYardBarLabels);
+	await setDoughnut('inboundDoughnut', initData.inboundDoughnutList);
+	await setDoughnut('outboundDoughnut', initData.outboundDoughnutList);
+	/* await setTransPie(initData.transPieList); */ //데이터가 많아짐에 따라 자리 부족으로 인해 pie 주석 처리
+
+	const mainTransColModel = [
+		{ title: '[[#{grid.renamlc}]]', dataType: 'string', dataIndx: 'renamlc', editable: false },
+		{ title: '[[#{md.mdesma.denamlc}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+		{ title: '[[#{sy.main.transportState}]]', dataType: 'string', dataIndx: 'result', editable: false },
+	];
+
+
+
+	const mainTransGridObject = new GridUtil(mainTransColModel, pageId, 'mainTransGrid');
+
+
+	if(!mainTransGridObject.groupModel.on) {
+		mainTransGridObject.setGroupModel({
+         on: true,
+         dataIndx: ['renamlc'],
+         merge: true,
+         header: false
+     });
+	}
+
+	mainTransGridObject.height = 190;
+	mainTransGridObject.numberCell = false;
+
+	mainTransGridObject.setCreate(function() {
+		this.showLoading();
+		this.option('dataModel', { data: initData.transGridList, recIndx: 'renamlc' });
+		this.hideLoading();
+		this.refreshDataAndView();
+	});
+
+	mainTransGridObject.open();
+
+	const equipmentTaskGridColModel = [
+		{ title: '[[#{grid.areakey}]]', dataType: 'string', dataIndx: 'areanam', editable: false,
+			render: ui=>ui.cellData
+		},
+		{ title: '[[#{grid.equipky}]]', dataType: 'string', dataIndx: 'equipky', editable: false,
+			render: ui=>ui.cellData
+		},
+		{ title: '[[#{md.mequma.equinam}]]', dataType: 'string', dataIndx: 'equinam', editable: false,
+			render: function(ui) {
+				return ui.cellData;
+			}
+		},
+		{ title: '[[#{md.mequma.equtype}]]', dataType: 'string', dataIndx: 'equtype', editable: false,
+			render: function(ui) {
+				return ui.cellData;
+			}
+		},
+		{ title: '조업구분', dataType: 'string', dataIndx: 'docctnm', editable: false,
+			render: function(ui) {
+				return ui.cellData;
+			}
+		},
+		{ title: '[[#{sy.main.equipmentTaskState}]]', dataType: 'string', dataIndx: 'tasksts', editable: false,
+			render : function(ui){
+				if(ui.rowData.tasksts === '대기'){	//대기 : 취소, 완료, 신규,출고완료 || 작업중 : 조업시작, 작업완료
+					return {text : '[[#{sy.main.idle}]]', style: { 'color': '#28a745' }}
+				}
+				return {text : '[[#{sy.main.working}]]', style: { 'color':  '#dc3545' }}
+			}
+		}
+	];
+
+	const equipmentTaskGridObject = new GridUtil(equipmentTaskGridColModel, pageId, 'equipmentTaskGrid');
+	equipmentTaskGridObject.numberCell = false;
+	equipmentTaskGridObject.setCreate(async function(event,ui){
+		this.option('height', 190);
+		this.showLoading();
+		this.option('dataModel', { data: initData.equipmentTaskList, recIndx: 'equinam' });
+		this.hideLoading();
+		this.refreshDataAndView();
+	});
+
+	equipmentTaskGridObject.setCellDblClick(function(event,ui){
+		//작업중인 조업에 한해서 새창-임시
+		if(ui.rowData.tasksts && ui.rowData.tasksts === '작업중'){
+			event.preventDefault();
+			const features = 'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=1800,height=1000,left=100,top=100';
+			let pathName = '/platform/page';
+			if(ui.rowData.docctnm ==='입고'){
+				pathName += '/im/doe034';
+			}else if(ui.rowData.docctnm ==='출고'){
+				pathName += '/om/doe057';
+			}else if(ui.rowData.docctnm ==='이동'){
+				pathName += '/sm/doe037';
+			}
+			window.open(window.location.origin + pathName, '_blank', features);
+		}
+	});
+
+	if(!equipmentTaskGridObject.groupModel.on) {
+		equipmentTaskGridObject.setGroupModel({
+			on: true,
+         	dataIndx: ['areanam', 'equipky', 'equinam', 'equtype'],
+         	merge: true,
+         	header: false,
+         	headerMenu: false
+     	});
+	}
+	equipmentTaskGridObject.open();
+
+	async function setBar(DOM, data, labels) {
+		const barCtx = document.querySelector('#' + DOM).getContext('2d');
+		return new Chart(barCtx, {
+			type: 'bar',
+			data: {
+				labels: labels,
+				datasets: [{
+					data: [data.totalOrder, data.totalWeight, data.totalGrossWeight],
+					backgroundColor: ['#FFCD56', '#FF6384', '#36A2EB'],
+					borderColor: ['[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]'],
+					borderWidth: 1
+				}]
+			},
+			options: {
+				indexAxis: 'y',
+				responsive: false,
+				plugins: {
+					legend: { display: false },
+					tooltip: {
+						callbacks: {
+							label: function(context) {
+								const label = context.chart.data.labels[context.dataIndex];
+								let total = context.dataset.data[context.dataIndex];
+								let completed;
+								if(label === '[[#{sy.main.inboundTotalOrder}]]' || label === '[[#{sy.main.outboundTotalOrder}]]') {
+									completed = data.completeOrder + '[[#{sy.main.time}]] / ';
+									total = total + '[[#{sy.main.time}]]';
+								}else if(label === '[[#{sy.main.totalWeight}]]') {
+									completed = data.completeWeight + 't / ';
+									total = total + 't';
+								}else if(label === '[[#{sy.main.totalGrossWeight}]]') {
+									completed = data.completeGrossWeight + 't / ';
+									total = total + 't';
+								}else{
+									completed = 0;
+								}
+								completed = completed?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+								total = total.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+								return label + ': ' + completed + total;
+							}
+						}
+					}
+				}
+			}
+		});
+	}
+
+	async function setBar2(DOM, data, labels) {
+		const barCtx = document.querySelector('#' + DOM).getContext('2d');
+		document.querySelector('#inbRate').innerText = '[[#{sy.main.inboundRate}]] ' + data?.monthOverMonthInbRate +'%';
+		document.querySelector('#oubRate').innerText = '[[#{sy.main.outboundRate}]] ' + data?.monthOverMonthOubRate +'%';
+
+		return new Chart(barCtx, {
+			type: 'bar',
+			data: {
+				labels: labels,
+				datasets: [{
+					label: '[[#{sy.main.inbound}]]',
+					data: [data?.inbStayedTwoMonthAgo, data?.inbStayedLastMonth, data?.inbStayedThisMonth],
+					backgroundColor: ['#00C7E2'],
+					borderColor: ['[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]'],
+					borderWidth: 1,
+					maxBarThickness: 30
+				},{
+					label: '[[#{sy.main.outbound}]]',
+					data: [data?.oubStayedTwoMonthAgo, data?.oubStayedLastMonth, data?.oubStayedThisMonth],
+					backgroundColor: ['#FF7DA8'],
+					borderColor: ['[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]'],
+					borderWidth: 1,
+					maxBarThickness: 30
+				}]
+			},
+			options: {
+				indexAxis: 'x',
+				responsive: false,
+				plugins: {
+					tooltip: {
+						callbacks: {
+							label: function(context) {
+								const label = context.dataset.label;
+								let seconds = context.dataset.data[context.dataIndex];
+								let hours = Math.floor(seconds / 3600);
+								let mins = Math.floor((seconds - hours * 3600) / 60);
+								return label + ' : ' + hours + '[[#{sy.main.hours}]] ' + mins + '[[#{sy.main.mins}]]';
+							}
+						}
+					}
+				},
+				scales: {
+				    y: {
+				      ticks: {
+				        display: false,
+				        beginAtZero: true,
+				      },
+				   },
+				},
+			},
+		});
+	}
+
+
+	async function setDoughnut(DOM, array) {
+		const doughnutCtx = document.querySelector('#' + DOM).getContext('2d');
+		const labels = [];
+		const chartData = [];
+
+		const doption = {
+		  responsive: false,
+		   plugins: {
+             legend: {
+                 position: 'right',
+                 labels: {
+                     pointStyle: 'circle',
+                     usePointStyle: true
+                 	}
+             	},
+             	tooltip: {
+    				callbacks: {
+    					label: function(chart) {
+    						return chart.dataset.data[chart.dataIndex].toLocaleString() + '(kg)';
+    					}
+    				}
+    			}
+         	}
+		};
+
+		for (const doughnutData of array) {
+			labels.push(doughnutData.doctynm);
+			chartData.push(doughnutData.sumWeight);
+		}
+		if(!array.length) {
+			labels.push('[[#{sy.main.noStaticsData}]]');
+		}
+
+		return new Chart(doughnutCtx, {
+			type: 'doughnut',
+			data: {
+				labels: labels,
+				datasets: [{
+					data: chartData ,
+					backgroundColor: getColorsArray(array.length),
+					borderColor: ['[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]'],
+					borderWidth: 2
+				}]
+			},
+			options: doption
+		});
+	}
+
+	async function setTransPie(array) {
+		const PieCtx = document.querySelector('#transPie').getContext('2d');
+
+		const labels = [];
+		const chartData = [];
+
+		for (const doughnutData of array) {
+			labels.push(doughnutData.renamlc);
+			chartData.push(doughnutData.completeTrans);
+		}
+		if(!array.length) {
+			labels.push('[[#{sy.main.noStaticsData}]]');
+		}
+
+		return new Chart(PieCtx, {
+			type: 'pie',
+			data: {
+				labels: labels,
+				datasets: [{
+					data: chartData,
+					backgroundColor: getColorsArray(array.length),
+					borderColor: ['[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]', '[[#{grid.styleStripe2}]]'],
+					borderWidth: 2
+				}]
+			},
+			options: {
+				cutoutPercentage: 70,
+				responsive: false,
+				maintainAspectRatio: false,
+				plugins: {
+             	legend: {
+	                    position: 'right',
+ 	                labels: {
+     	                pointStyle: 'circle',
+         	            usePointStyle: true,
+             		}
+             	}
+         	}
+			}
+		});
+	}
+
+	function getColorsArray(length) {
+		const colors = [];
+		for (let i = 0; i < length; i++) {
+			colors.push('#' + Math.floor(Math.random() * 16777215).toString(16));
+		}
+		return colors;
+	}
+
+	function getMonth(){
+		let today = new Date();
+		let month = today.getMonth() + 1;
+		return month;
+	}
+}();
+</script>
+</div>
+</html>

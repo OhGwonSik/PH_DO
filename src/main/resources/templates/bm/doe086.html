@@ -1,0 +1,1092 @@
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+<div class="tab-contents" layout:fragment="content">
+	<div class="location"></div>
+	<div class="search-conditions con-box">
+		<div class="setting-grid" th:data-visible-target='${tabPage}'>
+			<label for="doe086Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-group">
+					<select id="doe086Warekey" name="doe086Warekey"
+						data-cb-val="combovl" data-cb-name="combonm"
+						data-cb-url="/md/organization/warehouse" data-cb-select=""
+						data-cb-variable="warekeyList">
+					</select>
+				</div>
+			</div>
+			<label for="doe086Vhplnky" class="setting-grid-title">[[#{bm.btrpit.vhplnky}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-wrapper">
+					<input type="text" id="doe086Vhplnky" name="doe086Vhplnky" onkeyup="doe086SearchKeyup()"
+					th:placeholder="${#messages.msg('bm.btrpit.vhplnky')}" >
+				</div>
+			</div>
+			<label class="setting-grid-title ic-title-nece">[[#{bm.btrfhd.fcddate}]]</label>
+			<div class="setting-grid-content">
+				<div class="input-date-group">
+					<input type="date" max="2999-12-31" id="doe086BtrpdafFrom"
+						onkeyup="setInputDateDel(this)" name="doe086Btrpdaf" /> <span>~</span>
+					<input type="date" max="2999-12-31" id="doe086BtrpdafTo"
+						onkeyup="setInputDateDel(this)" name="doe086Btrpdaf" />
+				</div>
+			</div>
+			<!-- 청구처 수정 탭 -->
+			<label for="doe086Custnam" class="setting-grid-title" data-visible-category='["before"]'>[[#{search.cunamlc}]]</label>
+			<div class="setting-grid-content" data-visible-category='["before"]'>
+				<div class="input-wrapper">
+					<input type="text" id="doe086Custnam" name="doe086Custnam" th:placeholder="${#messages.msg('search.cunamlc')}" onkeyup="doe086SearchKeyup()">
+				</div>
+			</div>
+			<label for="doe086Deorgnm" class="setting-grid-title" data-visible-category='["before"]'>[[#{search.denamlc}]]</label>
+			<div class="setting-grid-content" data-visible-category='["before"]'>
+				<div class="input-wrapper">
+					<input type="text" id="doe086Deorgnm" name="doe086Deorgnm" th:placeholder="${#messages.msg('search.denamlc')}" onkeyup="doe086SearchKeyup()">
+				</div>
+			</div>
+		</div>
+		<div class="search-btn-group">
+			<button type="button" class="btn-search btn-navy btn-green"
+				id="doe086BtnSearch">
+				<img alt="">[[#{bt.search}]]
+			</button>
+			<button type="button" class="btn-clear btn-white" id="doe086BtnReset">
+				<img alt="">[[#{bt.reset}]]
+			</button>
+		</div>
+	</div>
+	<div class="search-list">
+		<div class="list-top" th:data-visible-target='${tabPage}'>
+			<div class="list-title ic-title-mark">
+				<span>[[#{menu.bm.doe086}]]</span>
+			</div>
+			<div class="edit-btn-wrapper">
+				<button class="btn-navy btn-green" id="doe086BtnPayadynCancel" data-visible-category='["after"]'>
+					<img class="ic-bt-cancel" alt="">[[#{bm.bt.payadCancel}]]
+				</button>
+				<button class="btn-white btn-green" id="doe086BtnCloseCancel" data-visible-category='["after"]'>
+					<img class="ic-bt-cancel" alt="">[[#{bm.bt.closeCancel}]]
+				</button>
+				<button class="btn-navy btn-green" id="doe086BtnValidated" data-visible-category='["after"]'>
+					<img class="ic-bt-save" alt="">[[#{bm.bt.validated}]]
+				</button>
+				<button class="btn-navy btn-green" id="doe086BtnBtrpcbtSave" data-visible-category='["before"]'>
+					<img class="ic-bt-save" data-visible-category='["before"]' alt="">[[#{bt.save}]]
+				</button>
+			</div>
+		</div>
+		<ul class="nav nav-tabs" id="doe086GridTab">
+			<li class="nav-item"><a class="nav-link active" 
+				data-toggle="tab" data-tab-type="after" href="#doe086AfterClose" id="doe086AfterTab">[[#{bm.tab.after}]]</a>
+			</li>
+			<li class="nav-item"><a class="nav-link"
+				data-toggle="tab" data-tab-type="before" href="#doe086BeforeClose" id="doe086BeforeTab">[[#{bm.tab.before}]]</a>
+			</li>
+		</ul>
+		<div class="tab-content">
+			<div class="list-grid-wrapper con-box tab-pane active" id="doe086BeforeClose">
+				<div class="search-list">
+					<div class="grid-container">
+						<div id="doe086BeforeGrid"></div>
+					</div>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box tab-pane show active" id="doe086AfterClose">
+				<div class="search-list">
+					<div class="grid-container">
+						<div id="doe086AfterHeadGrid"></div>
+					</div>
+					<div class="grid-container">
+						<div id="doe086AfterItemGrid"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+!async function(){
+	const pageId = `[[${tabPage}]]`;
+	let initTabType;
+	
+	const doe086BeforeGridCM = [
+		{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+			, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+			cb: { all: true, header: true, check: 'Y', uncheck: 'N' }
+		},
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false,hidden:true },
+		{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden : true },
+		{ title: '[[#{bm.btrpit.vhplnky}]]', dataType: 'string', dataIndx: 'vhplnky', editable: false },
+		{ title: '[[#{bm.btrpit.bphdkey}]]', dataType: 'string', dataIndx: 'bphdkey', editable: false },
+		{ title: '[[#{bm.btrpit.bphdcit}]]', dataType: 'string', dataIndx: 'bphdcit', editable: false, summary : {type : 'count'}},
+		{ title: '[[#{bm.btrpit.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false , hidden : true },
+		{ title: '[[#{bm.btrpit.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false , hidden : true },
+		{ title: '[[#{bm.btrpit.btrpkey}]]', dataType: 'string', dataIndx: 'btrpkey', editable: false, hidden:true },
+		{ title: '[[#{bm.btrpit.btrcate}]]', dataType: 'string', dataIndx: 'btrcate', editable: false , hidden : true },
+		{ title: '[[#{bm.btrpit.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+		{ title: '[[#{bm.doe082.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+		{ title: '[[#{bm.doe082.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+		{ title: '[[#{bm.doe082.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+		{ title: '[[#{bm.doe086.tpnstat}]]', dataType: 'string', dataIndx: 'tpistat', editable: false },
+		{ title: '[[#{grid.skuCode}]]', dataType: 'string', dataIndx: 'skumkey', editable: false, summary: { type : 'count' }},
+		{ title: '[[#{bm.btrpit.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, summary : {type : 'max'} ,format: '#,###.000'},
+		{ title: '[[#{bm.btrpit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, summary : {type : 'max'} ,format: '#,###.0' },
+		{ title: '[[#{bm.btrpit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, summary : {type : 'max'} ,format: "#,###" },
+		{ title: '[[#{bm.btrpit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, summary : {type : 'sum'} ,format: "#,###" },
+		{ title: '[[#{bm.btrpit.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editable: false, summary : {type : 'max'} ,format: '#,###.0' },
+		{ title: '[[#{bm.btrpit.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, summary : {type : 'max'} ,format: "#,###" },
+		{ title: '[[#{bm.btrpit.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg', editable: false, summary : {type : 'sum'} ,format: "#,###" },
+		{ title: '[[#{bm.btrpit.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false , hidden : true },
+		{ title: '[[#{bm.doe086.adconam}]]', dataType: 'string', dataIndx: 'adconam', editable: false },
+		{ title: '[[#{bm.doe086.adcoper}]]', dataType: 'float', dataIndx: 'adcoper', editable: false, summary : { type : 'avg' }, format: '#,###.00' },
+		{ title: '[[#{grid.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false, hidden : true },
+		{ title: '[[#{bm.common.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+		{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false },	//원본 목적지
+		{ title: '[[#{bm.btrpit.regiorg}]]', dataType: 'string', dataIndx: 'reorgnm', editable: false },
+		{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false },	//변경 목적지
+		{ title: '[[#{bm.btrpit.regimod}]]', dataType: 'string', dataIndx: 'remodnm', editable: false },
+		{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },	//원본 상세착지
+		{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },	//변경 상세착지
+		{ title: '[[#{grid.demdman}]]', dataType: 'string', dataIndx: 'demdman', editable: false },	//담당자명
+		{ title: '[[#{grid.demdadr}]]', dataType: 'string', dataIndx: 'demdadr', editable: false},	//상세착지 주소
+		{ title: '[[#{grid.dempocd}]]', dataType: 'string', dataIndx: 'dempocd', editable: false },	//우편번호
+		{ title: '[[#{grid.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false },	//담당자 전화번호
+		{ title: '[[#{bm.btrpit.btrpcbt}]]', dataType: 'string', dataIndx: 'btrpcbt', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: 'select',
+	            init: function (ui) {
+	            	ui.$cell.find('select').pqSelect({ checkbox : true });
+	                setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open');
+		        	}, 250);
+				},
+			    options: []
+			},
+			render: gridRenderAndValue
+		 },
+		{ title: '[[#{bm.btrpit.btrppat}]]', dataType: 'string', dataIndx: 'btrppat', editable: false },
+		{ title: '[[#{bm.btrpit.sbillto}]]', dataType: 'string', dataIndx: 'sbillto',
+			editor: {
+				type: 'select',
+	            init: function (ui) {
+	            	ui.$cell.find('select').pqSelect({ checkbox : true });
+	                setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open');
+		        	}, 250);
+				},
+			    options: []
+			},
+			render: gridRenderAndValue
+		},
+		{ title: '[[#{bm.btrpit.btrpitc}]]', dataType: 'string', dataIndx: 'btrpitc', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.btrpitn}]]', dataType: 'string', dataIndx: 'btrpitn', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.btrpigb}]]', dataType: 'string', dataIndx: 'btrpigb', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.btrpict}]]', dataType: 'string', dataIndx: 'btrpict', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.ownerky}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false, hidden: true },
+		{ title: '[[#{bm.common.payadst}]]', dataType: 'string', dataIndx: 'payadst', editable: false,
+			render : function(ui){
+				if(ui.rowData.payadyn === 'Y'){
+					return { 
+						style : { 'background' : '#aaebff'} 
+					}
+				}
+			}
+		},
+		{ title: '[[#{bm.btrphd.payadyn}]]', dataType: 'string', dataIndx: 'payadyn', editable: false, hidden : true},		
+		{ title: '[[#{bm.doe086.spehdat}]]', dataType: 'string', dataIndx: 'speidat', editable: false},
+		{ title: '[[#{bm.doe086.spehtim}]]', dataType: 'string', dataIndx: 'speitim', editable: false},
+		{ title: '[[#{bm.btrpit.trnindt}]]', dataType: 'string', dataIndx: 'trnindt', editable: false },
+		{ title: '[[#{bm.btrpit.trnintm}]]', dataType: 'string', dataIndx: 'trnintm', editable: false },
+		{ title: '[[#{bm.btrpit.calweig}]]', dataType: 'string', dataIndx: 'calweig', editable: false ,hidden:true},	//계산중량
+		{ title: '[[#{bm.btrpit.calweig}]]', dataType: 'string', dataIndx: 'calwgnm', editable: false },	//계산중량명 ex)gross중량 , net중량
+		{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false},
+		{ title: '[[#{bm.btrpit.btrpitm}]]', dataType: 'string', dataIndx: 'btrpitm', editable: false },
+		{ title: '[[#{bm.btrpit.btrpchr}]]', dataType: 'integer', dataIndx: 'btrpchr', editable: false, summary: { type : 'avg' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrpcco}]]', dataType: 'integer', dataIndx: 'btrpcco', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrppay}]]', dataType: 'integer', dataIndx: 'btrppay', editable: false, summary: { type : 'avg' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrppco}]]', dataType: 'integer', dataIndx: 'btrppco', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrpecc}]]', dataType: 'integer', dataIndx: 'btrpecc', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrpepc}]]', dataType: 'integer', dataIndx: 'btrpepc', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.surchco}]]', dataType: 'integer', dataIndx: 'surchco', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.addchco}]]', dataType: 'integer', dataIndx: 'addchco', summary : { type : 'sum' }, format : "#,###"},
+		{ title: '[[#{bm.btrpit.addpaco}]]', dataType: 'integer', dataIndx: 'addpaco', summary : { type : 'sum' }, format : "#,###"},
+		{ title: '[[#{bm.btrpit.holichr}]]', dataType: 'integer', dataIndx: 'holichr', editable: false , summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.holipay}]]', dataType: 'integer', dataIndx: 'holipay', editable: false , summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.totitch}]]', dataType: 'string', dataIndx: 'totitch', editable: false, hidden:true ,summary : {type : 'sum'}, format: '#,###'},
+		{ title: '[[#{bm.btrfit.totitpa}]]', dataType: 'string', dataIndx: 'totitpa', editable: false, hidden:true ,summary : {type : 'sum'}, format: '#,###'},
+		{ title: '[[#{bm.btrpit.adcmemo}]]', dataType: 'string', dataIndx: 'adcmemo'},
+		{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+		{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },
+		{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+		{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+		{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+		{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+		{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+	];
+	
+	const doe086BeforeGridObj = new GridUtil(doe086BeforeGridCM, pageId, 'doe086BeforeGrid');
+	doe086BeforeGridObj.setReset();
+	
+	doe086BeforeGridObj.setChange(function(event,ui){
+		//addchco addpaco 변경시 헤더 추가 청구 비용에 update
+		if(ui.source === 'edit' || ui.source === 'paste' || ui.source === 'undo' || ui.source === 'redo' || ui.source === 'clear'){
+			for(const updateData of ui.updateList){
+				if(updateData.newRow.hasOwnProperty('btrpcbt')){
+					this.updateRow({
+						rowIndx : updateData.rowIndx,
+						newRow : {
+							state : 'Y',
+							btrpcbt : updateData.newRow.btrpcbt ?? updateData.rowData.btrpcbt,
+						},
+						checkEditable : false
+					});
+				}
+			}
+		}
+	});
+	
+	//paste에 담긴 addList를 초기화시켜 그리드에 불필요한 row가 생성되지 않게 해줌
+	doe086BeforeGridObj.setBeforeValidate(function(event,ui){
+		if(ui.source === 'paste') {
+			ui.addList = [];
+		}
+	});
+				
+	doe086BeforeGridObj.open();
+	//마감 후
+	const doe086AfterHeadGridCM = [
+		{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+			, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+			paste: false, nodrag: true, nodrop: true, cb: { all: true, header: false, check: 'Y', uncheck: 'N' }
+		},
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false,hidden:true },
+		{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden : true },
+		{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+		{ title: '[[#{bm.btrphd.bphdkey}]]', dataType: 'string', dataIndx: 'bphdkey', editable: false, summary : {type : 'count'}},
+		{ title: '[[#{bm.btrpit.vhplnky}]]', dataType: 'string', dataIndx: 'vhplnky', editable: false},
+		{ title: '[[#{bm.btrfhd.fcddate}]]', dataType: 'string', dataIndx: 'pcddate', editable: false },
+		{ title: '[[#{bm.btrphd.pcdtime}]]', dataType: 'string', dataIndx: 'pcdtime', editable: false ,hidden:true },
+		{ title: '[[#{bm.btrphd.pcduser}]]', dataType: 'string', dataIndx: 'pcduser', editable: false ,hidden:true },
+		{ title: '[[#{bm.doe085.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false, hidden : true },
+		{ title: '[[#{bm.doe085.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false},
+		{ title: '[[#{bm.btrphd.payadyn}]]', dataType: 'string', dataIndx: 'payadyn', editable: false,
+			type: 'checkbox', editor: false, align: 'center',
+			cb: {all: false,header: false, check: 'Y',uncheck: 'N'},
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+		},
+		{ title: '[[#{bm.common.holidyn}]]', dataType: 'string', dataIndx: 'holidyn',
+			type: 'checkbox', editor: false, align: 'center',
+			cb: { all: false,header: false, check: 'Y',uncheck: 'N' },
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			paste: false, nodrag: true, nodrop: true,
+			editable : function(ui){
+				if(ui.rowData.doctype !== '810'){
+					return false;
+				}
+			}
+		},
+		{ title: '[[#{grid.vownkey}]]', dataType: 'string', dataIndx: 'vownkey', editable: false ,hidden : true },
+		{ title: '[[#{grid.vehicky}]]', dataType: 'string', dataIndx: 'vehicky', editable: false ,hidden:true},
+		{ title: '[[#{grid.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+		{ title: '[[#{md.mvowma.vowaffi}]]', dataType: 'string', dataIndx: 'vowaffi', editable: false },
+		{ title: '[[#{bm.doe086.drvernm}]]', dataType: 'string', dataIndx: 'drvernm', editable: false },
+		{ title: '[[#{bm.common.totalwg}]]', dataType: 'integer', dataIndx: 'totalwg', editable: false, summary: {type : 'sum'}, format: '#,###' },	
+		{ title: '[[#{bm.btrphd.trpdfsd}]]', dataType: 'integer', dataIndx: 'trpdfsd', summary: {type : 'sum'}, format: '#,###',
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+		},
+		{ title: '[[#{bm.btrphd.trpdfwg}]]', dataType: 'integer', dataIndx: 'trpdfwg', editable: false, summary: {type : 'sum'}, format: '#,###' },	
+		{ title: '[[#{bm.btrphd.totchco}]]', dataType: 'integer', dataIndx: 'totchco', editable: false, summary: {type : 'sum'}, format: '#,###',
+			render : function(ui){
+				return { style : { 'background' : '[[#{grid.styleHead01}]]' }}
+			}},	
+		{ title: '[[#{bm.btrphd.totpaco}]]', dataType: 'integer', dataIndx: 'totpaco', editable: false, summary: {type : 'sum'}, format: '#,###',
+			render : function(ui){
+				return { style : { 'background' : '[[#{grid.styleHead01}]]' }}
+		}},
+		{ title: '[[#{bm.btrphd.dfstdch}]]', dataType: 'integer', dataIndx: 'dfstdch', editable: false, format: '#,###' },	
+		{ title: '[[#{bm.btrphd.dfstdpa}]]', dataType: 'integer', dataIndx: 'dfstdpa', editable: false, format: '#,###' },	
+		{ title: '[[#{bm.btrphd.trpdfch}]]', dataType: 'integer', dataIndx: 'trpdfch', editable: false, summary: {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrphd.trpdfpa}]]', dataType: 'integer', dataIndx: 'trpdfpa', editable: false, summary: {type : 'sum'}, format: '#,###' },	
+		{ title: '[[#{bm.btrphd.toorgch}]]', dataType: 'integer', dataIndx: 'toorgch', editable: false, summary: {type : 'sum'}, format: '#,###' },	
+		{ title: '[[#{bm.btrphd.toorgpa}]]', dataType: 'integer', dataIndx: 'toorgpa', editable: false, summary: {type : 'sum'}, format: '#,###' },	
+		{ title: '[[#{bm.btrphd.tosurch}]]', dataType: 'integer', dataIndx: 'tosurch', editable: false, summary: {type : 'sum'}, format: '#,###' },	
+		{ title: '[[#{bm.btrphd.tosurpa}]]', dataType: 'integer', dataIndx: 'tosurpa', editable: false, summary: {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.holichr}]]', dataType: 'integer', dataIndx: 'holichr', editable: false , summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.holipay}]]', dataType: 'integer', dataIndx: 'holipay', editable: false , summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.holichr}]]', dataType: 'integer', dataIndx: 'holchog', editable: false , format: '#,###' ,hidden : true},
+		{ title: '[[#{bm.btrfit.holipay}]]', dataType: 'integer', dataIndx: 'holpaog', editable: false , format: '#,###' ,hidden : true},
+		{ title: '[[#{bm.btrphd.bphmemo}]]', dataType: 'string', dataIndx: 'bphmemo',  styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+		{ title: '[[#{bm.btrphd.bphyymm}]]', dataType: 'string', dataIndx: 'bphyymm', editable: false },
+		{ title: '[[#{md.mwarma.holrate}]]', dataType: 'integer', dataIndx: 'holrate', editable: false, hidden:true },
+		{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+		{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },
+		{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+		{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+		{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+		{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+		{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+	];
+
+	const doe086AfterItemGridCM = [
+		{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+			, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+			cb: { all: true, header: true, check: 'Y', uncheck: 'N' }
+		},
+		{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false,hidden:true },
+		{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden : true },
+		{ title: '[[#{bm.btrpit.bphdkey}]]', dataType: 'string', dataIndx: 'bphdkey', editable: false },
+		{ title: '[[#{bm.btrpit.bphdcit}]]', dataType: 'string', dataIndx: 'bphdcit', editable: false, summary : {type : 'count'}},
+		{ title: '[[#{bm.btrpit.doccate}]]', dataType: 'string', dataIndx: 'doccate', editable: false , hidden : true},
+		{ title: '[[#{bm.btrpit.doctype}]]', dataType: 'string', dataIndx: 'doctype', editable: false , hidden : true},
+		{ title: '[[#{bm.btrpit.btrpkey}]]', dataType: 'string', dataIndx: 'btrpkey', editable: false, hidden:true },
+		{ title: '[[#{bm.btrpit.btrcate}]]', dataType: 'string', dataIndx: 'btrcate', editable: false , hidden : true},
+		{ title: '[[#{bm.btrpit.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+		{ title: '[[#{bm.doe082.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false},
+		{ title: '[[#{bm.doe082.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false},
+		{ title: '[[#{bm.doe082.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false},
+		{ title: '[[#{bm.doe086.tpnstat}]]', dataType: 'string', dataIndx: 'tpistat', editable: false},
+		{ title: '[[#{grid.skuCode}]]', dataType: 'string', dataIndx: 'skumkey', editable: false, summary: { type : 'count' }},
+		{ title: '[[#{bm.btrpit.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, summary : {type : 'max'} ,format: '#,###.000'},
+		{ title: '[[#{bm.btrpit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, summary : {type : 'max'} ,format: '#,###.0' },
+		{ title: '[[#{bm.btrpit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, summary : {type : 'max'} ,format: "#,###"},
+		{ title: '[[#{bm.btrpit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, summary : {type : 'sum'} ,format: "#,###"},
+		{ title: '[[#{bm.btrpit.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editable: false, summary : {type : 'max'} ,format: '#,###.0'},
+		{ title: '[[#{bm.btrpit.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, summary : {type : 'max'} ,format: "#,###"},
+		{ title: '[[#{bm.btrpit.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg', editable: false, summary : {type : 'sum'} ,format: "#,###"},
+		{ title: '[[#{bm.btrpit.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false , hidden : true},
+		{ title: '[[#{bm.doe086.adconam}]]', dataType: 'string', dataIndx: 'adconam', editable: false },
+		{ title: '[[#{bm.doe086.adcoper}]]', dataType: 'float', dataIndx: 'adcoper', editable: false, summary : { type : 'avg' }, format: '#,###.00' },
+		{ title: '[[#{grid.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false, hidden : true },
+		{ title: '[[#{bm.common.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+		{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false},	//원본 목적지
+		{ title: '[[#{bm.btrpit.regiorg}]]', dataType: 'string', dataIndx: 'reorgnm', editable: false },
+		{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false},	//변경 목적지
+		{ title: '[[#{bm.btrpit.regimod}]]', dataType: 'string', dataIndx: 'remodnm', editable: false },
+		{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },	//원본 상세착지
+		{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false},	//변경 상세착지
+		{ title: '[[#{grid.demdman}]]', dataType: 'string', dataIndx: 'demdman', editable: false },	//담당자명
+		{ title: '[[#{grid.demdadr}]]', dataType: 'string', dataIndx: 'demdadr', editable: false},	//상세착지 주소
+		{ title: '[[#{grid.dempocd}]]', dataType: 'string', dataIndx: 'dempocd', editable: false },	//우편번호
+		{ title: '[[#{grid.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false},	//담당자 전화번호
+		{ title: '[[#{bm.btrpit.btrpitc}]]', dataType: 'string', dataIndx: 'btrpitc', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.btrpitn}]]', dataType: 'string', dataIndx: 'btrpitn', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.btrpigb}]]', dataType: 'string', dataIndx: 'btrpigb', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.btrpict}]]', dataType: 'string', dataIndx: 'btrpict', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false, hidden: true },
+		{ title: '[[#{bm.btrpit.ownerky}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false, hidden: true },
+		{ title: '[[#{bm.common.payadst}]]', dataType: 'string', dataIndx: 'payadst', editable: false,
+			render : function(ui){
+				if(ui.rowData.payadyn === 'Y'){
+					return { 
+						style : { 'background' : '#aaebff'} 
+					}
+				}
+			}
+		},
+		{ title: '[[#{bm.btrphd.payadyn}]]', dataType: 'string', dataIndx: 'payadyn', editable: false, hidden : true},		
+		{ title: '[[#{bm.doe086.spehdat}]]', dataType: 'string', dataIndx: 'speidat', editable: false},
+		{ title: '[[#{bm.doe086.spehtim}]]', dataType: 'string', dataIndx: 'speitim', editable: false},
+		{ title: '[[#{bm.btrpit.trnindt}]]', dataType: 'string', dataIndx: 'trnindt', editable: false },
+		{ title: '[[#{bm.btrpit.trnintm}]]', dataType: 'string', dataIndx: 'trnintm', editable: false },
+		{ title: '[[#{bm.btrpit.calweig}]]', dataType: 'string', dataIndx: 'calweig', editable: false ,hidden:true},	//계산중량
+		{ title: '[[#{bm.btrpit.calweig}]]', dataType: 'string', dataIndx: 'calwgnm', editable: false },	//계산중량명 ex)gross중량 , net중량
+		{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false},
+		{ title: '[[#{bm.btrpit.btrpitm}]]', dataType: 'string', dataIndx: 'btrpitm', editable: false },
+		{ title: '[[#{bm.btrpit.btrpchr}]]', dataType: 'integer', dataIndx: 'btrpchr', editable: false, summary: { type : 'avg' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrpcco}]]', dataType: 'integer', dataIndx: 'btrpcco', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrppay}]]', dataType: 'integer', dataIndx: 'btrppay', editable: false, summary: { type : 'avg' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrppco}]]', dataType: 'integer', dataIndx: 'btrppco', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrpecc}]]', dataType: 'integer', dataIndx: 'btrpecc', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.btrpepc}]]', dataType: 'integer', dataIndx: 'btrpepc', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.surchco}]]', dataType: 'integer', dataIndx: 'surchco', editable: false, summary: { type : 'sum' }, format: '#,###' },
+		{ title: '[[#{bm.btrpit.addchco}]]', dataType: 'integer', dataIndx: 'addchco', summary : { type : 'sum' }, format : "#,###",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' } 
+		},
+		{ title: '[[#{bm.btrpit.addpaco}]]', dataType: 'integer', dataIndx: 'addpaco', summary : { type : 'sum' }, format : "#,###",
+			styleHead: { 'background-color':'[[#{grid.styleHead02}]]' } 
+		},
+		{ title: '[[#{bm.btrpit.holichr}]]', dataType: 'integer', dataIndx: 'holichr', editable: false , summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrpit.holipay}]]', dataType: 'integer', dataIndx: 'holipay', editable: false , summary : {type : 'sum'}, format: '#,###' },
+		{ title: '[[#{bm.btrfit.totitch}]]', dataType: 'string', dataIndx: 'totitch', editable: false, hidden:true ,summary : {type : 'sum'}, format: '#,###'},
+		{ title: '[[#{bm.btrfit.totitpa}]]', dataType: 'string', dataIndx: 'totitpa', editable: false, hidden:true ,summary : {type : 'sum'}, format: '#,###'},
+		{ title: '[[#{bm.btrpit.adcmemo}]]', dataType: 'string', dataIndx: 'adcmemo', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+		{ title: '[[#{bm.btrpit.btrpcbt}]]', dataType: 'string', dataIndx: 'btrpcbt', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+				type: 'select',
+	            init: function (ui) {
+	            	ui.$cell.find('select').pqSelect({ checkbox : true });
+	                setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open');
+		        	}, 250);
+				},
+			    options: []
+			},
+			render: gridRenderAndValue
+		 },
+		{ title: '[[#{bm.btrpit.btrppat}]]', dataType: 'string', dataIndx: 'btrppat', editable: false },
+		{ title: '[[#{bm.btrpit.sbillto}]]', dataType: 'string', dataIndx: 'sbillto', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+			editor: {
+				type: 'select',
+	            init: function (ui) {
+	            	ui.$cell.find('select').pqSelect({ checkbox : true });
+	                setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open');
+		        	}, 250);
+				},
+			    options: []
+			},
+			render: gridRenderAndValue
+		 },
+		{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+		{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },
+		{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+		{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+		{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+		{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+		{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+	];
+
+	const doe086AfterHeadGridObj = new GridUtil(doe086AfterHeadGridCM, pageId, 'doe086AfterHeadGrid');
+	const doe086AfterItemGridObj = new GridUtil(doe086AfterItemGridCM, pageId, 'doe086AfterItemGrid');
+	
+	doe086AfterHeadGridObj.setFind();
+	doe086AfterItemGridObj.setFind();
+	
+	doe086AfterHeadGridObj.setCreate(async function(event,ui){
+		await initTab(pageId);	//tab 화면 초기화 설정
+		initTabType = document.querySelector('.nav-item .nav-link.active[id*="' + pageId + '"]').getAttribute('data-tab-type'); 
+		await initSearchCondition(initTabType);	//검색영역 변경
+		
+		//정산일자 set : 일자로 마감하기때문에 처리 화면만 1일기준으로 세팅
+		document.querySelector('#doe086BtrpdafFrom').value = moment().subtract(1,'M').format('YYYY-MM-DD');
+		document.querySelector('#doe086BtrpdafTo').value = moment().format('YYYY-MM-DD');
+		//그리드 내 고정 할 열의 갯수
+		this.option('freezeCols', 1);
+	})
+	
+	//paste에 담긴 addList를 초기화시켜 그리드에 불필요한 row가 생성되지 않게 해줌
+	doe086AfterHeadGridObj.setBeforeValidate(function(event,ui){
+		if(ui.source === 'paste') {
+			ui.addList = [];
+		}
+	});
+	
+	doe086AfterItemGridObj.setCreate(async function(event,ui){
+		//search select box init
+		await _commonInit(pageId);
+		const rCustData = await fetchUtil('GET','/md/partner/customer',{warekey:document.querySelector('#doe086Warekey :checked').value});
+		if(rCustData.status === 200) {
+			const custkeyList = await rCustData.json(); //[key]value selectbox 구성
+			comboCreateData('doe086AfterItemGrid','btrpcbt',custkeyList,{combovl:'combovl',combonm: 'combonm'});
+			comboCreateData('doe086AfterItemGrid','sbillto',custkeyList,{combovl:'combovl',combonm: 'combonm'});
+			comboCreateData('doe086BeforeGrid','btrpcbt',custkeyList,{combovl:'combovl',combonm: 'combonm'});
+		}
+		//그리드 내 고정 할 열의 갯수
+		this.option('freezeCols', 1);
+		doe086BeforeGridObj.getGrid().option('freezeCols',1);
+	});
+	
+	doe086AfterItemGridObj.setBeforeValidate(function(event, ui) {
+		if(ui.source !== 'undo' && (ui.source === 'edit' || ui.source === 'paste' || ui.source === 'checkbox')) {
+			for(const updateData of ui.updateList) {
+				this.updateRow({
+	       			rowIndx : updateData.rowIndx,
+	       		    newRow : {
+	    				state : 'Y'
+	       		    },
+	       		    checkEditable: false
+	       		});
+			}
+			if(ui.addList.length > 0){
+				ui.addList = [];
+			}
+        }
+	});
+	
+	doe086AfterHeadGridObj.setChange(async function(event,ui){ 
+		if(ui.source === 'edit' || ui.source === 'paste' || ui.source === 'undo' || ui.source === 'redo' || ui.source === 'clear') { 
+ 			for(const updateData of ui.updateList){ 
+				//아이템 list있을 경우 필수값 체크  -> 필수값 체크 후 false라면 N처리
+				if(!await requiredCheck(updateData)){
+					updateData.rowData.state = updateData.oldRow.state;
+					updateData.rowData.trfdfsd = updateData.oldRow.trfdfsd;
+					doe086AfterHeadGridObj.getGrid().refresh();
+					return;
+				}
+ 					
+				// 총 중량 > 부적기준중량 일 시 부적중량/부적청구,지급금액 0원 처리.
+				// 부적운임 청구는 직송일때면 계산된다 (직송 : 810, 운송 : 820)
+				const deadFreightObject = {};
+				deadFreightObject.trpdfsd = (updateData.newRow.trpdfsd || 0);
+				updateData.rowData.state = this.getChanges({ all:true }).updateList.length ? 'Y' : 'N';
+				deadFreightObject.trpdfwg = deadFreightObject.trpdfsd > updateData.rowData.totalwg ? (updateData.newRow.trpdfsd - updateData.rowData.totalwg) : 0;	//부적기준중량 = 부적중량 - 총 중량(부적기준중량>총중량 일시 미계산)
+				deadFreightObject.trpdfch = updateData.rowData.doctype === '810' ? (deadFreightObject.trpdfwg * updateData.rowData.dfstdch) / 1000 : 0;				//부적청구 = (부적중량 * 부적기준단가) / 1000
+				deadFreightObject.trpdfpa = (deadFreightObject.trpdfwg * updateData.rowData.dfstdpa) / 1000;														//부적지급 = 상기동일
+				deadFreightObject.toorgch = (updateData.rowData.btrpcco + updateData.rowData.btrpecc + deadFreightObject.trpdfch + updateData.rowData.holichr); 		//기본청구 = 청구금 + 할증금 + 부적금
+				deadFreightObject.totchco = deadFreightObject.toorgch + updateData.rowData.tosurch;							   	  									//총 청구금 = 기본금 + 추가금
+				deadFreightObject.toorgpa = (updateData.rowData.btrppco + updateData.rowData.btrpepc + deadFreightObject.trpdfpa + updateData.rowData.holipay); 		//기본지급 = 지급금 + 할증금 + 부적금
+				deadFreightObject.totpaco = deadFreightObject.toorgpa + updateData.rowData.tosurpa;								   									//총 지급금 = 기본금 + 추가금
+				
+				this.updateRow({
+					rowIndx : updateData.rowIndx,
+					newRow : deadFreightObject,
+					history : false,		/* 해당 옵션 기본값 true. true 일 시 히스토리가 갱신되어 undo/redo에 영향. */
+					checkEditable : false	/* cell의 editable 여부를 무시 */
+				});
+				await doe086AfterHeadGridObj.rowDblClick(event,updateData);
+			} 
+		}
+		doe086AfterHeadGridObj.getGrid().refresh();
+	});
+	
+	//item grid data check될 시 headgrid 자동 check
+	doe086AfterItemGridObj.setCheck(function(event,ui){
+		const gridData = doe086AfterHeadGridObj.getGrid().getData();
+		if(ui.rowData.state === 'Y'){
+			const headData = gridData.find(function(headkey){
+				return headkey.bphdkey === ui.rowData.bphdkey;
+			});
+			const headGrid = pq.grid('#doe086AfterHeadGrid');
+			headGrid.updateRow({
+       			rowIndx : headData.pq_ri,
+       		    newRow : {
+       		    	state: 'Y'
+       		    },
+       		    checkEditable: false
+       		});
+		}
+	});
+	
+	doe086AfterItemGridObj.setChange(function(event,ui){
+		//addchco addpaco 변경시 헤더 추가 청구 비용에 update
+		if(ui.source === 'edit' || ui.source === 'paste' || ui.source === 'undo' || ui.source === 'redo' || ui.source === 'clear'){ 
+			let updateFlag = false;
+			let addchco = 0;
+			let addpaco = 0;
+			for(const updateData of ui.updateList){
+				if(updateData.newRow.btrpcbt || updateData.newRow.sbillto){
+					doe086AfterItemGridObj.getGrid().updateRow({
+						rowIndx : updateData.rowIndx,
+						newRow : {
+							btrpcbt : updateData.newRow.btrpcbt ?? updateData.rowData.btrpcbt,
+							sbillto : updateData.newRow.sbillto ?? updateData.rowData.sbillto,
+						},
+						checkEditable : false
+					});
+				}
+				//수정 후 값 변경시 계산될 수 있도록 newRow - oldRow
+				if (updateData.newRow.addchco !== updateData.oldRow.addchco) {
+				    addchco += ((updateData.newRow.addchco ?? 0) - (updateData.oldRow.addchco ?? 0));
+				    updateData.rowData.addchco = updateData.newRow.addchco ?? 0;
+				    updateFlag = true;
+				}
+				
+				if (updateData.newRow.addpaco !== updateData.oldRow.addpaco) {
+				    addpaco += ((updateData.newRow.addpaco ?? 0) - (updateData.oldRow.addpaco ?? 0));
+				    updateData.rowData.addpaco = updateData.newRow.addpaco ?? 0;
+				    updateFlag = true;
+				}
+				updateData.rowData.state = doe086AfterItemGridObj.getGrid().getChanges({all:true}).updateList.length ? 'Y' : 'N';
+			}
+			if(updateFlag){
+				const gridData = doe086AfterItemGridObj.getGrid().getData();
+		
+				const addchcoData = pq.aggregate.sum(gridData.map(item=>item.addchco));
+				const addpacoData = pq.aggregate.sum(gridData.map(item=>item.addpaco));
+				
+				const headGrid = pq.grid('#doe086AfterHeadGrid');
+				const headGridList = headGrid.getData().find(function(data){
+					return data.bphdkey === ui.updateList[0].rowData.bphdkey;
+				});
+					
+				// addchcoData,addpacoData : 그리드 데이터를 참조하기때문에 추가청구 0 -> 1000 변경시 화면에서는 0이지만 1000 을 갖고와 계산
+				// 총 추가금액에 대한 합산은 가능하지만 감액 해야할 경우는 사용의 어려움이 있음.
+				// 따라서 위 for문에서 변경된 값으로 총 금액 계산
+				let totchco = headGridList.totchco + addchco;
+				let totpaco = headGridList.totpaco + addpaco;
+				
+				headGrid.updateRow({
+					rowIndx : headGridList.pq_ri,
+					newRow : {
+						tosurch : addchcoData,
+						tosurpa : addpacoData,
+						totchco : totchco,
+						totpaco : totpaco
+					},
+					checkEditable : false
+				});
+			}
+		}
+	});
+
+	doe086AfterHeadGridObj.setBeforeCheck(function(event,ui){
+		if(ui.dataIndx !== 'state'){
+			return;
+		}
+		const itemGrid = doe086AfterItemGridObj.getGrid();
+		const itemGridList = itemGrid.getData();
+		if(itemGridList.length > 0){
+			//itemgrid list가 있고, 해당list의 bphdkey값이 리스트와 다르다면
+			const checkList = itemGridList.filter(function(item){
+				return (item.bphdkey !== ui.rowData.bphdkey);
+			});
+			if(checkList.length > 0){
+				const requiredData = checkList.find(function(item){
+					return item.btrpcbt === '' || item.btrpcbt === null;
+				});
+				if(requiredData){
+					alert('[[#{bm.btrpit.btrpcbt}]][[#{bm.doe088.selectValue}]]');
+					doe086AfterItemGridObj.getGrid().editCell({ rowIndx : requiredData.pq_ri , dataIndx : 'btrpcbt' });
+					ui.rows[0].newRow.state = 'N';
+					return doe086AfterHeadGridObj.getGrid().refresh();
+				}
+			}
+		}
+	});
+	
+
+	//head grid check시 itemgrid 자동 조회
+	doe086AfterHeadGridObj.setCheck(async function(event,ui){
+		let result;
+		if(doe086AfterItemGridObj.getGrid().getData().length === 0){
+			result = await doe086AfterHeadGridObj.rowDblClick(event,ui);
+		}else{
+			let foundItem = doe086AfterItemGridObj.getGrid().getData().find(function(item) {
+	            return item.bphdkey === ui.rowData.bphdkey;
+	        });
+			
+	        // foundItem이 존재하지 않거나 bphdkey가 일치하지 않으면 처리
+	        if (!foundItem || foundItem.bphdkey !== ui.rowData.bphdkey) {
+	        	result = await doe086AfterHeadGridObj.rowDblClick(event, ui);
+	        }
+		}
+		
+ 		if(ui.dataIndx === 'state' || result === false) { 
+ 			ui.rowData.holidyn = result === false ? 'N' : ui.rowData.holidyn;
+		}else if(ui.dataIndx === 'holidyn' && (ui.rowIndx !== null && ui.rowIndx !== undefined)) {
+			let holichrOrg = ui.rowData.holchog;	//기존에 들고 있던 야간할증금액
+			let holipayOrg = ui.rowData.holpaog;
+			const rate = ui.check ? (ui.rowData.holrate / 100) : 0;
+			const itemGridData = doe086AfterItemGridObj.getGrid().getData();
+			for(const itemData of itemGridData) { 
+				const standardWeight = itemData.calweig === 'GROSSWG' ? 'grosswg' : 'skuweig';
+				doe086AfterItemGridObj.getGrid().updateRow({
+					rowIndx: itemData.pq_ri,
+					newRow: {
+						state: 'Y',
+						holichr: (itemData.btrpchr *  itemData[standardWeight] * rate) / 1000,
+						holipay: (itemData.btrppay *  itemData[standardWeight] * rate) / 1000
+					},
+					history: false,
+					checkEditable: false
+				});
+			}
+			const newRow = {};
+			newRow.holidyn = ui.check ? 'Y' : 'N';
+			newRow.holichr = pq.aggregate.sum(itemGridData.map(item => item.holichr));
+			newRow.holipay = pq.aggregate.sum(itemGridData.map(item => item.holipay));
+			const toorgch = pq.aggregate.sum(itemGridData.map(item => item.totitch));
+			const toorgpa = pq.aggregate.sum(itemGridData.map(item => item.totitpa));
+			if(holichrOrg + holipayOrg > 0){
+				newRow.toorgch = toorgch + (ui.rowData.trfdfch?? 0) - ui.rowData.holichr;
+				newRow.toorgpa = toorgpa + (ui.rowData.trfdfpa?? 0) - ui.rowData.holipay;
+			}else{
+				newRow.toorgch = toorgch + (ui.rowData.trfdfch?? 0) + newRow.holichr;	//기본청구 = 청구금 + 할증금 + 부적금 		//기본청구 = 청구금 + 할증금 + 부적금
+				newRow.toorgpa = toorgpa + (ui.rowData.trfdfpa?? 0) + newRow.holichr;
+			}
+			newRow.totchco = newRow.toorgch + ui.rowData.tosurch;
+			newRow.totpaco = newRow.toorgpa + ui.rowData.tosurpa;
+			this.updateRow({
+				rowIndx: ui.rowIndx,
+				newRow: newRow,
+				checkEditable: false
+			});
+		}
+		this.refresh();
+		
+	});
+	
+	doe086AfterHeadGridObj.setRowDblClick(async function(event, ui){
+		const headGrid = pq.grid('#doe086AfterHeadGrid');
+		const itemGrid = pq.grid('#doe086AfterItemGrid');
+		let activeHeadGridData;
+		
+		if(itemGrid.getData().length > 0){
+			let foundItem = doe086AfterItemGridObj.getGrid().getData().find(function(item) {
+	            return item.bphdkey === ui.rowData.bphdkey;
+	        });
+			
+	        // foundItem이 존재하지 않거나 bphdkey가 일치하지 않으면 처리
+	        if (foundItem) {
+				return;
+	        }
+	        
+	     	// headgrid state === 'y'인 데이터 => 해당 grid의 bphdkey와 아이템 그리드의 bphdkey가 다르다면 그 아이템 리스트의 필수값을 확인
+			// 다른bphdkey를 가진 헤더를 더블클릭 했을때 item 그리드의 데이터 필수값을 확인하기 위함
+			activeHeadGridData = headGrid.getData()
+				.find(e => e.state === 'Y' && itemGrid.getData().some(item => item.bphdkey === e.bphdkey));
+			
+			if(activeHeadGridData){
+				if(!await requiredCheck(ui)){
+					return false;
+				}
+			}
+		}
+		//아이템에 수정된 데이터가 있을 경우
+		const itemUpdateList = doe086AfterItemGridObj.getGrid().getChanges({ all: true }).updateList;
+		if(itemUpdateList.length > 0  && activeHeadGridData){
+			if(!confirm('[[#{ms.modifiedDataReset}]]')){	//수정된 데이터가 있습니다. 초기화 하시겠습니까?
+				ui.rowData.state = 'N';
+				headGrid.refresh();
+				//초기화 취소
+				return false;
+			}
+			//아이템 그리드의 bphdkey와 헤드 그리드의 bphdkey가 같은 rowData를 담아서 해당 rowData의 추가 청구/지급, 총 청구/지급 값을 rollback하기 위함
+			const headGridData = headGrid.getData().find(e => itemUpdateList.some(item => item.bphdkey === e.bphdkey));
+			// 추가 청구 및 지급 데이터의 합계 계산
+			const addchcoData = pq.aggregate.sum(itemUpdateList.map(item => item.addchco));
+			const addpacoData = pq.aggregate.sum(itemUpdateList.map(item => item.addpaco));
+			const totchco = pq.aggregate.sum(itemUpdateList.map(item => item.totitch));
+			const totpaco = pq.aggregate.sum(itemUpdateList.map(item => item.totitpa));
+			const historyData = doe086AfterHeadGridObj.getGrid().History().records.find(e => headGridData.bphdkey === e.updateList[0].rowData.bphdkey).updateList[0]; 
+			
+			// 변경된 금액으로 헤더 데이터를 계산
+			const headCostObj = {
+					state: 'N', // 초기 상태 설정
+			    	holidyn : historyData.oldRow.holidyn || historyData.newRow.holidyn,
+			    	tosurch: (headGridData.tosurch ?? 0) - addchcoData, // 변경된 추가 청구 금액
+			    	tosurpa: (headGridData.tosurpa ?? 0) - addpacoData, // 변경된 추가 지급 금액
+			    	totchco: totchco + (headGridData.tosurch ?? 0) - addchcoData, // 변경된 총 추가 청구 금액
+			    	totpaco: totpaco + (headGridData.tosurpa ?? 0) - addpacoData// 변경된 총 추가 지급 금액
+			};
+			
+			// 헤더 그리드의 특정 행 업데이트
+			headGrid.updateRow({
+			    rowIndx: headGridData.pq_ri,
+			    newRow: headCostObj,
+			    history : false,
+			    checkEditable: false
+			});
+
+			// 그리드 화면 갱신
+			await doe086AfterHeadGridObj.getGrid().refreshDataAndView();
+		}
+		const params ={
+				warekey : ui.rowData.warekey,
+				bphdkey : ui.rowData.bphdkey
+		};
+		await getDoe086ItemList(params);
+	});
+	
+	doe086AfterHeadGridObj.open();
+	doe086AfterItemGridObj.open();
+	
+	document.querySelectorAll('.nav-item .nav-link').forEach(navLink => {
+	    navLink.addEventListener('click', () => {
+	    	const targetElement = document.querySelector(`#tabli_${pageId}`);
+	        // 특정 요소의 클래스가 .on 인지 확인
+	        if (targetElement && targetElement.classList.contains('on')) {
+	            // 선택된 탭을 상수로 저장
+	            const clickedTab = navLink;
+	            // 지연 없이 바로 클래스가 변경되었는지 확인
+	            requestAnimationFrame(async () => {
+	                if (clickedTab.classList.contains('active') && clickedTab.classList.contains('show')) {
+	                	initTabType = clickedTab.getAttribute('data-tab-type');
+	    	            await initSearchCondition(initTabType);	//검색영역 변경
+	                }
+	            });
+	        }
+	    });
+	});
+
+	//조회 버튼 클릭
+	document.querySelector('#doe086BtnSearch').addEventListener('click', function() {
+		if(document.querySelector('.nav-item .nav-link.active[href*="doe086AfterClose"]')){
+			doe086AfterItemGridObj.searchList([]);
+		}
+		getDoe086HeadList();
+	});
+
+	//검색영역 초기화 버튼
+	document.querySelector('#doe086BtnReset').addEventListener('click', function(){
+		if(initTabType === 'after'){
+			const headGrid = doe086AfterHeadGridObj.getGrid().getData();
+			const itemGrid = doe086AfterItemGridObj.getGrid().getData();
+			if(headGrid.length > 0 || itemGrid.length > 0){
+				if(!confirm('[[#{ms.listViewRollback}]]')){
+					return;
+				}
+				makeEmptyGrid(doe086AfterHeadGridObj);
+				makeEmptyGrid(doe086AfterItemGridObj);
+			}
+		}else if(initTabType === 'before'){
+			if(doe086BeforeGridObj.getGrid().getData().length > 0){
+				if(!confirm('[[#{ms.listViewRollback}]]')){
+					return;
+				}
+				makeEmptyGrid(doe086BeforeGridObj);
+			}
+		}
+		document.querySelectorAll('input[id*="'+ pageId + '"], select[id*="'+ pageId + '"]').forEach(function(el){
+			if(el.localName === 'select'){
+				el.selectedIndex = 0;
+			}else{	//input
+				if(el.type === 'date' && el.name === pageId + 'Btrpdaf'){
+					//정산일자 set : 일자로 마감하기때문에 처리 화면만 1일기준으로 세팅
+					document.querySelector('#' + el.name + 'From').value = moment().subtract(1,'M').format('YYYY-MM-DD');
+					document.querySelector('#' + el.name + 'To').value = moment().format('YYYY-MM-DD');
+					return;
+				}
+				el.value = '';
+			}
+		});
+	});
+	
+	let defaultWarekey;
+	document.querySelector('#doe086Warekey').addEventListener('focus', () => {
+		defaultWarekey = document.querySelector('#doe086Warekey').value;
+	});
+	
+	document.querySelector('#doe086Warekey').addEventListener('change',async ()=>{
+		if(initTabType === 'after'){
+			const headGrid = doe086AfterHeadGridObj.getGrid().getData();
+			const itemGrid = doe086AfterItemGridObj.getGrid().getData();
+			if(headGrid.length > 0 || itemGrid.length > 0){
+				if(!confirm('[[#{ms.listViewRollback}]]')){
+					document.querySelector('#doe086Warekey').value = defaultWarekey;
+					return;
+				}
+				makeEmptyGrid(doe086AfterItemGridObj);	//item grid reset
+			}
+		}else{
+			if(doe086BeforeGridObj.getGrid().getData().length > 0){
+				if(!confirm('[[#{ms.listViewRollback}]]')){
+					document.querySelector('#doe086Warekey').value = defaultWarekey;
+					return;
+				}
+			}
+		}
+		defaultWarekey = this.value;
+		await getDoe086HeadList();
+	});
+	
+	//날짜 From to 역전 불가
+	dateValidation(document.querySelector('#doe086BtrpdafFrom'),document.querySelector('#doe086BtrpdafTo'),'doe086Btrpdaf',1,'M');
+	
+	//검증완료
+	document.querySelector('#doe086BtnValidated').addEventListener('click', async function(){
+		const grid = pq.grid('#doe086AfterHeadGrid');
+		const itemGrid = pq.grid('#doe086AfterItemGrid');
+		const headUpdateList = grid.getData().filter(function(e) {
+			return e.state === 'Y';
+		});
+		
+		const itemGridDataList = itemGrid.getData();
+		const itemGridUpdateList = doe086AfterItemGridObj.getGrid().getChanges({ all : true }).updateList;
+		
+		if(headUpdateList.length === 0){
+			alert('[[#{ms.choiceHeadRowZero}]]');
+			return;
+		}
+		
+		// 아이템 그리드 데이터에서 필수값 컬럼 데이터 확인
+		for(const checkData of itemGridDataList) {
+			for(const requiredInput in itemGrid.columns) {
+				if(itemGrid.columns[requiredInput].styleHead && itemGrid.columns[requiredInput].styleHead['background-color'] === '[[#{grid.styleHead01}]]') {
+					if(!checkData[requiredInput] && checkData[requiredInput] !== 0) {
+						alert((checkData.pq_ri + 1) + ' Row ' + '[[#{ms.requiredValue}]]' + ' (' + itemGrid.columns[requiredInput].title + ')');
+						itemGrid.editCell({ rowIndx : checkData.pq_ri, dataIndx : requiredInput });
+						return;
+					}
+				}
+			}
+		}
+		
+		const params = {
+			headUpdateList : headUpdateList,
+			itemUpdateList : itemGridUpdateList
+		};
+		
+		if(confirm('[[#{ms.verifyConfirm}]]')) {
+			grid.showLoading();
+
+			const rData = await fetchUtil('PATCH', '/bm/billing/doe086/validate', params);
+
+			if(rData.status === 200){
+				doe086AfterItemGridObj.searchList([]);
+				await getDoe086HeadList();
+				grid.refreshDataAndView();
+			}
+			grid.hideLoading();
+		}
+	});
+	
+	//마감취소
+	document.querySelector('#doe086BtnCloseCancel').addEventListener('click', async function(){
+		//마감 후 데이터의 체크 리스트를 확인 후 마감 취소
+		const grid = pq.grid('#doe086AfterHeadGrid');
+		const gridDataList = grid.getData();
+		const checkList = gridDataList.filter(function(e) {
+			return e.state === 'Y';
+		});
+		
+		if(!checkList.length){
+			alert('[[#{ms.choiceHeadRowZero}]]');
+			return;
+		}
+		if(confirm('[[#{ms.cancelConfirm}]]')){		//취소할 경우 마감 처리 전으로 돌아갑니다. 취소하시겠습니까?
+			grid.showLoading();
+			const rData = await fetchUtil('PATCH','/bm/billing/doe086/cancel', {updateList : checkList});
+			if(rData.status === 200){
+				doe086AfterItemGridObj.searchList([]);
+				getDoe086HeadList();
+			}
+			grid.hideLoading();
+			grid.refreshDataAndView();
+		}
+	});
+	
+	//선지급 취소
+	document.querySelector('#doe086BtnPayadynCancel').addEventListener('click', async function(){
+		const grid = pq.grid('#doe086AfterHeadGrid');
+		const gridDataList = grid.getData();
+		//체크된 헤드 리스트에서 선지급 여부가 Y인 것을 찾음
+		const gridCheckList = gridDataList.filter(function(e) {
+			return e.state === 'Y';
+		});
+		const payadCheckList = gridCheckList.filter(function(e) {
+			return e.payadyn === 'Y';
+		});
+		//체크된 리스트가 없다면 선택된 headRow X
+		if(!gridCheckList.length){
+			alert('[[#{ms.choiceHeadRowZero}]]');
+			return;
+		}
+		//체크된 리스트중에 선지급여부가 'Y'인 리스트가 없다면 선지급 취소를 할 수 없는 정산입니다.
+		if(!payadCheckList.length){
+			alert('[[#{ms.noAdvPayExists}]]');		//취소 가능한 선지급 정산이 없습니다."
+			return;
+		}
+		
+		if(confirm('[[#{ms.cancelAdvPayOnly}]]\n[[#{ms.modifyReset}]]')){	//선지급이 완료된 데이터만 취소됩니다.이대로 진행하시겠습니까?\n수정사항은 초기화됩니다.
+			grid.showLoading();
+			const rData = await fetchUtil('PATCH','/bm/billing/doe086/payad-cancel',payadCheckList)
+			if(rData.status === 200){
+				getDoe086HeadList();
+			}
+			grid.hideLoading();
+			grid.refreshDataAndView();
+		}
+	});
+	
+	document.querySelector('#doe086BtnBtrpcbtSave').addEventListener('click',async function(){
+		const grid = pq.grid('#doe086BeforeGrid');
+		const params = makeSaveData(grid);
+		if(!params){
+			return;
+		}
+		if(confirm('청구처만 수정됩니다. 저장하시겠습니까?')){
+			grid.showLoading();
+			const rData = await fetchUtil('PATCH', '/bm/billing/doe086/btrpcbt-save' ,params);
+			if(rData.status === 200){
+				await getDoe086HeadList();
+			}
+		}
+		
+		grid.refreshDataAndView();	
+		grid.hideLoading();
+	})
+	
+	
+	async function getDoe086HeadList() {
+		let params;
+		let grid;
+		let url;
+		
+		if(initTabType === 'after'){
+			grid = pq.grid('#doe086AfterHeadGrid');
+			makeEmptyGrid(doe086AfterItemGridObj);
+			params = makeSearchData(pageId);
+			url = '/bm/billing/doe086/grid/head';
+		}else{
+			grid = pq.grid('#doe086BeforeGrid');
+			params = makeSearchData(pageId);
+			params.pcvrfyn = 'N';	
+			url = '/bm/billing/doe086/grid/item';
+		}
+		
+		grid.showLoading();
+		const rData = await fetchUtil('GET', url, params);
+		if(rData.status === 200){
+			const dataList = await rData.json();
+			grid.option('dataModel', { data: dataList, recIndx: 'rowkey' });
+		}
+		grid.refreshDataAndView();
+		grid.hideLoading();
+	}
+	
+	//Item Grid 조회
+	async function getDoe086ItemList(params){
+		const grid = pq.grid('#doe086AfterItemGrid');
+		if(!params){
+			return;
+		}
+		grid.showLoading();
+		const rData = await fetchUtil('GET', '/bm/billing/doe086/grid/item', params);
+		if(rData.status === 200){
+			const btrpCloseItemList = await rData.json();
+			grid.option('dataModel',{ data:btrpCloseItemList, recIndx : 'rowkey' });
+		}
+		
+		grid.refreshDataAndView();
+		grid.hideLoading();
+	}
+	
+	async function requiredCheck(ui){
+		const itemGrid = doe086AfterItemGridObj.getGrid();
+		const itemGridList = itemGrid.getData();
+		if(itemGridList.length > 0){
+			//itemgrid list가 있고, 해당list의 bphdkey값이 리스트와 다르다면
+			const checkList = itemGridList.filter(function(item){
+				return (item.bphdkey !== ui.rowData.bphdkey);
+			});
+			if(checkList.length > 0){
+				const requiredData = checkList.find(function(item){
+					return item.btrpcbt === '' || item.btrpcbt === null;
+				});
+				//청구처 필수값 확인
+				if(requiredData){
+					alert('[[#{bm.btrpit.btrpcbt}]][[#{bm.doe088.selectValue}]]');
+					doe086AfterItemGridObj.getGrid().editCell({ rowIndx : requiredData.pq_ri , dataIndx : 'btrpcbt' });
+					ui.rowData.state = ui.rowData.state && ui.rowData.state === 'Y' ?  ui.rowData.state : 'N';
+					doe086AfterHeadGridObj.getGrid().refresh();
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	/* 검생영역 동적 변경 Event */
+	async function initSearchCondition(tabType){
+		//tapType : data-tap-type (after,before)
+		const targetDoms = document.querySelectorAll('.setting-grid[data-visible-target=' + pageId + '] [data-visible-category], .list-top[data-visible-target=' + pageId + '] [data-visible-category]');
+		targetDoms.forEach(dom => {
+			if(!JSON.parse(dom.dataset.visibleCategory).includes(tabType)){
+				dom.setAttribute('hidden', 'hidden');
+			} else {
+				dom.removeAttribute('hidden');
+			}
+		});
+	}
+	
+	doe086SearchKeyup = async function (){
+		const key = this.event.key || this.event.keyCode;
+		if(key === 'Enter' || key === 13) {
+			await getDoe086HeadList();
+		}
+	}
+}();
+</script>
+</div>
+</html>

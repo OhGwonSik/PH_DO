@@ -1,0 +1,1095 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="doe035Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe035Warekey" name="doe035Warekey"
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+						data-cb-select="" data-cb-variable="warekeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe035Areakey" class="setting-grid-title">[[#{search.areanam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe035Areakey" name="doe035Areakey"
+						data-cb-val="areakey" data-cb-name="areanam" data-cb-url="/md/organization/area/relation"
+						data-cb-select="" data-cb-variable="areakeyList">
+							<option value="">[[#{ms.chooseAll}]]</option>
+						</select>
+					</div>
+				</div>
+				<label for="doe035Locakey" class="setting-grid-title">[[#{search.locanam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe035Locakey" name="doe035Locakey"
+						data-cb-val="locakey" data-cb-name="locanam" data-cb-url="/md/wal-relations?loctypeList=BED,TMP"
+						data-cb-select="" data-cb-variable="locakeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe035Skumkey" class="setting-grid-title">[[#{search.skuCode}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.skuCode')}" id="doe035Skumkey" name="doe035Skumkey" onkeyup="doe035KeyupEvt()"/>
+					</div>
+				</div>
+				<label for="doe035Custnam" class="setting-grid-title">[[#{search.cunamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.cunamlc')}" id="doe035Custnam" name="doe035Custnam" onkeyup="doe035KeyupEvt()"/>
+					</div>
+				</div>
+				<label for="doe035Purcnum" class="setting-grid-title">[[#{grid.purcnum}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('grid.purcnum')}" id="doe035Purcnum" name="doe035Purcnum" onkeyup="doe035KeyupEvt()">
+					</div>
+				</div>
+				<label for="doe035Orderln" class="setting-grid-title">[[#{grid.orderln}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('grid.orderln')}" id="doe035Orderln" name="doe035Orderln" onkeyup="doe035KeyupEvt()">
+					</div>
+				</div>
+				<label for="doe035Regikey" class="setting-grid-title">[[#{search.renamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe035Regikey"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/partner/region"
+							data-cb-select="" data-cb-variable="regionList">
+						</select>
+					</div>
+				</div>
+				<label for="doe035Demodnm" class="setting-grid-title">[[#{search.denamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.denamlc')}" id="doe035Demodnm" name="doe035Demodnm" onkeyup="doe035KeyupEvt()">
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe035BtnSearch"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe035BtnReset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.sm.doe035}]]</span>
+				</div>
+				<div class="edit-btn-wrapper">
+					<span>[[#{grid.itemcnt}]] : </span>
+                    <span id="doe035Itemcnt">0</span>
+                    /
+                    <span>[[#{bm.common.totalwg}]] : </span>
+                    <span id="doe035TotalKg">0</span>
+                    /
+                    <span>[[#{sy.main.totalWeight}]] : </span>
+                    <span id="doe035TotalTon">0</span>
+					<button class="btn-navy btn-green" id="doe035BtnEachSave"><img class="ic-bt-save">[[#{bt.eachSelectionInstruction}]]</button>
+					<button class="btn-navy btn-green" id="doe035BtnSave"><img class="ic-bt-save">[[#{bt.selectionInstruction}]]</button>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box">
+				<div id="doe035Grid"></div>
+			</div>
+		</div>
+	<!-- 아이템 재고추가 모달 -->
+	<div class="modal fade modalTm" id="doe035LocationModal" role="dialog" aria-labelledby="doe035LocationModal" aria-hidden="true">
+			<div class="modal-dialog .modal-sm" role="document" style="width: 400px">
+				<div class="modal-content">
+					<div class="modal-top">
+						<button type="button" class="close" id="doe035LocationMdClose" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body doe035">
+							<div class="list-top">
+								<div class="list-title ic-title-mark">
+									<span>위치지정</span>
+								</div>
+							</div>
+							<div class="setting-grid con-box" style="grid-template-columns: 70px 1fr;">
+								<label for="doe035ModalAreakey" class="setting-grid-title ic-title-nece">[[#{sm.wstkky.toareky}]]</label>
+									<div class="setting-grid-content">
+									<div class="input-group">
+										<select id="doe035ModalAreakey"></select>
+									</div>
+								</div>
+
+					        	<label for="doe035ModalLocakey" class="setting-grid-title ic-title-nece">[[#{sm.wstkky.tolocky}]]</label>
+								<div class="setting-grid-content">
+									<div class="input-group">
+										<select id="doe035ModalLocakey"></select>
+									</div>
+								</div>
+
+								<label for="doe035ModalEquipky" class="setting-grid-title ic-title-nece">[[#{sm.wstkky.equipky}]]</label>
+								<div class="setting-grid-content">
+									<div class="input-group">
+										<select id="doe035ModalEquipky"></select>
+									</div>
+								</div>
+
+								<label for="doe035Layer" class="setting-grid-title">[[#{sm.wstkky.tolayer}]]</label>
+								<div class="setting-grid-content">
+									<div class="input-date-group">
+										<input type="number" id="doe035ModalLayerFrom" disabled="disabled">
+										<span>~</span>
+										<input type="number" id="doe035ModalLayerTo" disabled="disabled">
+									</div>
+								</div>
+
+								<label for="doe035ModalParsncd" class="setting-grid-title ic-title-nece">[[#{sm.wstkky.parsncd}]]</label>
+								<div class="setting-grid-content">
+									<div class="input-group">
+										<select id="doe035ModalParsncd"></select>
+									</div>
+								</div>
+
+								<label for="doe035ModalParsnnm" class="setting-grid-title">[[#{sm.wstkky.parsnnm}]]</label>
+								<div class="setting-grid-content">
+									<div class="input-group">
+										<input type="text" id="doe035ModalParsnnm" style="width: 400px;">
+									</div>
+								</div>
+							</div>
+					</div>
+					<div class="modal-bottom">
+						<button class="btn-white" id="doe035LocationMdSave">[[#{bt.save}]]</button>
+						<button class="btn-save btn-navy btn-green" id="doe035LocationMdCancel">[[#{bt.cancel}]]</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	<script>
+	!function(){
+		console.log('doe035 :: 선별지시등록')
+		const pageId = '[[${tabPage}]]';
+
+		let doe035StockList;
+		let doe035InitData;
+		let doe035CurrentWarekey;
+		const locationModalId = document.getElementById('doe035LocationModal');
+		//모달 키보드와 마우스로 안닫히게끔 설정
+		const locationModal = new bootstrap.Modal(locationModalId, {
+			backdrop: 'static',
+			keyboard: false
+		});
+		const doe035GridCM = [
+			{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+				, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+				nodrag: true, nodrop: true,
+				cb: { all: false, header: true, check: 'Y', uncheck: 'N' }
+			},
+			{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.stockky}]]', dataType: 'string', dataIndx: 'stockky', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+			{ title: '[[#{grid.areakey}]]', dataType: 'string', dataIndx: 'areakey', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{grid.areanam}]]', dataType: 'string', dataIndx: 'areanam', editable: false },
+			{ title: '[[#{grid.locakey}]]', dataType: 'string', dataIndx: 'locakey', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{grid.locanam}]]', dataType: 'string', dataIndx: 'locanam', editable: false },
+			{ title: '[[#{grid.layer}]]', dataType: 'integer', dataIndx: 'lolayer', editable: false },
+			{ title: '[[#{sm.wstkky.toareky}]]', dataType: 'string', dataIndx: 'toareky',
+				styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+				editor: {
+					type: 'select',
+		            init: function (ui) {
+		            	ui.$cell.find('select').pqSelect( {
+		            		checkbox : true,
+						 	search: false,
+						 	width: getSelectBoxWidthCondition(ui)
+						});
+		                setTimeout(function () {
+		                	ui.$cell.find('select').pqSelect('open');
+			        	}, 250);
+					},
+					options: ui => {
+						return window['areaRelationList']?.map(e => {
+							if(e.warekey === ui.rowData.warekey){
+								const obj = {};
+								obj[e.areakey] = e.areanam;
+
+								return obj;
+							}
+						}).filter(e => e);
+					}
+				},
+				render: ui => {
+					const target = window['areaRelationList']?.find( e => e.warekey === ui.rowData?.warekey && e['areakey'] === ui.cellData);
+					ui.rowData[ui.dataIndx] = target ? target.areakey : '';
+					return {
+						text: target ? target.areanam : ''
+					};
+				}
+			},
+			{ title: '[[#{sm.wstkky.tolocky}]]', dataType: 'string', dataIndx: 'tolocky',
+				styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+				editor: {
+					type: 'select',
+		            init: function (ui) {
+		            	ui.$cell.find('select').pqSelect( {
+		            		checkbox : true,
+						 	search: false,
+						 	width: getSelectBoxWidthCondition(ui)
+		            	});
+		                setTimeout(function () {
+		                	ui.$cell.find('select').pqSelect('open');
+			        	}, 250);
+					},
+					options: ui => {
+						return window['locationRelationList']?.map(e => {
+							if(e.warekey === ui.rowData.warekey && e.areakey === ui.rowData.toareky && e.loctype === 'BED'){
+								const obj = {};
+								obj[e.locakey] = e.locanam;
+
+								return obj;
+							}
+						}).filter(e => e);
+					}
+				},
+				render: ui => {
+					const target = window['locationRelationList']?.find( e => e.warekey === ui.rowData?.warekey && e.areakey === ui.rowData.toareky && e.locakey === ui.cellData && e.loctype === 'BED');
+					ui.rowData[ui.dataIndx] = target ? target.locakey : '';
+					return {
+						text: target ? target.locanam : ''
+					};
+				}
+			}, {
+				title: '[[#{grid.equipky}]]',
+				dataType: 'string',
+				dataIndx: 'equipky',
+				styleHead: {
+					'background-color': '[[#{grid.styleHead01}]]'
+				},
+				editor: {
+					type: 'select',
+					init: ui => {
+	        			 ui.$cell.find('select').pqSelect({
+    						 checkbox: true,
+    						 search: true,
+    						 width: getSelectBoxWidthCondition(ui)
+	        			});
+	        			 setTimeout(() => {
+	        				 ui.$cell.find('select').pqSelect('open');
+        				 }, 250);
+        			},
+					options: ui => {
+						return window['meqlocList']?.map(e => {
+							if(e.warekey === ui.rowData.warekey && e.areakey === ui.rowData.toareky && e.locakey === ui.rowData.tolocky){
+								const obj = {};
+								obj[e.equipky] = e.equinam;
+
+								return obj;
+							}
+						}).filter(e=>e);
+					}
+				},
+				editable: true,
+				render: ui => {
+					const target = window['meqlocList']?.find( e => e.warekey === ui.rowData.warekey && e.areakey === ui.rowData.toareky && e.locakey === ui.rowData.tolocky && e.equipky === ui.cellData);
+					ui.rowData[ui.dataIndx] = target ? target.equipky : '';
+					return {
+						text: target ? target.equinam : ''
+					};
+				}
+			},
+			{ title: '[[#{sm.wstkky.tolayer}]]', dataType: 'integer', dataIndx: 'tolayer',
+				styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+			},
+			{ title: '[[#{sm.wstkky.parsncd}]]', dataType: 'string', dataIndx: 'parsncd',
+				styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+				editor: {
+					type: 'select',
+		            init: function (ui) {
+		            	ui.$cell.find('select').pqSelect({ checkbox : true });
+		                setTimeout(function () {
+		                	ui.$cell.find('select').pqSelect('open');
+			        	}, 250);
+					},
+				    options: ui => {
+				    	return window['rsncodeRelationList']?.map(e => {
+							if(e.warekey === ui.rowData.warekey && e.doccate === '500' && e.doctype === '510'){
+								const obj = {};
+								obj[e.rsncode] = e.rsncdnm;
+
+								return obj;
+							}
+						}).filter(e => e);
+				    }
+				},
+				render : ui =>{
+					const target = window['rsncodeRelationList']?.find( e => e.warekey === ui.rowData.warekey && e.doccate === '500' && e.doctype === '510' && e.rsncode === ui.cellData);
+					return {
+						text : target ? target.rsncdnm : ''
+					}
+				},
+				editable: true
+			},
+			{ title: '[[#{sm.wstkky.parsnnm}]]', dataType: 'string', dataIndx: 'parsnnm',
+				styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }, editable: true
+			},
+			{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcate', editable: false, hidden : true },
+			{ title: '[[#{grid.btrcnam}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+			{ title: '[[#{bm.baddco.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false, hidden : true},
+			{ title: '[[#{bm.baddco.addconm}]]', dataType: 'string', dataIndx: 'addconm', editable: false },
+			{ title: '[[#{grid.skugrky}]]', dataType: 'string', dataIndx: 'skugrky', editable: false, hidden : true},
+			{ title: '[[#{grid.grpkynm}]]', dataType: 'string', dataIndx: 'grpkynm', editable: false},
+			{ title: '[[#{sm.wstkky.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+			{ title: '[[#{sm.wstkky.skuthic}]]', dataType: 'double', dataIndx: 'skuthic', format: '#,###.000', editable: false, summary: { type : 'max' } },
+			{ title: '[[#{sm.wstkky.skuwidt}]]', dataType: 'double', dataIndx: 'skuwidt', format: '#,###.0', editable: false, summary: { type : 'max' } },
+			{ title: '[[#{sm.wstkky.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', format: '#,###', editable: false, summary: { type : 'max' } },
+			{ title: '[[#{sm.wstkky.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', format: '#,###', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.ownrnam}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+			{ title: '[[#{sm.wstkky.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.custnam}]]', dataType: 'string', dataIndx: 'custnam', editable: false},
+			{ title: '[[#{sm.wstkky.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false},
+			{ title: '[[#{sm.wstkky.renamlc}]]', dataType: 'string', dataIndx: 'renamlc', editable: false },
+			{ title: '[[#{sm.wstkky.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false},
+			{ title: '[[#{sm.wstkky.remodnm}]]', dataType: 'string', dataIndx: 'remodnm', editable: false },
+			{ title: '[[#{sm.wstkky.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },
+			{ title: '[[#{sm.wstkky.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+			{ title: '[[#{sm.wstkky.purcnum}]]', dataType: 'string', dataIndx: 'purcnum', editable: false },
+			{ title: '[[#{sm.wstkky.orderln}]]', dataType: 'string', dataIndx: 'orderln', editable: false },
+			{ title: '[[#{sm.wstkky.lotnmky}]]', dataType: 'string', dataIndx: 'lotnmky', editable: false },
+			{ title: '[[#{sm.wstkky.stlotnb}]]', dataType: 'string', dataIndx: 'stlotnb', editable: false },
+			{ title: '[[#{sm.wstkky.skudesc}]]', dataType: 'string', dataIndx: 'skudesc', editable: false },
+			{ title: '[[#{sm.wstkky.itemcod}]]', dataType: 'string', dataIndx: 'itemcod', editable: false },
+			{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+			{ title: '[[#{sm.wstkky.stotqty}]]', dataType: 'integer', dataIndx: 'stotqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.taskqty}]]', dataType: 'integer', dataIndx: 'taskqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.sallqty}]]', dataType: 'integer', dataIndx: 'sallqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.sbloqty}]]', dataType: 'integer', dataIndx: 'sbloqty', editable: false, summary: { type : 'sum' }},
+			{ title: '[[#{sm.wstkky.planqty}]]', dataType: 'integer', dataIndx: 'planqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.plcmqty}]]', dataType: 'integer', dataIndx: 'plcmqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.suomkey}]]', dataType: 'string', dataIndx: 'suomkey', editable: false },
+			{ title: '[[#{sm.wstkky.rcvdcdt}]]', dataType: 'string', dataIndx: 'rcvdcdt', editable: false },
+			{ title: '[[#{sm.wstkky.lotat01}]]', dataType: 'string', dataIndx: 'lotat01', editable: false },
+			{ title: '[[#{sm.wstkky.lotat02}]]', dataType: 'string', dataIndx: 'lotat02', editable: false },
+			{ title: '[[#{sm.wstkky.lotat03}]]', dataType: 'string', dataIndx: 'lotat03', editable: false },
+			{ title: '[[#{sm.wstkky.stkstat}]]', dataType: 'string', dataIndx: 'stkstat', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.stkstat}]]', dataType: 'string', dataIndx: 'statnam', editable: false },
+			{ title: '[[#{sm.wstkky.blockid}]]', dataType: 'string', dataIndx: 'blockid', editable: false },
+			{ title: '[[#{sm.wstkky.rcvdcky}]]', dataType: 'string', dataIndx: 'rcvdcky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.rcvdcit}]]', dataType: 'integer', dataIndx: 'rcvdcit', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.adjsoky}]]', dataType: 'string', dataIndx: 'adjsoky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.adjsoit}]]', dataType: 'integer', dataIndx: 'adjsoit', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.physoky}]]', dataType: 'string', dataIndx: 'physoky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.physoit}]]', dataType: 'integer', dataIndx: 'physoit', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.shpdcky}]]', dataType: 'string', dataIndx: 'shpdcky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.shpdcit}]]', dataType: 'integer', dataIndx: 'shpdcit', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.taskoky}]]', dataType: 'string', dataIndx: 'taskoky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.taskoit}]]', dataType: 'integer', dataIndx: 'taskoit', editable: false, hidden: true },
+			{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },										// 생성일자
+			{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },										// 생성일시
+			{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },										// 생성사용자
+			{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },										// 수정일자
+			{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },										// 수정일시
+			{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },										// 수정사용자
+			{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+		];
+
+		const doe035GridObject = new GridUtil(doe035GridCM, 'doe035', 'doe035Grid');
+		doe035GridObject.setFreezeCols(1);
+		doe035GridObject.setCreate(async function(){
+			await initFunc();
+			const param = {
+					doccate : '500',
+					doctype : '510'
+			}
+
+			const doe035InitResponse = await fetchUtil('GET','/sm/inventory/init/mrscma',param);
+			doe035InitData = await doe035InitResponse.json();
+
+
+			const areakeyFilter = areakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe035Warekey').value;
+			});
+			await makeOptionAreakey(areakeyFilter);
+
+			const locakeyFilter = locakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe035Warekey').value;
+			});
+
+			$('#doe035Locakey').val('').attr('multiple', 'multiple')
+			.pqSelect({
+				searchId: 'doe035Locakey',
+				multiplePlaceholder: '[[#{ms.chooseAll}]]',
+				selectallText: '[[#{ms.chooseAll}]]',
+				displayText : '{0}개 선택',
+				checkbox: true,
+				width: '100%'
+			});
+			makeOptionLocakey(locakeyFilter);
+
+			$('#doe035Regikey').val('').attr('multiple', 'multiple')
+			.pqSelect({
+				searchId: 'doe035Regikey',
+				multiplePlaceholder: '[[#{ms.chooseAll}]]',
+				selectallText: '[[#{ms.chooseAll}]]',
+				displayText : '{0}개 선택',
+				checkbox: true,
+				width: '100%'
+			}).pqSelect('refreshData');
+
+			$('#doe035Locakey').pqSelect({ search: true, deselect : false, width: '100%' });
+		    $('#doe035Regikey').pqSelect({ search: true, deselect : false, width: '100%' });
+
+			$('#doe035ModalAreakey').pqSelect({ search: true, deselect : false, width: '100%' });
+			$('#doe035ModalLocakey').pqSelect({ search: true, deselect : false, width: '100%' });
+			$('#doe035ModalEquipky').pqSelect({ search: true, deselect : false, width: '100%' });
+			$('#doe035ModalParsncd').pqSelect({ search: true, deselect : false, width: '100%' });
+		});
+
+		doe035GridObject.setBeforeValidate(function(evt, ui){
+			if ((ui.source != 'undo' && ui.source == 'edit') || ui.source === 'paste'){
+
+				for(const updateData of ui.updateList){
+					this.updateRow({
+						rowIndx : updateData.rowIndx,
+						newRow : {
+							state : 'Y'
+						},
+						checkEditable : false
+					});
+				}
+			}
+		});
+
+		doe035GridObject.setChange(function(evt, ui){
+			if(ui.source === 'edit' || ui.source === 'paste' || ui.source === 'clear'){
+
+				for(const updateData of ui.updateList){
+					const newRow = {};
+		            //toarea 변경시 이벤트
+	 	            if(updateData.newRow.hasOwnProperty('toareky')){
+	 	            	const toarekyFind = window['areaRelationList'].find(e=> e.areakey === updateData.newRow.toareky);
+	 	            	newRow['toareky'] = toarekyFind ? toarekyFind.areakey : '';
+	    				newRow['tolocky'] = null;
+	    				newRow['equipky'] = null;
+	    				newRow['tolayer'] = 0;
+	 	            }
+
+    				if(updateData.newRow.hasOwnProperty('tolocky')){
+    					const tolockyFind = window['locationRelationList'].find(e=> e.warekey === updateData.rowData.warekey && e.areakey === updateData.rowData.toareky && e.locakey === updateData.newRow.tolocky && e.loctype === 'BED');
+    					newRow['tolocky'] = tolockyFind ? tolockyFind.locakey : '';
+	    				newRow['equipky'] = null;
+	    				newRow['tolayer'] = 0;
+    				}
+
+    				if(updateData.newRow.hasOwnProperty('equipky')){
+    					const equipkyFind = window['meqlocList'].find(e=>e.warekey === updateData.rowData.warekey && e.areakey === updateData.rowData.toareky && e.locakey === updateData.rowData.tolocky && e.equipky === updateData.newRow.equipky);
+    					newRow['equipky'] = equipkyFind ? equipkyFind.equipky : '';
+    				}
+
+ 	            	this.updateRow({
+ 	            		rowIndx : updateData.rowIndx,
+ 	            		newRow : newRow,
+ 	            		checkEditable : false
+ 	            	});
+
+					if(updateData.newRow.hasOwnProperty('equipky') && updateData.rowData.equipky){
+
+	 	        		const countMap = new Map();
+						const gridData = [...this.getData()];
+
+						const sortGridData = gridData.sort((a, b) => {
+							if(a.equipky !== b.equipky){
+								return a.equipky < b.equipky ? -1 : 1;
+							}
+
+							const aTolayer = a.tolayer ? a.tolayer : Infinity;
+							const bTolayer = b.tolayer ? b.tolayer : Infinity;
+
+							return aTolayer - bTolayer;
+	 	        		});
+						sortGridData.forEach(row => {
+							if(row.equipky){
+								const key = row.equipky + row.tolocky;
+								if(key){
+									if(!countMap.has(key)) {
+										countMap.set(key, 1);
+									}else{
+										countMap.set(key, countMap.get(key) + 1);
+									}
+									this.updateRow({
+										rowIndx: row.pq_ri,
+										newRow: { tolayer: countMap.get(key)},
+										checkEditable: false
+									});
+	 	        	        	}
+							}
+	 	        	    });
+	 	        	}else if(updateData.newRow.hasOwnProperty('equipky') && !updateData.rowData.equipky){
+	 	        		const countMap = new Map();
+       	            	this.updateRow({
+        	                rowIndx: updateData.rowIndx,
+        	                newRow: { tolayer: 0 },
+        	                checkEditable: false
+        	            });
+
+						const gridData = [...this.getData()];
+
+						const sortGridData = gridData.sort((a, b) => {
+							if(a.equipky !== b.equipky){
+								return a.equipky < b.equipky ? -1 : 1;
+							}
+
+							const aTolayer = a.tolayer ? a.tolayer : Infinity;
+							const bTolayer = b.tolayer ? b.tolayer : Infinity;
+
+							return aTolayer - bTolayer;
+	 	        		});
+						sortGridData.forEach(row => {
+							if(row.equipky){
+								const key = row.equipky + row.tolocky;
+								if(key){
+									if(!countMap.has(key)) {
+										countMap.set(key, 1);
+									}else{
+										countMap.set(key, countMap.get(key) + 1);
+									}
+								   	this.updateRow({
+								        rowIndx: row.pq_ri,
+								        newRow: { tolayer: countMap.get(key)},
+								        checkEditable: false
+								    });
+								}
+							}
+	 	        	    });
+					}
+					if(updateData.newRow.hasOwnProperty('tolayer') && updateData.newRow.tolayer){
+						const grid = pq.grid('#doe035Grid');
+						const findSameLocAndLayer = grid.getData().find(e=>{
+							return e.toareky === updateData.rowData.toareky && e.tolocky === updateData.rowData.tolocky && e.tolayer === Number(updateData.newRow.tolayer) && e.skumkey !== updateData.rowData.skumkey;
+						});
+
+						const pqRi = findSameLocAndLayer ? findSameLocAndLayer.pq_ri : updateData.rowData.pq_ri;
+
+						this.updateRow({
+							rowIndx : pqRi ?? updateData.rowIndx,
+							newRow : {tolayer : updateData.oldRow.tolayer},
+							checkEditable : false
+						});
+					}
+				}
+			}
+		});
+
+		doe035GridObject.setSelectEnd(function(evt, ui){
+
+			if(ui.selection._areas[0].type === 'cell'){
+				return;
+			}
+
+			const checkMap = new Map();
+
+			this.Selection().getSelection().forEach(function(data){
+				if(!checkMap.has(data.rowIndx)){
+					checkMap.set(data.rowIndx, data);
+					return true;
+				}
+				return false;
+			});
+
+			for(const [rowIndx, data] of checkMap){
+				this.updateRow({
+					rowIndx : rowIndx,
+					newRow : {
+						state : data.rowData.state === 'Y' ? 'N' : 'Y'
+					},
+					checkEditable : false
+				});
+			}
+		});
+
+		doe035GridObject.setCheck(function(evt, ui){
+			const gridCheckList = this.Checkbox('state').getCheckedNodes();
+
+			let weightSummary = 0;
+
+			for(const gridCheck of gridCheckList){
+				weightSummary += Number(gridCheck.skuweig);
+			}
+
+			document.querySelector('#doe035Itemcnt').innerHTML = String(gridCheckList.length);
+			document.querySelector('#doe035TotalKg').innerHTML = String(weightSummary).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+			document.querySelector('#doe035TotalTon').innerHTML = String(weightSummary / 1000);
+		});
+
+		doe035GridObject.setRowInit(function(ui){
+			const rowStyle = {};
+			if(ui.rowData.planqty){
+				rowStyle.style = 'background-color: #d6fff6; font-weight: bold;'
+			}else if(ui.rowData.sbloqty){
+				rowStyle.style =  'background-color: #90EE90; font-weight: bold;'
+			}else if(ui.rowData.emskuyn === 'Y'){
+				rowStyle.style =  'background-color: #FAED7D; font-weight: bold;'
+			}
+
+			const rsncdnmOptions = this.getColumn({dataIndx : 'parsncd'}).editor.options(ui)
+			if(rsncdnmOptions.length) {
+				ui.rowData.parsncd = Object.keys(rsncdnmOptions[0])[0];
+			}
+
+			return rowStyle;
+		});
+
+		doe035GridObject.open();
+
+		async function initFunc(){
+			const relationList = await Promise.allSettled([
+				getAreaRelationList(),
+				getLocationRelationList(),
+				getMeqlocList(),
+				getReasonCodeRelationList({
+					doccate : '500',
+					doctype : '510'
+				})
+			]);
+			await _commonInit(pageId);
+
+			const dataList = [
+				 	{
+						listName: 'areaRelationList'
+					}, {
+						listName: 'locationRelationList'
+					}, {
+						listName: 'meqlocList',
+					}, {
+						listName: 'rsncodeRelationList'
+				}];
+
+			for(let idx=0; idx < relationList.length; idx++){
+				const target = dataList[idx];
+				target['list'] = relationList[idx].value;
+			}
+
+			setPreloadDataOnWindow(dataList);
+		}
+
+		//조회버튼 클릭 시
+		document.querySelector('#doe035BtnSearch').addEventListener('click', function(){
+			getDoe035List();
+		});
+
+		async function getDoe035List(){
+			resetSkuCountHtml();
+			const grid = pq.grid('#doe035Grid');
+			const searchParams = document.querySelectorAll('input[id*="doe035"], select[id*="doe035"]');
+
+			const locakeyList = Array.from(document.querySelector('#doe035Locakey').selectedOptions, function(option){
+				return option.value;
+			});
+
+			const regikeyList = Array.from(document.querySelector('#doe035Regikey').selectedOptions, function(option){
+				return option.value;
+			});
+
+			const params = {};
+
+			//asnstat 및 doctype을 제외한 검색 조건 params.
+			for(const searchParam of searchParams) {
+				const key = searchParam.id.substring(6).toLowerCase();
+				params[key] = searchParam.value;
+			}
+
+			if(params.skumkey.trim() !== '') {
+				params.skumkeyList = params.skumkey.split(' ');
+			}
+
+			if(params.orderln.trim() !== '') {
+				params.orderlnList = params.orderln.split(' ');
+			}
+
+			params.locakeyList = locakeyList;
+			params.regikeyList = regikeyList;
+
+			grid.showLoading();
+			doe035CurrentWarekey = params.warekey;
+
+			const doe035Response = await fetchUtil('POST', '/sm/inventory/doe035/grid', params);
+			if(doe035Response.status === 200) {
+				doe035StockList = await doe035Response.json();
+				grid.option('dataModel', { data: doe035StockList, recIndx: 'rowkey' });
+			}
+
+			grid.refreshDataAndView();
+			grid.hideLoading();
+		}
+
+		//초기화 버튼 클릭 시
+		document.querySelector('#doe035BtnReset').addEventListener('click', function(){
+			const grid = pq.grid('#' + pageId + 'Grid');
+			if(grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					return;
+				}
+			}
+			resetSearchConditions(pageId); //공통 초기화함수
+
+			makeEmptyGrid(doe035GridObject);
+
+			const areakeyFilter = areakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe035Warekey').value;
+			});
+			makeOptionAreakey(areakeyFilter);
+
+			const locakeyFilter = locakeyList.filter(e=> e.warekey === document.querySelector('#doe035Warekey').value && (e.loctype === 'BED' || e.loctype === 'TMP'));
+			makeOptionLocakey(locakeyFilter);
+
+			resetSkuCountHtml();
+
+			$('#doe035Regikey').val('').pqSelect('refreshData');
+		});
+
+		//창고동 검색조건 변경 시
+		document.querySelector('#doe035Areakey').addEventListener('change', function(event){
+			const areakeyAndlocakeyFilter = locakeyList.filter(e=> {
+				if(event.target.value){
+					return e.areakey === event.target.value && e.warekey === document.querySelector('#doe035Warekey').value && (e.loctype === 'BED' || e.loctype === 'TMP');
+				}
+				return e.warekey === document.querySelector('#doe035Warekey').value && (e.loctype === 'BED' || e.loctype === 'TMP');
+			});
+			makeOptionLocakey(areakeyAndlocakeyFilter);
+		});
+
+		async function makeOptionAreakey(filterList){
+			let html = '<option value ="">[[#{ms.chooseAll}]]</option>';
+			for(const areakeyData of filterList){
+				html += '<option value="'+ areakeyData?.areakey +'">'+ areakeyData?.areanam +'</option>';
+			}
+			document.querySelector('#doe035Areakey').innerHTML = html;
+		}
+
+
+		function makeOptionLocakey(filterList){
+			let html = '';
+			for(const locakeyData of filterList){
+				html += '<option value="'+ locakeyData.locakey +'">'+ locakeyData.locanam +'</option>';
+			}
+
+			document.querySelector('#doe035Locakey').innerHTML = html;
+			$('#doe035Locakey').val('').pqSelect('refreshData');
+		}
+
+		function resetSkuCountHtml(){
+			document.querySelector('#doe035Itemcnt').innerHTML = 0;
+			document.querySelector('#doe035TotalKg').innerHTML = 0;
+			document.querySelector('#doe035TotalTon').innerHTML = 0;
+		}
+
+		//선별지시(저장) 버튼 클릭
+		document.querySelector('#doe035BtnSave').addEventListener('click', async function(){
+			const grid = pq.grid('#doe035Grid');
+			const gridDataList 	= grid.getData();
+
+			const checkList = gridDataList.filter(function(e) {
+				return e.state === 'Y';
+			});
+
+			if(!checkList.length){
+				alert('[[#{ms.choiceRowZero}]]');
+				return;
+			}
+
+			//선별지시 대상위 재고가 있는지 검증
+			const isStockCheckPassed = await validateStockForSelection(checkList);
+
+			if(!isStockCheckPassed){
+				return;
+			}
+
+			locationModal.show();
+
+			const areakeyFilter = areakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe035Warekey').value;
+			});
+
+			setSelectboxOption('doe035ModalAreakey',areakeyFilter, 'are');
+			setSelectboxOption('doe035ModalParsncd', doe035InitData.item.parsncdList, 'pars');
+		});
+
+		//개별 선별지시(저장) 버튼 클릭
+		document.querySelector('#doe035BtnEachSave').addEventListener('click', async function(){
+			saveEachDoe035();
+		});
+
+		async function saveEachDoe035(){
+			const grid = pq.grid('#doe035Grid');
+			const gridDataList 	= grid.getData();
+
+			const checkList = gridDataList.filter(function(e) {
+				return e.state === 'Y';
+			});
+
+			if(!checkList.length){
+				alert('[[#{ms.choiceRowZero}]]');
+				return;
+			}
+
+			//선별지시 대상위 재고가 있는지 검증
+			const isStockCheckPassed = await validateStockForSelection(checkList);
+
+			if(!isStockCheckPassed){
+				return;
+			}
+
+			const validation = validateEssentialFieldBeforeSaveGridUtil(doe035GridObject, ['toareky', 'tolocky', 'equipky', 'parsncd']);
+			if(!validation){
+				return;
+			}
+
+			checkList.sort((a, b) => {
+			    if (a.tolocky > b.tolocky) return 1;
+			    if (a.tolocky < b.tolocky) return -1;
+			    return a.tolayer - b.tolayer;
+			});
+
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+
+				const rData = await fetchUtil('POST','/sm/inventory/doe035/save', {updateList : checkList});
+
+				if(rData.status === 200){
+					makeEmptyGrid(grid);
+					grid.refreshDataAndView();
+					resetSkuCountHtml();
+				}
+
+				grid.hideLoading();
+			}
+		}
+		//선별지시 대상위 재고가 있는지 검증 true : 선별지시 가능, false : 선별지시 불가능
+		//A01베드에서 3,5,6단 제품을 선택시 3,6만 param에 담긴다. (연속된 단은 최대단)
+		async function validateStockForSelection(gridCheckList){
+			const validateParam = [];
+			const param = {};
+
+			gridCheckList.forEach(row =>{
+				const key = row.areakey + '-' + row.locakey;
+				if(!param[key]){
+					param[key] = [];
+				}
+				param[key].push(row);
+			});
+
+			Object.values(param).forEach(rows=>{
+				rows.sort((a,b)=> b.lolayer - a.lolayer);
+
+				let lastLolayer = null;
+				const lolayerList = [];
+				rows.forEach(currentRow=>{
+					const currentLolayer = currentRow.lolayer;
+
+					//처음이거나, 연속적이지 않을떄
+					if(lastLolayer === null || currentLolayer !== lastLolayer - 1){
+						if(lastLolayer !== null){
+							lolayerList.push(currentLolayer);
+							lolayerList.push(lastLolayer);
+						}
+						currentRow['lolayerList'] = [...lolayerList];
+						validateParam.push(currentRow);
+					}
+
+					lastLolayer = currentRow.lolayer;
+
+				});
+			});
+			const response = await fetchUtil('POST', '/sm/inventory/doe035/validate', validateParam);
+
+			return response.status === 200;
+		}
+
+		//선별 장소모달 To창고동 체인지 이벤트(pqselect 제이쿼리 기반)
+		$('#doe035ModalAreakey').change(function(event){
+			const locakeyFilter = locakeyList.filter(function(data){
+				return data.warekey === document.querySelector('#doe035Warekey').value && data.areakey === event.target.value && data.loctype === 'BED';
+			});
+
+			setSelectboxOption('doe035ModalLocakey',locakeyFilter, 'loc');
+			setSelectboxOption('doe035ModalEquipky',[], 'equ');
+
+			document.querySelector('#doe035ModalLayerFrom').value = '';
+			document.querySelector('#doe035ModalLayerTo').value = ''
+		});
+
+		//선별 장소모달 To베드 체인지 이벤트(pqselect 제이쿼리 기반)
+		$('#doe035ModalLocakey').change(async function(event){
+			// To베드의 현 최대단 +1 ~ (현 최대단 +1) + 체크노드
+			const grid = pq.grid('#doe035Grid');
+			const gridDataList 	= grid.getData();
+
+			const checkList = gridDataList.filter(function(e) {
+				return e.state === 'Y';
+			});
+
+			const param = {
+				warekey : document.querySelector('#doe035Warekey').value,
+				areakey : document.querySelector('#doe035ModalAreakey').value,
+				locakey : document.querySelector('#doe035ModalLocakey').value
+			}
+
+			const response = await fetchUtil('GET','/sm/inventory/doe035/layer',param);
+
+			if(response.status === 200){
+				const layerData = await response.json();
+				document.querySelector('#doe035ModalLayerFrom').value = (layerData.lolayer + 1);
+				document.querySelector('#doe035ModalLayerTo').value = layerData.lolayer + checkList.length;
+
+				const equikyFilter = window.meqlocList.filter(e => e.warekey === document.querySelector('#doe035Warekey').value && e.locakey === event.target.value);
+				setSelectboxOption('doe035ModalEquipky',equikyFilter, 'equ');
+
+			}
+		});
+
+		async function setSelectboxOption(objectId, optionList, objType){
+
+			const selectId = document.querySelector('#'+objectId);
+
+			let html = '<option value="">[[#{ms.select}]]</option>';
+			for (let i = 0; i < optionList.length; i++) {
+				const optionData = optionList[i];
+				let optionValue;
+				let optionName;
+				if(objType === 'are'){
+					optionValue = optionData.areakey;
+					optionName = optionData.areanam;
+				}else if(objType === 'loc'){
+					optionValue = optionData.locakey;
+					optionName = optionData.locanam;
+				}else if(objType === 'equ'){
+					optionValue = optionData.equipky;
+					optionName = optionData.equinam;
+				}else if(objType === 'pars'){
+					optionValue = optionData.combovl;
+					optionName = optionData.combonm;
+				}
+
+				const isSelected = objectId === 'doe035ModalParsncd' && i === 0 ? ' selected' : '';
+				html += '<option value="' + optionValue + '"' + isSelected + '>' + optionName + '</option>';
+			}
+			selectId.innerHTML = html;
+
+			$('#' + objectId).pqSelect('refreshData');
+		}
+
+		//모달 X 버튼 및 취소 버튼
+		document.querySelector('#doe035LocationMdClose').addEventListener('click', function() {
+			modalHide();
+		});
+		document.querySelector('#doe035LocationMdCancel').addEventListener('click', function() {
+			modalHide();
+		});
+
+		//모달 닫기 이벤트
+		function modalHide() {
+			document.querySelectorAll('.modal-body select[id*="doe035"]').forEach(function(select) {
+
+				if(select.id === 'doe035ModalLocakey' || select.id === 'doe035ModalParsnnm' || select.id === 'doe035ModalEquipky'){
+					select.innerHTML = '';
+				}else{
+					select.options[0].selected = true;
+				}
+				$('#' + select.id).pqSelect('refreshData');
+			});
+
+			document.querySelectorAll('.modal-body input[id*="doe035"]').forEach(function(element) {
+				element.value = '';
+			});
+
+			locationModal.hide();
+			document.activeElement.blur()
+		}
+
+		document.querySelector('#doe035LocationMdSave').addEventListener('click', function(){
+			saveDoe035();
+		});
+
+		async function saveDoe035(){
+			const grid = pq.grid('#doe035Grid');
+
+			const params = grid.Checkbox('state').getCheckedNodes();
+
+			if(!await modalValidate()){
+				return;
+			}
+
+			params.forEach(function(item){
+					item.toareky = document.querySelector('#doe035ModalAreakey').value;
+					item.tolocky = document.querySelector('#doe035ModalLocakey').value;
+					item.equipky = document.querySelector('#doe035ModalEquipky').value;
+					item.parsncd = document.querySelector('#doe035ModalParsncd').value;
+					item.parsnnm = document.querySelector('#doe035ModalParsnnm').value;
+			});
+
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+
+				const rData = await fetchUtil('POST','/sm/inventory/doe035/save', {updateList : params});
+
+				if(rData.status === 200){
+					makeEmptyGrid(doe035GridObject.getGrid());
+					grid.refreshDataAndView();
+					resetSkuCountHtml();
+					modalHide();
+				}
+
+				grid.hideLoading();
+			}
+		}
+
+		async function modalValidate(){
+			 const requiredFields = document.querySelectorAll('select[id*="doe035Modal"]');
+
+			 for(const requiredField of requiredFields){
+				 if(!requiredField.value){
+					const labelElement = document.querySelector('label[for="' + requiredField.id + '"]');
+
+					alert(labelElement.textContent + ' [[#{ms.requiredValue}]]');
+					$('#' + requiredField.id).pqSelect('open');
+
+					return false;
+				 }
+			 }
+			 return true;
+		}
+
+		//keyup
+		doe035KeyupEvt = async function (){
+			const key = this.event.key || this.event.keyCode;
+			if(key === 'Enter' || key === 13) {
+				await getDoe035List();
+			}
+		}
+
+		// 창고 변경시 자동조회
+		document.querySelector('#doe035Warekey').addEventListener('change', async function() {
+			const areakeyFilter = areakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe035Warekey').value;
+			});
+			makeOptionAreakey(areakeyFilter);
+			const locakeyFilter = locakeyList.filter(e=> e.warekey === document.querySelector('#doe035Warekey').value && (e.loctype === 'BED' || e.loctype === 'TMP'));
+			makeOptionLocakey(locakeyFilter);
+			const grid = pq.grid('#doe035Grid');
+			if(doe035CurrentWarekey && grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					this.value = doe035CurrentWarekey;
+					return;
+				}
+			}
+			await getDoe035List();
+		});
+	}();
+	</script>
+</div>
+</html>

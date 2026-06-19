@@ -1,0 +1,536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+/**
+ * @author : t.s.park
+ * @version : 1.0.0
+ * @since : 2024-07-15
+ * @note : Mapper xml for allocation strategy
+ * ==================================================
+ * DATE							AUTHOR            					NOTE
+ * 2024-07-15					t.s.park        					create Mapper xml
+ * ==================================================
+ */
+ -->
+<mapper namespace="com.kbph.logistics.rm.mapper.AllocationStrategyMapper">
+	<!-- 할당전략마스터 조회 -->
+	<select id="selectWalsmaList" resultType="com.kbph.logistics.rm.domain.WalsmaDTO">
+		/* selectWalsmaList */
+		SELECT
+			ALSTRMD AS ROWKEY,
+			ALSTRMD,
+			ALSTRNM, ALSTRTG, ALSTROD, ALUSEYN,
+			CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME,
+			LMOUSER, UPDTCHK
+		FROM
+			${userInfo.schema}.WALSMA
+		<where>
+		<if test='param.alstrmd != null and param.alstrmd != ""'>
+			AND ALSTRMD LIKE UPPER(CONCAT('%', #{param.alstrmd}, '%'))
+		</if>
+		<if test='param.alstrnm != null and param.alstrnm != ""'>
+			AND ALSTRNM LIKE UPPER(CONCAT('%', #{param.alstrnm}, '%'))
+		</if>
+		<if test='param.aluseyn != null and param.aluseyn != ""'>
+			AND ALUSEYN = #{param.aluseyn}
+		</if>
+		</where>
+		ORDER BY ALSTROD ASC
+	</select>
+
+	<!-- 할당전략마스터 생성 -->
+	<insert id="insertWalsmaList">
+		/* insertWalsmaList */
+		<foreach collection="addList" item="item" separator=";">
+		INSERT
+		INTO ${userInfo.schema}.WALSMA(
+			ALSTRMD,
+			ALSTRNM, ALSTRTG, ALSTROD, ALUSEYN,
+			CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME,
+			LMOUSER, UPDTCHK
+		)
+		VALUES(
+			#{item.alstrmd},
+			#{item.alstrnm}, #{item.alstrtg}, #{item.alstrod}, #{item.aluseyn},
+			date_format(NOW(),'%Y%m%d'), date_format(NOW(),'%H%i%s'), #{userInfo.useract}, date_format(NOW(),'%Y%m%d'), date_format(NOW(),'%H%i%s'),
+			#{userInfo.useract}, 0
+		)
+		</foreach>
+	</insert>
+
+	<!-- 할당전략마스터 업데이트 -->
+	<update id="updateWalsmaList">
+		/* updateWalsmaList */
+		<foreach collection="updateList" item="item" separator=";">
+		UPDATE ${userInfo.schema}.WALSMA
+			SET
+				ALSTRTG = #{item.alstrtg},
+				ALSTRNM = #{item.alstrnm},
+				ALSTROD = #{item.alstrod},
+				ALUSEYN = #{item.aluseyn},
+				LMODATE = date_format(NOW(),'%Y%m%d'),
+				LMOTIME = date_format(NOW(),'%H%i%s'),
+				LMOUSER = #{userInfo.useract},
+				UPDTCHK = #{item.updtchk} + 1
+			WHERE
+				ALSTRMD = #{item.alstrmd}
+		</foreach>
+	</update>
+
+	<!-- 할당전략헤더 조회 -->
+	<select id="selectWalshdList" resultType="com.kbph.logistics.rm.domain.WalshdDTO">
+		/* selectWalshdList */
+		SELECT
+			CONCAT(HD.WAREKEY, HD.ALSTRKY) AS ROWKEY,
+			HD.WAREKEY, HD.ALSTRKY,
+			WA.WHNAMLC, HD.ALSTRNM, HD.ALUSEYN,
+			HD.CREDATE, HD.CRETIME, HD.CREUSER, HD.LMODATE, HD.LMOTIME,
+			HD.LMOUSER, HD.UPDTCHK
+		FROM
+			${userInfo.schema}.WALSHD HD
+			INNER JOIN ${userInfo.schema}.MWARMA WA ON(
+				HD.WAREKEY = WA.WAREKEY
+			)
+		<where>
+		<if test='param.warekey != null and param.warekey != ""'>
+			AND HD.WAREKEY = #{param.warekey}
+		</if>
+		<if test='param.alstrky != null and param.alstrky != ""'>
+			AND HD.ALSTRKY LIKE UPPER(CONCAT('%', #{param.alstrky}, '%'))
+		</if>
+		<if test='param.alstrnm != null and param.alstrnm != ""'>
+			AND HD.ALSTRNM LIKE UPPER(CONCAT('%', #{param.alstrnm}, '%'))
+		</if>
+		<if test='param.aluseyn != null and param.aluseyn != ""'>
+			AND HD.ALUSEYN = #{param.aluseyn}
+		</if>
+		</where>
+		ORDER BY HD.WAREKEY, HD.ALSTRKY
+	</select>
+
+	<!-- 할당전략헤더 생성 -->
+	<insert id="insertWalshdList">
+		/* insertWalshdList */
+		<foreach collection="addList" item="item" separator=";">
+		INSERT
+		INTO ${userInfo.schema}.WALSHD(
+			WAREKEY, ALSTRKY,
+			ALSTRNM, ALUSEYN,
+			CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME,
+			LMOUSER, UPDTCHK
+		)
+		VALUES(
+			#{item.warekey}, #{item.alstrky},
+			#{item.alstrnm}, #{item.aluseyn},
+			date_format(NOW(),'%Y%m%d'), date_format(NOW(),'%H%i%s'), #{userInfo.useract}, date_format(NOW(),'%Y%m%d'), date_format(NOW(),'%H%i%s'),
+			#{userInfo.useract}, 0
+		)
+		</foreach>
+	</insert>
+
+	<!-- 할당전략헤더 업데이트 -->
+	<update id="updateWalshdList">
+		/* updateWalshdList */
+		<foreach collection="updateList" item="item" separator=";">
+		UPDATE ${userInfo.schema}.WALSHD
+			SET
+				ALSTRNM = #{item.alstrnm},
+				ALUSEYN = #{item.aluseyn},
+				LMODATE = date_format(NOW(),'%Y%m%d'),
+				LMOTIME = date_format(NOW(),'%H%i%s'),
+				LMOUSER = #{userInfo.useract},
+				UPDTCHK = #{item.updtchk} + 1
+			WHERE
+				WAREKEY = #{item.warekey}
+				AND ALSTRKY = #{item.alstrky}
+		</foreach>
+	</update>
+
+	<!-- 할당전략아이템 조회 -->
+	<select id="selectWalsitList" resultType="com.kbph.logistics.rm.domain.WalsitDTO">
+		/* selectWalsitList */
+		SELECT
+			CONCAT(IT.WAREKEY, IT.ALSTRKY, IT.ALSTRIT) AS ROWKEY,
+			IT.WAREKEY, IT.ALSTRKY, IT.ALSTRIT,
+			IT.ALSTRMD, IT.ALSTRWG, IT.ALSTRST, IT.ALESTYN, IT.ALUSEYN,
+			WA.WHNAMLC, AM.ALSTRNM, AM.ALSTRTG,
+			IT.CREDATE, IT.CRETIME, IT.CREUSER, IT.LMODATE, IT.LMOTIME,
+			IT.LMOUSER, IT.UPDTCHK
+		FROM
+			${userInfo.schema}.WALSIT IT
+			INNER JOIN ${userInfo.schema}.MWARMA WA ON(
+				IT.WAREKEY = WA.WAREKEY
+			)
+			INNER JOIN ${userInfo.schema}.WALSHD HD ON(
+				IT.WAREKEY = HD.WAREKEY AND IT.ALSTRKY = HD.ALSTRKY
+			)
+			INNER JOIN ${userInfo.schema}.WALSMA AM ON(
+				IT.ALSTRMD = AM.ALSTRMD
+			)
+		<where>
+		<if test='param.warekey != null and param.warekey != ""'>
+			AND IT.WAREKEY = #{param.warekey}
+		</if>
+		<if test='param.alstrky != null and param.alstrky != ""'>
+			AND IT.ALSTRKY = #{param.alstrky}
+		</if>
+		<if test='param.aluseyn != null and param.aluseyn != ""'>
+			AND IT.ALUSEYN = #{param.aluseyn}
+		</if>
+		</where>
+		ORDER BY IT.ALSTRKY, IT.ALSTRIT
+	</select>
+
+	<!-- 할당전략아이템 생성 -->
+	<insert id="insertWalsitList">
+		/* insertWalsitList */
+		<foreach collection="addList" item="item" separator=";">
+		INSERT
+		INTO ${userInfo.schema}.WALSIT(
+			WAREKEY, ALSTRKY, ALSTRIT,
+			ALSTRMD, ALSTRWG, ALSTRST, ALESTYN,
+			ALUSEYN,
+			CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME,
+			LMOUSER, UPDTCHK
+		)
+		VALUES(
+			#{item.warekey}, #{item.alstrky}, #{item.alstrit},
+			#{item.alstrmd}, #{item.alstrwg}, #{item.alstrst}, #{item.alestyn},
+			#{item.aluseyn},
+			date_format(NOW(),'%Y%m%d'), date_format(NOW(),'%H%i%s'), #{userInfo.useract}, date_format(NOW(),'%Y%m%d'), date_format(NOW(),'%H%i%s'),
+			#{userInfo.useract}, 0
+		)
+		</foreach>
+	</insert>
+
+	<!-- 할당전략아이템 업데이트 -->
+	<update id="updateWalsitList">
+		/* updateWalsitList */
+		<foreach collection="updateList" item="item" separator=";">
+		UPDATE ${userInfo.schema}.WALSIT
+			SET
+				ALSTRMD = #{item.alstrmd},
+				ALSTRWG = #{item.alstrwg},
+				ALSTRST = #{item.alstrst},
+				ALESTYN = #{item.alestyn},
+				ALUSEYN = #{item.aluseyn},
+				LMODATE = date_format(NOW(),'%Y%m%d'),
+				LMOTIME = date_format(NOW(),'%H%i%s'),
+				LMOUSER = #{userInfo.useract},
+				UPDTCHK = #{item.updtchk} + 1
+			WHERE
+				WAREKEY = #{item.warekey}
+				AND ALSTRKY = #{item.alstrky}
+				AND ALSTRIT = #{item.alstrit}
+		</foreach>
+	</update>
+
+	<!-- 오더별 할당전략리스트 조회 -->
+	<select id="selectWalordList" resultType="com.kbph.logistics.rm.domain.WalordDTO">
+		/* selectWalordList */
+		SELECT
+			CONCAT(OD.WAREKEY, OD.DOCCATE, OD.DOCTYPE) AS ROWKEY,
+			OD.WAREKEY, OD.DOCCATE, OD.DOCTYPE,
+			WA.WHNAMLC, DO.DOCCTNM, DO.DOCTYNM, OD.ALSTRKY,
+			OD.ALUSEYN,
+			OD.CREDATE, OD.CRETIME, OD.CREUSER, OD.LMODATE, OD.LMOTIME,
+			OD.LMOUSER, OD.UPDTCHK
+		FROM
+			${userInfo.schema}.WALORD OD
+			INNER JOIN ${userInfo.schema}.MWARMA WA ON(
+				OD.WAREKEY = WA.WAREKEY
+			)
+			INNER JOIN ${userInfo.schema}.MDOCMA DO ON(
+				DO.WAREKEY = WA.WAREKEY AND OD.DOCCATE = DO.DOCCATE AND OD.DOCTYPE = DO.DOCTYPE
+			)
+			INNER JOIN ${userInfo.schema}.WALSHD HD ON(
+				OD.WAREKEY = HD.WAREKEY AND OD.ALSTRKY = HD.ALSTRKY
+			)
+		<where>
+		<if test='param.warekey != null and param.warekey != ""'>
+			AND OD.WAREKEY = #{param.warekey}
+		</if>
+		<if test='param.alstrky != null and param.alstrky != ""'>
+			AND OD.ALSTRKY like UPPER(CONCAT('%', #{param.alstrky}, '%'))
+		</if>
+		<if test='param.doccate != null and param.doccate != ""'>
+			AND OD.DOCCATE = #{param.doccate}
+		</if>
+		<if test='param.doccate != null and param.doccate != "" and param.doctype != null and param.doctype != ""'>
+			AND OD.DOCTYPE = #{param.doctype}
+		</if>
+		<if test='param.aluseyn != null and param.aluseyn != ""'>
+			AND OD.ALUSEYN = #{param.aluseyn}
+		</if>
+		</where>
+		ORDER BY OD.WAREKEY, OD.DOCCATE, OD.DOCTYPE
+	</select>
+
+	<!-- 오더별 할당전략 아이템 포함 리스트 조회 -->
+	<select id="selectWalordWithWalsit" resultType="com.kbph.logistics.rm.domain.WalsitDTO">
+		/* selectWalordWithWalsit */
+		SELECT
+			<!-- P.K. -->
+			WAI.WAREKEY, WAI.ALSTRKY, WAI.ALSTRIT,
+			<!-- Fields -->
+			WAI.ALSTRMD, WAI.ALSTRST, WAI.ALSTRWG,
+			<!-- Join Table Fields -->
+			<!-- WAM -->
+			WAM.ALSTRNM AS ALSTRNM,
+			<!-- WPH -->
+			WAH.ALSTRNM AS ALSTHNM,
+			<!-- WPO -->
+			WAO.DOCCATE, WAO.DOCTYPE
+		FROM
+			${userInfo.schema}.WALSIT WAI
+		INNER JOIN
+			${userInfo.schema}.WALSHD WAH
+		ON
+			WAH.ALSTRKY = WAI.ALSTRKY
+			AND WAH.WAREKEY = WAI.WAREKEY
+		INNER JOIN
+			${userInfo.schema}.WALSMA WAM
+		ON
+			WAM.ALSTRMD = WAI.ALSTRMD
+		INNER JOIN
+			${userInfo.schema}.WALORD WAO
+		ON
+			WAO.ALSTRKY = WAI.ALSTRKY
+			AND WAO.WAREKEY = WAI.WAREKEY
+		WHERE
+			WAI.ALUSEYN = 'Y'
+			AND WAH.ALUSEYN = 'Y'
+			AND WAM.ALUSEYN = 'Y'
+			AND WAO.ALUSEYN = 'Y'
+			AND WAI.WAREKEY = #{param.warekey}
+			AND WAO.DOCCATE = #{param.doccate}
+			AND WAO.DOCTYPE = #{param.doctype}
+	</select>
+
+	<!-- 오더별 할당전략 생성 -->
+	<insert id="insertWalordList">
+		/* insertWalordList */
+		<foreach collection="addList" item="item" separator=";">
+		INSERT
+		INTO ${userInfo.schema}.WALORD (
+			WAREKEY, DOCCATE, DOCTYPE, ALSTRKY,
+			ALUSEYN,
+			CREDATE, CRETIME, CREUSER, LMODATE, LMOTIME,
+			LMOUSER
+		)
+		VALUES(
+			#{item.warekey}, #{item.doccate}, #{item.doctype}, #{item.alstrky},
+			#{item.aluseyn},
+			date_format(NOW(),'%Y%m%d'), date_format(NOW(),'%H%i%s'), #{userInfo.useract}, date_format(NOW(),'%Y%m%d'), date_format(NOW(),'%H%i%s'),
+			#{userInfo.useract}
+		)
+		</foreach>
+	</insert>
+
+	<!-- 오더별 할당전략리스트 업데이트 -->
+	<update id="updateWalordList">
+		/* updateWalordList */
+		<foreach collection="updateList" item="item" separator=";">
+		UPDATE ${userInfo.schema}.WALORD
+			SET
+				ALSTRKY = #{item.alstrky},
+				ALUSEYN = #{item.aluseyn},
+				LMODATE = date_format(NOW(),'%Y%m%d'),
+				LMOTIME = date_format(NOW(),'%H%i%s'),
+				LMOUSER = #{userInfo.useract},
+				UPDTCHK = #{item.updtchk} + 1
+			WHERE
+				WAREKEY = #{item.warekey}
+				AND DOCCATE = #{item.doccate},
+				AND DOCTYPE = #{item.doctype}
+		</foreach>
+	</update>
+
+	<!-- 할당전략 재고 조회 -->
+	<select id="selectStockListForAllocationStrategy">
+	/* selectStockListForAllocationStrategy */
+		SELECT
+			<!-- P.K. -->
+			WST.STOCKKY,
+			<!-- Columns -->
+			WST.WAREKEY,  WST.AREAKEY,  WST.LOCAKEY, WST.LOLAYER,
+			WST.SAVEPNT, WST.LOTNMKY, WST.OWNERKY, WST.OWNRNAM,
+			WST.CUSTCOD, WST.CUSTNAM, WST.FNCUSKY, WST.FCNAMLC,
+			WST.SKUGRKY, WST.SKUMKEY, WST.SKUDESC, WST.SKUWEIG,
+			WST.SKUWIDT, WST.SKULENG, WST.SKUTHIC, WST.STLOTNB,
+			WST.GROSSWG, WST.GROSSLN, WST.GROSSWD, WST.GROSSTH,
+			WST.BTRCATE, WST.BTRFSTC, WST.PURCNUM, WST.ORDERLN,
+			WST.REGIKEY, WST.DESTKEY, WST.REGIORG, WST.REGIMOD,
+			WST.DESTORG, WST.DEORGNM, WST.DESTMOD, WST.ITEMCOD,
+			WST.DEMODNM, WST.DEMODYN, WST.DEMDMAN, WST.DEMPOCD,
+			WST.DEMDADR, WST.DEMDTLN, WST.STOTQTY, WST.SALLQTY,
+			WST.SBLOQTY, WST.SUOMKEY, WST.ADDCOKY, WST.POSHPDT,
+			WST.POSHPTM, WST.POSHPDY, WST.SHPLIMT, WST.DELVDSR,
+			WST.STKMEMO, WST.EMSKUYN, WST.RCVDCDT, WST.LOTAT01,
+			WST.LOTAT02, WST.LOTAT03, WST.STKSTAT, WST.BLOCKID,
+			WST.RCVDCKY, WST.RCVDCIT, WST.ADJSOKY, WST.ADJSOIT,
+			WST.PHYSOKY, WST.PHYSOIT, WST.SHPDCKY, WST.SHPDCIT,
+			WST.TASKOKY, WST.TASKOIT,
+			<!-- Join Columns -->
+			MR1.RENAMLC AS REORGNM, MR2.RENAMLC AS REMODNM,
+			MW.WHNAMLC AS WHNAMLC, MA.AREANAM AS AREANAM, MLO.LOCANAM AS LOCANAM, MCO1.COMCDTX AS STKSTNM,
+			MC02.COMCDTX AS ADDCONM, MP.GRPKYNM,
+			<!-- Common Columns -->
+			DATE_FORMAT(WST.CREDATE, '%Y-%m-%d') AS CREDATE,
+			DATE_FORMAT(STR_TO_DATE(WST.CRETIME, '%H%i%s'), '%H:%i:%s') AS CRETIME,
+			${userInfo.schema}.FN_SY_USERNAM(WST.CREUSER) AS CREUSER,
+			DATE_FORMAT(WST.LMODATE, '%Y-%m-%d') AS LMODATE,
+			DATE_FORMAT(STR_TO_DATE(WST.LMOTIME, '%H%i%s'), '%H:%i:%s') AS LMOTIME,
+			${userInfo.schema}.FN_SY_USERNAM(WST.LMOUSER) AS LMOUSER,
+			WST.UPDTCHK,
+			(
+				MLO.OUBOPRI
+				<if test='allocationStrategy != null and allocationStrategy.size()>0'>
+					<foreach collection="allocationStrategy" item="strategy">
+						<if test='(strategy.alstrmd != null and strategy.alstrmd !="") and ("CUSTPRI".equals(strategy.alstrmd))'>
+							 + IF(WST.OWNERKY = #{order.ownerky}, #{strategy.alstrwg} , 0)
+						</if>
+						<if test='(strategy.alstrmd != null and strategy.alstrmd !="") and ( "REGIPRI".equals(strategy.alstrmd))'>
+							+ IF(WST.REGIMOD = #{order.regikey}, #{strategy.alstrwg} , 0)
+						</if>
+						<if test='(strategy.alstrmd != null and strategy.alstrmd !="") and ( "DESTPRI".equals(strategy.alstrmd))'>
+							+ IF(WST.DESTMOD = #{order.destkey}, #{strategy.alstrwg} , 0)
+						</if>
+						<if test='(strategy.alstrmd != null and strategy.alstrmd !="") and ( "SKUGRKY".equals(strategy.alstrmd))'>
+							+ IF(WST.SKUGRKY = #{order.skugrky}, #{strategy.alstrwg} , 0)
+						</if>
+					</foreach>
+				</if>
+				<!-- 같은 베드일 경우 점수 부여  -->
+					+ IF((SELECT COUNT(OBI.FRLOCKY) FROM ${userInfo.schema}.OOUBIT OBI WHERE OBI.FRLOCKY IN(WST.LOCAKEY)) > 0, 100 <!--임시--> + WST.LOLAYER , (WST.LOLAYER / 2))
+				 ) AS PRIORITY_SCORE
+		FROM
+		    ${userInfo.schema}.WSTKKY WST
+		INNER JOIN
+			${userInfo.schema}.MWARMA MW
+		ON
+		    MW.WAREKEY = WST.WAREKEY
+		    AND MW.WHUSEYN = 'Y'
+		INNER JOIN
+			${userInfo.schema}.MAREMA MA
+		ON
+		    MA.WAREKEY = WST.WAREKEY
+		    AND MA.AREAKEY = WST.AREAKEY
+		    AND MA.ARUSEYN = 'Y'
+		INNER JOIN
+			${userInfo.schema}.MLOCMA MLO
+		ON
+			WST.WAREKEY = MLO.WAREKEY
+			AND WST.AREAKEY = MLO.AREAKEY
+			AND WST.LOCAKEY = MLO.LOCAKEY
+		    AND MLO.LOUSEYN = 'Y'
+		INNER JOIN
+			${userInfo.schema}.OOUBHD OBH
+		ON
+			WST.WAREKEY = OBH.WAREKEY
+		LEFT JOIN
+			${userInfo.schema}.OOUBIT OBI
+		ON
+			OBH.WAREKEY = OBI.WAREKEY
+			AND OBH.OUTBOKY = OBI.OUTBOKY
+		INNER JOIN
+			${userInfo.schema}.MCODEM MCO1
+		ON
+		    MCO1.COMCDVL = WST.STKSTAT
+		    AND MCO1.COMCDKY = 'STKSTAT'
+		    AND MCO1.COUSEYN = 'Y'
+		INNER JOIN
+			${userInfo.schema}.MREGMA MR1
+		ON
+		   MR1.REGIKEY = WST.REGIORG
+		  AND MR1.REUSEYN = 'Y'
+		INNER JOIN
+			${userInfo.schema}.MREGMA MR2
+		ON
+		   MR2.REGIKEY = WST.REGIMOD
+		  AND MR2.REUSEYN = 'Y'
+		INNER JOIN
+			${userInfo.schema}.BADDCO BA
+		ON
+		   BA.ADDCOKY = WST.ADDCOKY
+		INNER JOIN
+			${userInfo.schema}.MCODEM MC02
+		ON
+		  BA.ADDSIKY = MC02.COMCDVL
+		  AND MC02.COMCDKY = 'ADDSIKY'
+		  AND MC02.COUSEYN = 'Y'
+		INNER JOIN
+			${userInfo.schema}.MGRPMA MP
+		ON
+		   MP.SKUGRKY = WST.SKUGRKY
+		WHERE
+		    WST.WAREKEY = #{order.warekey}
+		    AND WST.STOTQTY > 0
+		    AND WST.SALLQTY = 0
+		    AND WST.SBLOQTY = 0
+		    AND WST.PLANQTY = 0
+		    AND WST.PLCMQTY = 0
+		    AND WST.TASKQTY = 0
+		    AND MLO.LOCSTAT = 'NORMAL'
+		    AND MLO.LOCTYPE = 'BED'
+		    AND OBH.OUTBOKY = #{order.outboky}
+			<if test='order.regikey != null and order.regikey != ""'>
+		    	AND WST.REGIMOD = #{order.regikey}
+		    </if>
+		    <if test='order.destkey != null and order.destkey != ""'>
+		    	AND WST.DESTMOD = #{order.destkey}
+		    </if>
+		    <if test='order.ownerky != null and order.ownerky != ""'>
+		    	AND WST.OWNERKY = #{order.ownerky}
+		    </if>
+		   	 <if test='order.denamlc != null and order.denamlc != ""'>
+		    	AND WST.DEMODNM = UPPER(TRIM(#{order.denamlc}))
+		    </if>
+		    <if test='order.desaddr != null and order.desaddr != ""'>
+		    	AND WST.DEMDADR LIKE CONCAT('%', UPPER(TRIM(#{order.desaddr})), '%')
+		    </if>
+			<if test='allocationStrategy != null and allocationStrategy.size()>0'>
+				<foreach collection="allocationStrategy" item="strategy">
+					<if test='(strategy.alstrmd != null and strategy.alstrmd !="") and ("SIZEPRI".equals(strategy.alstrmd) and "Y".equals(strategy.alestyn))'>
+						AND WST.SKUGRKY = #{order.skugrky}
+					</if>
+				</foreach>
+			</if>
+		GROUP BY
+			<!-- P.K. -->
+			WST.STOCKKY,
+			<!-- Columns -->
+			WST.WAREKEY,  WST.AREAKEY,  WST.LOCAKEY, WST.LOLAYER,
+			WST.SAVEPNT, WST.LOTNMKY, WST.OWNERKY, WST.OWNRNAM,
+			WST.CUSTCOD, WST.CUSTNAM, WST.FNCUSKY, WST.FCNAMLC,
+			WST.SKUGRKY, WST.SKUMKEY, WST.SKUDESC, WST.SKUWEIG,
+			WST.SKUWIDT, WST.SKULENG, WST.SKUTHIC, WST.STLOTNB,
+			WST.GROSSWG, WST.GROSSLN, WST.GROSSWD, WST.GROSSTH,
+			WST.BTRCATE, WST.BTRFSTC, WST.PURCNUM, WST.ORDERLN,
+			WST.REGIKEY, WST.DESTKEY, WST.REGIORG, WST.REGIMOD,
+			WST.DESTORG, WST.DEORGNM, WST.DESTMOD, WST.ITEMCOD,
+			WST.DEMODNM, WST.DEMODYN, WST.DEMDMAN, WST.DEMPOCD,
+			WST.DEMDADR, WST.DEMDTLN, WST.STOTQTY, WST.SALLQTY,
+			WST.SBLOQTY, WST.SUOMKEY, WST.ADDCOKY, WST.POSHPDT,
+			WST.POSHPTM, WST.POSHPDY, WST.SHPLIMT, WST.DELVDSR,
+			WST.STKMEMO, WST.EMSKUYN, WST.RCVDCDT, WST.LOTAT01,
+			WST.LOTAT02, WST.LOTAT03, WST.STKSTAT, WST.BLOCKID,
+			WST.RCVDCKY, WST.RCVDCIT, WST.ADJSOKY, WST.ADJSOIT,
+			WST.PHYSOKY, WST.PHYSOIT, WST.SHPDCKY, WST.SHPDCIT,
+			WST.TASKOKY, WST.TASKOIT,
+			MR1.RENAMLC, MR2.RENAMLC,
+			MW.WHNAMLC, MA.AREANAM, MLO.LOCANAM, MCO1.COMCDTX,
+			MC02.COMCDTX, MP.GRPKYNM,
+			<!-- Common Columns -->
+			WST.CREDATE,
+			WST.CRETIME,
+			WST.CREUSER,
+			WST.LMODATE,
+			WST.LMOTIME,
+			WST.LMOUSER,
+			WST.UPDTCHK
+		ORDER BY
+			PRIORITY_SCORE DESC,
+			WST.WAREKEY, WST.AREAKEY, WST.LOCAKEY, WST.LOLAYER DESC
+	</select>
+</mapper>

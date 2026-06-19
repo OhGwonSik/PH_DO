@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"  xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	<head>
+		<meta charset="UTF-8">
+	    <title> Error Page!</title>
+	    <link rel="shortcut icon" th:href="@{/design/assets/img_logo@3x.png}">
+	    <!-- CSS  -->
+	    <link rel="stylesheet" th:href="@{/design/css/main.css}">
+	</head>
+	<body>
+		<div class="noise"></div>
+		<div class="overlay"></div>
+		<div class="terminal">
+			<h2>오류 발생</h2>
+		  	<hr>
+			<h1>Error : <span class="errorcode"><span th:text="${error}"></span></span></h1>
+			<p class="output"><span th:text="${message}"></span></p>
+			<p class="output">TIMESTAMP: <span th:text="${timestamp}"></span></p>
+			<br>
+		</div>
+		<div class="mainlink">
+			<h2>메인으로</h2>
+			<a th:href="@{/login}">바로가기</a>
+		</div>
+	</body>
+</html>

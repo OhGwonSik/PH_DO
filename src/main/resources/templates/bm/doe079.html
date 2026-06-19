@@ -1,0 +1,280 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="doe079Btrcnam" class="setting-grid-title">[[#{bm.btrcat.btrcnam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('bm.btrcat.btrcnam')}" onkeyup="doe079SearchKeyup()" id="doe079Btrcnam" name="doe079Btrcnam"/>
+					</div>
+				</div>
+				<label for="doe079Pfonlyn" class="setting-grid-title">[[#{bm.btrcat.pfonlyn}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe079Pfonlyn" name="doe079Pfonlyn">
+							<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe079BtnSearch"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe079BtnReset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.bm.doe079}]]</span>
+				</div>
+				<div class="edit-btn-wrapper">
+					<button class="btn-navy btn-green" id="doe079BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box">
+				<div id="doe079Pqgrid"></div>
+			</div>
+		</div>
+<script>
+!function(){
+	const pageId = `[[${tabPage}]]`;
+
+	const doe079GridCM = [
+		{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+			, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false
+			, cb: { all: false, header: true, check: 'Y', uncheck: 'N' }
+		},
+		{ title: '[[#{bm.btrcat.btrcate}]]', dataType: 'integer', dataIndx: 'btrcate', editable: false ,hidden:true},
+		{ title: '[[#{bm.btrcat.btrcnam}]]', dataType: 'string', dataIndx: 'btrcnam', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+		{ title: '[[#{bm.btrcat.btrfbtp}]]', dataType: 'string', dataIndx: 'btrfbtp', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+        		type: 'select',
+                init: function (ui) {
+                	ui.$cell.find('select').pqSelect({ singlePlaceholder: ''});
+                	setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open');
+	                }, 250);
+				},
+                options: [],
+			},
+			render : gridRenderAndValue
+		},
+		{ title: '[[#{bm.btrcat.btrpbtp}]]', dataType: 'string', dataIndx: 'btrpbtp', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+			editor: {
+        		type: 'select',
+                init: function (ui) {
+                	ui.$cell.find('select').pqSelect({ singlePlaceholder: ''});
+                	setTimeout(function () {
+	                	ui.$cell.find('select').pqSelect('open');
+	                }, 250);
+				},
+                options: [],
+			},
+			render : gridRenderAndValue
+		},
+		{ title: '[[#{bm.btrcat.tfonlyn}]]', dataType: 'string',dataIndx: 'tfonlyn',styleHead: { 'background-color': '[[#{grid.styleHead02}]]' },
+			type: 'checkbox', editor: false, align: 'center',
+			cb: {all: false,header: true, check: 'Y',uncheck: 'N'}
+		},
+		{ title: '[[#{bm.btrcat.pfonlyn}]]', dataType: 'string',dataIndx: 'pfonlyn',styleHead: { 'background-color': '[[#{grid.styleHead02}]]' },
+			type: 'checkbox', editor: false, align: 'center',
+			cb: {all: false,header: true, check: 'Y',uncheck: 'N'}
+		},
+		{ title: '[[#{bm.btrcat.orwidyn}]]', dataType: 'string',dataIndx: 'orwidyn',styleHead: { 'background-color': '[[#{grid.styleHead02}]]' },
+			type: 'checkbox', editor: false, align: 'center',
+			cb: {all: false,header: true, check: 'Y',uncheck: 'N'}
+		},
+		{ title: '[[#{bm.btrcat.dfstdyn}]]', dataType: 'string',dataIndx: 'dfstdyn',styleHead: { 'background-color': '[[#{grid.styleHead02}]]' },
+			type: 'checkbox', editor: false, align: 'center',
+			cb: {all: false,header: true, check: 'Y',uncheck: 'N'}
+		},
+		{ title: '[[#{bm.btrcat.ksgbun1}]]', dataType: 'string', dataIndx: 'ksgbun1', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+		{ title: '[[#{bm.btrcat.ksgbun2}]]', dataType: 'string', dataIndx: 'ksgbun2', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+		{ title: '[[#{bm.btrcat.ksgbun3}]]', dataType: 'string', dataIndx: 'ksgbun3', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+		{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },
+		{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },
+		{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },
+		{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },
+		{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },
+		{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },
+		{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+	];
+	const doe079GridObj = new GridUtil(doe079GridCM,pageId,'doe079Pqgrid');
+	doe079GridObj.setReset();
+	doe079GridObj.setFind();
+
+	doe079GridObj.setCreate(async function(event,ui){
+		//이송 운송 청구처타입 select box setting
+		const custData = await fetchUtil('GET', '/md/doe009/grid');
+		if(custData.status === 200){
+			const custList = await custData.json();
+			const billingToObject = { custkey : 'CUSTOMER', cunamlc : '[[#{menu.md.dom007}]]' };
+			custList.unshift(billingToObject);
+			comboCreateData('doe079Pqgrid', 'btrfbtp', custList, { combovl : 'custkey', combonm : 'cunamlc' });	//이송
+			comboCreateData('doe079Pqgrid', 'btrpbtp', custList, { combovl : 'custkey', combonm : 'cunamlc' });	//운송
+			this.option('freezeCols', 1);
+		}
+	});
+
+	doe079GridObj.setBeforeValidate(function(event,ui){
+		if(ui.source !== 'undo' && (ui.source === 'edit' || ui.source === 'paste' || ui.source === 'checkbox')){
+			for(const updateData of ui.updateList){
+				if(updateData.oldRow.btrcnam !== updateData.newRow.btrcnam || updateData.oldRow.btrfbtp !== updateData.newRow.btrfbtp ||
+					updateData.oldRow.btrpbtp !== updateData.newRow.btrpbtp || updateData.oldRow.tfonlyn !== updateData.newRow.tfonlyn ||
+					updateData.oldRow.pfonlyn !== updateData.newRow.pfonlyn || updateData.oldRow.dfstdyn !== updateData.newRow.dfstdyn ||
+					updateData.oldRow.ksgbun1 !== updateData.newRow.ksgbun1 || updateData.oldRow.ksgbun2 !== updateData.newRow.ksgbun2 ||
+					updateData.oldRow.ksgbun3 !== updateData.newRow.ksgbun3 ){
+					this.updateRow( {
+		       			rowIndx : updateData.rowIndx,
+		       		    newRow : {
+		       		    	state : 'Y'
+		       		    },
+		       		    checkEditable: false
+		       		});
+				}
+			}
+		}
+	});
+
+	doe079GridObj.setChange(function(event,ui){
+		if(ui.source !== 'undo' && ui.source === 'paste'){
+			for(const updateData of ui.updateList){
+				this.updateRow({
+					rowIndx : updateData.rowIndx,
+					newRow : {
+						state : 'Y',
+						btrcnam : updateData.rowData.btrcnam,
+						btrfbtp : updateData.rowData.btrfbtp,
+						btrpbtp : updateData.rowData.btrpbtp,
+						tfonlyn : updateData.rowData.tfonlyn,
+						pfonlyn : updateData.rowData.pfonlyn
+					},
+					checkEditable : false
+				});
+			}
+			for(const addData of ui.addList){
+				addData.newRow.state = 'Y';
+				addData.rowData.btrcnam =  addData.newRow.btrcnam;
+				addData.rowData.btrpvtp = addData.newRow.btrpbtp;
+				addData.rowData.tfonlyn = addData.newRow.tfonlyn;
+				addData.rowData.pfonlyn = addData.newRow.pfonlyn;
+			}
+		}
+		doe079GridObj.getGrid().refresh();
+	});
+
+	//grid row추가 버튼
+	doe079GridObj.setAdd(function(event,ui){
+		const rowData = {
+				state : 'Y',
+				tfonlyn : 'N',
+				pfonlyn : 'N',
+				orwidyn : 'N'
+		};
+
+    	const rowIndx = this.addRow({
+    		newRow: rowData,
+    		checkEditable: false
+    	});
+
+    	this.goToPage({ rowIndx: rowIndx });
+    	this.editFirstCellInRow({ rowIndx: rowIndx });
+	});
+
+	//grid row 삭제 버튼 : 삭제 후 저장 시 데이터 삭제 flow
+	doe079GridObj.setDelete(function(event,ui){
+		const checkList = this.Checkbox('state').getCheckedNodes();
+       	if(!checkList.length) {
+       		alert('[[#{ms.choiceRowZero}]]');
+       		return;
+       	}
+
+   		if(confirm(checkList.length + '[[#{ms.allRowDelete}]]')) {
+  			for(const checkData of checkList) {
+  				this.deleteRow({ rowIndx: checkData.pq_ri });
+  	   		}
+   		}
+	});
+
+	doe079GridObj.open();
+
+	//조회 버튼 클릭
+	document.querySelector('#doe079BtnSearch').addEventListener('click', function(){
+		getDoe079BtrcatList();
+	});
+
+	//검색영역 초기화 버튼
+	document.querySelector('#doe079BtnReset').addEventListener('click', function(){
+		const headGrid = doe079GridObj.getGrid().getData();
+		if(headGrid.length > 0){
+			if(!confirm('[[#{ms.listViewRollback}]]')){
+				return;
+			}
+		}
+		document.querySelector('#doe079Btrcnam').value = '';
+		document.querySelector('#doe079Pfonlyn').value = '';
+		makeEmptyGrid(doe079GridObj);
+	});
+
+	//저장 버튼 클릭
+	document.querySelector('#doe079BtnSave').addEventListener('click', function(){
+		saveDoe079BtrcatData();
+	});
+
+	async function getDoe079BtrcatList(){
+		const grid = pq.grid('#doe079Pqgrid');
+		const params = {
+				btrcnam: document.querySelector('#doe079Btrcnam').value,
+				pfonlyn : document.querySelector('#doe079Pfonlyn :checked').value
+			};
+		grid.showLoading();
+		const rData = await fetchUtil('GET','/bm/billing/doe079/btrcat', params);
+
+		if(rData.status !== 200){
+			grid.hideLoading();
+			return;
+		}
+		const btrcatList = await rData.json();
+		if(btrcatList){
+			grid.option('dataModel', { data: btrcatList, recIndx: 'btrcate' });
+			grid.refreshDataAndView();
+		}
+		grid.hideLoading();
+	}
+
+	async function saveDoe079BtrcatData(){
+		const grid = pq.grid('#doe079Pqgrid');
+		const params = makeSaveData(grid);
+
+		if(!params){
+			return;
+		}
+
+		if(confirm('[[#{ms.checksave}]]')) {
+			grid.showLoading();
+
+			const rData = await fetchUtil('POST','/bm/billing/doe079/save',params);
+			if(rData.status === 200){
+				getDoe079BtrcatList();	//재조회
+				grid.refreshDataAndView();
+			}
+
+			grid.hideLoading();
+		}
+	}
+
+	//keyup
+	doe079SearchKeyup = async function (){
+		const key = this.event.key || this.event.keyCode;
+		if(key === 'Enter' || key === 13) {
+			await getDoe079BtrcatList();
+		}
+	}
+}();
+</script>
+</div>
+</html>

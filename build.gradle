@@ -1,0 +1,86 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.5'
+	id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.kbph'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+	provided {
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-aop:3.3.0'
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16' // log
+	implementation 'org.apache.httpcomponents.client5:httpclient5:5.3.1'
+	implementation 'com.jcraft:jsch:0.1.55'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client'
+    annotationProcessor 'org.projectlombok:lombok'
+    runtimeOnly 'org.springframework.boot:spring-boot-starter-tomcat'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
+    testImplementation 'org.springframework.batch:spring-batch-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    // Jasper Reports 관련 라이브러리
+	implementation 'net.sf.jasperreports:jasperreports:6.21.3'
+	implementation 'com.github.librepdf:openpdf:1.3.32'
+
+	// 출력물 인쇄
+	// 김세희 24.10.11 추가
+	implementation 'org.apache.pdfbox:pdfbox:2.0.24'
+
+	// https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
+	//jasper 라이브러리를 프로그램 버전에 맞춰서 업그레이드를 했는데 변경하니 밑에 해당하는 라이브러리 오류가 나서 임시로 넣어놓음
+	//하주영 24.08.20 추가
+	implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+	//firebase 셋팅
+	implementation 'com.google.firebase:firebase-admin:9.3.0'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+    // 암호화
+    implementation 'commons-codec:commons-codec:1.9'
+	implementation 'org.json:json:20210307' // 추가된 의존성
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+tasks.named('bootJar') {
+	archiveFileName.set('PH_DO.jar')
+}
+
+tasks.named('jar') {
+	enabled = false
+}

@@ -1,0 +1,357 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+			<div class="search-conditions con-box">
+				<div class="setting-grid">
+					<label for="doe001Warekey" class="setting-grid-title">[[#{search.wareCode}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('search.wareCode')}" id="doe001Warekey" name="doe001Warekey">
+						</div>
+					</div>
+					<label for="doe001Whnamlc" class="setting-grid-title">[[#{search.whnamlc}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-wrapper">
+							<input type="text" th:placeholder="${#messages.msg('search.whnamlc')}" id="doe001Whnamlc" name="doe001Whnamlc">
+						</div>
+					</div>
+					<label for="doe001Whuseyn" class="setting-grid-title">[[#{md.useyn}]]</label>
+					<div class="setting-grid-content">
+						<div class="input-group">
+							<select id="doe001Whuseyn" class="pq-select">
+								<option value="">[[#{ms.chooseAll}]]</option>
+								<option value="Y">[[#{search.use}]]</option>
+								<option value="N">[[#{search.unuse}]]</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="search-btn-group">
+					<button type="button" class="btn-search btn-navy btn-green" id="doe001BtnSearch"><img>[[#{bt.search}]]</button>
+					<button type="button" class="btn-clear btn-white" id="doe001BtnReset"><img>[[#{bt.reset}]]</button>
+				</div>
+			</div>
+			<div class="search-list">
+				<div class="list-top">
+					<div class="list-title ic-title-mark">
+						<span>[[#{menu.md.doe001}]]</span>
+					</div>
+					<div class="edit-btn-wrapper">
+						<button class="btn-navy btn-green" id="doe001BtnSave"><img class="ic-bt-save">[[#{bt.save}]]</button>
+					</div>
+				</div>
+				<div class="list-grid-wrapper con-box">
+					<div id="doe001Grid"></div>
+				</div>
+			</div>
+		<script>
+		!function(){
+			const pageId = '[[${tabPage}]]';
+			let conPrinterList, myPrinterList;
+
+			// 칼럼
+			const doe001GridCM = [
+				{ title: '', dataType: 'bool', dataIndx: 'state', align: 'center', type: 'checkbox'
+						, sortable: false, editor: false, cb: {all: false,	header: true},
+						nodrag: true, nodrop: true
+				},
+				{ title: '', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden:true},
+				{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true},
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' }},
+				{ title: '[[#{md.mwarma.whnamko}]]', dataType: 'string', dataIndx: 'whnamko', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mwarma.whnamen}]]', dataType: 'string', dataIndx: 'whnamen', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.useyn}]]', dataType: 'string', dataIndx: 'whuseyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mwarma.poststm}]]', dataType: 'date', dataIndx: 'poststm', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+				    format: val => val?.replace(regDivideTime, divideTimeFormat),
+		 			editor: {
+		 				type: 'textbox',
+		 				init: timeEditor2,
+		 				getData: ui => ui.$cell.find('input').val()
+		 			}
+				},
+				{ title: '[[#{md.mwarma.stkdytm}]]', dataType: 'date', dataIndx: 'stkdytm', styleHead: { 'background-color':'[[#{grid.styleHead01}]]' },
+					format: val => val?.replace(regDivideTime, divideTimeFormat),
+		 			editor: {
+		 				type: 'textbox',
+		 				init: timeEditor2,
+		 				getData: ui => ui.$cell.find('input').val()
+		 			}
+				},
+				{ title: '[[#{md.addr}]]', dataType: 'string', dataIndx: 'waraddr', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.posbx}]]', dataType: 'string', dataIndx: 'waposbx', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.poscd}]]', dataType: 'string', dataIndx: 'waposcd' ,styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.teln}]]', dataType: 'string', dataIndx: 'warteln', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.repnm}]]', dataType: 'string', dataIndx: 'warepnm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.reptl}]]', dataType: 'string', dataIndx: 'wareptl', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.repem}]]', dataType: 'string', dataIndx: 'warepem', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mannm}]]', dataType: 'string', dataIndx: 'wamannm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mantl}]]', dataType: 'string', dataIndx: 'wamantl', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.manem}]]', dataType: 'string', dataIndx: 'wamanem', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				/* { title: '[[#{md.mwarma.wmptrnm}]]', dataType: 'string', dataIndx: 'wmptrnm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editor: {
+						type: 'select',
+		        		init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : wmptrnmRender,
+				},
+				{ title: '[[#{md.mwarma.wsptrnm}]]', dataType: 'string', dataIndx: 'wsptrnm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					editable: function (ui) {
+		    			return editable = ui.rowData.wmptrnm ? true : false
+		    		},
+					editor: {
+						type: 'select',
+		        		init: function (ui) {
+		        			 ui.$cell.find('select').pqSelect({ checkbox : true, search: false, width: getSelectBoxWidthCondition(ui) });
+		        			 setTimeout(function () {
+		        				 ui.$cell.find('select').pqSelect('open');
+	        				 }, 250);
+	        			 },
+					    options: []
+					},
+					render : wsptrnmRender
+				}, */
+				{ title: '[[#{md.mwarma.watarea}]]', dataType: 'integer', dataIndx: 'watarea', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mwarma.wascapa}]]', dataType: 'integer', dataIndx: 'wascapa', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mwarma.holtmfm}]]', dataType: 'string', dataIndx: 'holtmfm', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					format: val => val?.replace(regDivideTime, divideTimeFormat),
+		 			editor: {
+		 				type: 'textbox',
+		 				init: timeEditor2,
+		 				getData: ui => ui.$cell.find('input').val()
+		 			}
+				},
+				{ title: '[[#{md.mwarma.holtmto}]]', dataType: 'string', dataIndx: 'holtmto', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' },
+					format: val => val?.replace(regDivideTime, divideTimeFormat),
+		 			editor: {
+		 				type: 'textbox',
+		 				init: timeEditor2,
+		 				getData: ui => ui.$cell.find('input').val()
+		 			}
+				},
+				{ title: '[[#{md.mwarma.holrate}]]', dataType: 'integer', dataIndx: 'holrate', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }},
+				{ title: '[[#{md.mwarma.plarmyn}]]', dataType: 'string', dataIndx: 'plarmyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{md.mwarma.proofyn}]]', dataType: 'string', dataIndx: 'proofyn', styleHead: { 'background-color':'[[#{grid.styleHead02}]]' }
+				, type: 'checkbox', editor: false, align: 'center', cb: { all: false, header: true, check: 'Y', uncheck: 'N' }},
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false},
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false},
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false},
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false},
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false},
+				{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }
+			]
+
+			// 그리드 기본 설정
+			const doe001Grid = new GridUtil(doe001GridCM, pageId, pageId + 'Grid');
+			doe001Grid.setFind();
+			doe001Grid.setReset();
+
+			doe001Grid.setCreate(async function(evt, ui){
+				await _commonInit(pageId);
+				this.option('freezeCols', 1);
+				/* const doe001InitRes = await fetchUtil('GET', '/md/' + pageId + '/init');
+				const doe001InitData = await doe001InitRes.json();
+				conPrinterList = doe001InitData.item.conPrinterList;
+				myPrinterList = doe001InitData.item.myPrinterList;
+
+				pirnterCombo('wmptrnm', conPrinterList);
+				pirnterCombo('wsptrnm', conPrinterList); */
+			})
+
+			// 그리드 행 추가
+			doe001Grid.setAdd(function(evt, ui){
+				const rowData = {
+					state: true,
+					watarea: 0,
+					wascapa: 0,
+					holrate: 0.00,
+					poststm: '000000',
+					stkdytm: '000000',
+					holtmfm: '000000',
+					holtmto: '000000',
+					plarmyn: 'Y',
+					proofyn: 'N',
+					whuseyn: 'Y'
+				};
+				const rowIndx = this.addRow({
+					rowData : rowData,
+					checkEditable : false
+				});
+
+				this.goToPage({ rowIndx: rowIndx });
+		    	this.editFirstCellInRow({ rowIndx: rowIndx });
+				this.focus({
+					rowIndxPage: rowIndx,
+					colIndx: $('#' + pageId + 'Grid').pqGrid( 'getColIndx', { dataIndx: rowIndx } )
+				});
+			});
+
+			// 그리드 데이터 변경
+			doe001Grid.setChange(async function(evt, ui){
+				if('checkbox' === ui.source){
+					const updateRowList = [];
+
+					await ui.updateList.forEach(updateData => {
+		    			let newRow = { state: true };
+
+		           		if(updateData.newRow.hasOwnProperty('whuseyn') || updateData.newRow.hasOwnProperty('plarmyn') || updateData.newRow.hasOwnProperty('proofyn')){
+		        			updateRowList.push({
+								rowIndx: updateData.rowIndx,
+								newRow: newRow
+							});
+		       			}
+		   			});
+					await this.updateRow({
+						rowList: updateRowList,
+						checkEditable: false
+					});
+		    	} else if('edit' === ui.source || 'paste' === ui.source  || ui.source === 'undo' || ui.source === 'redo' || ui.source === 'clear'){
+		    		for(const updateData of ui.updateList) {
+
+		    			this.updateRow({
+							rowIndx : updateData.rowIndx,
+							newRow : {
+								state: true,
+								watarea: updateData.rowData.watarea,
+								wascapa: updateData.rowData.wascapa,
+								poststm: updateData.rowData.poststm,
+								stkdytm: updateData.rowData.stkdytm,
+								holtmfm: updateData.rowData.holtmfm,
+								holtmto: updateData.rowData.holtmto,
+								plarmyn: updateData.rowData.plarmyn,
+								proofyn: updateData.rowData.proofyn,
+								whuseyn: updateData.rowData.whuseyn
+							},
+							checkEditable : false
+		    			})
+		    		}
+		    		for(const addData of ui.addList) {
+		    			addData.rowData.state = true;
+		    			addData.rowData.watarea = addData?.newRow?.watarea || 0;
+		    			addData.rowData.wascapa = addData?.newRow?.wascapa || 0;
+		    			addData.rowData.poststm = addData?.newRow?.poststm || '000000';
+		    			addData.rowData.stkdytm = addData?.newRow?.stkdytm || '000000';
+		    			addData.rowData.holtmfm = addData?.newRow?.holtmfm || '000000';
+		    			addData.rowData.holtmto = addData?.newRow?.holtmto || '000000';
+		    			addData.rowData.plarmyn = addData?.newRow?.plarmyn || 'Y';
+		    			addData.rowData.proofyn = addData?.newRow?.proofyn || 'N';
+		    			addData.rowData.whuseyn = addData?.newRow?.whuseyn || 'Y';
+		    		}
+		    	}
+		    	doe001Grid.getGrid().refresh();
+			});
+
+			// Grid 객체 생성
+			doe001Grid.open();
+
+			// 검색 버튼
+			document.querySelector('#' + pageId + 'BtnSearch').addEventListener('click', async function(){
+				await getDoe001List();
+			})
+
+			// 저장 버튼
+			document.querySelector('#' + pageId + 'BtnSave').addEventListener('click', async function(){
+				const validation = validateEssentialFieldBeforeSaveGridUtil(doe001Grid, ['whnamlc', 'poststm', 'stkdytm']); // 필수입력
+				if( !validation || (await !confirm('[[#{ms.checksave}]]'))){ // 저장 하시겠습니까?
+					return;
+				}
+				await saveGridUtil(doe001Grid, refineGridUtilSaveList(doe001Grid), '/md/' + pageId + '/grid'); // 저장
+				await getDoe001List(); // 재조회
+			})
+
+			// 초기화 버튼
+			document.querySelector('#' + pageId + 'BtnReset').addEventListener('click', function(){
+				resetSearchConditions(pageId);
+				makeEmptyGrid(doe001Grid);
+			})
+
+			// Grid 데이터 조회 함수
+			async function getDoe001List(){
+				const grid = pq.grid('#' + pageId + 'Grid');
+				const data = {
+						warekey : document.querySelector('#' + pageId + 'Warekey').value.toUpperCase(),
+			  			whnamlc : document.querySelector('#' + pageId + 'Whnamlc').value.toUpperCase(),
+			  			whuseyn : document.querySelector('#' + pageId + 'Whuseyn').value
+				};
+
+				grid.showLoading();
+				const res = await fetchUtil('GET', '/md/' + pageId + '/grid', data);
+				if(res.status===200){
+					const doe001List = await res.json();
+					grid.option( 'dataModel', {
+						data: doe001List,
+						recIndx: 'rowkey'
+					});
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+
+			const itemList = document.querySelectorAll('.setting-grid input');
+			itemList.forEach(function(item){
+				item.addEventListener('keyup', searchEnter);
+			})
+
+			// Enter로 검색
+			async function searchEnter(event) {
+			    const key = event.key || event.keyCode;
+			    if (key === 'Enter' || key === 13) {
+			        await getDoe001List();
+			    }
+			}
+
+			function pirnterCombo(colnm, obj) {
+				const grid = pq.grid('#' + pageId + 'Grid');
+				const column = grid.getColumn({ dataIndx: colnm });
+
+		        const options = obj.map(function(obj){
+		            var rObj = {};
+		            rObj[obj] = obj
+		            return rObj;
+		        });
+
+		        column.editor.options = options;
+		    }
+
+			// 프린터기 렌더링 validation
+		    function wmptrnmRender(ui) {
+		    	let option = ui.column.editor.options.find(function(obj) {
+		            return (obj[ui.cellData] != null);
+		        });
+		        if(myPrinterList.length > ui.rowIndx){
+		        	ui.rowData[ui.dataIndx] = option ? ui.cellData : myPrinterList[ui.rowIndx].wmptrnm;
+			        return option ? option[ui.cellData] : myPrinterList[ui.rowIndx].wmptrnm;
+		        }
+		    }
+
+		    function wsptrnmRender(ui) {
+		        let option = ui.column.editor.options.find(function(obj) {
+		            return (obj[ui.cellData] != null);
+		        });
+
+		        let wsptrnmValue = ui.rowData[ui.dataIndx];
+		        if (!ui.rowData.wmptrnm) {
+		            wsptrnmValue = '';
+		        } else if (!wsptrnmValue && myPrinterList.length > ui.rowIndx) {
+		            wsptrnmValue = myPrinterList[ui.rowIndx].wsptrnm || '';
+		        }
+
+		        ui.rowData[ui.dataIndx] = wsptrnmValue;
+		        return {
+		            option: option ? option[ui.cellData] : wsptrnmValue,
+		            cls: !ui.rowData.wmptrnm ? 'color-gray pq-cell-disable' : ''
+		        };
+		    }
+		}();
+		</script>
+	</div>
+</html>

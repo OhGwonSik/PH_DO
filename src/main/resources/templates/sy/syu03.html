@@ -1,0 +1,524 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents Ptype06" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<div class="setting-grid-title">[[#{sy.srolgr.rolgnam}]]</div>
+	            <div class="setting-grid-content">
+	            	<div class="input-wrapper">
+	            		<input id="syu03RoleGroupNm" type="text" value="">
+	                </div>
+	            </div>
+        	</div>
+            <div class="search-btn-group">
+            	<div class="btn-search btn-navy" id="syu03BtnSearch"><img>[[#{bt.search}]]</div>
+             	<div class="btn-clear btn-white" id="syu03BtnClearAll"><img>[[#{bt.reset}]]</div>
+            </div>
+        </div>
+        <div class="list-wrapper">
+        	<div class="search-list">
+        		<div class="list-top">
+        			<div class="list-title ic-title-mark">[[#{sy.syu03.roleInfo}]]</div>
+               		<div class="edit-btn-wrapper">
+               			<button id="syu03BtnAddRow" class="btn-white"><img class="ic-line-plus">[[#{bt.add}]]</button>
+                 		<button id="syu03BtnDelRow" class="btn-white"><img class="ic-line-minus">[[#{bt.delete}]]</button>
+                 		<button id="syu03BtnSaveRole" class="btn-navy"><img class="ic-bt-save">[[#{bt.save}]]</button>
+               		</div>
+            	</div>
+            	<!-- 개발 작업시 그리드 들어갈 부분 -->
+            	<div class="list-grid-wrapper con-box">
+            		<div id="syu03RoleGrid"></div>
+	            </div>
+            </div>
+            <div class="search-list">
+            	<div class="list-top">
+            		<div class="list-title ic-title-mark">[[#{sy.syu03.menuInfoByRole}]]</div>
+               		<div class="edit-btn-wrapper">
+               			<div class="ic-dot">[[#{menu.md.dos001}]]</div>
+                 		<div class="input-group  w-120">
+                   			<select id="syu03SystemId"></select>
+                 		</div>
+                 	<button id="syu03BtnSaveMenu" class="btn-navy"><img class="ic-bt-save">[[#{bt.save}]]</button>
+               		</div>
+             	</div>
+             <!-- 개발 작업시 그리드 들어갈 부분 -->
+             	<div class="list-grid-wrapper con-box">
+               		<div id="syu03RoleMenuGrid"></div>
+             	</div>
+             	<div class="list-top">
+               		<div class="list-title ic-title-mark">[[#{sy.syu03.warehouseRoleByRoleGroup}]]</div>
+               		<div class="edit-btn-wrapper">
+                 	<button id="syu03BtnSaveWhouse" class="btn-navy"><img class="ic-bt-save">[[#{bt.save}]]</button>
+               		</div>
+             	</div>
+             	<!-- 개발 작업시 그리드 들어갈 부분 -->
+             	<div class="list-grid-wrapper con-box">
+               		<div id="syu03RoleWhouseGrid"></div>
+             	</div>
+           	</div>
+        </div>
+    <script>
+	!function(){
+		let syu03RoleMenuList;
+		let roleMenuChangeDataList = [];
+
+		syu03Init();
+		console.log("syu03 : 권한등록 ");
+
+		const syu03RoleGridCM = [
+			{ title: 'rowkey', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+			{
+				title: "[[#{sy.srolgr.rolgkey}]]",
+				align: "left",
+				halign: "center",
+				dataType: "string",
+				dataIndx: "rolgkey",
+				styleHead: {'background-color': '#FAF4C0'},
+				editable: false
+			},
+			{
+				title: "[[#{sy.srolgr.rolgkey}]]",
+				align: "left",
+				halign: "center",
+				dataType: "string",
+				dataIndx: "oldrlgky",
+				hidden : true
+			},
+			{
+				title: "[[#{sy.srolgr.rolgnam}]]",
+				align: "left",
+				halign: "center",
+				dataType: "string",
+				dataIndx: "rolgnam",
+				styleHead: {'background-color': '#FAF4C0'},
+				editable: function (ui) {
+					if(!ui.rowData) return true;
+                    const rkey = ui.rowData['rolgkey'];
+                    if (rkey == "ADMIN") {
+                        return false;
+                    } else {
+                        return true;
+                    }
+                },
+			},
+			{
+				title: "[[#{sy.srolgr.roldesc}]]",
+				align: "left",
+				halign: "center",
+				dataType: "string",
+				dataIndx: "roldesc",
+				styleHead: {'background-color': '#E4F7BA'},
+				editable: true
+			},
+			{ title: '[[#{grid.credate}]]',  dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },					// 생성일자
+			{ title: '[[#{grid.cretime}]]',  dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },					// 생성일시
+			{ title: '[[#{grid.creuser}]]',  dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },						// 생성사용자
+			{ title: '[[#{grid.lmodate}]]',  dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },					// 수정일자
+			{ title: '[[#{grid.lmotime}]]',  dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },					// 수정일시
+			{ title: '[[#{grid.lmouser}]]',  dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },						// 수정사용자
+			{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }					// Update Check
+		];
+		const syu03RoleMenuGridCM = [
+			{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+			{
+				title: "[[#{sy.srolmn.menukey}]]",
+				dataType: "string",
+				dataIndx: "menukey",
+				hidden: true
+			},
+			{
+				title: "[[#{sy.srolmn.rolnmky}]]",
+				dataType: "string",
+				dataIndx: "rolnmky",
+				hidden: true
+			},
+			{
+				title: "[[#{sy.smnuma.menunam}]]",
+				halign: "center",
+				dataType: "string",
+				dataIndx: "menunam",
+				sortable : false,
+				editable: false
+			},
+			{
+				title: "[[#{sy.smnuma.progrid}]]",
+				align: "left",
+				halign: "center",
+				dataType: "string",
+				dataIndx: "progrid",
+				sortable : false,
+				editable: false
+			},
+			{
+				title: "[[#{sy.smnuma.prgmurl}]]",
+				halign: "center",
+				dataType: "string",
+				dataIndx: "prgmurl",
+				sortable : false,
+				editable: false
+			},
+			{
+				title: "[[#{sy.smnuma.menuseq}]]",
+				halign: "center",
+				dataType: "string",
+				dataIndx: "menuseq",
+				sortable : false,
+				editable: false
+			}
+		];
+		const syu03RoleWhouseGridCM = [
+			{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+			{ title: '', dataType: 'String',  dataIndx: 'state', type: 'checkBoxSelection', align: 'center'
+				, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+				cb: { all: false, header: true, check: 'Y', uncheck: 'N' }
+			},
+			{
+				title: "[[#{sy.srolgr.rolgkey}]]",
+				dataType: "string",
+				dataIndx: "rolgkey",
+				hidden : true
+			},
+			{
+				title: "[[#{grid.warekey}]]",
+				dataType: "string",
+				dataIndx: "warekey"
+			},
+			{
+				title: "[[#{grid.whnamlc}]]",
+				dataType: "string",
+				dataIndx: "whnamlc"
+			},
+			{ title: '[[#{grid.credate}]]',  dataType: 'string', dataIndx: 'credate', editable: false, hidden: true },					// 생성일자
+			{ title: '[[#{grid.cretime}]]',  dataType: 'string', dataIndx: 'cretime', editable: false, hidden: true },					// 생성일시
+			{ title: '[[#{grid.creuser}]]',  dataType: 'string', dataIndx: 'creuser', editable: false, hidden: true },						// 생성사용자
+			{ title: '[[#{grid.lmodate}]]',  dataType: 'string', dataIndx: 'lmodate', editable: false, hidden: true },					// 수정일자
+			{ title: '[[#{grid.lmotime}]]',  dataType: 'string', dataIndx: 'lmotime', editable: false, hidden: true },					// 수정일시
+			{ title: '[[#{grid.lmouser}]]',  dataType: 'string', dataIndx: 'lmouser', editable: false, hidden: true },						// 수정사용자
+			{ title: '[[#{grid.updtchk}]]',  dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true }					// Update Check
+		];
+		// '[[${gprogrid}]]' 임시 하드코딩
+		const syu03RoleGrid = new GridUtil(syu03RoleGridCM, '[[${tabPage}]]', 'syu03RoleGrid');
+		syu03RoleGrid.setSelectionModel({type: 'row', mode: 'single'});
+		syu03RoleGrid.setCellClick(async function(event, ui) {
+			await getMenuByRoleList();
+			await getWarehouseByRoleList();
+		});
+
+		syu03RoleGrid.open();
+
+		const syu03RoleMenuGrid = new GridUtil(syu03RoleMenuGridCM, '[[${tabPage}]]', 'syu03RoleMenuGrid');
+		syu03RoleMenuGrid.setSelectionModel({type: 'row', mode: 'single'});
+
+		syu03RoleMenuGrid.setTreeModel({
+			historyAdd : true,
+            dataIndx: 'menunam',
+            id: 'menukey',
+            parentId: 'menufid',
+            cascade: true,
+            cbId: 'state',
+            format: "flat",
+            checkbox: true,
+            checkboxHead: true
+		});
+
+		syu03RoleMenuGrid.setCheck(async function(event, ui){
+
+			if (ui.rows[0].rowData.menugbn === 'FLD') {
+
+				for(const childrenData of ui.rows[0].rowData.children) {
+					changeRowData(childrenData);
+				}
+			} else{
+				changeRowData(ui.rows[0].rowData);
+			}
+		});
+
+		//setCheck에서 사용
+		function changeRowData(rowData){
+
+			const isCheckedData = syu03RoleMenuList.find(function(element){
+				return element.rowkey === rowData.rowkey;
+			});
+
+			const findIndex = roleMenuChangeDataList.findIndex(function(element){
+				return element.rowkey === isCheckedData.rowkey;
+			});
+
+			if(Boolean(isCheckedData.state) === rowData.state){
+
+				if(findIndex !== -1){
+					roleMenuChangeDataList.splice(findIndex, 1);
+				}
+			}else{
+				if(findIndex === -1){
+					roleMenuChangeDataList.push(rowData);
+				}
+			}
+		}
+
+		syu03RoleMenuGrid.open();
+
+		const syu03RoleWhouseGrid = new GridUtil(syu03RoleWhouseGridCM,'[[${tabPage}]]', 'syu03RoleWhouseGrid');
+		syu03RoleWhouseGrid.open();
+
+
+		async function syu03Init(){
+
+			const response = await fetchUtil('GET', '/sy/menu/grid/header');
+
+			const systemMenuList = await response.json();
+			let html = '<option value="">[[#{ms.chooseAll}]]</option>';
+			for(const systemMenuData of systemMenuList){
+				html += '<option value = "'+ systemMenuData.mnhdkey +'">'+ systemMenuData.mnhdnam +'</option>';
+			}
+			document.querySelector('#syu03SystemId').innerHTML = html;
+		}
+
+		async function getRoleList(){
+
+			const roleGrid = pq.grid('#syu03RoleGrid');
+			const roleMenuGrid = pq.grid('#syu03RoleMenuGrid');
+			const roleWhouseGrid = pq.grid('#syu03RoleWhouseGrid');
+
+			roleMenuGrid.option('dataModel', {data : []});
+			roleMenuGrid.refreshDataAndView();
+			roleWhouseGrid.option('dataModel', {data : []});
+			roleWhouseGrid.refreshDataAndView();
+
+			roleGrid.showLoading();
+
+			const param = {
+					rolgnam : document.querySelector('#syu03RoleGroupNm').value
+			}
+
+			const response = await fetchUtil('GET', '/sy/syu03/grid/role', param);
+
+			if(response.status === 200) {
+				const roleList = await response.json();
+				roleGrid.option('dataModel', { data: roleList, recIndx: 'rowkey' });
+				roleMenuChangeDataList = [];
+			}
+
+			roleGrid.hideLoading();
+			roleGrid.refreshDataAndView();
+
+		}
+
+		async function getMenuByRoleList(){
+
+			const roleMenuGrid = pq.grid('#syu03RoleMenuGrid');
+
+			const selectRow = pq.grid('#syu03RoleGrid').SelectRow().getSelection();
+
+			if(!selectRow.length){
+				return;
+			}
+			roleMenuGrid.showLoading();
+
+			const param = {
+					rolgkey : selectRow[0].rowData['rolgkey'],
+					mnhdkey : document.querySelector('#syu03SystemId').value
+			}
+
+			const response = await fetchUtil('GET', '/sy/syu03/grid/menu-role', param);
+
+			if(response.status === 200) {
+				const roleMenuList = await response.json();
+
+				syu03RoleMenuList = JSON.parse(JSON.stringify(roleMenuList));
+
+				roleMenuGrid.option('dataModel', { data: roleMenuList, recIndx: 'menukey' });
+
+				roleMenuChangeDataList = [];
+			}
+
+			roleMenuGrid.hideLoading();
+			roleMenuGrid.refreshDataAndView();
+		}
+
+		async function getWarehouseByRoleList(){
+
+			const roleWhouseGrid = pq.grid('#syu03RoleWhouseGrid');
+
+			const selectRow = pq.grid('#syu03RoleGrid').SelectRow().getSelection();
+
+			roleWhouseGrid.showLoading();
+
+			const param = {
+					rolgkey : selectRow[0].rowData['rolgkey']
+			}
+
+			const response = await fetchUtil('GET', '/sy/syu03/grid/war-role', param);
+
+			if(response.status === 200) {
+				const roleWhouseList = await response.json();
+				roleWhouseGrid.option('dataModel', { data: roleWhouseList, recIndx: 'rowkey' });
+			}
+
+			roleWhouseGrid.hideLoading();
+			roleWhouseGrid.refreshDataAndView();
+
+		}
+
+		document.querySelector('#syu03SystemId').addEventListener('change', async function(){
+			await getMenuByRoleList();
+		});
+
+		//조회 버튼 클릭 시
+		document.querySelector('#syu03BtnSearch').addEventListener('click', async function(){
+			await getRoleList();
+		});
+
+		//초기화 버튼 클릭 시
+		document.querySelector('#syu03BtnClearAll').addEventListener('click', async function(){
+			resetSearchConditions(pageId);
+			await getRoleList();
+		});
+
+		//ROLE 추가버튼 클릭 시
+		document.querySelector('#syu03BtnAddRow').addEventListener('click', async function(){
+			pq.grid('#syu03RoleGrid').addRow({
+				newRow:{
+					rolgkey: '',
+					rolgnam: ''
+					}
+			});
+		});
+
+		//ROLE 삭제 버튼 클릭 시
+		document.querySelector('#syu03BtnDelRow').addEventListener('click', async function(){
+			const selectRow = pq.grid('#syu03RoleGrid').SelectRow().getSelection();
+			const rolgkey = selectRow[0].rowData['rolgkey'];
+			if (rolgkey === 'ADMIN') {
+				alert(rolgkey + '[[#{ms.cannotDelete}]]');
+				return;
+			} else if(confirm(`[[#{ms.saveAfterDelete}]]`)) {
+				selectRow.forEach(function(sel) {
+					pq.grid('#syu03RoleGrid').deleteRow({rowIndx: sel.rowIndx});
+				});
+			}
+		});
+
+		//ROLE 저장 버튼 클릭 시
+		document.querySelector('#syu03BtnSaveRole').addEventListener('click', async function(){
+			const grid = syu03RoleGrid.getGrid();
+			const gridDataList 	= grid.getData();
+			const gridChangeList = grid.getChanges({all:true});
+
+			const updateList = gridChangeList.updateList;
+			const addList = gridChangeList.addList;
+			const deleteList = gridChangeList.deleteList;
+
+			if(!updateList.length && !addList.length && !deleteList.length){
+				return;
+			}
+
+			//&& e.pq_ri != addData.pq_ri 자기 자신 뺴고 검사
+			for(const addData of addList){
+				const sameRolgkeyCheck = gridDataList.filter(function(e) {
+					return e.rolgkey === addData.rolgkey && e.pq_ri != addData.pq_ri;
+				});
+
+				if(sameRolgkeyCheck.length){
+					alert('[[#{ms.duplicationRolgkey}]]');
+					return;
+				}
+			}
+
+			for(const updateData of updateList){
+				if(updateData.oldrlky === 'ADMIN'){
+	 				alert(updateData.oldrlky + '[[#{ms.cannotUpdate}]]');
+	 				return;
+				}
+
+				if(!updateData.rolgkey){
+					alert('[[#{ms.inputRolgkey}]]');
+					return;
+				}
+
+				if(!updateData.rolgnam){
+					alert('[[#{ms.inputRolgnam}]]');
+					return;
+				}
+			}
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+				const param = {
+						addList : addList,
+						updateList : updateList,
+						deleteList : deleteList
+				}
+
+				const response = await fetchUtil('POST' , '/sy/role/save' , param);
+				if(response.status === 200){
+					grid.option('dataModel', { data: [] });
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+		});
+
+		//권한 별 메뉴 저장버튼 클릭 시
+		document.querySelector('#syu03BtnSaveMenu').addEventListener('click', async function(){
+			const grid = syu03RoleMenuGrid.getGrid();
+
+			if(!roleMenuChangeDataList.length){
+				alert('[[#{ms.syncNo}]]');
+				return;
+			}
+
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+
+				const param = {
+						rolgkey : pq.grid('#syu03RoleGrid').SelectRow().getSelection()[0].rowData['rolgkey'],
+						roleMenuWhList : roleMenuChangeDataList
+				}
+
+				const response = await fetchUtil('POST' , '/sy/role-menu/save' , param);
+				if(response.status === 200){
+
+					const roleMenuResponse = await fetchUtil('GET', '/session/role-menu');
+					if(roleMenuResponse.status === 200){
+						const userRole = userAttr.usertyp;
+						if(userRole === pq.grid('#syu03RoleGrid').SelectRow().getSelection()[0].rowData['rolgkey']){
+							await setChangeMenu(roleMenuChangeDataList);
+						}
+						await getMenuByRoleList();
+					}
+				}
+				grid.hideLoading();
+			}
+		});
+
+		//권한 별 창고권한 저장버튼 클릭 시
+		document.querySelector('#syu03BtnSaveWhouse').addEventListener('click', async function(){
+			const grid = syu03RoleWhouseGrid.getGrid();
+			const gridChangeList = grid.getChanges({all:true});
+
+			const updateList = gridChangeList.updateList;
+			if(!updateList.length){
+				return;
+			}
+
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+
+				const param = {
+						rolgkey : pq.grid('#syu03RoleGrid').SelectRow().getSelection()[0].rowData['rolgkey'],
+						roleMenuWhList : updateList
+				}
+
+				const response = await fetchUtil('POST' , '/sy/role-wh/save' , param);
+				if(response.status === 200){
+					await getRoleList();
+					grid.refreshDataAndView();
+				}
+				grid.hideLoading();
+			}
+		});
+	}();
+	</script>
+</div>
+</html>

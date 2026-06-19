@@ -1,0 +1,670 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.sy.mapper.SystemMapper">
+
+	<select id="selectSmnghdList" resultType="com.kbph.logistics.sy.domain.SmnghdDTO">
+		/* selectSmnghdList */
+		SELECT MNHDKEY, MNHDNAM, MNHDLKY
+		     , MNHDDSC, HDUSEYN, CREDATE, CRETIME
+		     , CREUSER, LMODATE, LMOTIME, LMOUSER
+		  FROM ${schema}.SMNGHD
+		  WHERE
+		  	HDUSEYN = 'Y'
+	</select>
+
+	<!-- syu02 메뉴 정보 가져오기 -->
+	<select id="getMenuList" resultType="com.kbph.logistics.sy.domain.SmnumaDTO">
+		/* getMenuList */
+		SELECT
+			CONCAT(MENUKEY,MNHDKEY) as ROWKEY,
+		    MENUKEY, MNHDKEY, MENUFID,
+		    MENUGBN, MENUNAM, MENUSEQ, MENULKY,
+		    PROGRID, PRGMURL, MNUSEYN, CREDATE,
+		    CRETIME, CREUSER, LMODATE, LMOTIME,
+		    LMOUSER, UPDTCHK
+		FROM
+			${schema}.SMNUMA
+		WHERE
+			MENUFID = #{param.menufid}
+			AND MNHDKEY = #{param.mnhdkey}
+			AND MNUSEYN = 'Y'
+			<if test='param.mnhdkey != null and param.mnhdkey !=""'>
+				AND MNHDKEY = #{param.mnhdkey}
+			</if>
+			<if test='param.menufid != null and param.menufid !=""'>
+				AND MENUFID = #{param.menufid}
+			</if>
+		ORDER BY LPAD(MENUSEQ, 5, '0')
+	</select>
+
+	<!-- SMNUMA MENUKEY 채번 -->
+    <select id="selectMenukey" resultType="String">
+     	/* selectMenukey */
+     	SELECT ${schema}.FN_SY_MENUKEY() as MENUKEY from DUAL
+    </select>
+
+	<insert id="insertSmnuma" parameterType="com.kbph.logistics.sy.domain.SmnumaDTO">
+		/* insertSmnuma */
+		INSERT INTO ${userData.schema}.SMNUMA (
+			MENUKEY
+			, MNHDKEY
+			, MENUFID
+			, MENUGBN
+			, MENUNAM
+			, MENUSEQ
+			, MENULKY
+			, PROGRID
+			, PRGMURL
+			, MNUSEYN
+			, CREDATE
+			, CRETIME
+			, CREUSER
+			, LMODATE
+			, LMOTIME
+			, LMOUSER
+		)
+		VALUES(
+		#{param.menukey},
+		#{param.mnhdkey},
+		#{param.menufid},
+		#{param.menugbn},
+		#{param.menunam},
+		#{param.menuseq},
+		#{param.menulky},
+		#{param.progrid},
+		#{param.prgmurl},
+		'Y',
+		date_format(now(), '%Y%m%d'),
+		date_format(now(), '%H%i%s'),
+		#{userData.useract},
+		date_format(now(), '%Y%m%d'),
+		date_format(now(), '%H%i%s'),
+		#{userData.useract}
+		)
+	</insert>
+
+	<update id="updateSmnuma" parameterType="com.kbph.logistics.sy.domain.SmnumaDTO">
+		/* updateSmnuma */
+		UPDATE ${userData.schema}.SMNUMA
+		SET MNHDKEY = #{param.mnhdkey},
+			PROGRID = #{param.progrid},
+			MENUNAM = #{param.menunam},
+			MENUSEQ = #{param.menuseq},
+			MNUSEYN = #{param.mnuseyn},
+			MENULKY = #{param.menulky},
+			<if test='param.prgmurl != null and param.prgmurl != ""'>
+			PRGMURL = #{param.prgmurl},
+			</if>
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			MENUKEY = #{param.menukey}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- syu03 권한그룹 정보 가져오기 -->
+	<select id="getRoleList" resultType="com.kbph.logistics.sy.domain.SrolgrDTO">
+		/* getRoleList */
+		SELECT
+			ROLGKEY as ROWKEY
+			, ROLGKEY, ROLGKEY as OLDRLKY, ROLGNAM
+			, ROLDESC , CNFRMYN, RLUSEYN, CREDATE, CRETIME
+			, CREUSER , LMODATE, LMOTIME, LMOUSER
+			, UPDTCHK
+		FROM
+			${schema}.SROLGR
+		WHERE
+			RLUSEYN = 'Y'
+			<if test='param.rolgnam != null and param.rolgnam != ""'>
+				AND ROLGNAM LIKE CONCAT('%', #{param.rolgnam}, '%')
+			</if>
+			<if test='param.cnfrmyn != null and param.cnfrmyn != ""'>
+				AND CNFRMYN = #{param.cnfrmyn}
+			</if>
+	</select>
+
+	<!-- 권한별 메뉴 조회 -->
+	<select id="getMenuByRoleList" resultType="com.kbph.logistics.sy.domain.SmnumaDTO">
+		/* getMenuByRoleList */
+		SELECT
+			CONCAT(SM.MENUKEY, SM.MNHDKEY) as ROWKEY,
+			SM.MENUKEY, SM.MNHDKEY, SM.MENUFID
+			, SM.MENUGBN, SM.MENUNAM, SM.MENUSEQ, SM.PROGRID
+			, SM.PRGMURL, SR.ROLNMKY
+		    , CASE
+		        WHEN SR.MENUKEY IS NULL OR SR.RMUSEYN = 'N' THEN 0
+		        ELSE 1
+		    END  AS STATE
+		    , SR.UPDTCHK
+		FROM
+		    ${schema}.SMNUMA SM
+		LEFT JOIN ${schema}.SROLMN SR
+		    ON SR.MENUKEY = SM.MENUKEY
+		    AND SR.ROLGKEY = #{param.rolgkey}
+		WHERE
+		    SM.MNUSEYN = 'Y'
+		    <if test='param.mnhdkey != null and param.mnhdkey !=""'>
+		    	AND SM.MNHDKEY = #{param.mnhdkey}
+		    </if>
+	</select>
+
+	<!-- SROLMN ROLNMKY 채번 -->
+    <select id="selectRolnmky" resultType="String">
+     	/* selectRolnmky */
+     	SELECT ${schema}.FN_SY_ROLNMKY() as ROLNMKY from DUAL
+    </select>
+
+	<!-- 권한 별 메뉴 저장 및 수정 -->
+	<insert id="saveMenuByRole" parameterType="com.kbph.logistics.sy.domain.SrolmnDTO">
+		/* saveMenuByRole */
+		INSERT INTO ${userData.schema}.SROLMN
+		(
+			ROLNMKY
+			, ROLGKEY
+			, MENUKEY
+			, RMUSEYN
+			, CREDATE
+			, CRETIME
+			, CREUSER
+			, LMODATE
+			, LMOTIME
+			, LMOUSER
+		)
+		VALUES
+		(
+			#{param.rolnmky}
+			, #{param.rolgkey}
+			, #{param.menukey}
+			, #{param.rmuseyn}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{userData.useract}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{userData.useract}
+		)
+		ON DUPLICATE KEY UPDATE
+			RMUSEYN = #{param.rmuseyn}
+			, UPDTCHK = #{param.updtchk} + 1
+	</insert>
+
+	<!-- 권한별 창고 조회 -->
+	<select id="getWarehouseByRoleList" resultType="com.kbph.logistics.sy.domain.SrolwhDTO">
+	    /* getWarehouseByRoleList */
+		SELECT
+		    CONCAT(IFNULL(SR.ROLGKEY,''), MW.WAREKEY) as ROWKEY
+		    , SR.ROLGKEY
+		    , MW.WAREKEY
+		    , MW.WHNAMLC
+		    , CASE
+		        WHEN SR.WAUSEYN = 'Y' THEN 'Y'
+		        ELSE 'N'
+		    END AS STATE
+		    , SR.CREDATE
+		    , SR.CRETIME
+		    , SR.CREUSER
+		    , SR.LMODATE
+		    , SR.LMOTIME
+		    , SR.LMOUSER
+		    , SR.UPDTCHK
+		FROM
+		    ${schema}.MWARMA MW
+		LEFT JOIN ${schema}.SROLWH SR
+		    ON SR.WAREKEY  = MW.WAREKEY
+		    AND SR.ROLGKEY = #{param.rolgkey}
+		ORDER BY
+		    MW.WAREKEY
+	</select>
+
+	<insert id="insertSrolgr" parameterType="com.kbph.logistics.sy.domain.SrolgrDTO">
+		/* insertSrolgr */
+		INSERT INTO ${userData.schema}.SROLGR (
+			ROLGKEY,
+			ROLGNAM,
+			ROLDESC,
+			RLUSEYN,
+			CREDATE,
+			CRETIME,
+			CREUSER,
+			LMODATE,
+			LMOTIME,
+			LMOUSER
+		)
+		VALUES(
+		#{param.rolgkey},
+		#{param.rolgnam},
+		#{param.roldesc},
+		'Y',
+		date_format(now(), '%Y%m%d'),
+		date_format(now(), '%H%i%s'),
+		#{userData.useract},
+		date_format(now(), '%Y%m%d'),
+		date_format(now(), '%H%i%s'),
+		#{userData.useract}
+		)
+	</insert>
+
+	<update id="updateSrolgr" parameterType="com.kbph.logistics.sy.domain.SrolgrDTO">
+		/* updateSrolgr */
+		UPDATE ${userData.schema}.SROLGR
+		SET ROLGKEY = #{param.rolgkey},
+			ROLGNAM = #{param.rolgnam},
+			ROLDESC = #{param.roldesc},
+			RLUSEYN = #{param.rluseyn},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			ROLGKEY = #{param.oldrlky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<update id="saveSrolwh" parameterType="com.kbph.logistics.sy.domain.SrolwhDTO">
+		/* saveSrolwh */
+		INSERT INTO ${userData.schema}.SROLWH
+		(
+			ROLGKEY
+			, WAREKEY
+			, WAUSEYN
+			, CREDATE
+			, CRETIME
+			, CREUSER
+			, LMODATE
+			, LMOTIME
+			, LMOUSER
+		)
+		VALUES
+		(
+			#{param.rolgkey}
+			, #{param.warekey}
+			, 'Y'
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{userData.useract}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{userData.useract}
+		)
+		ON DUPLICATE KEY UPDATE
+				WAUSEYN = #{param.state}
+				, LMODATE = date_format(now(), '%Y%m%d')
+				, LMOTIME = date_format(now(), '%H%i%s')
+				, LMOUSER = #{userData.useract}
+				, UPDTCHK = #{param.updtchk} + 1
+	</update>
+
+	<update id="insertBookMark" parameterType="com.kbph.logistics.sy.domain.SmnubmDTO">
+		INSERT
+			INTO ${schema}.SMNUBM
+			(
+				USERKEY, USERACT, PROGRID, CREDATE
+			  , CRETIME, CREUSER, LMODATE, LMOTIME
+			  , LMOUSER
+			)
+		    VALUES
+		    (
+				#{param.userkey}, #{param.useract}, #{param.progrid}, DATE_FORMAT(NOW(), '%Y%m%d')
+			  , DATE_FORMAT(NOW(), '%H%i%s'), #{param.useract}, DATE_FORMAT(NOW(), '%Y%m%d'), DATE_FORMAT(NOW(), '%H%i%s')
+			  , #{param.useract}
+		    )
+	</update>
+
+	<delete id="deleteBookMark" parameterType="com.kbph.logistics.sy.domain.SmnubmDTO">
+		DELETE
+		  FROM ${schema}.SMNUBM
+		  <where>
+		  	USERACT = #{param.useract}
+			AND PROGRID = #{param.progrid}
+		  </where>
+	</delete>
+
+	<select id="selectAppUserList" resultType="com.kbph.logistics.sy.domain.UserDTO">
+		/* selectAppUserList */
+		SELECT CONCAT(USERKEY, USERACT) AS ROWKEY
+		     , USERKEY, USERACT, USERNAM, TELPHNM
+		     , USRMEMO, EMAILAD
+		     , DATE_FORMAT(CREDATE,'%Y-%m-%d') AS CREDATE
+		     , DATE_FORMAT(STR_TO_DATE(CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		     , ${userData.schema}.FN_SY_USERNAM(CREUSER) AS CREUSER
+		     , DATE_FORMAT(LMODATE,'%Y-%m-%d') AS LMODATE
+		     , DATE_FORMAT(STR_TO_DATE(LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		     , ${userData.schema}.FN_SY_USERNAM(LMOUSER) AS LMOUSER
+		  FROM ${userData.commonSchema}.SUSRMA
+		<where>
+			<if test='param.useract != null and param.useract != ""'>
+				AND USERACT LIKE CONCAT('%', UPPER(#{param.useract}), '%')
+		    </if>
+		    <if test='param.usernam != null and param.usernam != ""'>
+				AND USERNAM LIKE CONCAT('%', UPPER(#{param.usernam}), '%')
+		    </if>
+		   AND ACTIVYN = #{param.activyn}
+		   AND APUSEYN = #{param.apuseyn}
+		</where>
+	</select>
+
+	<select id="syu05VehicleInitList" resultType="com.kbph.logistics.sy.domain.SusrvhDTO">
+		/* syu05VehicleInitList */
+		SELECT
+		    MV.VEHICKY AS ROWKEY
+		    , MV.VEHICKY
+		    , MV.VHCSNAM
+		    , MV.VHCFNAM
+		    , MC1.COMCDTX AS DLVTYPE
+		    , MC2.COMCDTX AS VHCOPTY
+		    , MC3.COMCDTX AS VHCTYPE
+		    , MC4.COMCDTX AS VHCSTAT
+		    , MC5.COMCDTX AS VHCTNCD
+		    , MV.VHCMAXW
+		    , MV.VHCCAPA
+		    , MV.DRVERNM
+		    , MV.DRVERPH
+		    , MV.INBVHYN
+		    , MV.OUBVHYN
+		    , MV.POSCOYN
+		    , MV.VHCVRYN
+		    , MO.VOWNKEY
+		    , MO.VONAMLC
+		    , DATE_FORMAT(MV.CREDATE, '%Y-%m-%d') AS CREDATE
+		    , DATE_FORMAT(STR_TO_DATE(MV.CRETIME, '%H%i%s'), '%H:%i:%s') AS CRETIME
+		    , ${userData.schema}.FN_SY_USERNAM(MV.CREUSER) AS CREUSER
+		    , DATE_FORMAT(MV.LMODATE, '%Y-%m-%d') AS LMODATE
+		    , DATE_FORMAT(STR_TO_DATE(MV.LMOTIME, '%H%i%s'), '%H:%i:%s') AS LMOTIME
+		    , ${userData.schema}.FN_SY_USERNAM(MV.LMOUSER) AS LMOUSER
+		FROM
+		    PH_COMMON.MVHCMA MV
+		INNER JOIN PH_COMMON.MVOWMA MO ON
+		    MV.VOWNKEY = MO.VOWNKEY
+		INNER JOIN ${userData.schema}.MCODEM MC1 ON
+		    MC1.COMCDKY = 'DLVTYPE'
+		    AND MC1.COMCDVL = MV.DLVTYPE
+		INNER JOIN ${userData.schema}.MCODEM MC2 ON
+		    MC2.COMCDKY = 'VHCOPTY'
+		    AND MC2.COMCDVL = MV.VHCOPTY
+		INNER JOIN ${userData.schema}.MCODEM MC3 ON
+		    MC3.COMCDKY = 'VHCTYPE'
+		    AND MC3.COMCDVL = MV.VHCTYPE
+		INNER JOIN ${userData.schema}.MCODEM MC4 ON
+		    MC4.COMCDKY = 'VHCSTAT'
+		    AND MC4.COMCDVL = MV.VHCSTAT
+		INNER JOIN ${userData.schema}.MCODEM MC5 ON
+		    MC5.COMCDKY = 'VHCTNCD'
+		    AND MC5.COMCDVL = MV.VHCTNCD
+		WHERE MV.VHUSEYN = 'Y'
+		    <!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 조회 (임시) -->
+			 <choose>
+				 <when test='param.subDomain != null and param.subDomain != ""'>
+			 		 AND (MV.PUBLCYN = 'Y'
+			 		  OR (MV.PUBLCYN = 'N' AND MV.DMWPLNM = #{param.subDomain}))
+				 </when>
+				 <otherwise>
+					 AND (MV.PUBLCYN = 'Y'
+					  OR (MV.PUBLCYN = 'N' AND MV.DMWPLNM = REPLACE(LOWER(#{userData.schema}), '_', '-')))
+				 </otherwise>
+			 </choose>
+		ORDER BY
+		    MO.VOWNKEY
+		    , MV.VEHICKY
+	</select>
+
+	<select id="selectVehicleByUser" resultType="com.kbph.logistics.sy.domain.SusrvhDTO">
+		/* selectVehicleByUser */
+		SELECT CONCAT(SU.USERKEY, SU.VEHICKY) AS ROWKEY
+			 , SU.VEHICKY as OLDVEKY
+		     , SU.USERKEY, SU.USERACT, SU.VEHICKY, MV.VHCSNAM, MV.VHCFNAM
+		     , MC1.COMCDTX AS DLVTYPE, MC2.COMCDTX AS VHCOPTY, MC3.COMCDTX AS VHCTYPE, MC4.COMCDTX AS VHCSTAT
+		     , MC5.COMCDTX AS VHCTNCD, MV.VHCMAXW, MV.VHCCAPA, MV.DRVERNM
+		     , MV.DRVERPH, MV.INBVHYN, MV.OUBVHYN, MV.POSCOYN
+		     , MV.VHCVRYN, SU.VHUSEYN, MO.VOWNKEY, MO.VONAMLC, MO.VOWNKEY as OLDVOKY
+		     , DATE_FORMAT(SU.CREDATE,'%Y-%m-%d') AS CREDATE
+		     , DATE_FORMAT(STR_TO_DATE(SU.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME
+		     , ${userData.schema}.FN_SY_USERNAM(SU.CREUSER) AS CREUSER
+		     , DATE_FORMAT(SU.LMODATE,'%Y-%m-%d') AS LMODATE
+		     , DATE_FORMAT(STR_TO_DATE(SU.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME
+		     , ${userData.schema}.FN_SY_USERNAM(SU.LMOUSER) AS LMOUSER, SU.UPDTCHK
+		  FROM ${userData.commonSchema}.SUSRVH SU
+		 INNER JOIN ${userData.commonSchema}.SUSRMA SUS
+		 	ON SU.USERKEY = SUS.USERKEY
+		 	AND SU.USERACT = SUS.USERACT
+		 INNER JOIN ${userData.commonSchema}.MVHCMA MV
+		    ON SU.VEHICKY = MV.VEHICKY
+		 INNER JOIN ${userData.commonSchema}.MVOWMA MO
+		    ON MV.VOWNKEY = MO.VOWNKEY
+		 INNER JOIN ${userData.schema}.MCODEM MC1
+		    ON MC1.COMCDKY = 'DLVTYPE'
+		   AND MC1.COMCDVL = MV.DLVTYPE
+		 INNER JOIN ${userData.schema}.MCODEM MC2
+		    ON MC2.COMCDKY = 'VHCOPTY'
+		   AND MC2.COMCDVL = MV.VHCOPTY
+		 INNER JOIN ${userData.schema}.MCODEM MC3
+		    ON MC3.COMCDKY = 'VHCTYPE'
+		   AND MC3.COMCDVL = MV.VHCTYPE
+		 INNER JOIN ${userData.schema}.MCODEM MC4
+		    ON MC4.COMCDKY = 'VHCSTAT'
+		   AND MC4.COMCDVL = MV.VHCSTAT
+		 INNER JOIN ${userData.schema}.MCODEM MC5
+		    ON MC5.COMCDKY = 'VHCTNCD'
+		   AND MC5.COMCDVL = MV.VHCTNCD
+	    <where>
+	    	SUS.ACTIVYN = #{param.activyn}
+	    	AND MV.VHUSEYN = 'Y'
+	    	AND SU.USERACT = #{param.useract}
+	    	<if test='param.userkey != null and param.userkey != ""'>
+	    		AND SU.USERKEY LIKE CONCAT('%', UPPER(#{param.userkey}), '%')
+	    	</if>
+	    	<!-- 빌드서버인 경우 서브도메인, 로컬서버인 경우 스키마로 조회 (임시) -->
+			 <choose>
+				 <when test='param.subDomain != null and param.subDomain != ""'>
+			 		 AND (MV.PUBLCYN = 'Y'
+			 		  OR (MV.PUBLCYN = 'N' AND MV.DMWPLNM = #{param.subDomain}))
+				 </when>
+				 <otherwise>
+					 AND (MV.PUBLCYN = 'Y'
+					  OR (MV.PUBLCYN = 'N' AND MV.DMWPLNM = REPLACE(LOWER(#{userData.schema}), '_', '-')))
+				 </otherwise>
+			 </choose>
+	    </where>
+	     ORDER BY MO.VOWNKEY, SU.VEHICKY
+	</select>
+
+	<update id="syu05UpdateDriver" parameterType="com.kbph.logistics.sy.domain.SusrvhDTO">
+		/* syu05UpdateDriver */
+		UPDATE ${userData.commonSchema}.SUSRVH
+			SET VEHICKY = #{param.vehicky}
+				, VOWNKEY = #{param.vownkey}
+				, VHUSEYN = #{param.vhuseyn}
+				, LMODATE = DATE_FORMAT(NOW(), '%Y%m%d')
+				, LMOTIME = DATE_FORMAT(NOW(), '%H%i%s')
+				, LMOUSER = #{userData.useract}
+				, UPDTCHK = #{param.updtchk} + 1
+			WHERE
+				USERKEY = #{param.userkey}
+				AND USERACT = #{param.useract}
+				AND VEHICKY = #{param.oldveky}
+				AND VOWNKEY = #{param.oldvoky}
+				AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<select id="selectInboundBarData" resultType="com.kbph.logistics.sy.domain.DashBoardDTO">
+		/* selectInboundBarData */
+		SELECT COUNT(1) AS TOTAL_ORDER
+			 , IFNULL(SUM(CASE WHEN WR.RCVITST = 'RVCOMP' THEN 1 ELSE 0 END), 0) AS COMPLETE_ORDER
+			 , IFNULL(SUM(WR.SKUWEIG), 0) * 0.001 AS TOTAL_WEIGHT
+			 , IFNULL(SUM(CASE WHEN WR.RCVITST = 'RVCOMP' THEN WR.SKUWEIG ELSE 0 END), 0) * 0.001 AS COMPLETE_WEIGHT
+			 , IFNULL(SUM(WR.GROSSWG), 0) * 0.001 AS TOTAL_GROSS_WEIGHT
+			 , IFNULL(SUM(CASE WHEN WR.RCVITST = 'RVCOMP' THEN WR.GROSSWG ELSE 0 END), 0) * 0.001 AS COMPLETE_GROSS_WEIGHT
+		  FROM ${schema}.WRCVIT WR
+		 WHERE WR.RCVDCDT = DATE_FORMAT(NOW(), '%Y%m%d')
+	</select>
+
+	<select id="selectInboundDoughnutList" resultType="com.kbph.logistics.sy.domain.DashBoardDTO">
+		/* selectInboundDoughnutList */
+		SELECT MD.DOCTYPE, MD.DOCTYNM, SUM(WR.SKUWEIG) AS SUM_WEIGHT
+		  FROM ${schema}.WRCVIT WR
+		 INNER JOIN ${schema}.WRCVHD WH
+		    ON WH.RCVDCKY = WR.RCVDCKY
+		 INNER JOIN ${schema}.MDOCMA MD
+		    ON WR.WAREKEY = MD.WAREKEY
+		   AND WH.DOCCATE = MD.DOCCATE
+		   AND WH.DOCTYPE = MD.DOCTYPE
+		 WHERE WR.RCVDCDT = DATE_FORMAT(NOW(), '%Y%m%d')
+		 GROUP BY MD.DOCTYPE, MD.DOCTYNM;
+	</select>
+
+	<select id="selectOutboundBarData" resultType="com.kbph.logistics.sy.domain.DashBoardDTO">
+		/* selectOutboundBarData */
+		SELECT COUNT(1) AS TOTAL_ORDER
+			 , IFNULL(SUM(CASE WHEN WS.SHPITST = 'CMP' THEN 1 ELSE 0 END), 0) AS COMPLETE_ORDER
+			 , IFNULL(SUM(WS.SKUWEIG), 0) * 0.001 AS TOTAL_WEIGHT
+			 , IFNULL(SUM(CASE WHEN WS.SHPITST = 'CMP' THEN WS.SKUWEIG ELSE 0 END), 0) * 0.001 AS COMPLETE_WEIGHT
+			 , IFNULL(SUM(WS.GROSSWG), 0) * 0.001 AS TOTAL_GROSS_WEIGHT
+			 , IFNULL(SUM(CASE WHEN WS.SHPITST = 'CMP' THEN WS.GROSSWG ELSE 0 END), 0) * 0.001 AS COMPLETE_GROSS_WEIGHT
+		 FROM ${schema}.WSHPIT WS
+		WHERE WS.SPEIDAT = DATE_FORMAT(NOW(), '%Y%m%d')
+	</select>
+
+	<select id="selectOutboundDoughnutList" resultType="com.kbph.logistics.sy.domain.DashBoardDTO">
+		/* selectOutboundDoughnutList */
+		SELECT MD.DOCTYPE, MD.DOCTYNM, SUM(WS.SKUWEIG) AS SUM_WEIGHT
+		  FROM ${schema}.WSHPIT WS
+		 INNER JOIN ${schema}.WSHPHD WH
+		    ON WH.SHPDCKY = WS.SHPDCKY
+		 INNER JOIN ${schema}.MDOCMA MD
+			ON WS.WAREKEY = MD.WAREKEY
+		   AND WH.DOCCATE = MD.DOCCATE
+		   AND WH.DOCTYPE = MD.DOCTYPE
+		 WHERE WS.SPEIDAT = DATE_FORMAT(NOW(), '%Y%m%d')
+		 GROUP BY MD.DOCTYPE, MD.DOCTYNM
+	</select>
+
+	<select id="selectStayedYardBarData" resultType="com.kbph.logistics.sy.domain.DashBoardDTO">
+		/* "selectStayedYardBarData" */
+		WITH STAYED_YARD AS (
+			SELECT
+		 	COALESCE((SELECT -1 * (ROUND(AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(WA.EXTTIME, '0'), '%H%i%s')))
+		 			- AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(WA.ENTTIME, '0'), '%H%i%s')))))
+	   		   FROM ${schema}.WASNHD WA
+	  	   	  WHERE WA.ASNSTAT = 'CMP'
+	  	   	  	AND WA.ENTDATE BETWEEN DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 1 MONTH) + INTERVAL 1 DAY, '%Y%m%d') AND DATE_FORMAT(NOW(),'%Y%m%d')
+	  	   	   ), 0) AS inb_stayed_this_month
+	  	   ,COALESCE((SELECT -1 * (ROUND(AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(WA.EXTTIME, '0'), '%H%i%s')))
+	  	   			- AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(WA.ENTTIME, '0'), '%H%i%s')))))
+	 	   	   FROM ${schema}.WASNHD WA
+		  	  WHERE WA.ASNSTAT = 'CMP'
+	    		AND WA.ENTDATE BETWEEN DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 2 MONTH) + INTERVAL 1 DAY, '%Y%m%d') AND DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 1 MONTH), '%Y%m%d')
+			   ), 0) AS inb_stayed_last_month
+		   ,COALESCE((SELECT -1 * (ROUND(AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(WA.EXTTIME, '0'), '%H%i%s')))
+		   			- AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(WA.ENTTIME, '0'), '%H%i%s')))))
+	 	   	   FROM ${schema}.WASNHD WA
+	 	   	  WHERE WA.ASNSTAT = 'CMP'
+	 	   	    AND WA.ENTDATE BETWEEN DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 3 MONTH) + INTERVAL 1 DAY, '%Y%m%d') AND DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 2 MONTH), '%Y%m%d')
+	 	   	   ), 0) AS inb_stayed_two_month_ago
+		   ,COALESCE((SELECT -1 * (ROUND(AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(OU.EXTTIME, '0'), '%H%i%s')))
+		   			- AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(OU.ENTTIME, '0'), '%H%i%s')))))
+		   	   FROM ${schema}.OOUBHD OU
+		   	  WHERE OU.OBOSTAT = 'CMP'
+		   	    AND OU.ENTDATE BETWEEN DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 1 MONTH) + INTERVAL 1 DAY, '%Y%m%d') AND DATE_FORMAT(NOW(),'%Y%m%d')
+		   	   ), 0) AS oub_stayed_this_month
+		   ,COALESCE((SELECT -1 * (ROUND(AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(OU.EXTTIME, '0'), '%H%i%s')))
+		   			- AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(OU.ENTTIME, '0'), '%H%i%s')))))
+		   	   FROM ${schema}.OOUBHD OU
+		   	  WHERE OU.OBOSTAT = 'CMP'
+		   	    AND OU.ENTDATE BETWEEN DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 2 MONTH) + INTERVAL 1 DAY, '%Y%m%d') AND DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 1 MONTH), '%Y%m%d')
+		   	   ), 0) AS oub_stayed_last_month
+		   ,COALESCE((SELECT -1 * (ROUND(AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(OU.EXTTIME, '0'), '%H%i%s')))
+		   			- AVG(TIME_TO_SEC(STR_TO_DATE(IFNULL(OU.ENTTIME, '0'), '%H%i%s')))))
+		   	   FROM ${schema}.OOUBHD OU
+		   	  WHERE OU.OBOSTAT = 'CMP'
+		   	    AND OU.ENTDATE BETWEEN DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 3 MONTH) + INTERVAL 1 DAY, '%Y%m%d') AND DATE_FORMAT(LAST_DAY(NOW() - INTERVAL 2 MONTH), '%Y%m%d')
+		   	   ), 0) AS oub_stayed_two_month_ago
+		   	   FROM DUAL )
+		  SELECT
+		  	SY.*,
+		  	CASE WHEN IFNULL(SY.inb_stayed_last_month , 0) = 0 THEN
+		  		CASE WHEN ifnull(SY.inb_stayed_this_month, 0) = 0 THEN 0
+		  		ELSE 100  <!-- 무한 증가 -->
+		  		END
+		  	ELSE  ROUND((SY.inb_stayed_this_month - SY.inb_stayed_last_month)/ SY.inb_stayed_last_month * 100 ,2)
+		  	END AS MONTH_OVER_MONTH_INB_RATE,	<!-- 전월대비 출고 증감률 -->
+		  	CASE WHEN IFNULL(SY.oub_stayed_last_month , 0) = 0 THEN
+		  		CASE WHEN ifnull(SY.oub_stayed_this_month, 0) = 0 THEN 0
+		  		ELSE 100  <!-- 무한 증가 -->
+		  		END
+		  	ELSE ROUND((SY.oub_stayed_this_month - SY.oub_stayed_last_month)/ SY.oub_stayed_last_month * 100,2)	<!-- 소수점 두자리 -->
+		  	END AS MONTH_OVER_MONTH_OUB_RATE
+		  FROM STAYED_YARD SY
+	</select>
+
+	<select id="selectTransGridList" resultType="com.kbph.logistics.sy.domain.DashBoardDTO">
+		SELECT TW.RENAMLC
+			 , TI.REGIMOD
+			 , TI.DEMODNM
+			 , TI.DEMDADR
+		     , SUM(CASE WHEN TP.TPNSTAT IN ('PLAN', 'LOADING') THEN 1 ELSE 0 END) as READY_TRANS
+		     , SUM(CASE WHEN TP.TPNSTAT IN ('START', 'UNLOADING') THEN 1 ELSE 0 END) as DRIVING_TRANS
+		     , SUM(CASE WHEN TP.TPNSTAT = 'FINISH' THEN 1 ELSE 0 END) as COMPLETE_TRANS
+		     , CONCAT(CAST(SUM(CASE WHEN TP.TPNSTAT IN ('START', 'UNLOADING', 'FINISH') THEN 1 ELSE 0 END) AS CHAR), '/', COUNT(1)) AS RESULT
+		     <!-- 목적지 + 상세착지에 해당하는 운송아이템 수와 시작됐거나 운송완료된 데이터 로 보여주는것이 좋지 않은지 : 운송완료/운송아이템수-->
+		     <!-- , CONCAT(CAST(SUM(CASE WHEN TP.TPNSTAT IN ('START', 'UNLOADING') THEN 1 ELSE 0 END) AS CHAR), '/', CAST(SUM(CASE WHEN TP.TPNSTAT = 'FINISH' THEN 1 ELSE 0 END) AS CHAR)) AS RESULT -->
+		 FROM ${schema}.TPLNHD TP
+		 INNER JOIN ${schema}.TPLNIT TI
+ 			ON TI.VHPLNKY = TP.VHPLNKY
+		 INNER JOIN (
+			SELECT
+				TW.*,
+				MR.RENAMLC
+			FROM
+				${schema}.TPWPWG TW
+			INNER JOIN ${schema}.MREGMA MR
+			   ON MR.REGIKEY = TW.REGIKEY ) AS TW
+		   ON TP.VHPLNKY = TW.VHPLNKY
+		  AND TI.REGIMOD = TW.REGIKEY		<!-- 변경된 목적지로 운송이 되기때문에 REGIMOD로 .. -->
+		WHERE TP.VHPDATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		GROUP BY TW.RENAMLC , TI.REGIMOD , TI.DEMODNM , TI.DEMDADR
+	</select>
+
+	<select id="selectTransPieList" resultType="com.kbph.logistics.sy.domain.DashBoardDTO">
+		SELECT TW.RENAMLC, SUM(CASE WHEN TP.TPNSTAT = 'FINISH' THEN 1 ELSE 0 END) as "COMPLETE_TRANS"
+		  FROM ${schema}.TPLNHD TP
+		 INNER JOIN (
+		 	SELECT TW.*, MR.RENAMLC
+		 	FROM ${schema}.TPWPWG TW
+		 	INNER JOIN ${schema}.MREGMA MR ON MR.REGIKEY = TW.REGIKEY
+		 ) AS TW ON TP.VHPLNKY = TW.VHPLNKY
+		 WHERE TP.VHPDATE = DATE_FORMAT(NOW(), '%Y%m%d')
+		 GROUP BY TW.RENAMLC;
+	</select>
+
+	<select id="selectEquipmentTaskList" resultType="com.kbph.logistics.sy.domain.DashBoardDTO">
+		/* selectEquipmentTaskList */
+		SELECT WT.TOAREKY, ME.EQUINAM, MC.COMCDTX AS EQUTYPE, ME.EQUIPKY, MD.DOCCTNM, MA.AREANAM
+		     , IF(WT.TOAREKY IS NOT NULL, '작업중', '대기') AS TASKSTS
+		  FROM ${schema}.MEQUMA ME
+		INNER JOIN ${schema}.MAREMA MA
+		   ON MA.WAREKEY = ME.WAREKEY
+		  AND MA.AREAKEY = ME.AREAKEY
+		  AND ARUSEYN = 'Y'
+		INNER JOIN ${schema}.MCODEM MC
+		   ON MC.COMCDKY = 'EQUTYPE'
+		  AND MC.COMCDVL = ME.EQUTYPE
+	     LEFT JOIN ${schema}.WTAKIT WT
+		   ON ME.WAREKEY = WT.WAREKEY
+		  AND ME.AREAKEY = WT.TOAREKY
+		  AND ME.EQUIPKY = WT.EQUIPKY
+		  AND WT.TASKSTS IN ('OPERSTR')
+		  AND WT.CREDATE BETWEEN DATE_FORMAT(NOW() - INTERVAL 2 DAY, '%Y%m%d') AND DATE_FORMAT(NOW(), '%Y%m%d')
+		 LEFT JOIN ${schema}.MDOCMA MD
+		   ON WT.DOCCATE = MD.DOCCATE
+		  AND WT.DOCTYPE = MD.DOCTYPE
+		GROUP BY WT.TOAREKY, ME.EQUINAM, MC.COMCDTX, ME.EQUIPKY, MD.DOCCTNM, MA.AREANAM
+		ORDER BY MA.AREAKEY, ME.EQUIPKY
+	</select>
+
+	<!-- 인쇄이력번호 채번 -->
+   <select id="selectPrintsq" resultType="String">
+   	  /* selectPrintsq */
+      SELECT ${schema}.FN_SY_PRINTSQ() AS PRINTSQ FROM DUAL
+   </select>
+</mapper>

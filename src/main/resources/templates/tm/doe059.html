@@ -1,0 +1,370 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="setting-grid">
+				<label for="doe059Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe059Warekey" name="doe059Warekey"
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+						data-cb-variable="warekeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe059Vhpdate" class="setting-grid-title">[[#{tm.tplnhd.vhpdate}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-date-group">
+						<input type="date" id="doe059VhpdateFrom">
+						<span>~</span>
+						<input type="date" id="doe059VhpdateTo">
+					</div>
+				</div>
+				<label for="doe059Tpnstat" class="setting-grid-title">[[#{tm.tplnhd.tpnstat}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe059Tpnstat" multiple="multiple" data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/code/common-code?comcdky=TPNSTAT&comcdsy=Y">
+						</select>
+					</div>
+				</div>
+				<label for="doe059Doctype" class="setting-grid-title">[[#{tm.common.doctype}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe059Doctype" name="doe059Doctype">
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe059Search"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe059Reset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.tm.doe059}]]</span>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box">
+				<div id="doe059HeadGrid"></div>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-grid-wrapper con-box">
+				<div id="doe059ItemGrid"></div>
+			</div>
+		</div>
+		<script>
+		!function() {
+			const pageId = 'doe059';
+
+			//날짜 셋팅
+			const yesterday = moment().subtract(1, 'd').format('YYYY-MM-DD');
+			const today = moment().format('YYYY-MM-DD');
+			const vhpdateFrom = document.querySelector('#' + pageId + 'VhpdateFrom');
+			const vhpdateTo = document.querySelector('#' + pageId + 'VhpdateTo')
+			vhpdateFrom.value = yesterday;
+			vhpdateTo.value = today;
+			
+			dateValidation(vhpdateFrom, vhpdateTo, 'doe059Vhpdate', 'd', 1);
+			
+			//========================================================
+			//DOE059 HeadGrid (헤드 그리드)
+			//========================================================
+			//헤드 그리드 columnModel
+			const doe059HeadGridCM = [
+				{ title: '[[#{tm.common.doccate}]]', dataType: 'string', dataIndx: 'docctnm', editable: false, hidden: true },
+				{ title: '[[#{tm.common.doctype}]]', dataType: 'string', dataIndx: 'doctynm', editable: false },
+				{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+				{ title: '[[#{tm.tplnhd.loadkey}]]', dataType: 'string', dataIndx: 'lonamlc', editable: false },
+				{ title: '[[#{tm.tplnhd.vhplnky}]]', dataType: 'string', dataIndx: 'vhplnky', editable: false },
+				{ title: '[[#{tm.common.vhcfnam}]]', dataType: 'string', dataIndx: 'vhcfnam', editable: false },
+				{ title: '[[#{tm.tplnhd.vownkey}]]', dataType: 'string', dataIndx: 'vonamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhctncd}]]', dataType: 'string', dataIndx: 'vhnamlc', editable: false },
+				{ title: '[[#{tm.mvhcma.vhcmaxw}]]', dataType: 'string', dataIndx: 'vhcmaxw', editable: false },
+				{ title: '[[#{tm.common.drvernm}]]', dataType: 'string', dataIndx: 'drvernm', editable: false },
+				{ title: '[[#{md.mvhcma.drverph}]]', dataType: 'string', dataIndx: 'drverph', editable: false },
+				{ title: '[[#{tm.doe058.odweig}]]', dataType: 'integer', dataIndx: 'orderweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.common.totalweig}]]', dataType: 'integer', dataIndx: 'totalweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{tm.tplnhd.aprovyn}]]', dataType: 'string', dataIndx: 'apnamlc', editable: false },
+				{ title: '[[#{tm.tplnhd.tpnstat}]]', dataType: 'string', dataIndx: 'plnamlc', editable: false },
+				{ title: '[[#{tm.tplnhd.trnmemo}]]', dataType: 'string', dataIndx: 'trnmemo', editable: false },
+				{ title: '[[#{tm.tplnhd.mixcuyn}]]', dataType: 'string', dataIndx: 'mixcuyn', editable: false },
+				{ title: '[[#{tm.doe058.tpriloc}]]', dataType: 'string', dataIndx: 'trlocml', editable: false },
+				{ title: '[[#{tm.doe058.spriloc}]]', dataType: 'string', dataIndx: 'srlocml', editable: false },
+				{ title: '[[#{tm.tplnhd.vhpdate}]]', dataType: 'string', dataIndx: 'vhpdate', editable: false },
+				{ title: '[[#{tm.tplnhd.vhptime}]]', dataType: 'string', dataIndx: 'vhptime', editable: false },
+				{ title: '[[#{tm.tplnhd.stpitdt}]]', dataType: 'string', dataIndx: 'stpitdt', editable: false },
+				{ title: '[[#{tm.tplnhd.stpittm}]]', dataType: 'string', dataIndx: 'stpittm', editable: false },
+				{ title: '[[#{tm.tplnhd.trnindt}]]', dataType: 'string', dataIndx: 'trnindt', editable: false },
+				{ title: '[[#{tm.tplnhd.trnintm}]]', dataType: 'string', dataIndx: 'trnintm', editable: false },
+				{ title: '[[#{tm.tplnhd.trcnldt}]]', dataType: 'string', dataIndx: 'trcnldt', editable: false },
+				{ title: '[[#{tm.tplnhd.trcnltm}]]', dataType: 'string', dataIndx: 'trcnltm', editable: false},
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe059HeadGrid = new GridUtil(doe059HeadGridCM, pageId , pageId + 'HeadGrid');
+
+			doe059HeadGrid.setFind();
+			
+			doe059HeadGrid.setHeight(300);
+
+			doe059HeadGrid.setCreate(async function() {
+				await _commonInit(pageId);
+				const responseData = await doe059InitData();
+				
+				//doctype 셋팅
+				doctypeSetting(responseData);
+				
+				//배차상태(tpnstat) multi selectBox
+				$('#' + pageId + 'Tpnstat').pqSelect({
+					searchId: pageId + 'Tpnstat',
+					multiplePlaceholder: '[[#{ms.chooseAll}]]',//전체
+					displayText: '{0}개 선택',
+					checkbox: true,
+					deselect: false,
+					selectallText: '[[#{ms.chooseAll}]]',//전체
+					width: '100%'
+				});
+			});
+			
+			//헤드 그리드 셀 더블클릭 이벤트
+			//아이템 그리드 데이터 표시
+			doe059HeadGrid.setCellDblClick(async function(evt, ui) {
+				const data = {
+						vhplnky: ui.rowData.vhplnky,
+						warekey: document.querySelector('#' + pageId + 'Warekey').value
+				}
+				
+				const grid = pq.grid('#' + pageId + 'ItemGrid');
+				
+				grid.showLoading();
+				
+				const itemList = await fetchUtil('GET', '/tm/dispatch/common/itemgrid', data);
+				
+				if(itemList.status !== 200) {
+					grid.option('dataModel', {data: []});
+				}else {
+					const itemGridData = await itemList.json();
+					
+					grid.option('dataModel', {
+						data: itemGridData,
+						recIndx: 'rowkey'
+					});
+				}
+				
+				grid.refreshDataAndView();
+				grid.hideLoading();
+			});
+
+			doe059HeadGrid.open();
+
+			//========================================================
+			//DOE059 Item Grid (아이템 그리드)
+			//========================================================
+			//아이템 그리드 column Model
+			const doe059ItemGridCM = [
+				{ title: '[[#{tm.tplnhd.vhplnky}]]', dataType: 'string', dataIndx: 'vhplnky', editable: false },
+				{ title: '[[#{tm.tplnit.vhplnit}]]', dataType: 'integer', dataIndx: 'vhplnit', editable:false, format: '#,###' },
+				{ title: '[[#{tm.tplnit.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+				{ title: '[[#{tm.tplnit.skuthic}]]', dataType: 'float', dataIndx: 'skuthic', editable: false, format: '#,###.000', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuwidt}]]', dataType: 'float', dataIndx: 'skuwidt', editable: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{tm.tplnit.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{grid.grossth}]]', dataType: 'float', dataIndx: 'grossth', editable: false, format: '#,###.000', summary: { type: 'max' } },
+				{ title: '[[#{grid.grosswd}]]', dataType: 'float', dataIndx: 'grosswd', editable: false, format: '#,###.0', summary: { type: 'max' } },
+				{ title: '[[#{grid.grossln}]]', dataType: 'integer', dataIndx: 'grossln', editable: false, format: '#,###', summary: { type: 'max' } },
+				{ title: '[[#{grid.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{grid.addcoky}]]', dataType: 'string', dataIndx: 'addnaml', editable: false },
+				{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+				{ title: '[[#{grid.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: false },
+				{ title: '[[#{grid.cunamlc}]]', dataType: 'string', dataIndx: 'custnam', editable: false },
+				{ title: '[[#{grid.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false },
+				{ title: '[[#{grid.rgorgnm}]]', dataType: 'string', dataIndx: 'ronamlc', editable: false },
+				{ title: '[[#{grid.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false },
+				{ title: '[[#{grid.remodnm}]]', dataType: 'string', dataIndx: 'rmnamlc', editable: false },
+				{ title: '[[#{grid.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false },
+				{ title: '[[#{grid.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },
+				{ title: '[[#{grid.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false },
+				{ title: '[[#{grid.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+				{ title: '[[#{tm.tplnit.demdadr}]]', dataType: 'string', dataIndx: 'stockaddr', editable: false },
+				{ title: '[[#{tm.tplnit.demdnam}]]', dataType: 'string', dataIndx: 'demdman', editable: false },
+				{ title: '[[#{tm.tplnit.demdtln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false },
+				{ title: '[[#{tm.tplnit.tpistat}]]', dataType: 'string', dataIndx: 'pinamlc', editable: false },
+				{ title: '[[#{tm.tplnit.trncpdt}]]', dataType: 'string', dataIndx: 'trncpdt', editable: false },
+				{ title: '[[#{tm.tplnit.trncptm}]]', dataType: 'string', dataIndx: 'trncptm', editable: false },
+				{ title: '[[#{grid.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: false },
+				{ title: '[[#{grid.ownamlc}]]', dataType: 'string', dataIndx: 'ownrnam', editable: false },
+				{ title: '[[#{tm.tplnit.plnsize}]]', dataType: 'string', dataIndx: 'pnszmlc', editable: false },
+				{ title: '[[#{tm.wplnhd.skugrky}]]', dataType: 'string', dataIndx: 'sknamlc', editable: false },
+				{ title: '[[#{tm.common.stkmemo}]]', dataType: 'string', dataIndx: 'stkmemo', editable: false },
+				{ title: '[[#{tm.tplnit.itemcod}]]', dataType: 'string', dataIndx: 'itemmlc', editable: false },
+				{ title: '[[#{tm.tplnit.tritqty}]]', dataType: 'integer', dataIndx: 'tritqty', editable: false, format: '#,###', summary: { type: 'sum' } },
+				{ title: '[[#{im.wasnit.poshpdt}]]', dataType: 'string', dataIndx: 'poshpdt', editable: false },
+				{ title: '[[#{im.wasnit.poshptm}]]', dataType: 'string', dataIndx: 'poshptm', editable: false },
+				{ title: '[[#{im.wasnit.poshpdy}]]', dataType: 'string', dataIndx: 'poshpdy', editable: false },
+				{ title: '[[#{grid.shplimt}]]', dataType: 'string', dataIndx: 'shplimt', editable: false },
+				{ title: '[[#{grid.delvdsr}]]', dataType: 'string', dataIndx: 'delvdsr', editable: false },
+				{ title: '[[#{tm.tplnit.purcnum}]]', dataType: 'string', dataIndx: 'purcnum', editable: false },
+				{ title: '[[#{tm.tplnit.orderln}]]', dataType: 'string', dataIndx: 'orderln', editable: false },
+				{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+				{ title: '[[#{tm.tplnit.emskuyn}]]', dataType: 'string', dataIndx: 'emskuyn', editable: false,
+					type: 'checkbox', align: 'center',
+					cb: { all: false, header: false, check: 'Y', uncheck: 'N' }
+				},
+				{ title: '[[#{tm.wplnhd.shpplky}]]', dataType: 'string', dataIndx: 'shpplky', editable: false },
+				{ title: '[[#{tm.wplnit.shpplit}]]', dataType: 'integer', dataIndx: 'shpplit', editable: false },
+				{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },
+				{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },
+				{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },
+				{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },
+				{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },
+				{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },
+				{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, format: '#,###' }
+			]
+
+			const doe059ItemGrid = new GridUtil(doe059ItemGridCM, pageId , pageId + 'ItemGrid');
+
+			doe059ItemGrid.setFind();
+			
+			doe059ItemGrid.setHeight(300);
+			
+			//아이템 그리드 rowInit 이벤트
+			//긴급재여부(emskuyn)이 Y이면 백그라운드 색 변경, 폰트 굵기 변경
+			doe059ItemGrid.setRowInit(function(ui) {
+				if(ui.rowData.emskuyn === 'Y'){
+					return {
+						style: ui.rowData.emskuyn === 'Y' ? 'background-color: #FAED7D; font-weight: bold;' : ''
+					}
+				}
+			});
+			
+			doe059ItemGrid.open();
+
+			
+			//========================================================
+			//Init Data
+			//========================================================
+			//initData
+			async function doe059InitData() {
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value
+				}
+				const responseData = await fetchUtil('GET', '/tm/dispatch/common/init', data);
+				const initData = await responseData.json();
+				
+				return initData;
+			}
+			
+			//doctype selectBox
+			function doctypeSetting(responseData) {
+				const doctypeSelectBox = document.querySelector('#' + pageId + 'Doctype');
+				doctypeSelectBox.innerHTML = '';
+				
+				let option = document.createElement('option');
+				option.value = '';
+				option.text = '[[#{tm.common.all}]]';
+				doctypeSelectBox.appendChild(option);
+				
+				for(const doctype of responseData.doctypeList) {
+					let option = document.createElement('option');
+					option.value = doctype.combovl;
+					option.text = doctype.combonm;
+					doctypeSelectBox.appendChild(option);
+				}
+			}
+			
+			
+			//========================================================
+			//이벤트
+			//========================================================
+			//검색
+			document.querySelector('#' + pageId + 'Search').addEventListener('click', async function() {
+				await doe059SearchData();
+			});
+			
+			//창고 Change evt
+			document.querySelector('#' + pageId + 'Warekey').addEventListener('change', async function() {
+				await doe059SearchData();
+				
+				const responseData = await doe059InitData();
+				doctypeSetting(responseData);
+			});
+			
+			//초기화
+			document.querySelector('#' + pageId + 'Reset').addEventListener('click', function () {
+				resetSearchConditions(pageId);
+				
+				$('#' + pageId + 'Tpnstat').val('').pqSelect('refreshData');
+
+				makeEmptyGrid(doe059HeadGrid);
+				makeEmptyGrid(doe059ItemGrid);
+			});
+			
+			
+			//========================================================
+			//검색 데이터
+			//========================================================
+			//검색
+			//헤드 그리드 데이터 채우기
+			async function doe059SearchData() {
+				const pageId = 'doe059';
+				const tpnstatList = [];
+
+				const tpnstatOptions = document.querySelector('#' + pageId + 'Tpnstat').selectedOptions;
+
+				for(const option of tpnstatOptions) {
+					tpnstatList.push(option.value);
+				}
+				
+				const data = {
+						warekey: document.querySelector('#' + pageId + 'Warekey').value,
+						doctype: document.querySelector('#' + pageId + 'Doctype').value,
+						vhpdateFrom: document.querySelector('#' + pageId + 'VhpdateFrom').value.replaceAll('-', ''),
+						vhpdateTo: document.querySelector('#' + pageId + 'VhpdateTo').value.replaceAll('-', ''),
+						tpnstatCheckedList: tpnstatList
+				}
+				
+				const headGrid = pq.grid('#' + pageId + 'HeadGrid');
+				
+				headGrid.showLoading();
+				
+				const headGridList = await fetchUtil('GET', '/tm/dispatch/common/headgrid', data);
+				
+				if(headGridList.status !== 200) {
+					headGrid.option('dataModel', {data: []});
+				}else {
+					const headGridData = await headGridList.json();
+					
+					headGrid.option('dataModel', {
+						data: headGridData,
+						recIndx: 'rowkey'
+					});
+				}
+				
+				headGrid.refreshDataAndView();
+				headGrid.hideLoading();
+				
+				const itemGrid = pq.grid('#' + pageId + 'ItemGrid');
+				
+				itemGrid.showLoading();
+				
+				itemGrid.option('dataModel', {data: []});
+				
+				itemGrid.refreshDataAndView();
+				itemGrid.hideLoading();
+			}
+		}();
+		
+		
+		</script>
+	 </div>
+</html>

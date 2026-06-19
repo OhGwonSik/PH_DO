@@ -1,0 +1,2935 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.kbph.logistics.im.mapper.InboundMapper">
+		<sql id="getAddcoky">
+		(
+           		CASE
+				 WHEN (SELECT CDCATE3 FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ITEMCOD' AND COMCDVL = #{item.itemcod}) = 'PLATE'
+			 	 	THEN (
+				        SELECT BA.ADDCOKY
+				          FROM ${userData.schema}.BADDCO BA
+				         WHERE ((BA.MINLENG = 0 OR BA.MINLENG <![CDATA[<=]]> #{item.skuleng})
+				           AND (BA.MAXLENG = 0 OR #{item.skuleng} <![CDATA[<]]> BA.MAXLENG))
+				           AND (    CASE
+									    WHEN (SELECT ORWIDYN FROM ${userData.schema}.BTRCAT WHERE BTRCATE = #{item.btrcate}) = 'Y'
+									        THEN (BA.MINWIDT = 0 OR BA.MINWIDT <![CDATA[<=]]> #{item.grosswd})
+									              AND (BA.MAXWIDT = 0 OR #{item.grosswd} <![CDATA[<]]> BA.MAXWIDT)
+									              OR (BA.MAXLENG = 0 AND BA.MINLENG <![CDATA[<=]]> #{item.skuleng})
+									              OR (BA.MAXWIDT = 0 AND BA.MINWIDT <![CDATA[<=]]> #{item.grosswd})
+					           			ELSE (BA.MINWIDT = 0 OR BA.MINWIDT <![CDATA[<=]]> #{item.skuwidt})
+									         AND (BA.MAXWIDT = 0 OR #{item.skuwidt} <![CDATA[<]]> BA.MAXWIDT)
+									         OR (BA.MAXLENG = 0 AND BA.MINLENG <![CDATA[<=]]> #{item.skuleng})
+                                             OR (BA.MAXWIDT = 0 AND BA.MINWIDT <![CDATA[<=]]> #{item.skuwidt})
+									 END
+							   )
+						    AND BA.SYSCDYN = 'N'
+				    )
+	    	 ELSE (
+    	 			SELECT BAD.ADDCOKY
+    	 			  FROM ${userData.schema}.BADDCO BAD
+    	 			WHERE BAD.SYSCDYN = 'Y'
+	    	 )
+		 	END
+	  	)
+	</sql>
+
+	<!-- ASN 헤더 조회 -->
+	<select id="getWasnhdList" resultType="com.kbph.logistics.im.domain.WasnhdDTO">
+		/* getWasnhdList */
+		SELECT
+			<!-- pqGrid recIndx -->
+			WA.EOASNKY as ROWKEY,
+			<!-- P.K. -->
+			WA.EOASNKY,
+			<!-- Field -->
+			WA.WAREKEY, MW.WHNAMLC, WA.DOCCATE, MD.DOCCTNM,
+		    WA.DOCTYPE, MD.DOCTYNM, WA.VOWNKEY, MVO.VONAMLC,
+		    WA.VEHICKY, MV.VHCFNAM, WA.DRVERNM, WA.ASNSTAT,
+		    MC.COMCDTX AS ASNSTNM, DATE_FORMAT(WA.ASNDATE,'%Y-%m-%d') AS ASNDATE, DATE_FORMAT(STR_TO_DATE(WA.ASNTIME,'%H%i%s'),'%H:%i:%s') AS ASNTIME, WA.RSNCODE,
+		    MR.RSNCDNM, WA.PARSNNM, WA.ASNPIYN, WA.ASNITYN, WA.ENTDATE,
+		    WA.ENTTIME, WA.PASTRKY, WA.HDSAVYN,
+			<!-- Custom Field -->
+			COUNT(1) AS ITEMCNT, SUM(WAI.SKUWEIG) AS TTLWEIG, SUM(WAI.ASNDQTY) AS TTLDQTY,
+		    <!-- Common Field -->
+		    DATE_FORMAT(WA.CREDATE,'%Y-%m-%d') AS CREDATE,
+		    DATE_FORMAT(STR_TO_DATE(WA.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME,
+		    ${userData.schema}.FN_SY_USERNAM(WA.CREUSER) AS CREUSER,
+		    DATE_FORMAT(WA.LMODATE,'%Y-%m-%d') as LMODATE,
+		    DATE_FORMAT(STR_TO_DATE(WA.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME,
+		    ${userData.schema}.FN_SY_USERNAM(WA.LMOUSER) AS LMOUSER,
+		    WA.UPDTCHK
+		FROM
+		    ${userData.schema}.WASNHD WA <!-- ASN Header -->
+		INNER JOIN ${userData.schema}.MWARMA MW <!-- 창고 master -->
+			ON MW.WAREKEY = WA.WAREKEY
+			AND MW.WHUSEYN = 'Y'
+		LEFT JOIN ${userData.commonSchema}.MVOWMA MVO <!-- 차주 master -->
+			ON MVO.VOWNKEY = WA.VOWNKEY
+			AND MVO.VOUSEYN = 'Y'
+		INNER JOIN ${userData.commonSchema}.MVHCMA MV <!-- 차량 master -->
+			ON MVO.VOWNKEY = MV.VOWNKEY
+			AND MV.VEHICKY = WA.VEHICKY
+			AND MV.VHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MCODEM MC <!-- Common Code master -->
+			ON MC.COMCDVL = WA.ASNSTAT
+			AND MC.COMCDKY = 'ASNSTAT'
+			AND MC.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD <!-- Document master -->
+			ON MD.WAREKEY = WA.WAREKEY
+			AND MD.DOCCATE = WA.DOCCATE
+			AND MD.DOCTYPE = WA.DOCTYPE
+			AND MD.DOUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MRSCMA MR <!-- Reason code master --> <!-- 임시 LEFT -->
+			ON MR.WAREKEY = WA.WAREKEY
+			AND MR.DOCCATE = WA.DOCCATE
+			AND MR.DOCTYPE = WA.DOCTYPE
+			AND MR.RSNCODE = WA.RSNCODE
+			AND MR.RSUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.WASNIT WAI <!-- ASN item master -->
+		    ON WAI.WAREKEY = WA.WAREKEY
+		    AND WAI.EOASNKY = WA.EOASNKY
+		    <if test="param.forInboundOrderFlag != null">
+	    	    <if test='"Y".equals(param.forInboundOrderFlag)'>
+					AND WAI.COSTRKY IS NOT NULL
+					AND WAI.COSTRIT IS NOT NULL
+    	 		</if>
+    	 		<if test='"N".equals(param.forInboundOrderFlag)'>
+					AND (WAI.COSTRKY IS NULL OR TRIM(WAI.COSTRKY) = '')
+					AND (WAI.COSTRIT IS NULL OR TRIM(WAI.COSTRIT) = '')
+   				</if>
+		    </if>
+		<where>
+			<if test='param.warekey != null and param.warekey != ""'>
+		    	AND WA.WAREKEY = #{param.warekey}
+		    </if>
+		    <if test='param.eoasnky != null and param.eoasnky != ""'>
+		    	AND WA.EOASNKY LIKE CONCAT('%', #{param.eoasnky}, '%')
+		    </if>
+		    <if test='param.vhcfnam != null and param.vhcfnam != ""'>
+		    	AND MV.VHCFNAM LIKE CONCAT('%', #{param.vhcfnam}, '%')
+		    </if>
+    	 	<if test='param.purcnum != null and param.purcnum != ""'>
+		    	AND WAI.PURCNUM LIKE CONCAT('%', #{param.purcnum}, '%')
+		    </if>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WAI.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test="param.orderln != null and param.orderln !=''">
+					AND WAI.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+	       	<if test='param.asndatefrom != null and param.asndatefrom != ""'>
+				 AND DATE_FORMAT(STR_TO_DATE(WA.ASNDATE, '%Y%m%d'), '%Y-%m-%d') <![CDATA[>=]]> #{param.asndatefrom}
+			</if>
+			<if test='param.asndateto != null and param.asndateto != ""'>
+				 AND DATE_FORMAT(STR_TO_DATE(WA.ASNDATE, '%Y%m%d'), '%Y-%m-%d') <![CDATA[<=]]> #{param.asndateto}
+			</if>
+			<if test='param.asnpiyn != null and param.asnpiyn != ""'>
+		    	AND WA.ASNPIYN = #{param.asnpiyn}
+		    </if>
+			<if test='param.asnityn != null and param.asnityn != ""'>
+		    	AND WA.ASNITYN = #{param.asnityn}
+		    </if>
+   		    <choose>
+		        <when test="param.asnstatList != null and param.asnstatList.size != 0">
+		            AND WA.ASNSTAT IN
+		            <foreach collection="param.asnstatList" item="asnstat" open="(" close=")" separator=",">
+		                #{asnstat}
+		            </foreach>
+		        </when>
+		        <otherwise>
+		            AND WA.ASNSTAT IN ('NEW', 'ACONF','PCANCEL','PCONF')
+		        </otherwise>
+		    </choose>
+   		    <if test="param.asnitstList != null and param.asnitstList.size != 0">
+		    	AND WA.ASNITST IN
+		    	<foreach collection="param.asnitstList" open="(" close=")" item="asnitst" separator=",">
+		    	 	#{asnitst}
+	    	 	</foreach>
+		    </if>
+<!-- 		    <if test='param.asnitst != null and param.asnitst != ""'> -->
+<!-- 		    	AND WAI.ASNITST = #{param.asnitst} -->
+<!-- 		    </if> -->
+	    	 <if test="param.forExamFlag != null">
+	    	 	<choose>
+	    	 		<when test='"Y".equals(param.forExamFlag)'>
+					AND (SELECT COUNT(1) from WASNIT A WHERE A.EOASNKY = WA.EOASNKY and A.ASNITST = 'NEW') = 0
+	    	 		</when>
+	    	 		<when test='"N".equals(param.forExamFlag)'>
+					AND (SELECT COUNT(1) from WASNIT A WHERE A.EOASNKY = WA.EOASNKY and A.ASNITST = 'NEW') > 0
+	    	 		</when>
+	    	 	</choose>
+    	 	</if>
+		</where>
+		GROUP BY
+			WA.EOASNKY,
+			WA.WAREKEY, MW.WHNAMLC, WA.DOCCATE, MD.DOCCTNM,
+		    WA.DOCTYPE, MD.DOCTYNM, WA.VOWNKEY, MVO.VONAMLC,
+		    WA.VEHICKY, MV.VHCFNAM, WA.DRVERNM, WA.ASNSTAT,
+		    ASNSTNM, WA.ASNDATE, WA.ASNTIME, WA.RSNCODE,
+		    MR.RSNCDNM, WA.PARSNNM, WA.ASNPIYN, WA.ENTDATE,
+		    WA.ENTTIME, WA.CREDATE, WA.CREUSER, WA.LMODATE,
+		    WA.LMOTIME, WA.LMOUSER, WA.UPDTCHK
+		ORDER BY
+			WA.EOASNKY DESC, WA.ASNDATE DESC, WA.ASNTIME DESC
+	</select>
+
+	<!-- task 할당 안된 ASN 아이템 조회 -->
+	<select id="selectWasnitListWithoutTask" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* selectWasnitListWithoutTask */
+		SELECT
+			<!-- pqGrid recIndx -->
+			CONCAT(WAI.EOASNKY, WAI.EOASNIT) as ROWKEY,
+			<!-- P.K. -->
+			WAI.EOASNKY, WAI.EOASNIT,
+			<!-- Field -->
+			WAI.WAREKEY, MW.WHNAMLC,
+			date_format(WAI.POSHPDT, '%Y-%m-%d') AS POSHPDT,
+			DATE_FORMAT(STR_TO_DATE(WAI.POSHPTM,'%H%i%s'),'%H:%i:%s') as POSHPTM,
+			WAI.POSHPDY,
+			WAI.INVOICE,
+			WAI.OWNERKY, WAI.OWNRNAM, WAI.ASNITST, MCO2.COMCDTX AS ASNITSN,
+			WAI.SKUGRKY, MG.GRPKYNM, WAI.SKUMKEY, WAI.SKUDESC,
+			WAI.STLAYER, ((SELECT count(1) FROM ${userData.schema}.WASNIT WHERE EOASNKY = #{param.eoasnky} AND WAREKEY = #{param.warekey}) - WAI.STLAYER + 1) AS VSLAYER, WAI.SKUWEIG, WAI.SKUWIDT,
+			WAI.SKULENG, WAI.SKUTHIC, WAI.GROSSWG, WAI.GROSSWD,
+			WAI.GROSSLN, WAI.GROSSTH, WAI.SUOMKEY, MCO3.COMCDTX AS SUOMNAM, WAI.SKUSTRD,
+			WAI.ADDCOKY, WAI.ASNDQTY, WAI.RCHSQTY, WAI.CUSTCOD,
+			WAI.CUSTNAM, WAI.REGIORG, MR1.RENAMLC AS RGORGNM, WAI.DEORGNM,
+			WAI.REGIMOD, MR2.RENAMLC AS RGMODNM, WAI.DEMODNM,
+			WAI.ULLOCKY, ML1.LOCANAM AS ULLOCNM, WAI.TOAREKY,
+			MA.AREANAM AS TOARENM, WAI.TOLOCKY, ML2.LOCANAM AS TOLOCNM, WAI.TOLAYER,
+			WAI.ITEMCOD, MCO4.COMCDTX AS ITCODNM, WAI.PURCNUM, WAI.ORDERLN,
+			WAI.STLOTNB, WAI.BTRFSTC, WAI.SKUSTAT, MCO1.COMCDTX AS SKUSTNM,
+			WAI.SHPLIMT AS SHPLIMT, WAI.DELVDSR AS DELVDSR, WAI.RSNCODE, MRC.RSNCDNM AS RSNCDNM,
+			MRC.RSCATE1, WAI.PARSNNM, WAI.COSTRKY, WAI.COSTRIT,
+			WAI.SERINUM, WAI.SAVEPOS, WAI.SCHDATE, WAI.MIXLOAD,
+			WAI.DESTTRG, WAI.YARDTRG, WAI.INBDATE, WAI.INBVHNM,
+			WAI.OUBVHNM, WAI.SHPDRNM, WAI.PRSALDT, WAI.CMPDATE,
+			WAI.SHPPERS, WAI.OUBDATE, WAI.PREPRDE, WAI.ARVDATE,
+			WAI.SHPODAT, WAI.TRSODAT, WAI.INDIMET, WAI.OUTDIMT,
+			WAH.DOCCATE, WAH.DOCTYPE, WAI.BTRCATE, WAI.EQUIPKY,
+			WAI.DEMDMAN, WAI.DEMDADR, WAI.DEMPOCD, WAI.DEMDTLN, MCO5.COMCDTX AS ADDCONM, BT.BTRCNAM,
+		    <!-- Common Field -->
+			MAX(DATE_FORMAT(WAI.CREDATE,'%Y%m%d')) as CREDATE,
+			MAX(DATE_FORMAT(STR_TO_DATE(WAI.CRETIME,'%H%i%s'),'%H:%i:%s')) AS CRETIME,
+			${userData.schema}.FN_SY_USERNAM(WAI.CREUSER) AS CREUSER,
+			MAX(DATE_FORMAT(WAI.LMODATE,'%Y%m%d')) AS LMODATE,
+			MAX(DATE_FORMAT(STR_TO_DATE(WAI.LMOTIME,'%H%i%s'),'%H:%i:%s')) AS LMOTIME,
+			${userData.schema}.FN_SY_USERNAM(WAI.LMOUSER) AS LMOUSER,
+			MAX(WAI.UPDTCHK) AS UPDTCHK
+		FROM
+		    ${userData.schema}.WASNIT WAI
+		INNER JOIN ${userData.schema}.MWARMA MW  <!-- 창고 master -->
+			ON MW.WAREKEY = WAI.WAREKEY
+		INNER JOIN ${userData.schema}.MAREMA MA  <!-- 창고동 master (to 창고동)-->
+			ON MA.WAREKEY = WAI.WAREKEY
+			AND MA.AREAKEY = WAI.TOAREKY
+		LEFT JOIN ${userData.schema}.MLOCMA ML1  <!-- 베드 master(하차포인트) -->
+			ON ML1.WAREKEY = WAI.WAREKEY
+<!-- 			AND ML1.AREAKEY = MA.AREAKEY -->
+			AND ML1.LOCAKEY = WAI.ULLOCKY
+		LEFT JOIN ${userData.schema}.MLOCMA ML2  <!-- 베드 master(베드) -->
+			ON ML1.WAREKEY = WAI.WAREKEY
+			AND ML2.AREAKEY = MA.AREAKEY
+			AND ML2.LOCAKEY = WAI.TOLOCKY
+		LEFT JOIN ${userData.schema}.MGRPMA MG <!-- 제품 그룹 master --> <!-- 임시 LETF -->
+			ON MG.SKUGRKY = WAI.SKUGRKY
+		INNER JOIN ${userData.schema}.WASNHD WAH <!-- ASN Header -->
+			ON WAH.EOASNKY = WAI.EOASNKY
+		LEFT JOIN ${userData.schema}.MREGMA MR1 <!-- 목적지 master for orginal -->
+			ON MR1.REGIKEY = WAI.REGIORG
+		LEFT JOIN ${userData.schema}.MREGMA MR2 <!-- 목적지 master for mod -->
+			ON MR2.REGIKEY = WAI.REGIMOD
+		INNER JOIN ${userData.schema}.MCODEM MCO1 <!-- Common Code master for skustat -->
+			ON MCO1.COMCDVL = WAI.SKUSTAT
+			AND MCO1.COMCDKY = 'SKUSTAT'
+		INNER JOIN ${userData.schema}.MCODEM MCO2 <!-- Common Code master for asnitst -->
+			ON MCO2.COMCDVL = WAI.ASNITST
+			AND MCO2.COMCDKY = 'ASNITST'
+		INNER JOIN ${userData.schema}.MCODEM MCO3 <!-- Common Code master for suomkey -->
+			ON MCO3.COMCDVL = WAI.SUOMKEY
+			AND MCO3.COMCDKY = 'SUOMKEY'
+		INNER JOIN ${userData.schema}.MCODEM MCO4 <!-- Common Code master for itemcod -->
+			ON MCO4.COMCDVL = WAI.ITEMCOD
+			AND MCO4.COMCDKY = 'ITEMCOD'
+		INNER JOIN ${userData.schema}.BADDCO BA
+				ON WAI.ADDCOKY = BA.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MCO5
+				ON BA.ADDSIKY = MCO5.COMCDVL
+			   AND MCO5.COMCDKY = 'ADDSIKY'
+			   AND MCO5.COUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MRSCMA MRC <!-- Reason Code master --> <!-- 임시 LETF -->
+			ON MRC.WAREKEY = WAH.WAREKEY
+			AND MRC.WAREKEY = WAI.WAREKEY
+			AND MRC.DOCCATE = WAH.DOCCATE
+			AND MRC.DOCTYPE = WAH.DOCTYPE
+			AND MRC.RSNCODE = WAI.RSNCODE
+		LEFT JOIN ${userData.schema}.BTRCAT BT <!-- 정산유형 --> <!-- 임시 LETF -->
+			ON BT.BTRCATE = WAI.BTRCATE
+<!-- 		LEFT OUTER JOIN ${userData.schema}.WRCVIT WRC -->
+<!-- 			ON WAI.EOASNKY = WRC.EOASNKY -->
+<!-- 			AND WAI.EOASNIT = WRC.EOASNIT -->
+		<where>
+<!-- 			WRC.EOASNIT IS NULL -->
+		    <if test='param.warekey != null and param.warekey != ""'>
+		    AND WAI.WAREKEY = #{param.warekey}
+		    </if>
+		    <if test='param.eoasnky != null and param.eoasnky != ""'>
+		    AND WAI.EOASNKY = #{param.eoasnky}
+		    </if>
+   		    <if test="param.asnitstList != null and param.asnitstList.size != 0">
+		    AND WAI.ASNITST IN
+		    	<foreach collection="param.asnitstList" item="asnitst" open="(" close=")" separator=",">
+		    	 	#{asnitst}
+	    	 	</foreach>
+		    </if>
+	    </where>
+	    GROUP BY
+			WAI.EOASNKY, WAI.EOASNIT,
+			WAI.WAREKEY, MW.WHNAMLC, WAI.POSHPDT, WAI.INVOICE,
+			WAI.OWNERKY, WAI.OWNRNAM, WAI.ASNITST, MCO2.COMCDTX,
+			WAI.SKUGRKY, MG.GRPKYNM, WAI.SKUMKEY, WAI.SKUDESC,
+			WAI.STLAYER, VSLAYER, WAI.SKUWEIG, WAI.SKUWIDT,
+			WAI.SKULENG, WAI.SKUTHIC, WAI.GROSSWG, WAI.GROSSWD,
+			WAI.GROSSLN, WAI.GROSSTH, WAI.SUOMKEY, MCO3.COMCDTX, WAI.SKUSTRD,
+			WAI.ADDCOKY, WAI.ASNDQTY, WAI.RCHSQTY, WAI.CUSTCOD,
+			WAI.CUSTNAM, WAI.REGIORG, MR1.RENAMLC, WAI.DEORGNM,
+			WAI.REGIMOD, MR2.RENAMLC, WAI.DEMODNM,
+			WAI.ULLOCKY, ML1.LOCANAM, WAI.TOAREKY,
+			MA.AREANAM, WAI.TOLOCKY, ML2.LOCANAM, WAI.TOLAYER,
+			WAI.ITEMCOD, MCO4.COMCDTX, WAI.PURCNUM, WAI.ORDERLN,
+			WAI.STLOTNB, WAI.BTRFSTC, WAI.SKUSTAT, MCO1.COMCDTX,
+			WAI.SHPLIMT, WAI.DELVDSR, WAI.RSNCODE, MRC.RSNCDNM,
+			MRC.RSCATE1, WAI.PARSNNM, WAI.COSTRKY, WAI.COSTRIT,
+			WAI.SERINUM, WAI.SAVEPOS, WAI.SCHDATE, WAI.MIXLOAD,
+			WAI.DESTTRG, WAI.YARDTRG, WAI.INBDATE, WAI.INBVHNM,
+			WAI.OUBVHNM, WAI.SHPDRNM, WAI.PRSALDT, WAI.CMPDATE,
+			WAI.SHPPERS, WAI.OUBDATE, WAI.PREPRDE, WAI.ARVDATE,
+			WAI.SHPODAT, WAI.TRSODAT, WAI.INDIMET, WAI.OUTDIMT,
+			WAH.DOCCATE, WAH.DOCTYPE, WAI.EQUIPKY
+		ORDER BY
+			WAI.EOASNKY DESC, VSLAYER, WAI.STLAYER, WAI.EOASNIT
+	</select>
+
+	<!-- ASN 아이템 조회 -->
+	<select id="getWasnitList" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* getWasnitList */
+		SELECT
+			<!-- pqGrid recIndx -->
+			CONCAT(WAI.EOASNKY, WAI.EOASNIT) as ROWKEY,
+			<!-- P.K. -->
+			WAI.EOASNKY, WAI.EOASNIT,
+			<!-- Field -->
+			WAI.WAREKEY, MW.WHNAMLC, DATE_FORMAT(WAI.POSHPDT,'%Y-%m-%d') AS POSHPDT,
+			DATE_FORMAT(STR_TO_DATE(WAI.POSHPTM,'%H%i%s'),'%H:%i:%s') as POSHPTM,
+			WAI.POSHPDY,
+			WAI.INVOICE,
+			WAI.OWNERKY, WAI.OWNRNAM, WAI.ASNITST, MCO2.COMCDTX AS ASNITSN,
+			WAI.SKUGRKY, MG.GRPKYNM, WAI.SKUMKEY, WAI.SKUDESC,
+			WAI.STLAYER, ((SELECT count(1) - WAI.STLAYER + 1 FROM ${userData.schema}.WASNIT WHERE EOASNKY = #{param.eoasnky} AND WAREKEY = #{param.warekey})) AS VSLAYER, WAI.SKUWEIG, WAI.SKUWIDT,
+			WAI.SKULENG, WAI.SKUTHIC, WAI.GROSSWG, WAI.GROSSWD,
+			WAI.GROSSLN, WAI.GROSSTH, WAI.SUOMKEY, MCO3.COMCDTX AS SUOMNAM, WAI.SKUSTRD,
+			WAI.ADDCOKY, WAI.ASNDQTY, WAI.RCHSQTY, WAI.CUSTCOD,
+			WAI.CUSTNAM, WAI.REGIORG, MR1.RENAMLC AS RGORGNM, WAI.DEORGNM,
+			WAI.REGIMOD, MR2.RENAMLC AS RGMODNM, WAI.DEMODNM,
+			WAI.DEMDMAN, WAI.DEMDADR, WAI.DEMPOCD, WAI.DEMDTLN,
+			WAI.ULLOCKY, ML1.LOCANAM AS ULLOCNM, WAI.TOAREKY,
+			MA.AREANAM AS TOARENM, WAI.TOLOCKY, ML2.LOCANAM AS TOLOCNM, WAI.TOLAYER,
+			WAI.ITEMCOD, MCO4.COMCDTX AS ITCODNM, WAI.PURCNUM, WAI.ORDERLN,
+			WAI.STLOTNB, WAI.BTRFSTC, WAI.SKUSTAT, MCO1.COMCDTX AS SKUSTNM,
+			DATE_FORMAT(WAI.SHPLIMT,'%Y-%m-%d') AS SHPLIMT, DATE_FORMAT(WAI.DELVDSR,'%Y-%m-%d') AS DELVDSR, WAI.RSNCODE, MRC.RSNCDNM AS RSNCDNM,
+			MRC.RSCATE1, WAI.PARSNNM, WAI.COSTRKY, WAI.COSTRIT,
+			WAI.SERINUM, WAI.SAVEPOS, WAI.SCHDATE, WAI.MIXLOAD,
+			WAI.DESTTRG, WAI.YARDTRG, WAI.INBDATE, WAI.INBVHNM,
+			WAI.OUBVHNM, WAI.SHPDRNM, WAI.PRSALDT, WAI.CMPDATE,
+			WAI.SHPPERS, WAI.OUBDATE, WAI.PREPRDE, WAI.ARVDATE,
+			WAI.SHPODAT, WAI.TRSODAT, WAI.INDIMET, WAI.OUTDIMT,
+			WAH.DOCCATE, WAH.DOCTYPE, MDO.DOCCTNM, MDO.DOCTYNM,
+			WAI.BTRCATE, BT.BTRCNAM,
+			WAI.FNCUSKY, WAI.EQUIPKY, MCO5.COMCDTX AS ADDCONM,
+		    <!-- Common Field -->
+			MAX(DATE_FORMAT(WAI.CREDATE,'%Y%m%d')) as CREDATE,
+			MAX(DATE_FORMAT(STR_TO_DATE(WAI.CRETIME,'%H%i%s'),'%H:%i:%s')) AS CRETIME,
+			${userData.schema}.FN_SY_USERNAM(WAI.CREUSER) AS CREUSER,
+			MAX(DATE_FORMAT(WAI.LMODATE,'%Y%m%d')) AS LMODATE,
+			MAX(DATE_FORMAT(STR_TO_DATE(WAI.LMOTIME,'%H%i%s'),'%H:%i:%s')) AS LMOTIME,
+			${userData.schema}.FN_SY_USERNAM(WAI.LMOUSER) AS LMOUSER,
+			MAX(WAI.UPDTCHK) AS UPDTCHK
+		FROM
+		    ${userData.schema}.WASNIT WAI
+		INNER JOIN ${userData.schema}.MWARMA MW  <!-- 창고 master -->
+			ON MW.WAREKEY = WAI.WAREKEY
+		LEFT JOIN ${userData.schema}.MAREMA MA  <!-- 창고동 master (to 창고동)-->
+			ON MA.WAREKEY = WAI.WAREKEY
+			AND MA.AREAKEY = WAI.TOAREKY
+		LEFT JOIN ${userData.schema}.MLOCMA ML1  <!-- 베드 master(하차포인트) -->
+			ON ML1.WAREKEY = WAI.WAREKEY
+			AND ML1.LOCAKEY = WAI.ULLOCKY
+		LEFT JOIN ${userData.schema}.MLOCMA ML2  <!-- 베드 master(하차포인트) -->
+			ON ML1.WAREKEY = WAI.WAREKEY
+			AND ML2.AREAKEY = MA.AREAKEY
+			AND ML2.LOCAKEY = WAI.TOLOCKY
+		LEFT JOIN ${userData.schema}.MGRPMA MG <!-- 제품 그룹 master --> <!-- 임시 LETF -->
+			ON MG.SKUGRKY = WAI.SKUGRKY
+		INNER JOIN ${userData.schema}.WASNHD WAH <!-- ASN Header -->
+			ON WAH.EOASNKY = WAI.EOASNKY
+		LEFT JOIN ${userData.schema}.MREGMA MR1 <!-- 목적지 master for orginal -->
+			ON MR1.REGIKEY = WAI.REGIORG
+		LEFT JOIN ${userData.schema}.MREGMA MR2 <!-- 목적지 master for mod -->
+			ON MR2.REGIKEY = WAI.REGIMOD
+		INNER JOIN ${userData.schema}.MCODEM MCO1 <!-- Common Code master for skustat -->
+			ON MCO1.COMCDVL = WAI.SKUSTAT
+			AND MCO1.COMCDKY = 'SKUSTAT'
+		INNER JOIN ${userData.schema}.MCODEM MCO2 <!-- Common Code master for asnitst -->
+			ON MCO2.COMCDVL = WAI.ASNITST
+			AND MCO2.COMCDKY = 'ASNITST'
+		INNER JOIN ${userData.schema}.MCODEM MCO3 <!-- Common Code master for suomkey -->
+			ON MCO3.COMCDVL = WAI.SUOMKEY
+			AND MCO3.COMCDKY = 'SUOMKEY'
+		INNER JOIN ${userData.schema}.MCODEM MCO4 <!-- Common Code master for itemcod -->
+			ON MCO4.COMCDVL = WAI.ITEMCOD
+			AND MCO4.COMCDKY = 'ITEMCOD'
+		INNER JOIN ${userData.schema}.MDOCMA MDO <!-- document master -->
+			ON MDO.DOCCATE = WAI.DOCCATE
+			AND MDO.DOCTYPE = WAI.DOCTYPE
+		LEFT JOIN ${userData.schema}.MRSCMA MRC <!-- Reason Code master --> <!-- 임시 LETF -->
+			ON MRC.WAREKEY = WAH.WAREKEY
+			AND MRC.WAREKEY = WAI.WAREKEY
+			AND MRC.DOCCATE = WAH.DOCCATE
+			AND MRC.DOCTYPE = WAH.DOCTYPE
+			AND MRC.RSNCODE = WAI.RSNCODE
+		LEFT JOIN ${userData.schema}.BTRCAT BT <!-- 정산유형 --> <!-- 임시 LETF -->
+			ON BT.BTRCATE = WAI.BTRCATE
+		INNER JOIN ${userData.schema}.BADDCO BA
+				ON WAI.ADDCOKY = BA.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MCO5
+				ON BA.ADDSIKY = MCO5.COMCDVL
+			   AND MCO5.COMCDKY = 'ADDSIKY'
+			   AND MCO5.COUSEYN = 'Y'
+		<where>
+		    <if test='param.warekey != null and param.warekey != ""'>
+		    AND WAI.WAREKEY = #{param.warekey}
+		    </if>
+		    <if test='param.eoasnky != null and param.eoasnky != ""'>
+		    AND WAI.EOASNKY = #{param.eoasnky}
+		    </if>
+   		    <if test="param.asnitstList != null and param.asnitstList.size != 0">
+		    AND WAI.ASNITST IN
+		    	<foreach collection="param.asnitstList" item="asnitst" open="(" close=")" separator=",">
+		    	 	#{asnitst}
+	    	 	</foreach>
+		    </if>
+	    </where>
+	    GROUP BY
+			WAI.EOASNKY, WAI.EOASNIT,
+			WAI.WAREKEY, MW.WHNAMLC, WAI.POSHPDT, WAI.INVOICE,
+			WAI.OWNERKY, WAI.OWNRNAM, WAI.ASNITST, MCO2.COMCDTX,
+			WAI.SKUGRKY, MG.GRPKYNM, WAI.SKUMKEY, WAI.SKUDESC,
+			WAI.STLAYER, VSLAYER, WAI.SKUWEIG, WAI.SKUWIDT,
+			WAI.SKULENG, WAI.SKUTHIC, WAI.GROSSWG, WAI.GROSSWD,
+			WAI.GROSSLN, WAI.GROSSTH, WAI.SUOMKEY, MCO3.COMCDTX, WAI.SKUSTRD,
+			WAI.ADDCOKY, WAI.ASNDQTY, WAI.RCHSQTY, WAI.CUSTCOD,
+			WAI.CUSTNAM, WAI.REGIORG, MR1.RENAMLC, WAI.DEORGNM,
+			WAI.REGIMOD, MR2.RENAMLC, WAI.DEMODNM,
+			WAI.ULLOCKY, ML1.LOCANAM, WAI.TOAREKY,
+			MA.AREANAM, WAI.TOLOCKY, ML2.LOCANAM, WAI.TOLAYER,
+			WAI.ITEMCOD, MCO4.COMCDTX, WAI.PURCNUM, WAI.ORDERLN,
+			WAI.STLOTNB, WAI.BTRFSTC, WAI.SKUSTAT, MCO1.COMCDTX,
+			WAI.SHPLIMT, WAI.DELVDSR, WAI.RSNCODE, MRC.RSNCDNM,
+			MRC.RSCATE1, WAI.PARSNNM, WAI.COSTRKY, WAI.COSTRIT,
+			WAI.SERINUM, WAI.SAVEPOS, WAI.SCHDATE, WAI.MIXLOAD,
+			WAI.DESTTRG, WAI.YARDTRG, WAI.INBDATE, WAI.INBVHNM,
+			WAI.OUBVHNM, WAI.SHPDRNM, WAI.PRSALDT, WAI.CMPDATE,
+			WAI.SHPPERS, WAI.OUBDATE, WAI.PREPRDE, WAI.ARVDATE,
+			WAI.SHPODAT, WAI.TRSODAT, WAI.INDIMET, WAI.OUTDIMT,
+			WAH.DOCCATE, WAH.DOCTYPE
+		ORDER BY
+			WAI.STLAYER DESC
+	</select>
+
+	<!-- Doe024 ASN 아이템 조회 -->
+	<select id="getDoe024WasnitList" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* getDoe024WasnitList */
+		WITH FILTER_OWNER_CUST AS (
+		    SELECT
+		        CASE
+		            WHEN WAI.OWNERKY IS NULL OR TRIM(WAI.OWNERKY) = '' THEN (
+		                SELECT CUSTKEY
+		                FROM ${userData.schema}.MCUSMA
+		                WHERE CUNAMLC = WAI.OWNRNAM
+                        ORDER BY CUSTKEY
+		            	LIMIT 1
+		            )
+		            ELSE WAI.OWNERKY
+		        END AS OWNERKY
+		        , OWNRNAM
+		        , CASE
+		            WHEN WAI.CUSTCOD IS NULL OR TRIM(WAI.CUSTCOD) = '' THEN (
+		                SELECT CUSTKEY
+		                FROM ${userData.schema}.MCUSMA
+		                WHERE CUNAMLC = WAI.CUSTNAM
+                        ORDER BY CUSTKEY
+		            	LIMIT 1
+		            )
+		            ELSE WAI.CUSTCOD
+		        END AS CUSTCOD
+		        , CUSTNAM
+		    FROM ${userData.schema}.WASNIT WAI
+		    WHERE
+		        WAI.WAREKEY = #{param.warekey}
+		        AND WAI.EOASNKY = #{param.eoasnky}
+		)
+		SELECT
+			<!-- pqGrid recIndx -->
+			CONCAT(WAI.EOASNKY, WAI.EOASNIT) as ROWKEY,
+			<!-- P.K. -->
+			WAI.EOASNKY, WAI.EOASNIT,
+			<!-- Field -->
+			WAI.WAREKEY, MW.WHNAMLC, DATE_FORMAT(WAI.POSHPDT,'%Y-%m-%d') AS POSHPDT, WAI.INVOICE,
+			CASE
+        		WHEN WAI.OWNERKY IS NULL OR TRIM(WAI.OWNERKY) = '' THEN (
+		            SELECT
+		                CUSTKEY
+		            FROM
+		                ${userData.schema}.MCUSMA
+		            WHERE
+		                CUNAMLC = WAI.OWNRNAM
+                    ORDER BY CUSTKEY
+	            	LIMIT 1
+		        )
+        		ELSE WAI.OWNERKY
+    		END AS OWNERKY,
+     		WAI.OWNRNAM, WAI.ASNITST, (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ASNITST' AND COMCDVL = WAI.ASNITST AND COUSEYN = 'Y') AS ASNITSN,
+			WAI.SKUGRKY, MG.GRPKYNM, WAI.SKUMKEY, WAI.SKUDESC,
+			WAI.STLAYER, ((SELECT count(1) - WAI.STLAYER + 1 FROM ${userData.schema}.WASNIT WHERE EOASNKY = #{param.eoasnky} AND WAREKEY = #{param.warekey})) AS VSLAYER, WAI.SKUWEIG, WAI.SKUWIDT,
+			WAI.SKULENG, WAI.SKUTHIC, WAI.GROSSWG, WAI.GROSSWD,
+			WAI.GROSSLN, WAI.GROSSTH, WAI.SUOMKEY, (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'SUOMKEY' AND COMCDVL = WAI.SUOMKEY AND COUSEYN = 'Y') AS SUOMNAM,
+			WAI.SKUSTRD, WAI.ADDCOKY, WAI.ASNDQTY, WAI.RCHSQTY,
+			CASE
+				WHEN WAI.CUSTCOD IS NULL OR TRIM(WAI.CUSTCOD) = '' THEN (SELECT CUSTKEY FROM ${userData.schema}.MCUSMA WHERE CUNAMLC = WAI.CUSTNAM ORDER BY CUSTKEY LIMIT 1)
+				ELSE WAI.CUSTCOD
+			END AS CUSTCOD,
+			WAI.CUSTNAM, WAI.REGIORG, MR1.RENAMLC AS RGORGNM, IFNULL(MDE.DESTKEY,'') AS DESTORG, WAI.DEORGNM,
+			WAI.REGIMOD, MR2.RENAMLC AS RGMODNM, IFNULL(MDE.DESTKEY,'') AS DESTMOD, WAI.DEMODNM,
+		    CASE
+		    	WHEN WAI.DEMDADR IS NOT NULL AND TRIM(WAI.DEMDADR) != '' THEN WAI.DEMDADR
+		        WHEN MDE.DESTKEY IS NULL AND TRIM(MDE.DESTKEY) = '' THEN (SELECT DESADDR FROM ${userData.schema}.MDESMA WHERE DENAMLC = WAI.DEMODNM ORDER BY REGIKEY, CUSTKEY, DESTKEY LIMIT 1)
+		        ELSE MDE.DESADDR
+		    END AS DEMDADR,
+		    CASE
+		    	WHEN WAI.DEMDMAN IS NOT NULL AND TRIM(WAI.DEMDMAN) != '' THEN WAI.DEMDMAN
+		        WHEN MDE.DESTKEY IS NULL AND TRIM(MDE.DESTKEY) = '' THEN (SELECT DEMANNM FROM ${userData.schema}.MDESMA WHERE DENAMLC = WAI.DEMODNM ORDER BY REGIKEY, CUSTKEY, DESTKEY LIMIT 1)
+		        ELSE MDE.DEMANNM
+		    END AS DEMDMAN,
+		    CASE
+		    	WHEN WAI.DEMDTLN IS NOT NULL AND TRIM(WAI.DEMDTLN) != '' THEN WAI.DEMDTLN
+		        WHEN MDE.DESTKEY IS NULL AND TRIM(MDE.DESTKEY) = '' THEN (SELECT DESTELN FROM ${userData.schema}.MDESMA WHERE DENAMLC = WAI.DEMODNM ORDER BY REGIKEY, CUSTKEY, DESTKEY LIMIT 1)
+		        ELSE MDE.DESTELN
+		    END AS DEMDTLN,
+		    CASE
+		    	WHEN WAI.DEMPOCD IS NOT NULL AND TRIM(WAI.DEMPOCD) != '' THEN WAI.DEMPOCD
+		        WHEN MDE.DESTKEY IS NULL AND TRIM(MDE.DESTKEY) = '' THEN (SELECT DEPOSCD FROM ${userData.schema}.MDESMA WHERE DENAMLC = WAI.DEMODNM ORDER BY REGIKEY, CUSTKEY, DESTKEY LIMIT 1)
+		        ELSE MDE.DEPOSCD
+		    END AS DEMPOCD,
+		    WAI.ULLOCKY, ML1.LOCANAM AS ULLOCNM, WAI.TOAREKY,
+			MA.AREANAM AS TOARENM, WAI.TOLOCKY, ML2.LOCANAM AS TOLOCNM, WAI.TOLAYER,
+			WAI.ITEMCOD, (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ITEMCOD' AND COMCDVL = WAI.ITEMCOD AND COUSEYN = 'Y') AS ITCODNM,
+			WAI.PURCNUM, WAI.ORDERLN,
+			WAI.STLOTNB, WAI.BTRFSTC, WAI.SKUSTAT, (SELECT COMCDTX FROM DO_DY.MCODEM WHERE COMCDKY = 'SKUSTAT' AND COMCDVL = WAI.SKUSTAT AND COUSEYN = 'Y') AS SKUSTNM,
+			DATE_FORMAT(WAI.SHPLIMT,'%Y-%m-%d') AS SHPLIMT, DATE_FORMAT(WAI.DELVDSR,'%Y-%m-%d') AS DELVDSR, WAI.RSNCODE, MRC.RSNCDNM AS RSNCDNM,
+			MRC.RSCATE1, WAI.PARSNNM, WAI.COSTRKY, WAI.COSTRIT,
+			WAI.SERINUM, WAI.SAVEPOS, WAI.SCHDATE, WAI.MIXLOAD,
+			WAI.DESTTRG, WAI.YARDTRG, WAI.INBDATE, WAI.INBVHNM,
+			WAI.OUBVHNM, WAI.SHPDRNM, WAI.PRSALDT, WAI.CMPDATE,
+			WAI.SHPPERS, WAI.OUBDATE, WAI.PREPRDE, WAI.ARVDATE,
+			WAI.SHPODAT, WAI.TRSODAT, WAI.INDIMET, WAI.OUTDIMT,
+			WAH.DOCCATE, WAH.DOCTYPE, MDO.DOCCTNM, MDO.DOCTYNM,
+			WAI.BTRCATE, BT.BTRCNAM,
+			WAI.FNCUSKY, WAI.EQUIPKY, (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = BA.ADDSIKY AND COUSEYN = 'Y') AS ADDCONM,
+			IF(WAI.ASNITST = 'NEW', 'N', 'Y') as ASNCFYN,
+			WAH.ASNITYN,
+		    <!-- Common Field -->
+			MAX(DATE_FORMAT(WAI.CREDATE,'%Y%m%d')) as CREDATE,
+			MAX(DATE_FORMAT(STR_TO_DATE(WAI.CRETIME,'%H%i%s'),'%H:%i:%s')) AS CRETIME,
+			${userData.schema}.FN_SY_USERNAM(WAI.CREUSER) AS CREUSER,
+			MAX(DATE_FORMAT(WAI.LMODATE,'%Y%m%d')) AS LMODATE,
+			MAX(DATE_FORMAT(STR_TO_DATE(WAI.LMOTIME,'%H%i%s'),'%H:%i:%s')) AS LMOTIME,
+			${userData.schema}.FN_SY_USERNAM(WAI.LMOUSER) AS LMOUSER,
+			MAX(WAI.UPDTCHK) AS UPDTCHK
+		FROM
+		    ${userData.schema}.WASNIT WAI
+		INNER JOIN ${userData.schema}.MWARMA MW  <!-- 창고 master -->
+			ON MW.WAREKEY = WAI.WAREKEY
+		LEFT JOIN ${userData.schema}.MAREMA MA  <!-- 창고동 master (to 창고동)-->
+			ON MA.WAREKEY = WAI.WAREKEY
+			AND MA.AREAKEY = WAI.TOAREKY
+		LEFT JOIN ${userData.schema}.MLOCMA ML1  <!-- 베드 master(하차포인트) -->
+			ON ML1.WAREKEY = WAI.WAREKEY
+			AND ML1.AREAKEY = WAI.TOAREKY
+			AND ML1.LOCAKEY = WAI.ULLOCKY
+		LEFT JOIN ${userData.schema}.MLOCMA ML2  <!-- 베드 master(하차포인트) -->
+			ON ML2.WAREKEY = WAI.WAREKEY
+			AND ML2.AREAKEY = WAI.TOAREKY
+			AND ML2.LOCAKEY = WAI.TOLOCKY
+		INNER JOIN ${userData.schema}.MGRPMA MG <!-- 제품 그룹 master --> <!-- 임시 LETF -->
+			ON MG.SKUGRKY = WAI.SKUGRKY
+		INNER JOIN ${userData.schema}.WASNHD WAH <!-- ASN Header -->
+			ON WAH.EOASNKY = WAI.EOASNKY
+		LEFT JOIN ${userData.schema}.MREGMA MR1 <!-- 목적지 master for orginal -->
+			ON MR1.REGIKEY = WAI.REGIORG
+		LEFT JOIN ${userData.schema}.MREGMA MR2 <!-- 목적지 master for mod -->
+			ON MR2.REGIKEY = WAI.REGIMOD
+		INNER JOIN ${userData.schema}.MDOCMA MDO <!-- document master -->
+			ON MDO.WAREKEY = WAI.WAREKEY
+			AND MDO.DOCCATE = WAI.DOCCATE
+			AND MDO.DOCTYPE = WAI.DOCTYPE
+		LEFT JOIN ${userData.schema}.MRSCMA MRC <!-- Reason Code master --> <!-- 임시 LETF -->
+			ON MRC.WAREKEY = WAH.WAREKEY
+			AND MRC.WAREKEY = WAI.WAREKEY
+			AND MRC.DOCCATE = WAH.DOCCATE
+			AND MRC.DOCTYPE = WAH.DOCTYPE
+			AND MRC.RSNCODE = WAI.RSNCODE
+		LEFT JOIN ${userData.schema}.BTRCAT BT <!-- 정산유형 --> <!-- 임시 LETF -->
+			ON BT.BTRCATE = WAI.BTRCATE
+		INNER JOIN ${userData.schema}.BADDCO BA
+				ON WAI.ADDCOKY = BA.ADDCOKY
+		LEFT JOIN FILTER_OWNER_CUST FOC ON
+		    FOC.OWNRNAM = WAI.OWNRNAM
+		LEFT JOIN ${userData.schema}.MDESMA MDE
+		    ON MDE.CUSTKEY = FOC.OWNERKY
+		    AND MDE.REGIKEY = WAI.REGIMOD
+		    AND MDE.DENAMLC = WAI.DEMODNM
+		<where>
+		    <if test='param.warekey != null and param.warekey != ""'>
+		    AND WAI.WAREKEY = #{param.warekey}
+		    </if>
+		    <if test='param.eoasnky != null and param.eoasnky != ""'>
+		    AND WAI.EOASNKY = #{param.eoasnky}
+		    </if>
+   		    <if test="param.asnitstList != null and param.asnitstList.size != 0">
+		    AND WAI.ASNITST IN
+		    	<foreach collection="param.asnitstList" item="asnitst" open="(" close=")" separator=",">
+		    	 	#{asnitst}
+	    	 	</foreach>
+		    </if>
+	    </where>
+	    GROUP BY
+			WAI.EOASNKY, WAI.EOASNIT,
+			WAI.WAREKEY, MW.WHNAMLC, WAI.POSHPDT, WAI.INVOICE,
+			WAI.OWNERKY, WAI.OWNRNAM, WAI.ASNITST, ASNITSN,
+			WAI.SKUGRKY, MG.GRPKYNM, WAI.SKUMKEY, WAI.SKUDESC,
+			WAI.STLAYER, VSLAYER, WAI.SKUWEIG, WAI.SKUWIDT,
+			WAI.SKULENG, WAI.SKUTHIC, WAI.GROSSWG, WAI.GROSSWD,
+			WAI.GROSSLN, WAI.GROSSTH, WAI.SUOMKEY, SUOMNAM, WAI.SKUSTRD,
+			WAI.ADDCOKY, WAI.ASNDQTY, WAI.RCHSQTY, WAI.CUSTCOD,
+			WAI.CUSTNAM, WAI.REGIORG, MR1.RENAMLC, WAI.DEORGNM,
+			WAI.REGIMOD, MR2.RENAMLC, WAI.DEMODNM,
+			WAI.ULLOCKY, ML1.LOCANAM, WAI.TOAREKY,
+			MA.AREANAM, WAI.TOLOCKY, ML2.LOCANAM, WAI.TOLAYER,
+			WAI.ITEMCOD, ITCODNM, WAI.PURCNUM, WAI.ORDERLN,
+			WAI.STLOTNB, WAI.BTRFSTC, WAI.SKUSTAT, SKUSTNM,
+			WAI.SHPLIMT, WAI.DELVDSR, WAI.RSNCODE, MRC.RSNCDNM,
+			MRC.RSCATE1, WAI.PARSNNM, WAI.COSTRKY, WAI.COSTRIT,
+			WAI.SERINUM, WAI.SAVEPOS, WAI.SCHDATE, WAI.MIXLOAD,
+			WAI.DESTTRG, WAI.YARDTRG, WAI.INBDATE, WAI.INBVHNM,
+			WAI.OUBVHNM, WAI.SHPDRNM, WAI.PRSALDT, WAI.CMPDATE,
+			WAI.SHPPERS, WAI.OUBDATE, WAI.PREPRDE, WAI.ARVDATE,
+			WAI.SHPODAT, WAI.TRSODAT, WAI.INDIMET, WAI.OUTDIMT,
+			WAH.DOCCATE, WAH.DOCTYPE,
+			WAI.FNCUSKY, WAI.EQUIPKY, ADDCONM
+		ORDER BY
+			WAI.EOASNKY DESC, VSLAYER, WAI.STLAYER, WAI.EOASNIT
+	</select>
+
+	<!-- ASN 헤더 조회(join 없음) -->
+	<select id="selectPlainWasnhd" resultType="com.kbph.logistics.im.domain.WasnhdDTO">
+		/* selectPlainWasnhd */
+		SELECT
+			<!-- P.K. -->
+			WA.EOASNKY,
+			<!-- Columns -->
+			WA.WAREKEY, WA.DOCCATE, WA.DOCTYPE, WA.VOWNKEY,
+			WA.VEHICKY, WA.VHCFNAM, WA.DRVERNM,
+			WA.ASNSTAT, WA.ASNDATE, WA.ASNTIME, WA.ENTDATE,
+			WA.ENTTIME, WA.RSNCODE, WA.PARSNNM, WA.ASNPIYN,
+			WA.ASNITYN, WA.PASTRKY,
+			<!-- Commons -->
+			WA.CREDATE, WA.CRETIME, WA.CREUSER, WA.LMODATE,
+			WA.LMOTIME, WA.LMOUSER, WA.UPDTCHK
+		FROM
+		    ${userData.schema}.WASNHD WA
+		WHERE
+			WA.EOASNKY = #{param.eoasnky}
+		    <if test="param.warekey != null and param.warekey != ''">
+		    AND WA.WAREKEY = #{param.warekey}
+		    </if>
+		    <if test="param.asnstat != null and param.asnstat != ''">
+		    AND WA.ASNSTAT = #{param.asnstat}
+		    </if>
+	</select>
+
+	<!-- ASN 헤더 조회(필요한 값만) -->
+	<select id="selectWasnhdKey" resultType="com.kbph.logistics.im.domain.WasnhdDTO">
+		/* selectWasnhdKey */
+		SELECT
+			WA.EOASNKY,
+			WA.WAREKEY,
+			WA.DOCCATE,
+			WA.DOCTYPE,
+			WA.ASNSTAT,
+			WA.VEHICKY,
+			WA.VHCFNAM,
+			WA.PASTRKY,
+			WA.UPDTCHK
+		FROM
+		    ${userData.schema}.WASNHD WA
+		WHERE
+			WA.WAREKEY = #{param.warekey}
+		    AND WA.EOASNKY = #{param.eoasnky}
+		    <if test="param.asnstat != null and param.asnstat != ''">
+		    AND WA.ASNSTAT = #{param.asnstat}
+		    </if>
+	</select>
+
+		<!-- ASN 아이템 조회 -->
+	<select id="selectWasnitKeyAndItemAll" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* selectWasnitKeyAndItemAll */
+		SELECT
+			WA.EOASNKY, WA.EOASNIT, WA.WAREKEY
+			, WA.POSHPDT, WA.POSHPTM, WA.POSHPDY, WA.INVOICE
+			, WA.DOCCATE, WA.DOCTYPE, WA.BTRCATE, WA.OWNERKY, WA.OWNRNAM
+			, WA.ASNITST, WA.SKUGRKY, WA.SKUMKEY, WA.SKUDESC, WA.STLAYER
+			, WA.SKUWEIG, WA.SKUWIDT, WA.SKULENG, WA.SKUTHIC, WA.GROSSWD
+			, WA.GROSSLN, WA.GROSSWG, WA.GROSSTH, WA.SKUSTRD, WA.ULLOCKY
+			, WA.EQUIPKY, WA.TOAREKY, WA.TOLOCKY, WA.TOLAYER, WA.SUOMKEY
+			, WA.ADDCOKY, WA.CUSTCOD, WA.CUSTNAM, WA.FNCUSKY
+			, WA.FCNAMLC, WA.REGIORG, WA.REGIMOD, WA.DESTORG, WA.DEORGNM
+			, WA.DESTMOD, WA.DEMODNM, WA.DEMODYN, WA.DEMDMAN, WA.DEMDADR
+			, WA.DEMPOCD, WA.DEMDTLN, WA.ITEMCOD, WA.PURCNUM, WA.ORDERLN
+			, WA.BTRFSTC, WA.STLOTNB, WA.SHPLIMT, WA.STKMEMO, WA.DELVDSR
+			, WA.RESTKYN, WA.SKUSTAT, WA.RSNCODE, WA.PARSNNM, WA.COSTRKY, WA.COSTRIT
+			, WA.SERINUM, WA.SAVEPOS, WA.SCHDATE, WA.MIXLOAD, WA.DESTTRG, WA.YARDTRG
+			, WA.INBDATE, WA.INBVHNM, WA.OUBVHNM, WA.SHPDRNM, WA.PRSALDT
+			, WA.CMPDATE, WA.SHPPERS, WA.OUBDATE, WA.PREPRDE, WA.ARVDATE, WA.SHPODAT
+			, WA.TRSODAT, WA.INDIMET, WA.OUTDIMT, WA.UPDTCHK
+		FROM
+		    ${userData.schema}.WASNIT WA
+		WHERE
+			WA.WAREKEY = #{param.warekey}
+		    AND WA.EOASNKY = #{param.eoasnky}
+		    <if test="param.asnitstList != null and param.asnitstList.size != 0">
+		    AND WA.ASNITST in
+		    	<foreach collection="param.asnitstList" item="asnitst" open="(" close=")" separator=",">
+		    	 	#{asnitst}
+	    	 	</foreach>
+		    </if>
+	</select>
+
+	<!-- ASN 아이템 조회(필요한 값만) -->
+	<select id="selectWasnitKeyAndItem" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* selectWasnitKeyAndItem */
+		SELECT
+			<!-- P.K -->
+			WA.EOASNKY, WA.EOASNIT,
+			<!-- Columns -->
+			WA.WAREKEY, WA.POSHPDT, WA.POSHPTM, WA.POSHPDY,
+			WA.INVOICE, WA.DOCCATE, WA.DOCTYPE, WA.BTRCATE,
+			WA.OWNERKY, WA.OWNRNAM, WA.ASNITST, WA.SKUGRKY,
+			WA.SKUMKEY, WA.SKUDESC, WA.STLAYER, WA.SKUWEIG,
+			WA.SKUWIDT, WA.SKULENG, WA.SKUTHIC,  WA.GROSSWD,
+			WA.GROSSLN, WA.GROSSWG, WA.GROSSTH, WA.SKUSTRD,
+			WA.ULLOCKY, WA.EQUIPKY, WA.TOAREKY, WA.TOLOCKY,
+			WA.TOLAYER, WA.SUOMKEY, WA.ADDCOKY, WA.ASNDQTY,
+			WA.RCHSQTY, WA.CUSTCOD, WA.CUSTNAM, WA.FNCUSKY,
+			WA.FCNAMLC, WA.REGIORG, WA.REGIMOD, WA.DESTORG,
+			WA.DEORGNM, WA.DESTMOD, WA.DEMODNM, WA.DEMODYN,
+			WA.DEMDMAN, WA.DEMDADR, WA.DEMPOCD, WA.DEMDTLN,
+			WA.ITEMCOD, WA.PURCNUM, WA.ORDERLN, WA.BTRFSTC,
+			WA.STLOTNB, WA.SHPLIMT, WA.STKMEMO, WA.DELVDSR,
+			WA.RESTKYN, WA.SKUSTAT, WA.RSNCODE, WA.PARSNNM,
+			WA.COSTRKY, WA.COSTRIT, WA.SERINUM, WA.SAVEPOS,
+			WA.SCHDATE, WA.MIXLOAD, WA.DESTTRG, WA.YARDTRG,
+			WA.INBDATE, WA.INBVHNM, WA.OUBVHNM, WA.SHPDRNM,
+			WA.PRSALDT, WA.CMPDATE, WA.SHPPERS, WA.OUBDATE,
+			WA.PREPRDE, WA.ARVDATE, WA.SHPODAT, WA.TRSODAT,
+			WA.INDIMET, WA.OUTDIMT,
+			<!-- Common Columns -->
+			WA.CREDATE, WA.CRETIME, WA.CREUSER, WA.LMODATE,
+			WA.LMOTIME, WA.LMOUSER, WA.UPDTCHK
+		FROM
+		    ${userData.schema}.WASNIT WA
+		WHERE
+			WA.WAREKEY = #{param.warekey}
+		    AND WA.EOASNKY = #{param.eoasnky}
+		    <if test="param.asnitstList != null and param.asnitstList.size != 0">
+		    AND WA.ASNITST in
+		    	<foreach collection="param.asnitstList" item="asnitst" open="(" close=")" separator=",">
+		    	 	#{asnitst}
+	    	 	</foreach>
+		    </if>
+	</select>
+
+	<!-- ASN 아이템 조회(필요한 값만) -> calcel 조건 추가-->
+	<select id="selectWasnitKeyAndItemNotCancel" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* selectWasnitKeyAndItemNotCancel */
+		SELECT
+			<!-- P.K -->
+			WA.EOASNKY, WA.EOASNIT,
+			<!-- Columns -->
+			WA.WAREKEY, WA.ASNITST,
+			WA.SKUMKEY, WA.ULLOCKY, WA.COSTRKY, WA.COSTRIT,
+			WA.UPDTCHK
+		FROM
+		    ${userData.schema}.WASNIT WA
+		WHERE
+			WA.WAREKEY = #{param.warekey}
+		    AND WA.EOASNKY = #{param.eoasnky}
+		    <if test="param.asnitstList != null and param.asnitstList.size != 0">
+		    AND WA.ASNITST in
+		    	<foreach collection="param.asnitstList" item="asnitst" open="(" close=")" separator=",">
+		    	 	#{asnitst}
+	    	 	</foreach>
+		    </if>
+		    AND WA.ASNITST != 'CANCEL'
+	</select>
+
+	<!-- 입고예정정보 헤더 생성 -->
+	<insert id="insertWasnhdList" parameterType="com.kbph.logistics.im.domain.WasnhdDTO">
+		/* insertWasnhdList */
+		<foreach collection="insertList" item="item" separator=";">
+		INSERT INTO
+		${userData.schema}.WASNHD(
+			<!-- P.K -->
+			EOASNKY,
+			<!-- Columns -->
+			WAREKEY, DOCCATE, DOCTYPE, RSNCODE,
+			PARSNNM, VOWNKEY, VEHICKY, DRVERNM,
+			HDSAVYN,
+			ASNSTAT, ASNDATE, ASNTIME, ENTDATE,
+			ENTTIME, ASNPIYN, PASTRKY, VHCFNAM,
+			<!-- Common Columns -->
+			CREDATE, CRETIME, CREUSER, LMODATE,
+			LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{item.eoasnky},
+			#{item.warekey}, #{item.doccate}, #{item.doctype}, #{item.rsncode},
+			#{item.parsnnm}, #{item.vownkey}, #{item.vehicky}, IFNULL(#{item.drvernm}, ''),
+			#{item.hdsavyn},
+			IFNULL(#{item.asnstat}, 'NEW'), date_format(#{item.asndate}, '%Y%m%d'), DATE_FORMAT(STR_TO_DATE(#{item.asntime}, '%H:%i:%s'), '%H%i%s'), IFNULL(#{item.entdate}, ''),
+			IFNULL(#{item.enttime}, ''), IFNULL(#{item.asnpiyn}, 'N'), #{item.pastrky}, (
+																													SELECT
+																														VHCFNAM
+																													FROM ${userData.commonSchema}.MVHCMA
+																													WHERE
+																														VOWNKEY = #{item.vownkey}
+																														AND VEHICKY = #{item.vehicky}
+																													LIMIT 1
+																												),
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}, date_format(now(), '%Y%m%d'),
+			date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+		</foreach>
+	</insert>
+
+	<!-- to창고동 to베드 설비코드 하차포인트 연관관계 확인 -->
+	<select id="checkRelationship" resultType="int">
+		/* checkRelationship */
+		SELECT
+		    COUNT(1)
+		FROM
+		    ${userData.schema}.MEQLOC MEQL
+		INNER JOIN ${userData.schema}.MEQUMA MEQ
+		    ON MEQL.WAREKEY = MEQ.WAREKEY
+		    AND MEQL.AREAKEY = MEQ.AREAKEY
+		    AND MEQL.EQUIPKY = MEQ.EQUIPKY
+		WHERE
+		    MEQL.WAREKEY = #{param.warekey}
+		    AND MEQL.AREAKEY = #{param.toareky}
+		    AND MEQL.LOCAKEY IN(#{param.tolocky}, #{param.ullocky})
+		    AND MEQL.EQUIPKY = #{param.equipky}
+		    AND MEQL.ELUSEYN = 'Y'
+		    AND MEQ.EQUSEYN = 'Y'
+		    AND MEQ.EQUSTAT = 'NORMAL'
+	</select>
+
+	<!-- 입고예정정보 아이템 생성 -->
+	<insert id="insertWasnitList" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* insertWasnitList */
+		<foreach collection="insertList" item="item" index='index' separator=";">
+		INSERT INTO
+		${userData.schema}.WASNIT(
+				<!-- P.K -->
+				EOASNKY, EOASNIT
+				<!-- Columns -->
+				, WAREKEY, POSHPDT, POSHPTM, POSHPDY
+				, INVOICE, OWNERKY, OWNRNAM
+				, ASNITST, SKUGRKY, SKUMKEY, SKUDESC
+				, STLAYER, SKUWEIG, SKUWIDT, SKULENG
+				, SKUTHIC, GROSSWD, GROSSLN, GROSSWG
+				, SKUSTRD, ULLOCKY, TOAREKY, TOLOCKY
+				, TOLAYER, SUOMKEY, ADDCOKY, ASNDQTY
+				, RCHSQTY, CUSTCOD, CUSTNAM, REGIORG, REGIMOD
+				, DESTORG, DEORGNM, DESTMOD, DEMODNM, DEMODYN, ITEMCOD, PURCNUM
+				, ORDERLN, BTRFSTC, STLOTNB
+				, SHPLIMT, DELVDSR
+				, STKMEMO, RESTKYN, SKUSTAT, RSNCODE
+				, PARSNNM, COSTRKY, COSTRIT, DOCCATE
+				, DOCTYPE, BTRCATE, FNCUSKY, GROSSTH
+				, EQUIPKY
+				, DEMDMAN, DEMDADR, DEMPOCD, DEMDTLN
+				, INDIMET, OUTDIMT, SERINUM
+				, SAVEPOS, SCHDATE, MIXLOAD, DESTTRG
+				, YARDTRG, INBDATE, INBVHNM, OUBVHNM
+				, SHPDRNM, PRSALDT, CMPDATE, SHPPERS
+				, OUBDATE, PREPRDE, ARVDATE, SHPODAT
+				, TRSODAT
+				<!-- Common Columns -->
+				, CREDATE, CRETIME, CREUSER, LMODATE,
+				LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{item.eoasnky}, #{item.eoasnit}
+			, #{item.warekey}, REPLACE(#{item.poshpdt}, '-', ''), REPLACE(#{item.poshptm}, ':', ''), #{item.poshpdy}
+			, #{item.invoice}, IFNULL(#{item.ownerky},''), #{item.ownrnam}
+			, IFNULL(#{item.asnitst}, 'NEW'), (
+															SELECT MG.SKUGRKY
+													        FROM ${userData.schema}.MGRPMA MG
+													        WHERE
+													        	((MG.MINLENG = 0 OR MG.MINLENG <![CDATA[<=]]> #{item.skuleng}) AND (MG.MAXLENG = 0 OR #{item.skuleng} <![CDATA[<]]> MG.MAXLENG))
+													        	AND ((MG.MINWIDT = 0 OR MG.MINWIDT <![CDATA[<=]]> #{item.skuwidt}) AND (MG.MAXWIDT = 0 OR #{item.skuwidt} <![CDATA[<]]> MG.MAXWIDT))
+													        	AND MG.GRUSEYN = 'Y'
+											        	), UPPER(#{item.skumkey}), #{item.skudesc},
+			IFNULL(#{item.stlayer}, #{item.eoasnit}), #{item.skuweig}, #{item.skuwidt}, #{item.skuleng},
+			#{item.skuthic}, #{item.grosswd}, #{item.grossln}, #{item.grosswg},
+			#{item.skustrd}, IFNULL(#{item.ullocky},''), IFNULL(#{item.toareky},''), IFNULL(#{item.tolocky},''),
+			IF(#{item.tolayer} IS NULL OR #{item.tolayer} = 0, #{index} + 1, #{item.tolayer}), #{item.suomkey}, <include refid="getAddcoky"></include>, #{item.asndqty},
+			#{item.rchsqty}, #{item.custcod}, #{item.custnam}, #{item.regiorg}, IF(#{item.regimod} = '' OR #{item.regimod} IS NULL , #{item.regiorg}, #{item.regimod}),
+			#{item.destorg}, #{item.deorgnm}, IF(#{item.destmod} = '' OR #{item.destmod} IS NULL , #{item.destorg}, #{item.destmod}), IF(#{item.demodnm} = '' OR #{item.demodnm} IS NULL , #{item.deorgnm}, #{item.demodnm}), IF(#{item.destmod} = '' OR #{item.destmod} IS NULL, 'N', 'Y'), #{item.itemcod}, #{item.purcnum},
+			#{item.orderln}, IFNULL(#{item.btrfstc},''), IFNULL(#{item.stlotnb},''),
+			IF(#{item.shplimt} IS NULL OR #{item.shplimt} = '', '', REPLACE(#{item.shplimt}, '-', '')), IF(#{item.delvdsr} IS NULL OR #{item.delvdsr} = '', '', REPLACE(#{item.delvdsr},'-','')),
+			#{item.stkmemo}, IFNULL(#{item.restkyn}, 'N'), #{item.skustat}, #{item.rsncode},
+			#{item.parsnnm}, #{item.costrky}, #{item.costrit}, #{item.doccate},
+			#{item.doctype}, #{item.btrcate}, IFNULL(#{item.fncusky},''), #{item.grossth},
+			IFNULL(#{item.equipky},''),
+			IFNULL(#{item.demdman},''), IFNULL(#{item.demdadr},''), IFNULL(#{item.dempocd},''), IFNULL(#{item.demdtln},''),
+			IFNULL(#{item.indimet}, 0), IFNULL(#{item.outdimt}, 0), IFNULL(#{item.serinum},1),
+			IFNULL(#{item.savepos},''), IFNULL(#{item.schdate},''), IFNULL(#{item.mixload},'N'), IFNULL(#{item.desttrg},''),
+			IFNULL(#{item.yardtrg},''), IFNULL(#{item.inbdate},''), IFNULL(#{item.inbvhnm},''), IFNULL(#{item.oubvhnm},''),
+			IFNULL(#{item.shpdrnm},''), IFNULL(#{item.prsaldt},''), IFNULL(#{item.cmpdate},''), IFNULL(#{item.shppers},''),
+			IFNULL(#{item.oubdate},''), IFNULL(#{item.preprde},''), IFNULL(#{item.arvdate},''), IFNULL(#{item.shpodat},''),
+			IFNULL(#{item.trsodat},''),
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}, date_format(now(), '%Y%m%d'),
+			date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+		</foreach>
+	</insert>
+
+	<!-- ASN 맨 윗 단으로 변경 -->
+	<update id="updateWasnitToTopLayer">
+		/* updateWasnitToTopLayer */
+		UPDATE ${userData.schema}.WASNIT AS IT
+		SET
+			IT.STLAYER = #{param.stlayer},
+			IT.LMODATE = date_format(now(), '%Y%m%d'),
+			IT.LMOTIME = date_format(now(), '%H%i%s'),
+			IT.LMOUSER = #{userData.useract}
+		WHERE
+			IT.EOASNKY = #{param.eoasnky}
+			AND IT.WAREKEY = #{param.warekey}
+			AND IT.STLAYER = (SELECT COUNT(1) FROM ${userData.schema}.WASNIT WHERE EOASNKY = #{param.eoasnky} AND WAREKEY = #{param.warekey})
+	</update>
+
+	<!-- ASN 기존 윗 단과 swap -->
+	<update id="updateWasnitSwapLayer">
+		/* updateWasnitSwapLayer */
+		UPDATE ${userData.schema}.WASNIT
+		SET
+			STLAYER = (SELECT COUNT(1) FROM ${userData.schema}.WASNIT WHERE EOASNKY = #{param.eoasnky} AND WAREKEY = #{param.warekey}),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			EOASNKY = #{param.eoasnky}
+			AND EOASNIT = #{param.eoasnit}
+			AND WAREKEY = #{param.warekey}
+	</update>
+
+	<!-- ASN 헤더 검수여부 변경 -->
+	<update id="updateWasnhdAsnpiyn">
+		/* updateWasnhdAsnpiyn */
+		UPDATE ${userData.schema}.WASNHD
+		SET
+			ASNPIYN = 'Y',
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			EOASNKY = #{param.eoasnky}
+	</update>
+
+	<!-- doe024 입고예정정보 헤더 상태변경-->
+	<update id="updateDoe024WasnhdStatus">
+		/* updateDoe024WasnhdStatus */
+		UPDATE ${userData.schema}.WASNHD
+		SET
+			ASNSTAT = #{status},
+			HDSAVYN = #{param.hdsavyn},
+			<if test = 'param.rsncode != null'>
+			RSNCODE = #{param.rsncode},
+			</if>
+			<if test = 'param.parsnnm != null'>
+			PARSNNM = #{param.parsnnm},
+			</if>
+			<if test='param.asnityn != null'>
+			ASNITYN = #{param.asnityn},
+			</if>
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND EOASNKY = #{param.eoasnky}
+	</update>
+
+	<!-- 입고예정정보 헤더 상태변경-->
+	<update id="updateWasnhdStatus">
+		/* updateWasnhdStauts */
+		UPDATE ${userData.schema}.WASNHD
+		SET
+			ASNSTAT = #{status},
+			<if test = 'param.rsncode != null'>
+			RSNCODE = #{param.rsncode},
+			</if>
+			<if test = 'param.rsncdnm != null'>
+			PARSNNM = #{param.rsncdnm},
+			</if>
+			<if test = 'param.parsnnm != null'>
+			PARSNNM = #{param.parsnnm},
+			</if>
+			<if test='param.asnityn != null'>
+			ASNITYN = #{param.asnityn},
+			</if>
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND EOASNKY = #{param.eoasnky}
+	</update>
+
+	<!-- 입고예정정보 아이템 상태변경-->
+	<update id="updateDoe024WasnitStatus">
+		/* updateDoe024WasnitStatus */
+		<foreach collection="updateList" item="data" separator=";">
+		UPDATE ${userData.schema}.WASNIT
+		SET
+			ASNITST = #{status},
+			<if test='data.ullocky != null'>
+				ULLOCKY = #{data.ullocky},
+			</if>
+			<if test='data.toareky != null'>
+				TOAREKY = #{data.toareky},
+			</if>
+			<if test='data.tolocky != null'>
+				TOLOCKY = #{data.tolocky},
+			</if>
+			<if test='data.tolayer != null'>
+				TOLAYER = #{data.tolayer},
+			</if>
+			<if test='data.equipky != null'>
+				EQUIPKY = #{data.equipky},
+			</if>
+			<if test='data.custcod != null'>
+				CUSTCOD = #{data.custcod},
+			</if>
+			<if test='data.custnam != null'>
+				CUSTNAM = #{data.custnam},
+			</if>
+			<if test='data.ownerky != null'>
+				OWNERKY = #{data.ownerky},
+			</if>
+			<if test='data.ownrnam != null'>
+				OWNRNAM = #{data.ownrnam},
+			</if>
+			<if test='data.destorg != null'>
+				DESTORG = #{data.destorg},
+			</if>
+			<if test='data.deorgnm != null'>
+				DEORGNM = #{data.deorgnm},
+			</if>
+			<if test='data.destmod != null'>
+				DESTMOD = #{data.destmod},
+			</if>
+			<if test='data.demodnm != null'>
+				DEMODNM = #{data.demodnm},
+			</if>
+			<if test='data.dempocd != null'>
+				DEMPOCD = #{data.dempocd},
+			</if>
+			<if test='data.demdadr != null'>
+				DEMDADR = #{data.demdadr},
+			</if>
+			<if test='data.demdman != null'>
+				DEMDMAN = #{data.demdman},
+			</if>
+			<if test='data.demdtln != null'>
+				DEMDTLN = #{data.demdtln},
+			</if>
+			<if test='data.rsncode != null'>
+				RSNCODE = #{data.rsncode},
+			</if>
+			<if test='data.parsnnm != null'>
+				PARSNNM = #{data.parsnnm},
+			</if>
+			<if test='data.rcarscd != null'>
+				RSNCODE = #{data.rcarscd},
+			</if>
+			<if test='data.rcarsnm != null'>
+				PARSNNM = #{data.rcarsnm},
+			</if>
+			<if test='data.rchsqty != null'>
+				RCHSQTY = #{data.rchsqty},
+			</if>
+			MIXLOAD = CASE
+						WHEN (SELECT COUNT(DISTINCT DEMODNM)
+							 	FROM ${userData.schema}.WASNIT
+							 	WHERE WAREKEY = #{data.warekey}
+							 	AND EOASNKY = #{data.eoasnky}) > 1
+						THEN 'Y'
+						ELSE 'N'
+					  END,
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			EOASNKY = #{data.eoasnky}
+			<if test="data.eoasnit != null">
+			AND EOASNIT = #{data.eoasnit}
+			</if>
+			<if test="withoutCancel == true">
+			AND ASNITST != 'CANCEL'
+			</if>
+		</foreach>
+	</update>
+
+	<!-- 입고예정정보 아이템 상태변경-->
+	<update id="updateWasnitStatus">
+		/* updateWasnitStatus */
+		<foreach collection="updateList" item="data" separator=";">
+		UPDATE ${userData.schema}.WASNIT
+		SET
+			ASNITST = #{status},
+			<if test='data.ullocky != null'>
+				ULLOCKY = #{data.ullocky},
+			</if>
+			<if test='data.toareky != null'>
+				TOAREKY = #{data.toareky},
+			</if>
+			<if test='data.tolocky != null'>
+				TOLOCKY = #{data.tolocky},
+			</if>
+			<if test='data.tolayer != null'>
+				TOLAYER = #{data.tolayer},
+			</if>
+			<if test='data.equipky != null'>
+				EQUIPKY = #{data.equipky},
+			</if>
+			<if test='data.rsncode != null'>
+				RSNCODE = #{data.rsncode},
+			</if>
+			<if test='data.parsnnm != null'>
+				PARSNNM = #{data.parsnnm},
+			</if>
+			<if test='data.rcarscd != null'>
+				RSNCODE = #{data.rcarscd},
+			</if>
+			<if test='data.rcarsnm != null'>
+				PARSNNM = #{data.rcarsnm},
+			</if>
+			<if test='data.rchsqty != null'>
+				RCHSQTY = #{data.rchsqty},
+			</if>
+<!-- 			MIXLOAD = CASE -->
+<!-- 						WHEN (SELECT COUNT(DISTINCT DEMODNM) -->
+<!-- 							 	FROM ${userData.schema}.WASNIT -->
+<!-- 							 	WHERE WAREKEY = #{data.warekey} -->
+<!-- 							 	AND EOASNKY = #{data.eoasnky}) > 1 -->
+<!-- 						THEN 'Y' -->
+<!-- 						ELSE 'N' -->
+<!-- 					  END, -->
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			EOASNKY = #{data.eoasnky}
+			<if test="data.eoasnit != null">
+			AND EOASNIT = #{data.eoasnit}
+			</if>
+			<if test="withoutCancel == true">
+			AND ASNITST != 'CANCEL'
+			</if>
+		</foreach>
+	</update>
+
+	<!-- 입고예정정보 헤더 입차정보 입력-->
+	<update id="updateWasnhdVehicleEntranceInfo">
+		/* updateWasnhdVehicleEntranceInfo */
+		<foreach collection="updateList" item="data" separator=";">
+		UPDATE ${userData.schema}.WASNHD WAS
+		INNER JOIN ${userData.schema}.MWARMA MWA
+			ON MWA.WAREKEY = WAS.WAREKEY
+		SET
+			WAS.ENTDOYN = IF(MWA.CNTRLYN = 'Y', 'N' ,'Y'),
+			WAS.ENTDATE = IF(#{data.entdate} IS NULL OR #{data.entdate} = '', date_format(now(),'%Y%m%d'), REPLACE(#{data.entdate}, '-', '')),
+			WAS.ENTTIME = IF(#{data.enttime} IS NULL OR #{data.enttime} = '', date_format(now(), '%Y%m%d'), REPLACE(#{data.enttime}, ':', '')),
+			WAS.LMODATE = date_format(now(), '%Y%m%d'),
+			WAS.LMOTIME = date_format(now(), '%H%i%s'),
+			WAS.LMOUSER = #{userData.useract},
+			WAS.UPDTCHK = #{data.updtchk} + 1
+		WHERE
+			WAS.WAREKEY = #{data.warekey}
+			AND WAS.EOASNKY = #{data.eoasnky}
+			AND WAS.UPDTCHK = #{data.updtchk}
+		</foreach>
+	</update>
+
+	<!-- 입고예정번호 채번 -->
+	<select id="selectEoasnky" resultType="String">
+		/* selectEoasnky */
+		SELECT
+			${userData.schema}.FN_IM_EOASNKY() AS `eoasnky`
+		FROM
+			DUAL
+	</select>
+
+    <!-- 입고예정번호 아이템 채번 -->
+    <select id="selectEoasnit" resultType="Integer">
+     	/* selectEoasnit */
+     	SELECT
+     		${userData.schema}.FN_IM_EOASNIT(#{eoasnky}) AS `eoasnit`
+   		FROM
+   			DUAL
+    </select>
+
+	<!-- doc027 입고검수 아이템 합격, 불합격 상태값 변경 -->
+	<update id="updateAsnitstDoe027" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* updateAsnitstDoe027 */
+		UPDATE ${userData.schema}.WASNIT
+		SET ASNITST = #{param.asnitst},
+			STLAYER = #{param.stlayer},
+			RSNCODE = #{param.rsncode},
+			PARSNNM = IFNULL(#{param.parsnnm},''),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			EOASNKY = #{param.eoasnky}
+			AND EOASNIT = #{param.eoasnit}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doc027 입고검수 헤더 합격, 불합격 상태값 변경 -->
+	<update id="updateHeadAsnstatDoe027" parameterType="com.kbph.logistics.im.domain.WasnhdDTO">
+		/* updateHeadAsnstatDoe027 */
+		UPDATE ${userData.schema}.WASNHD
+		SET ASNSTAT = #{param.asnstat},
+			RSNCODE = #{param.rsncode},
+			PARSNNM = IFNULL(#{param.parsnnm},''),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND EOASNKY = #{param.eoasnky}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doc027 입고검수 입고오더 아이템 합격, 불합격 상태값 변경 -->
+	<update id="updateStritstDoe027" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* updateStritstDoe027 */
+		UPDATE ${userData.schema}.OSTRIT
+		SET STRITST = #{param.stritst},
+			RSNCODE = #{param.rsncode},
+			PARSNNM = IFNULL(#{param.parsnnm},''),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			COSTRKY = #{param.costrky}
+			AND COSTRIT = #{param.costrit}
+<!-- 			AND UPDTCHK = #{param.updtchk} -->
+	</update>
+
+	<!-- doc027 입고검수 입고오더 헤더 합격, 불합격 상태값 변경 -->
+	<update id="updateOstrhdDoe027" parameterType="com.kbph.logistics.im.domain.OstrhdDTO">
+		/* updateOstrhdDoe027 */
+		UPDATE ${userData.schema}.OSTRHD
+		SET STRSTAT = #{param.strstat},
+			PARSNNM = IFNULL(#{param.parsnnm},''),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = UPDTCHK + 1
+		WHERE
+			COSTRKY = #{param.costrky}
+<!-- 			AND UPDTCHK = #{param.updtchk} -->
+	</update>
+
+	<!-- 입고오더 아이템 리스트 조회 -->
+	<select id="getOstritList" resultType="com.kbph.logistics.im.domain.OstritDTO">
+		/* getOstritList */
+		SELECT
+			WAREKEY, COSTRKY, COSTRIT
+			, OWNERKY, STRITST, SKUMKEY, SKUDESC
+			, STLAYER, SKUWEIG, SKUWIDT, SKULENG
+			, SKUTHIC, SUOMKEY, STROQTY, STRCQTY
+			, CUSTCOD, ITEMCOD
+			, PURCNUM, ORDERLN, STLOTNB, SKUSTAT
+			, STRMEMO, RSNCODE, PARSNNM, CREDATE
+			, CRETIME, CREUSER, LMODATE, LMOTIME
+			, LMOUSER, UPDTCHK
+		FROM
+		    ${userData.schema}.OSTRIT
+		WHERE
+		    COSTRKY = #{param.costrky}
+		    <if test='param.stritst != null and param.stritst != ""'>
+		    	AND STRITST = #{param.stritst}
+		    </if>
+	</select>
+
+	<!-- 입고오더 헤더 조회(필요한 값만) -->
+	<select id="selectOstrhdKey" resultType="com.kbph.logistics.im.domain.OstrhdDTO">
+		/* selectOstrhdKey */
+		SELECT
+			OS.COSTRKY, OS.WAREKEY, OS.STRSTAT, OS.UPDTCHK
+		FROM
+		    ${userData.schema}.OSTRHD OS
+		WHERE
+			OS.WAREKEY = #{param.warekey}
+		    AND OS.COSTRKY = #{param.costrky}
+		    <if test="param.strstat != null and param.strstat != ''">
+		    AND OS.STRSTAT = #{param.strstat}
+		    </if>
+	</select>
+
+	<!-- ASN 아이템 조회(필요한 값만) -->
+	<select id="selectOstritKeyAndItem" resultType="com.kbph.logistics.im.domain.OstritDTO">
+		/* selectOstritKeyAndItem */
+		SELECT
+			OS.COSTRKY, OS.COSTRIT, OS.WAREKEY, OS.STRITST,
+			OS.UPDTCHK
+		FROM
+		    ${userData.schema}.OSTRIT OS
+		WHERE
+			OS.WAREKEY = #{param.warekey}
+		    AND OS.COSTRKY = #{param.costrky}
+		    <if test="param.stritstList != null and param.stritstList.size() != 0">
+		    	AND OS.STRITST in
+		    	<foreach collection="param.stritstList" item="stritst" open="(" close=")" separator=",">
+		    	 	#{stritst}
+	    	 	</foreach>
+		    </if>
+	</select>
+
+	<!-- 입고오더 채번 -->
+	<select id="selectCostrky" resultType="String">
+		/* selectCostrky */
+		SELECT
+			${userData.schema}.FN_IM_COSTRKY() AS `costrky`
+		FROM dual
+	</select>
+
+	 <!-- 입고오더 아이템 채번 -->
+    <select id="selectCostrit" resultType="Integer">
+     	/* selectCostrit */
+     	SELECT
+     		${userData.schema}.FN_IM_COSTRIT(#{costrky}) AS `costrit`
+   		FROM
+   			DUAL
+    </select>
+
+	<!-- 입고오더헤더 생성 -->
+	<insert id="insertOstrhdList" parameterType="com.kbph.logistics.im.domain.InboundOrderForTreeGridDTO">
+		/* insertOstrhdList */
+		<foreach collection="insertList" item="item" separator=";">
+		INSERT INTO ${userData.schema}.OSTRHD(
+			<!-- P.K -->
+			COSTRKY,
+			<!-- Columns -->
+			WAREKEY, DOCCATE, DOCTYPE, RSNCODE,
+			PARSNNM, VOWNKEY, VEHICKY, VHCFNAM, DRVERNM,
+			STRSTAT, STRDATE, STRTIME,
+			<!-- Common Columns -->
+			CREDATE, CRETIME, CREUSER, LMODATE,
+			LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{item.costrky},
+			#{item.warekey}, #{item.doccate}, #{item.doctype}, #{item.rsncode},
+			#{item.parsnnm}, #{item.vownkey}, #{item.vehicky}, #{item.vhcfnam}, #{item.drvernm},
+			#{item.strstat}, DATE_FORMAT(#{item.strdate}, '%Y%m%d'), DATE_FORMAT(STR_TO_DATE(#{item.strtime}, '%H:%i:%s'), '%H%i%s'),
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}, date_format(now(), '%Y%m%d'),
+			date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+		</foreach>
+	</insert>
+
+	<!-- 입고오더 아이템 생성 -->
+	<insert id="insertOstritList" parameterType="com.kbph.logistics.im.domain.InboundOrderForTreeGridDTO">
+		/* insertOstritList */
+		<foreach collection="insertList" item="item" separator=";">
+		INSERT INTO ${userData.schema}.OSTRIT(
+			<!-- P.K -->
+			COSTRKY, COSTRIT
+			<!-- Columns -->
+			, WAREKEY, OWNERKY, OWNRNAM
+			, POSHPDT, POSHPTM, POSHPDY, INVOICE
+			, STRITST, SKUGRKY, SKUMKEY, SKUDESC
+			, STLAYER, SKUWEIG, SKUWIDT, SKULENG
+			, GROSSWG, GROSSWD, GROSSLN, SKUTHIC
+			, SUOMKEY, SKUSTRD, STROQTY, STRCQTY
+			, CUSTCOD, CUSTNAM
+			, REGIORG, DESTORG, DEORGNM
+			, REGIMOD, DESTMOD, DEMODNM, DEMODYN
+			, DEMDMAN, DEMDADR, DEMPOCD, DEMDTLN
+			, ADDCOKY
+			, ITEMCOD, PURCNUM, ORDERLN
+			, STLOTNB, BTRFSTC
+			, SHPLIMT, DELVDSR
+			, SKUSTAT, STRMEMO, RSNCODE, PARSNNM
+			, DOCCATE, DOCTYPE, BTRCATE, FNCUSKY
+			<!-- Common Columns -->
+			, CREDATE, CRETIME, CREUSER, LMODATE
+			, LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{item.costrky}, #{item.costrit}
+			, #{item.warekey}, #{item.ownerky}, #{item.ownrnam}
+			, REPLACE(#{item.poshpdt}, '-', ''), REPLACE(#{item.poshptm}, ':' ,''), #{item.poshpdy}, #{item.invoice}
+			, #{item.stritst}, (
+									SELECT MG.SKUGRKY
+							        FROM ${userData.schema}.MGRPMA MG
+							        WHERE
+							        	((MG.MINLENG = 0 OR MG.MINLENG <![CDATA[<=]]> #{item.skuleng}) AND (MG.MAXLENG = 0 OR #{item.skuleng} <![CDATA[<]]> MG.MAXLENG))
+							        	AND ((MG.MINWIDT = 0 OR MG.MINWIDT <![CDATA[<=]]> #{item.skuwidt}) AND (MG.MAXWIDT = 0 OR #{item.skuwidt} <![CDATA[<]]> MG.MAXWIDT))
+							        	AND MG.GRUSEYN = 'Y'
+					        	), #{item.skumkey}, #{item.skudesc},
+			IFNULL(#{item.stlayer}, #{item.costrit}), #{item.skuweig}, #{item.skuwidt}, #{item.skuleng}
+			, #{item.grosswg}, #{item.grosswd}, #{item.grossln}, #{item.skuthic}
+			, #{item.suomkey}, #{item.skustrd}, #{item.stroqty}, #{item.strcqty}
+			, #{item.custcod}, #{item.custnam}
+			, #{item.regiorg}, #{item.destorg}, #{item.deorgnm}, IF(#{item.regimod} = '' OR #{item.regimod} IS NULL, #{item.regiorg}, #{item.regimod})
+			, IF(#{item.destmod} = '' OR #{item.destmod} IS NULL, #{item.destorg}, #{item.destmod}), IF(#{item.demodnm} = '' OR #{item.demodnm} IS NULL, #{item.deorgnm}, #{item.demodnm}), IF(#{item.destmod} = '' OR #{item.destmod} IS NULL, 'N', 'Y')
+			, IFNULL(#{item.demdman}, ''), IFNULL(#{item.demdadr},''), IFNULL(#{item.dempocd},''), IFNULL(#{item.demdtln},'')
+			, <include refid="getAddcoky"></include>
+			, #{item.itemcod}, #{item.purcnum}, #{item.orderln}
+			, IFNULL(#{item.stlotnb},''), IFNULL(#{item.btrfstc},'')
+			, IF(#{item.shplimt} IS NULL OR #{item.shplimt} = '', '', REPLACE(#{item.shplimt}, '-', '')), IF(#{item.delvdsr} IS NULL OR #{item.delvdsr} = '', '', REPLACE(#{item.delvdsr},'-',''))
+			, #{item.skustat}, #{item.strmemo}, #{item.rsncode}, #{item.parsnnm}
+			, #{item.doccate}, #{item.doctype}, #{item.btrcate}, IFNULL(#{item.fncusky},'')
+			, date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+		</foreach>
+	</insert>
+
+	<!-- 입고오더 헤더 상태변경-->
+	<update id="updateOstrhdStatus">
+		/* updateOstrhdStatus */
+		UPDATE ${userData.schema}.OSTRHD
+		SET
+			STRSTAT = #{status},
+			<if test='param.rsncode != null'>
+			RSNCODE = #{param.rsncode},
+			</if>
+			<if test='param.parsnnm != null'>
+			PARSNNM = #{param.parsnnm},
+			</if>
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND COSTRKY = #{param.costrky}
+	</update>
+
+	<!-- 입고오더 아이템 상태변경-->
+	<update id="updateOstritStatus">
+		/* updateOstritStatus */
+		<foreach collection="updateList" item="data" separator=";">
+		UPDATE ${userData.schema}.OSTRIT
+		SET
+			STRITST = #{status},
+			<if test='data.rsncode != null'>
+			RSNCODE = #{data.rsncode},
+			</if>
+			<if test='data.parsnnm != null'>
+			PARSNNM = #{data.parsnnm},
+			</if>
+			<if test='data.strcqty != null'>
+			STRCQTY = #{data.strcqty},
+			</if>
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			WAREKEY = #{data.warekey}
+			AND COSTRKY = #{data.costrky}
+			AND COSTRIT = #{data.costrit}
+			<if test="withoutCancel == true">
+			AND STRITST != 'CANCEL'
+			</if>
+		</foreach>
+	</update>
+
+	<!-- 입고검수대상 확정-->
+	<update id="updateWasnhdFlagForInspectionTarget">
+		/* updateWasnhdFlagForInspectionTarget */
+		<foreach collection="updateList" item="data" separator=";">
+		UPDATE ${userData.schema}.WASNHD
+		SET
+			ASNITYN = #{data.asnityn},
+			ENTDATE = IF(ISNULL(#{data.entdate}) OR TRIM(#{data.entdate}) = '', date_format(now(), '%Y%m%d'), date_format(#{data.entdate}, '%Y%m%d')),
+			ENTTIME =  IF(ISNULL(#{data.enttime}) OR TRIM(#{data.enttime}) = '', date_format(now(), '%H%i%s'), date_format(STR_TO_DATE(#{data.enttime}, '%H%i%s'), '%H%i%s')),
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			WAREKEY = #{data.warekey}
+			AND EOASNKY = #{data.eoasnky}
+		</foreach>
+	</update>
+
+	<select id="getDoe033HeadList" resultType="com.kbph.logistics.im.domain.WasnhdDTO">
+		/* getDoe033HeadList */
+		SELECT
+			<!-- pqGrid recIndx -->
+			WA.EOASNKY as ROWKEY,
+			<!-- P.K. -->
+			WA.EOASNKY, WT.RCVDCKY,
+			<!-- Field -->
+			WA.WAREKEY, WT.TASKOKY, MW.WHNAMLC, WA.DOCCATE, MD.DOCCTNM,
+		    WA.DOCTYPE, MD.DOCTYNM, WA.VOWNKEY, MVO.VONAMLC,
+		    WA.VEHICKY, MV.VHCFNAM, WA.DRVERNM, WA.ASNSTAT,
+		    WT.EQUIPKY, MEQ.EQUINAM, MEQ.AREAKEY, MA.AREANAM,
+		    IFNULL(MAX(WT.TASKSTS), WA.ASNSTAT) as ASNSTAT,
+		    IFNULL (MAX(MC2.COMCDTX), MC.COMCDTX) as ASNSTNM,
+		    DATE_FORMAT(WA.ASNDATE,'%Y-%m-%d') AS ASNDATE, DATE_FORMAT(STR_TO_DATE(WA.ASNTIME,'%H%i%s'),'%H:%i:%s') AS ASNTIME, WA.RSNCODE,
+		    MR.RSNCDNM, WA.PARSNNM, WA.ASNPIYN,
+			<!-- Custom Field -->
+			COUNT(1) AS ITEMCNT, SUM(WAI.SKUWEIG) AS TTLWEIG, SUM(WAI.ASNDQTY) AS TTLDQTY,
+		    <!-- Common Field -->
+		    DATE_FORMAT(WA.CREDATE,'%Y-%m-%d') AS CREDATE,
+		    DATE_FORMAT(STR_TO_DATE(WA.CRETIME,'%H%i%s'),'%H:%i:%s') AS CRETIME,
+		    ${userData.schema}.FN_SY_USERNAM(WA.CREUSER) AS CREUSER,
+		    DATE_FORMAT(WA.LMODATE,'%Y-%m-%d') as LMODATE,
+		    DATE_FORMAT(STR_TO_DATE(WA.LMOTIME,'%H%i%s'),'%H:%i:%s') AS LMOTIME,
+		    ${userData.schema}.FN_SY_USERNAM(WA.LMOUSER) AS LMOUSER,
+		    WA.UPDTCHK
+		FROM
+		    ${userData.schema}.WASNHD WA <!-- ASN Header -->
+		INNER JOIN ${userData.schema}.MWARMA MW <!-- 창고 master -->
+			ON MW.WAREKEY = WA.WAREKEY
+			AND MW.WHUSEYN = 'Y'
+		INNER JOIN ${userData.commonSchema}.MVOWMA MVO <!-- 차주 master -->
+			ON MVO.VOWNKEY = WA.VOWNKEY
+			AND MVO.VOUSEYN = 'Y'
+		INNER JOIN ${userData.commonSchema}.MVHCMA MV <!-- 차량 master -->
+			ON MVO.VOWNKEY = MV.VOWNKEY
+			AND MV.VEHICKY = WA.VEHICKY
+			AND MV.VHUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MCODEM MC <!-- Common Code master -->
+			ON MC.COMCDVL = WA.ASNSTAT
+			AND MC.COMCDKY = 'ASNSTAT'
+			AND MC.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD <!-- Document master -->
+			ON MD.WAREKEY = WA.WAREKEY
+			AND MD.DOCCATE = WA.DOCCATE
+			AND MD.DOCTYPE = WA.DOCTYPE
+			AND MD.DOUSEYN = 'Y'
+		LEFT JOIN ${userData.schema}.MRSCMA MR <!-- Reason code master --> <!-- 임시 LEFT -->
+			ON MR.WAREKEY = WA.WAREKEY
+			AND MR.DOCCATE = WA.DOCCATE
+			AND MR.DOCTYPE = WA.DOCTYPE
+			AND MR.RSNCODE = WA.RSNCODE
+			AND MR.RSUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.WASNIT WAI <!-- ASN item master -->
+		    ON WAI.WAREKEY = WA.WAREKEY
+		    AND WAI.EOASNKY = WA.EOASNKY
+		INNER JOIN ${userData.schema}.WTAKIT WT <!-- Task table -->
+		    ON WT.EOASNKY = WAI.EOASNKY
+		     AND WT.EOASNIT = WAI.EOASNIT
+		    AND WT.WAREKEY = WAI.WAREKEY
+		INNER JOIN ${userData.schema}.WRCVIT WR ON
+		    WR.RCVDCKY = WT.RCVDCKY
+		    AND WR.RCVDCIT = WT.RCVDCIT
+		LEFT JOIN ${userData.schema}.MCODEM MC2 <!-- takstat master -->
+		    ON MC2.COMCDVL = WT.TASKSTS
+		    AND MC2.COMCDKY = 'TASKSTS'
+			AND MC2.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MEQUMA MEQ
+			ON MEQ.WAREKEY = WT.WAREKEY
+		    AND MEQ.AREAKEY = WT.TOAREKY
+		    AND MEQ.EQUIPKY = WT.EQUIPKY
+		    AND MEQ.EQUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MAREMA MA
+		    ON MA.WAREKEY = MEQ.WAREKEY
+		    AND MA.AREAKEY = MEQ.AREAKEY
+		<where>
+			<if test='param.warekey != null and param.warekey != ""'>
+		    	AND WA.WAREKEY = #{param.warekey}
+		    </if>
+		    <if test='param.asnstat != null and param.asnstat != ""'>
+		    	AND WA.ASNSTAT = #{param.asnstat}
+		    </if>
+		    <if test='param.eoasnky != null and param.eoasnky != ""'>
+		    	AND WA.EOASNKY LIKE CONCAT('%',#{param.eoasnky},'%')
+		    </if>
+		    <if test='param.vhcfnam != null and param.vhcfnam != ""'>
+		    	AND WA.VHCFNAM LIKE CONCAT ('%', #{param.vhcfnam},'%')
+		    </if>
+		    <if test='param.taskoky != null and param.taskoky != ""'>
+		    	AND WT.TASKOKY LIKE CONCAT('%',#{param.taskoky},'%')
+		    </if>
+		    <if test='param.vhcfnam != null and param.vhcfnam != ""'>
+		    	AND MV.VHCFNAM LIKE CONCAT('%',#{param.vhcfnam},'%')
+		    </if>
+	       	<if test='param.asndatefrom != null and param.asndatefrom != ""'>
+				 AND DATE_FORMAT(STR_TO_DATE(WA.ASNDATE, '%Y%m%d'), '%Y-%m-%d') <![CDATA[>=]]> #{param.asndatefrom}
+			</if>
+			<if test='param.asndateto != null and param.asndateto != ""'>
+				 AND DATE_FORMAT(STR_TO_DATE(WA.ASNDATE, '%Y%m%d'), '%Y-%m-%d') <![CDATA[<=]]> #{param.asndateto}
+			</if>
+			<if test='param.asnpiyn != null and param.asnpiyn != ""'>
+		    	AND WA.ASNPIYN = #{param.asnpiyn}
+		    </if>
+   		    <if test="param.asnstatList != null and param.asnstatList.size != 0">
+		    	AND WA.ASNSTAT IN
+		    	<foreach collection="param.asnstatList" item="asnstat" open="(" close=")" separator=",">
+		    	 	#{asnstat}
+	    	 	</foreach>
+		    </if>
+		    <if test='param.asnitst != null and param.asnitst != ""'>
+		    	AND WAI.ASNITST = #{param.asnitst}
+		    </if>
+   		    <if test='param.equipky != null and param.equipky != ""'>
+		    	AND WT.EQUIPKY = #{param.equipky}
+		    </if>
+			AND (WT.TASKSTS IS NULL OR WT.TASKSTS NOT IN ('OPERCMP', 'CMP'))
+			AND WR.RCVITST != 'CANCEL'
+		</where>
+		GROUP BY
+			WA.WAREKEY, MW.WHNAMLC, WA.DOCCATE, MD.DOCCTNM, WT.TASKOKY,
+		    WA.DOCTYPE, MD.DOCTYNM, WA.VOWNKEY, MVO.VONAMLC, WT.EQUIPKY, MEQ.EQUINAM, MEQ.AREAKEY, MA.AREANAM,
+		    WA.VEHICKY, MV.VHCFNAM, WA.DRVERNM, WA.ASNDATE, WA.ASNTIME, WA.RSNCODE,
+		    MR.RSNCDNM, WA.PARSNNM, WA.ASNPIYN,
+		    CREDATE, CREUSER, LMODATE, LMOTIME,
+		    LMOUSER, WA.UPDTCHK
+		ORDER BY
+			WT.TASKOKY DESC, WA.EOASNKY DESC
+	</select>
+
+	<select id="getDoe033ItemList" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* getDoe033ItemList */
+		SELECT
+			<!-- pqGrid recIndx -->
+			CONCAT(WAI.EOASNKY, WAI.EOASNIT) as ROWKEY,
+			<!-- P.K. -->
+			WAI.EOASNKY, WAI.EOASNIT,
+			<!-- Fields -->
+			WRC.RCVDCKY, WRC.RCVDCIT,
+			WAI.WAREKEY, MW.WHNAMLC, DATE_FORMAT(WAI.POSHPDT, '%Y-%m-%d') AS POSHPDT, WAI.INVOICE,
+			WT.TASKOKY, WT.TASKOIT,
+			WAI.OWNERKY, WAI.OWNRNAM,
+			IFNULL(WT.TASKSTS, WAI.ASNITST) as ASNITST,
+			IFNULL(WST.LOLAYER, 0) as LOLAYER,
+			WAI.SKUGRKY, MG.GRPKYNM, WAI.SKUMKEY, WAI.SKUDESC,
+			WAI.STLAYER, ((SELECT count(1) FROM ${userData.schema}.WASNIT WHERE EOASNKY = #{param.eoasnky} AND WAREKEY = #{param.warekey}) - WAI.STLAYER + 1) AS VSLAYER, WAI.SKUWEIG, WAI.SKUWIDT,
+			WAI.SKULENG, WAI.SKUTHIC, WAI.GROSSWG, WAI.GROSSWD,	WAI.GROSSLN, WAI.GROSSTH,
+			WAI.SUOMKEY, WAI.SKUSTRD,
+			WAI.ULLOCKY, WT.TOAREKY, MA.AREANAM , WT.TOLOCKY, ML.LOCANAM,
+			WAI.ADDCOKY, WAI.ASNDQTY, WAI.RCHSQTY, WAI.CUSTCOD, WAI.CUSTNAM,
+			WAI.REGIORG, MR1.RENAMLC AS RGORGNM, WAI.DESTORG, WAI.DEORGNM,
+			WAI.REGIMOD, MR2.RENAMLC AS RGMODNM, WAI.DESTMOD, WAI.DEMODNM,
+			WAI.DEMDMAN, WAI.DEMDADR, WAI.DEMPOCD, WAI.DEMDTLN,
+			WAI.ITEMCOD, WAI.PURCNUM,
+			WAI.ORDERLN, WAI.STLOTNB, WAI.BTRFSTC, WAI.SKUSTAT, MG.GRPKYNM, BTR.BTRCNAM,
+			DATE_FORMAT(WAI.SHPLIMT, '%Y-%m-%d') AS SHPLIMT, DATE_FORMAT(WAI.DELVDSR, '%Y-%m-%d') AS DELVDSR, WAI.RSNCODE,
+			MRC.RSNCDNM AS RSNCDNM,	WAI.PARSNNM, WAI.COSTRKY, WAI.COSTRIT, WAI.BTRCATE, WAI.BTRFSTC,
+			WAI.POSHPTM, WAI.POSHPDY, WAI.EQUIPKY, WAI.FNCUSKY, WAI.STKMEMO,
+		    <!-- Common Fields -->
+			MAX(DATE_FORMAT(WAI.CREDATE,'%Y-%m-%d')) as CREDATE,
+			MAX(DATE_FORMAT(STR_TO_DATE(WAI.CRETIME,'%H%i%s'),'%H:%i:%s')) AS CRETIME,
+			${userData.schema}.FN_SY_USERNAM(WAI.CREUSER) AS CREUSER,
+			MAX(DATE_FORMAT(WAI.LMODATE,'%Y-%m-%d')) as LMODATE,
+			MAX(DATE_FORMAT(STR_TO_DATE(WAI.LMOTIME,'%H%i%s'),'%H:%i:%s')) AS LMOTIME,
+			${userData.schema}.FN_SY_USERNAM(WAI.LMOUSER) AS LMOUSER,
+			WT.UPDTCHK
+		    , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ITEMCOD' AND COMCDVL = WAI.ITEMCOD AND COUSEYN = 'Y') AS ITCODNM
+		    , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'SUOMKEY' AND COMCDVL = WAI.SUOMKEY AND COUSEYN = 'Y') AS SUOMNAM
+		    , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'TASKSTS' AND COMCDVL = WT.TASKSTS AND COUSEYN = 'Y') AS TASKSTSNM
+		    , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = BA.ADDSIKY AND COUSEYN = 'Y') AS ADDCONM
+		    , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'SKUSTAT' AND COMCDVL = WAI.SKUSTAT AND COUSEYN = 'Y') AS SKUSTNM
+		    , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'TASKSTS' AND COMCDVL = WT.TASKSTS AND COUSEYN = 'Y') AS ASNITSN
+		FROM
+		    ${userData.schema}.WASNIT WAI
+		INNER JOIN ${userData.schema}.MWARMA MW  <!-- 창고 master -->
+			ON MW.WAREKEY = WAI.WAREKEY
+		INNER JOIN ${userData.schema}.WASNHD WAH <!-- ASN Header -->
+			ON WAH.EOASNKY = WAI.EOASNKY
+		LEFT JOIN ${userData.schema}.MREGMA MR1 <!-- 목적지 master for orginal -->
+			ON MR1.REGIKEY = WAI.REGIORG
+		LEFT JOIN ${userData.schema}.MREGMA MR2 <!-- 목적지 master for mod -->
+			ON MR2.REGIKEY = WAI.REGIMOD
+		LEFT JOIN ${userData.schema}.MRSCMA MRC <!-- Reason Code master --> <!-- 임시 LETF -->
+			ON MRC.WAREKEY = WAH.WAREKEY
+			AND MRC.WAREKEY = WAI.WAREKEY
+			AND MRC.DOCCATE = WAH.DOCCATE
+			AND MRC.DOCTYPE = WAH.DOCTYPE
+			AND MRC.RSNCODE = WAI.RSNCODE
+		INNER JOIN ${userData.schema}.WTAKIT WT <!-- task table -->
+		    ON WT.EOASNKY = WAI.EOASNKY
+		    AND WT.EOASNIT = WAI.EOASNIT
+		    AND WT.WAREKEY = WAI.WAREKEY
+		INNER JOIN ${userData.schema}.MAREMA MA
+		 	ON MA.WAREKEY = WT.WAREKEY
+		 	AND MA.AREAKEY = WT.TOAREKY
+		INNER JOIN ${userData.schema}.MLOCMA ML
+			ON ML.WAREKEY = WT.WAREKEY
+			AND ML.AREAKEY = WT.TOAREKY
+			AND ML.LOCAKEY = WT.TOLOCKY
+		INNER JOIN ${userData.schema}.MGRPMA MG <!-- 제품 그룹 master -->
+			ON MG.SKUGRKY = WAI.SKUGRKY
+		INNER JOIN ${userData.schema}.BTRCAT BTR <!-- 정산유형 master -->
+			ON BTR.BTRCATE = WAI.BTRCATE
+		INNER JOIN ${userData.schema}.WRCVIT WRC ON
+		    WRC.EOASNKY = WAI.EOASNKY
+		    AND WRC.EOASNIT = WAI.EOASNIT
+		LEFT JOIN ${userData.schema}.WSTKKY WST ON
+		    WST.WAREKEY = WT.WAREKEY
+		    AND WST.AREAKEY = WT.TOAREKY
+		    AND WST.LOCAKEY = WT.TOLOCKY
+		    AND WST.SKUMKEY = WT.SKUMKEY
+	   INNER JOIN ${userData.schema}.BADDCO BA
+	   		   ON WAI.ADDCOKY = BA.ADDCOKY
+		<where>
+			WT.TASKSTS != 'CANCEL'
+			AND WRC.RCVITST != 'CANCEL'
+		    <if test='param.warekey != null and param.warekey != ""'>
+		    	AND WAI.WAREKEY = #{param.warekey}
+		    </if>
+		    <if test='param.eoasnky != null and param.eoasnky != ""'>
+		    	AND WAI.EOASNKY = #{param.eoasnky}
+		    </if>
+		    <if test='param.taskoky != null and param.taskoky != ""'>
+		    	AND WT.TASKOKY = #{param.taskoky}
+		    </if>
+		    <if test='param.asnitst != null and param.asnitst != ""'>
+		    	AND WAI.ASNITST = #{param.asnitst}
+		    </if>
+		    <if test='param.tasksts != null and param.tasksts != ""'>
+		    	AND WT.TASKSTS = #{param.tasksts}
+		    </if>
+   		    <if test="param.taskstsList != null and param.taskstsList.size != 0">
+		    	AND WT.TASKSTS IN
+		    	<foreach collection="param.taskstsList" item="tasksts" open="(" close=")" separator=",">
+		    	 	#{tasksts}
+	    	 	</foreach>
+		    </if>
+	    </where>
+	    GROUP BY ROWKEY,
+			WAI.EOASNKY, WAI.EOASNIT,
+			WAI.WAREKEY, MW.WHNAMLC, WAI.POSHPDT, WAI.INVOICE,
+			WAI.OWNERKY, WAI.OWNRNAM, WAI.ASNITST,
+			WAI.SKUGRKY, MG.GRPKYNM, WAI.SKUMKEY, WAI.SKUDESC,
+			WAI.STLAYER, WAI.SKUWEIG, WAI.SKUWIDT, WAI.SKULENG,
+			WAI.SKUTHIC, WAI.GROSSWG, WAI.GROSSWD, WAI.GROSSLN,
+			WAI.SUOMKEY, WAI.SKUSTRD, WAI.ADDCOKY,
+			WAI.ASNDQTY, WAI.RCHSQTY, WAI.CUSTCOD, WAI.CUSTNAM,
+			WAI.REGIORG, MR1.RENAMLC, WAI.DEORGNM,
+			WAI.REGIMOD, MR2.RENAMLC, WAI.DEMODNM,
+			WAI.DEMDMAN, WAI.DEMDADR, WAI.DEMPOCD, WAI.DEMDTLN,
+			WAI.ITEMCOD, WAI.PURCNUM, WAI.ORDERLN,
+			WAI.STLOTNB, WAI.BTRFSTC, WAI.SKUSTAT,
+			WAI.SHPLIMT, WAI.DELVDSR, WAI.RSNCODE, MRC.RSNCDNM,
+			WAI.PARSNNM, WAI.COSTRKY, WAI.COSTRIT, ASNITSN,
+    		SKUSTNM, ADDCONM, TASKSTSNM, SUOMNAM, ITCODNM
+		ORDER BY
+		    WT.TOLOCKY, WT.TOLAYER
+	</select>
+
+	<!-- 재고키 채번 -->
+	<select id="selectStockky" resultType="String">
+		/* selectStockky */
+		select ${userData.schema}.fn_sm_stockky() as stockky from dual
+	</select>
+
+	<!-- LOTNMKY 채번 -->
+	<select id="selectLotnmky" resultType="String">
+		/* selectLotnmky */
+		select ${userData.schema}.fn_sm_lotnmky() as lotnmky from dual
+	</select>
+
+	<select id="getDoe033Layer" resultType="int">
+		/* getDoe033Layer */
+		SELECT
+		    IFNULL(
+		        (SELECT
+		            MAX(CASE
+		                WHEN LOLAYER IS NULL OR LOLAYER = 0 OR LOLAYER = '' THEN 0
+		                ELSE LOLAYER
+		            END)
+		         FROM ${userData.schema}.WSTKKY
+		         WHERE
+		         	WAREKEY = #{param.warekey}
+		         AND AREAKEY = #{param.toareky}
+		         AND LOCAKEY = #{param.tolocky} LIMIT 1), 0) AS LOLAYER
+	</select>
+
+	<!-- doe033 wstkky insert -->
+	<insert id="saveDoe033Wstkky" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* saveDoe033Wstkky */
+		INSERT INTO ${userData.schema}.WSTKKY(
+			STOCKKY
+			, WAREKEY, AREAKEY, LOCAKEY, LOLAYER
+			, LOTNMKY
+			, OWNERKY, OWNRNAM, CUSTCOD, CUSTNAM, FNCUSKY
+			, SKUMKEY, SKUDESC
+			, SKUGRKY
+			, GROSSWG, GROSSWD, GROSSLN, GROSSTH
+			, SKUWEIG, SKUWIDT, SKULENG, SKUTHIC
+			, BTRCATE, STLOTNB, PURCNUM, ORDERLN
+			, REGIORG, DESTORG, DEORGNM, REGIMOD, DESTMOD, DEMODNM
+			, DEMDMAN, DEMDADR, DEMPOCD, DEMDTLN
+			, ITEMCOD, STOTQTY
+			, SUOMKEY
+			, ADDCOKY, BTRFSTC, STKMEMO
+			, POSHPDT, POSHPTM, POSHPDY
+			, SHPLIMT, DELVDSR
+			, RCVDCDT
+			, RCVDCTM
+			, RCVDCKY, RCVDCIT
+			, TASKOKY, TASKOIT
+			, CREDATE, CRETIME, CREUSER
+			, LMODATE, LMOTIME, LMOUSER
+			, UPINFST
+		)
+		VALUES(
+			#{item.stockky}
+			, #{item.warekey}, #{item.toareky}, #{item.tolocky}, #{item.tolayer}
+			, #{item.lotnmky}
+			, #{item.ownerky}, #{item.ownrnam}, #{item.custcod}, #{item.custnam}, #{item.fncusky}
+			, #{item.skumkey}, #{item.skudesc}
+			,(
+				SELECT MG.SKUGRKY
+		        FROM ${userData.schema}.MGRPMA MG
+		        WHERE
+		        	((MG.MINLENG = 0 OR MG.MINLENG <![CDATA[<=]]> #{item.skuleng}) AND (MG.MAXLENG = 0 OR #{item.skuleng} <![CDATA[<]]> MG.MAXLENG))
+		        	AND ((MG.MINWIDT = 0 OR MG.MINWIDT <![CDATA[<=]]> #{item.skuwidt}) AND (MG.MAXWIDT = 0 OR #{item.skuwidt} <![CDATA[<]]> MG.MAXWIDT))
+		        	AND MG.GRUSEYN = 'Y'
+        	)
+			, #{item.grosswg}, #{item.grosswd}, #{item.grossln}, #{item.grossth}
+			, #{item.skuweig}, #{item.skuwidt}, #{item.skuleng}, #{item.skuthic}
+			, #{item.btrcate}, IFNULL(#{item.stlotnb},''), #{item.purcnum}, #{item.orderln}
+			, #{item.regiorg}, IFNULL(#{item.destorg},''), #{item.deorgnm}, #{item.regimod}, IFNULL(#{item.destmod},''), #{item.demodnm}
+			, #{item.demdman}, #{item.demdadr}, #{item.dempocd}, #{item.demdtln}
+			, #{item.itemcod}, #{item.asndqty}
+			, #{item.suomkey}
+			, <include refid="getAddcoky"></include>
+			, #{item.btrfstc}, #{item.stkmemo}
+			, REPLACE(#{item.poshpdt},'-',''), REPLACE(#{item.poshptm},':',''), #{item.poshpdy}
+			,CASE
+			    WHEN #{item.shplimt} IS NULL OR #{item.shplimt} = '' THEN ''
+			    ELSE DATE_FORMAT(#{item.shplimt}, '%Y%m%d')
+			END,
+			CASE
+			    WHEN #{item.delvdsr} IS NULL OR #{item.delvdsr} = '' THEN ''
+			    ELSE DATE_FORMAT(#{item.delvdsr}, '%Y%m%d')
+			END
+			, IF(#{item.rcvdcdt} IS NULL OR #{item.rcvdcdt} = '', date_format(now(), '%Y%m%d'), REPLACE(#{item.rcvdcdt}, '-', ''))
+			, IF(#{item.rcvdctm} IS NULL OR #{item.rcvdctm} = '', date_format(now(), '%H%i%s'), REPLACE(#{item.rcvdctm}, ':', ''))
+			, #{item.rcvdcky}, #{item.rcvdcit}
+			, #{item.taskoky}, #{item.taskoit}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{userData.useract}
+			, date_format(now(), '%Y%m%d')
+			, date_format(now(), '%H%i%s')
+			, #{userData.useract}
+			, 'Y'
+		)
+	</insert>
+		<!-- doe033 wtakit 조업시작처리-->
+	<update id="saveDoe033WtakitOperStart" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* saveDoe033WtakitOperStart */
+		UPDATE ${userData.schema}.WTAKIT
+			SET
+				TASKSTS = #{param.tasksts},
+				MVSTDAT = date_format(now(), '%Y%m%d'),
+				MVSTTIM = date_format(now(), '%H%i%s'),
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{userData.useract},
+				UPDTCHK = #{param.updtchk} + 1
+			WHERE
+				TASKOKY = #{param.taskoky}
+				AND TASKOIT = #{param.taskoit}
+				AND WAREKEY = #{param.warekey}
+				AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doe033 wtakit 작업완료처리-->
+	<update id="saveDoe033Wtakit" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* saveDoe033Wtakit */
+		UPDATE ${userData.schema}.WTAKIT
+			SET
+				STOCKKY = #{param.stockky},
+				LOTNMKY = #{param.lotnmky},
+				TCMPQTY = #{param.asndqty},
+				EQUIPKY = #{param.equipky},
+				TOLOCKY = #{param.tolocky},
+				TOLAYER = #{param.tolayer},
+				TASKSTS = #{param.tasksts},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{userData.useract},
+				UPDTCHK = #{param.updtchk} + 1
+			WHERE
+				TASKOKY = #{param.taskoky}
+				AND TASKOIT = #{param.taskoit}
+				AND WAREKEY = #{param.warekey}
+				AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- doe033 wtakit 조업완료처리-->
+	<update id="saveDoe033WtakitOperCmp" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* saveDoe033WtakitOperCmp */
+		UPDATE ${userData.schema}.WTAKIT
+			SET
+				TASKSTS = #{param.tasksts},
+				MVEDDAT = date_format(now(), '%Y%m%d'),
+				MVEDTIM = date_format(now(), '%H%i%s'),
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{userData.useract},
+				UPDTCHK = #{param.updtchk} + 1
+			WHERE
+				TASKOKY = #{param.taskoky}
+				AND TASKOIT = #{param.taskoit}
+				AND WAREKEY = #{param.warekey}
+				AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<select id="isAsnTaskAllOperCmp" resultType="int">
+		/* isAsnTaskAllOperCmp */
+		SELECT COUNT(1)
+			FROM ${userData.schema}.WTAKIT WT
+		INNER JOIN ${userData.schema}.WASNHD WH
+			ON WT.EOASNKY = WH.EOASNKY
+		WHERE WT.TASKSTS IN ('NEW', 'OPERSTR', 'TASKCMP')
+			AND WT.EOASNKY = #{param.eoasnky}
+	</select>
+
+	<!-- 입고지시(입고예정 하차포인트 별 조회) -->
+	<select id="getWasnitUllockyGroup" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* getWasnitUllockyGroup */
+		SELECT
+			EOASNKY, WAREKEY, ULLOCKY, TOAREKY
+		FROM
+			${userData.schema}.WASNIT
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND EOASNKY = #{param.eoasnky}
+		GROUP BY ULLOCKY, EQUIPKY
+	</select>
+
+	<!-- 입고지시(입고예정 하차포인트-> to베드 별 조회) -->
+	<select id="getWasnitUllockyGroupList" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* getWasnitUllockyGroupList */
+		SELECT
+           WA.EOASNKY, WA.EOASNIT, WA.WAREKEY, WA.POSHPDT, WA.POSHPTM, WA.POSHPDY
+            , WA.INVOICE, WA.DOCCATE, WA.DOCTYPE, WA.BTRCATE, WA.OWNERKY, WA.OWNRNAM
+            , WA.ASNITST, WA.SKUGRKY, WA.SKUMKEY, WA.SKUDESC, WA.STLAYER, WA.SKUWEIG
+            , WA.SKUWIDT, WA.SKULENG, WA.SKUTHIC, WA.GROSSWD, WA.GROSSLN, WA.GROSSWG
+            , WA.GROSSTH, WA.SKUSTRD, WA.ULLOCKY, WA.EQUIPKY, WA.TOAREKY, WA.TOLOCKY
+            , WA.TOLAYER, WA.SUOMKEY, WA.ADDCOKY, WA.ASNDQTY, WA.RCHSQTY, WA.CUSTCOD
+            , WA.CUSTNAM, WA.FNCUSKY, WA.FCNAMLC, WA.REGIORG, WA.REGIMOD, WA.DESTORG
+            , WA.DEORGNM, WA.DESTMOD, WA.DEMODNM, WA.DEMODYN, WA.DEMDMAN, WA.DEMDADR
+            , WA.DEMPOCD, WA.DEMDTLN, WA.ITEMCOD, WA.PURCNUM, WA.ORDERLN, WA.BTRFSTC
+            , WA.STLOTNB, WA.SHPLIMT, WA.STKMEMO, WA.DELVDSR, WA.RESTKYN, WA.SKUSTAT
+            , WA.RSNCODE, WA.PARSNNM, WA.COSTRKY, WA.COSTRIT, WA.SERINUM, WA.SAVEPOS
+            , WA.SCHDATE, WA.MIXLOAD, WA.DESTTRG, WA.YARDTRG, WA.INBDATE, WA.INBVHNM
+            , WA.OUBVHNM, WA.SHPDRNM, WA.PRSALDT, WA.CMPDATE, WA.SHPPERS, WA.OUBDATE
+            , WA.PREPRDE, WA.ARVDATE, WA.SHPODAT, WA.TRSODAT, WA.INDIMET, WA.OUTDIMT
+            , WR.RCVDCKY, WR.RCVDCIT
+            , WA.CREDATE, WA.CRETIME, WA.CREUSER, WA.LMODATE, WA.LMOTIME, WA.LMOUSER
+            , WA.UPDTCHK
+        FROM
+            ${userData.schema}.WASNIT WA
+        INNER JOIN ${userData.schema}.WRCVIT WR
+            ON WR.EOASNKY = WA.EOASNKY
+            AND WR.EOASNIT = WA.EOASNIT
+		WHERE
+		    WA.WAREKEY = #{param.warekey}
+		    AND WA.EOASNKY = #{param.eoasnky}
+		    AND WA.ULLOCKY = #{param.ullocky}
+		    AND WA.TOAREKY = #{param.toareky}
+		    AND WR.RCVITST != 'CANCEL'
+		ORDER BY
+		    WA.STLAYER DESC
+	</select>
+
+	<!-- 입고문서 아이템 조회(필요한 값만) -->
+	<select id="selectWrcvitStatusList" resultType="com.kbph.logistics.im.domain.WrcvitDTO">
+		/* selectWrcvitStatusList */
+		SELECT
+			WR.RCVDCKY, WR.RCVDCIT, WR.WAREKEY, WR.RCVITST,
+			WR.EOASNKY, WR.EOASNIT, WR.COSTRKY, WR.COSTRIT
+		FROM
+		    ${userData.schema}.WRCVIT WR
+		WHERE
+			WR.WAREKEY = #{param.warekey}
+		    AND WR.RCVDCKY = #{param.rcvdcky}
+		    <if test="param.rcvitstList != null and param.rcvitstList.size != 0">
+		    AND WR.RCVITST in
+		    	<foreach collection="param.rcvitstList" item="rcvitst" open="(" close=")" separator=",">
+		    	 	#{rcvitst}
+	    	 	</foreach>
+		    </if>
+		    AND WR.RCVITST != 'CANCEL'
+	</select>
+
+	<!-- doe033 입고문서 아이템 조회(필요한 값만) ASN번호로 조회-->
+	<select id="selectWrcvitRVCMPList" resultType="com.kbph.logistics.im.domain.WrcvitDTO">
+		/* selectWrcvitRVCMPList */
+		SELECT
+			WR.RCVDCKY, WR.RCVDCIT, WR.WAREKEY, WR.RCVITST,
+			WR.EOASNKY, WR.EOASNIT, WR.COSTRKY, WR.COSTRIT
+		FROM
+		    ${userData.schema}.WRCVIT WR
+		WHERE
+			WR.WAREKEY = #{param.warekey}
+		    AND WR.RCVDCKY = #{param.rcvdcky}
+		    <if test="param.rcvitstList != null and param.rcvitstList.size != 0">
+		    AND WR.RCVITST in
+		    	<foreach collection="param.rcvitstList" item="rcvitst" open="(" close=")" separator=",">
+		    	 	#{rcvitst}
+	    	 	</foreach>
+		    </if>
+	</select>
+
+	<!-- 지시한 입고문서헤더 리스트 조회 -->
+	<select id="selectTaskWrcvhdList" parameterType="com.kbph.logistics.im.domain.WrcvhdDTO">
+		/* selectTaskWrcvhdList */
+		SELECT
+			<!-- pqGrid recIndx -->
+			CONCAT(WRH.RCVDCKY) AS ROWKEY,
+			<!-- P.K. -->
+			WRH.RCVDCKY,
+			<!-- Fields -->
+			WRH.WAREKEY, WRH.DOCCATE, WRH.DOCTYPE, WRH.VOWNKEY,
+			WRH.VEHICKY, WRH.VHCFNAM, WRH.DRVERNM, WRH.PASTRKY,
+			WRH.RCVDCST, WRH.RCVRSCD, WRH.RCVRSNM, WRH.RCARSCD,
+			WRH.RCARSNM,
+			<!-- Join Table Fields -->
+			MW.WHNAMLC AS WHNAMLC, MD.DOCCTNM AS DOCCTNM, MD.DOCTYNM AS DOCTYNM, MVO.VONAMLC AS VONAMLC,
+			WTA.TASKOKY AS TASKOKY, WTA.TASKSTS AS TASKSTS, MC.COMCDTX AS RCVDCSTNM, MR1.RSNCDNM AS RCVRSCDNM,
+			WTA.EOASNKY AS EOASNKY, WRI.PURCNUM, WRI.ORDERLN,
+			<!-- Custom Fields -->
+			<!-- Common Fields -->
+			WRH.CREDATE, WRH.CRETIME, WRH.CREUSER, WRH.LMODATE,
+			WRH.LMOTIME, WRH.LMOUSER, WRH.UPDTCHK
+		FROM ${userData.schema}.WRCVHD WRH
+		INNER JOIN ${userData.schema}.MWARMA MW  <!-- 창고 master -->
+			ON MW.WAREKEY = WRH.WAREKEY
+		LEFT JOIN (
+			SELECT
+				DISTINCT RCVDCKY, EOASNKY, RCVDCDT, SKUMKEY, PURCNUM, ORDERLN
+			FROM
+				${userData.schema}.WRCVIT
+		) AS WRI <!-- 입고 문서 아이템 -->
+			ON WRI.RCVDCKY = WRH.RCVDCKY
+		LEFT JOIN (
+			SELECT
+				DISTINCT TASKOKY, RCVDCKY, TASKSTS, EOASNKY
+			FROM
+				${userData.schema}.WTAKIT
+		) AS WTA <!-- task -->
+			ON WTA.RCVDCKY = WRH.RCVDCKY
+		LEFT JOIN ${userData.commonSchema}.MVOWMA MVO <!-- 차주 master --><!-- 임시 LEFT -->
+			ON MVO.VOWNKEY = WRH.VOWNKEY
+		LEFT JOIN ${userData.commonSchema}.MVHCMA MV <!-- 차량 master --><!-- 임시 LEFT -->
+			ON MVO.VOWNKEY = WRH.VOWNKEY
+				AND MV.VEHICKY = WRH.VEHICKY
+		INNER JOIN ${userData.schema}.MCODEM MC <!-- Common Code master --><!-- 임시 LEFT -->
+			ON MC.COMCDVL = WRH.RCVDCST
+			AND MC.COMCDKY = 'RCVDCST'
+		INNER JOIN ${userData.schema}.MDOCMA MD <!-- Document master -->
+			ON MD.WAREKEY = WRH.WAREKEY
+			AND MD.DOCCATE = WRH.DOCCATE
+			AND MD.DOCTYPE = WRH.DOCTYPE
+		LEFT JOIN ${userData.schema}.MRSCMA MR1 <!-- Reason code master --> <!-- 임시 LEFT -->
+			ON MR1.WAREKEY = WRH.WAREKEY
+			AND MR1.DOCCATE = WRH.DOCCATE
+			AND MR1.DOCTYPE = WRH.DOCTYPE
+			AND MR1.RSNCODE = WRH.RCVRSCD
+		LEFT JOIN ${userData.schema}.MRSCMA MR2 <!-- Reason code master --> <!-- 임시 LEFT -->
+			ON MR2.WAREKEY = WRH.WAREKEY
+			AND MR2.DOCCATE = WRH.DOCCATE
+			AND MR2.DOCTYPE = WRH.DOCTYPE
+			AND MR2.RSNCODE = WRH.RCARSCD
+		INNER JOIN ${userData.schema}.WASNHD WAH
+		    ON WAH.EOASNKY = WRI.EOASNKY
+		<where>
+			<if test='param.warekey != null and param.warekey != ""'>
+			AND WRH.WAREKEY = #{param.warekey}
+			</if>
+			<if test='param.rcvdcky != null and param.rcvdcky != ""'>
+			AND WRH.RCVDCKY LIKE CONCAT('%', #{param.rcvdcky}, '%')
+			</if>
+			<if test='param.vhcfnam != null and param.vhcfnam != ""'>
+			AND WRH.VHCFNAM LIKE CONCAT('%', #{param.vhcfnam}, '%')
+			</if>
+			<if test='param.eoasnky != null and param.eoasnky !=""'>
+			AND WRI.EOASNKY LIKE CONCAT('%', #{param.eoasnky}, '%')
+			</if>
+    	 	<if test='param.purcnum != null and param.purcnum != ""'>
+		    	AND WRI.PURCNUM LIKE CONCAT('%', #{param.purcnum}, '%')
+		    </if>
+<!-- 			<choose> -->
+<!-- 				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1"> -->
+<!-- 					AND WRI.SKUMKEY IN -->
+<!-- 					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=","> -->
+<!-- 						#{skumkey} -->
+<!-- 					</foreach> -->
+<!-- 				</when> -->
+<!-- 				<otherwise> -->
+<!-- 					AND WRI.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%') -->
+<!-- 				</otherwise> -->
+<!-- 			</choose> -->
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WRI.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test="param.orderln != null and param.orderln !=''">
+					AND WRI.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.rcvdcst != null and param.rcvdcst !=""'>
+			AND WRH.RCVDCST IN (#{param.rcvdcst})
+			</if>
+   		    <if test="param.rcvdcstList != null and param.rcvdcstList.size != 0">
+		    	AND WRH.RCVDCST IN
+		    	<foreach collection="param.rcvdcstList" open="(" close=")" item="rcvdcst" separator=",">
+		    	 	#{rcvdcst}
+	    	 	</foreach>
+		    </if>
+			<if test='param.asndateFrom != null and param.asndateFrom != ""'>
+			 AND DATE_FORMAT(STR_TO_DATE(WAH.ASNDATE, '%Y%m%d'), '%Y-%m-%d') <![CDATA[>=]]> #{param.asndateFrom}
+			</if>
+			<if test='param.asndateTo != null and param.asndateTo != ""'>
+			 AND DATE_FORMAT(STR_TO_DATE(WAH.ASNDATE, '%Y%m%d'), '%Y-%m-%d') <![CDATA[<=]]> #{param.asndateTo}
+			</if>
+			<if test='param.taskoky != null and param.taskoky != ""'>
+			AND WTA.TASKOKY LIKE CONCAT('%', #{param.taskoky}, '%')
+			</if>
+		<if test='param.tasksts != null and param.tasksts != ""'>
+			AND WTA.TASKSTS = #{param.tasksts}
+		</if>
+		<if test="param.taskstsList != null and param.taskstsList.size != 0">
+	    	AND WTA.TASKSTS IN
+	    	<foreach collection="param.taskstsList" open="(" close=")" item="tasksts" separator=",">
+	    	 	#{tasksts}
+    	 	</foreach>
+	    </if>
+		<if test="param.asnstatList != null and param.asnstatList.size != 0">
+	    	AND WAH.ASNSTAT IN
+	    	<foreach collection="param.asnstatList" open="(" close=")" item="asnstat" separator=",">
+	    	 	#{asnstat}
+    	 	</foreach>
+	    </if>
+		</where>
+		GROUP BY
+			<!-- P.K. -->
+			WRH.RCVDCKY,
+			<!-- Fields -->
+			WRH.WAREKEY, WRH.DOCCATE, WRH.DOCTYPE, WRH.VOWNKEY,
+			WRH.VEHICKY, WRH.VHCFNAM, WRH.DRVERNM, WRH.PASTRKY,
+			WRH.RCVDCST, WRH.RCVRSCD, WRH.RCVRSNM, WRH.RCARSCD,
+			WRH.RCARSNM,
+			<!-- Join Table Fields -->
+			WTA.TASKOKY,
+<!-- 			 WTA.TASKSTS, -->
+			<!-- Custom Fields -->
+			<!-- Common Fields -->
+			WRH.CREDATE, WRH.CRETIME, WRH.CREUSER, WRH.LMODATE,
+			WRH.LMOTIME, WRH.LMOUSER, WRH.UPDTCHK
+		HAVING
+			WTA.TASKSTS != 'CANCEL'
+		ORDER BY RCVDCKY DESC, TASKOKY DESC, EOASNKY DESC
+	</select>
+
+	<!-- doe034 입고완료확정 헤더조회 -->
+	<select id="selectDoe034TaskWrcvhdList" parameterType="com.kbph.logistics.im.domain.WrcvhdDTO">
+		/* selectDoe034TaskWrcvhdList */
+		SELECT
+		    CONCAT(WRH.RCVDCKY) AS ROWKEY,
+		    WRH.RCVDCKY,
+		    WRH.WAREKEY, WRH.DOCCATE, WRH.DOCTYPE, WRH.VOWNKEY,
+		    WRH.VEHICKY, WRH.VHCFNAM, WRH.DRVERNM, WRH.PASTRKY,
+		    WRH.RCVDCST, IF(WRH.RCVDCST = 'ACANCEL', WRH.RCARSCD, WRH.RCVRSCD) as RCARSCD,
+    		IF(WRH.RCVDCST = 'ACANCEL', WRH.RCVRSNM, WRH.RCVRSNM) as RCVRSNM,
+		    WTA.EQUIPKY, MEQ.EQUINAM,
+		    WRH.RCARSNM, IFNULL(WTAK.STATCNT, 0) AS STATCNT,
+		    MW.WHNAMLC AS WHNAMLC, MD.DOCCTNM AS DOCCTNM, MD.DOCTYNM AS DOCTYNM, MVO.VONAMLC AS VONAMLC,
+		    WTA.TASKOKY AS TASKOKY, WTA.TASKSTS AS TASKSTS, MC.COMCDTX AS RCVDCSTNM, IF(WRH.RCVDCST = 'ACANCEL', MR2.RSNCDNM, MR1.RSNCDNM) AS RCVRSCDNM,
+		    WTA.EOASNKY AS EOASNKY, MC2.COMCDTX AS TASKSTSNM,
+		    WRH.CREDATE, WRH.CRETIME, WRH.CREUSER, WRH.LMODATE,
+		    WRH.LMOTIME, WRH.LMOUSER, WRH.UPDTCHK
+		FROM
+		    ${userData.schema}.WTAKIT WTA
+		INNER JOIN ${userData.schema}.WRCVHD WRH
+		    ON WRH.WAREKEY = WTA.WAREKEY
+		    AND WRH.RCVDCKY = WTA.RCVDCKY
+		INNER JOIN ${userData.schema}.WRCVIT WRI
+		    ON WRI.WAREKEY = WTA.WAREKEY
+		    AND WRI.RCVDCKY = WTA.RCVDCKY
+		    AND WRI.RCVDCIT = WTA.RCVDCIT
+		INNER JOIN ${userData.schema}.MWARMA MW
+		    ON MW.WAREKEY = WRH.WAREKEY
+		INNER JOIN ${userData.commonSchema}.MVOWMA MVO
+		    ON MVO.VOWNKEY = WRH.VOWNKEY
+		INNER JOIN ${userData.commonSchema}.MVHCMA MV
+		    ON MVO.VOWNKEY = WRH.VOWNKEY
+		        AND MV.VEHICKY = WRH.VEHICKY
+		INNER JOIN ${userData.schema}.MCODEM MC
+		    ON MC.COMCDVL = WRH.RCVDCST
+		    AND MC.COMCDKY = 'RCVDCST'
+		    AND MC.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD
+		    ON MD.WAREKEY = WRH.WAREKEY
+		    AND MD.DOCCATE = WRH.DOCCATE
+		    AND MD.DOCTYPE = WRH.DOCTYPE
+		LEFT JOIN ${userData.schema}.MRSCMA MR1
+		    ON MR1.WAREKEY = WRH.WAREKEY
+		    AND MR1.DOCCATE = WRH.DOCCATE
+		    AND MR1.DOCTYPE = WRH.DOCTYPE
+		    AND MR1.RSNCODE = WRH.RCVRSCD
+		LEFT JOIN ${userData.schema}.MRSCMA MR2
+		    ON MR2.WAREKEY = WRH.WAREKEY
+		    AND MR2.DOCCATE = WRH.DOCCATE
+		    AND MR2.DOCTYPE = WRH.DOCTYPE
+		    AND MR2.RSNCODE = WRH.RCARSCD
+	   INNER JOIN ${userData.schema}.MCODEM MC2
+	   		   ON MC2.COMCDVL = WTA.TASKSTS
+	   		  AND MC2.COMCDKY = 'TASKSTS'
+	   		  AND MC2.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MEQUMA MEQ
+		    ON MEQ.WAREKEY = WTA.WAREKEY
+		    AND MEQ.EQUIPKY = WTA.EQUIPKY
+		LEFT JOIN (
+		    SELECT
+		        COUNT(1) as STATCNT, EOASNKY, RCVDCKY, TASKSTS
+		    FROM
+		        ${userData.schema}.WTAKIT
+		    WHERE
+		        DOCCATE = '400'
+		        AND TASKSTS IN ('NEW', 'OPERSTR', 'TASKCMP', 'CMP')
+		    GROUP BY EOASNKY, RCVDCKY, TASKSTS
+		) as WTAK
+		    ON WTAK.EOASNKY = WTA.EOASNKY
+		    AND WTAK.RCVDCKY = WTA.RCVDCKY
+		<where>
+			<if test='param.warekey != null and param.warekey != ""'>
+			AND WRH.WAREKEY = #{param.warekey}
+			</if>
+			<if test='param.rcvdcky != null and param.rcvdcky != ""'>
+			AND WRH.RCVDCKY LIKE CONCAT('%', #{param.rcvdcky}, '%')
+			</if>
+			<if test='param.vhcfnam != null and param.vhcfnam != ""'>
+			AND WRH.VHCFNAM LIKE CONCAT('%', #{param.vhcfnam}, '%')
+			</if>
+			<if test='param.eoasnky != null and param.eoasnky !=""'>
+			AND WRI.EOASNKY LIKE CONCAT('%', #{param.eoasnky}, '%')
+			</if>
+    	 	<if test='param.purcnum != null and param.purcnum != ""'>
+		    	AND WRI.PURCNUM LIKE CONCAT('%', #{param.purcnum}, '%')
+		    </if>
+			<choose>
+				<when test="param.skumkeyList != null and param.skumkeyList.size() > 1">
+					AND WRI.SKUMKEY IN
+					<foreach collection="param.skumkeyList" item="skumkey" index="index" open="(" close=")" separator=",">
+						#{skumkey}
+					</foreach>
+				</when>
+				<when test='param.skumkey != null and param.skumkey != ""'>
+					AND WRI.SKUMKEY LIKE CONCAT('%', UPPER(TRIM(#{param.skumkey})), '%')
+				</when>
+			</choose>
+			<choose>
+				<when test="param.orderlnList != null and param.orderlnList.size() > 1">
+					AND WRI.ORDERLN IN
+					<foreach collection="param.orderlnList" item="orderln" index="index" open="(" close=")" separator=",">
+						#{orderln}
+					</foreach>
+				</when>
+				<when test='param.orderln != null and param.orderln != ""'>
+					AND WRI.ORDERLN LIKE CONCAT('%', UPPER(TRIM(#{param.orderln})), '%')
+				</when>
+			</choose>
+			<if test='param.rcvdcst != null and param.rcvdcst !=""'>
+			AND WRH.RCVDCST IN (#{param.rcvdcst})
+			</if>
+   		    <if test="param.rcvdcstList != null and param.rcvdcstList.size != 0">
+		    	AND WRH.RCVDCST IN
+		    	<foreach collection="param.rcvdcstList" open="(" close=")" item="rcvdcst" separator=",">
+		    	 	#{rcvdcst}
+	    	 	</foreach>
+		    </if>
+			<if test='param.rcvdcdtFrom != null and param.rcvdcdtFrom != ""'>
+			 AND DATE_FORMAT(STR_TO_DATE(WRI.RCVDCDT, '%Y%m%d'), '%Y-%m-%d') <![CDATA[>=]]> #{param.rcvdcdtFrom}
+			</if>
+			<if test='param.rcvdcdtTo != null and param.rcvdcdtTo != ""'>
+			 AND DATE_FORMAT(STR_TO_DATE(WRI.RCVDCDT, '%Y%m%d'), '%Y-%m-%d') <![CDATA[<=]]> #{param.rcvdcdtTo}
+			</if>
+			<if test='param.taskoky != null and param.taskoky != ""'>
+			AND WTA.TASKOKY = LIKE CONCAT('%', #{param.taskoky}, '%')
+			</if>
+		<if test='param.tasksts != null and param.tasksts != ""'>
+			AND WTA.TASKSTS = #{param.tasksts}
+		</if>
+		<if test="param.taskstsList != null and param.taskstsList.size != 0">
+	    	AND WTA.TASKSTS IN
+	    	<foreach collection="param.taskstsList" open="(" close=")" item="tasksts" separator=",">
+	    	 	#{tasksts}
+    	 	</foreach>
+	    </if>
+		</where>
+		GROUP BY
+			WRH.RCVDCKY,
+			WRH.WAREKEY, WRH.DOCCATE, WRH.DOCTYPE, WRH.VOWNKEY,
+			WRH.VEHICKY, WRH.VHCFNAM, WRH.DRVERNM, WRH.PASTRKY,
+			WRH.RCVDCST, WRH.RCVRSCD, WRH.RCVRSNM, WRH.RCARSCD,
+			WRH.RCARSNM,
+			WTA.TASKOKY,
+			WRH.CREDATE, WRH.CRETIME, WRH.CREUSER, WRH.LMODATE,
+			WRH.LMOTIME, WRH.LMOUSER, WRH.UPDTCHK
+		ORDER BY RCVDCKY DESC, TASKOKY DESC, EOASNKY DESC
+	</select>
+
+	<!-- 지시한 입고문서아이템 리스트 조회 -->
+	<select id="selectTaskWrcvitList" resultType="com.kbph.logistics.im.domain.WrcvitDTO">
+		/* selectTaskWrcvitList */
+		SELECT CONCAT(WRI.RCVDCKY, WRI.RCVDCIT) AS ROWKEY
+		     , WRI.RCVDCKY, WRI.RCVDCIT, WRI.POSHPDT, WRI.INVOICE
+		     , WRI.WAREKEY, WRI.OWNERKY, WRI.OWNRNAM, WRI.RCVITST
+		     , MC.COMCDTX as RCVITNM, WRI.CUSTCOD, WRI.CUSTNAM, WRI.SKUGRKY
+		     , WRI.SKUMKEY, WRI.SKUDESC, WRI.SKULENG, WRI.SKUWIDT
+		     , WRI.SKUTHIC, WRI.SKUWEIG, WRI.GROSSWD, WRI.GROSSLN
+		     , WRI.GROSSWG, WRI.STLAYER, WRI.REGIORG, WRI.DEORGNM
+		     , WRI.REGIMOD, WRI.DEMODNM, WRI.ULLOCKY, ML1.LOCANAM AS ULLOCNM
+		     , WRI.ADDCOKY, WRI.SKUSTRD, WRI.RESTKYN, WTA.TOAREKY
+		     , MA.AREANAM AS TOARENM, WTA.TOLOCKY, ML2.LOCANAM AS TOLOCNM, WTA.TOLAYER
+		     , WRI.ITEMCOD, WRI.STLOTNB, WRI.PURCNUM, WRI.ORDERLN
+		     , WRI.RCVDCDT, WRI.RCVDCTM, WRI.ASNDQTY, WRI.RCHSQTY
+		     , WRI.SUOMKEY, WRI.SHPLIMT, WRI.DELVDSR, WRI.BTRFSTC
+		     , WRI.EOASNKY, WRI.EOASNIT, WRI.COSTRKY, WRI.COSTRIT
+		     , WRI.RCARSCD, WRI.RCARSNM, WRI.BTRCATE, WRI.GROSSTH
+		     , WRI.SERINUM, WRI.SAVEPOS, WRI.SCHDATE, WRI.MIXLOAD
+		     , WRI.YARDTRG, WRI.INBDATE, WRI.INBVHNM, WRI.OUBVHNM
+		     , WRI.SHPDRNM, WRI.PRSALDT, WRI.CMPDATE, WRI.SHPPERS
+		     , WRI.OUBDATE, WRI.PREPRDE, WRI.ARVDATE, WRI.SHPODAT
+		     , WRI.TRSODAT, WRI.INDIMET, WRI.OUTDIMT, WRI.DESTTRG
+		     , WRH.DOCCATE, WRH.DOCTYPE, WTA.TASKOKY, WTA.TASKSTS
+		     , MW.WHNAMLC, MD.DOCCTNM, MD.DOCTYNM, MR2.RSNCDNM AS RCARSNM
+		     , MG.GRPKYNM, MRE1.RENAMLC AS REORGNM, MRE2.RENAMLC AS REMODNM
+		     , BC.BTRCNAM, WRI.CREDATE, WRI.CRETIME, WRI.CREUSER
+		     , WRI.LMODATE, WRI.LMOTIME, WRI.LMOUSER, WRI.UPDTCHK
+		     , (SELECT count(1) - WRI.STLAYER + 1 FROM ${userData.schema}.WRCVIT WHERE WAREKEY = #{param.warekey} AND RCVDCKY = #{param.rcvdcky}) AS VSLAYER
+		     , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ITEMCOD' AND COMCDVL = WRI.ITEMCOD AND COUSEYN = 'Y') AS ITCODNM
+		     , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'SUOMKEY' AND COMCDVL = WRI.SUOMKEY AND COUSEYN = 'Y') AS SUOMNAM
+		     , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'TASKSTS' AND COMCDVL = WTA.TASKSTS AND COUSEYN = 'Y') AS TASKSTSNM
+		     , (SELECT COMCDTX FROM ${userData.schema}.MCODEM WHERE COMCDKY = 'ADDSIKY' AND COMCDVL = BA.ADDSIKY AND COUSEYN = 'Y') AS ADDCONM
+		 FROM ${userData.schema}.WRCVIT WRI
+		INNER JOIN ${userData.schema}.WRCVHD WRH
+		   ON WRH.WAREKEY = WRI.WAREKEY
+		  AND WRH.RCVDCKY = WRI.RCVDCKY
+		INNER JOIN ${userData.schema}.MWARMA MW  <!-- 창고 master -->
+			ON MW.WAREKEY = WRI.WAREKEY
+		INNER JOIN ${userData.schema}.MLOCMA ML1  <!-- 베드 master(하차포인트) -->
+			ON ML1.WAREKEY = WRI.WAREKEY
+			AND ML1.LOCAKEY = WRI.ULLOCKY
+		INNER JOIN ${userData.schema}.MGRPMA MG <!-- 제품 그룹 master -->
+			ON MG.SKUGRKY = WRI.SKUGRKY
+		INNER JOIN ${userData.schema}.BTRCAT BC
+		   ON BC.BTRCATE = WRI.BTRCATE
+		INNER JOIN ${userData.schema}.BADDCO BA
+			ON WRI.ADDCOKY = BA.ADDCOKY
+		INNER JOIN ${userData.schema}.MCODEM MC <!-- Common Code master -->
+		   ON MC.COMCDKY = 'RCVITST'
+		  AND MC.COMCDVL = WRI.RCVITST
+		  AND MC.COUSEYN = 'Y'
+		INNER JOIN ${userData.schema}.MDOCMA MD <!-- Document master -->
+		   ON MD.WAREKEY = WRI.WAREKEY
+		  AND MD.DOCCATE = WRI.DOCCATE
+		  AND MD.DOCTYPE = WRI.DOCTYPE
+		INNER JOIN ${userData.schema}.MREGMA MRE1 <!-- 목적지 master for orginal -->
+			ON MRE1.REGIKEY = WRI.REGIORG
+		INNER JOIN ${userData.schema}.MREGMA MRE2 <!-- 목적지 master for mod -->
+			ON MRE2.REGIKEY = WRI.REGIMOD
+		INNER JOIN (
+			SELECT
+				DISTINCT TASKOKY, RCVDCKY, RCVDCIT, TASKSTS, EOASNKY
+				, WAREKEY, TOAREKY, TOLOCKY, TOLAYER
+			FROM
+				${userData.schema}.WTAKIT
+			<where>
+				<if test='param.warekey != null and param.warekey != ""'>
+					AND WAREKEY = #{param.warekey}
+				</if>
+				<if test='param.taskoky != null and param.taskoky != ""'>
+					AND TASKOKY = #{param.taskoky}
+				</if>
+			</where>
+		) AS WTA <!-- task -->
+		   ON WTA.WAREKEY = WRI.WAREKEY
+		  AND WTA.RCVDCKY = WRI.RCVDCKY
+		  AND WTA.RCVDCIT = WRI.RCVDCIT
+		INNER JOIN ${userData.schema}.MAREMA MA
+		   ON MA.WAREKEY = WTA.WAREKEY
+		  AND MA.AREAKEY = WTA.TOAREKY
+		INNER JOIN ${userData.schema}.MLOCMA ML2
+		   ON ML2.WAREKEY = WTA.WAREKEY
+		  AND ML2.AREAKEY = WTA.TOAREKY
+		  AND ML2.LOCAKEY = WTA.TOLOCKY
+		INNER JOIN ${userData.schema}.MRSCMA MR1 <!-- Reason code master --> <!-- 임시 LEFT -->
+		   ON MR1.WAREKEY = WRI.WAREKEY
+		  AND MR1.DOCCATE = WRI.DOCCATE
+		  AND MR1.DOCTYPE = WRI.DOCTYPE
+		  AND MR1.RSNCODE = WRI.RCVRSCD
+		 LEFT JOIN ${userData.schema}.MRSCMA MR2 <!-- Reason code master --> <!-- 임시 LEFT -->
+		   ON MR2.WAREKEY = WRI.WAREKEY
+		  AND MR2.DOCCATE = WRI.DOCCATE
+		  AND MR2.DOCTYPE = WRI.DOCTYPE
+		  AND MR2.RSNCODE = WRI.RCARSCD
+		<where>
+			<if test='param.warekey != null and param.warekey != ""'>
+				AND WRI.WAREKEY = #{param.warekey}
+			</if>
+			<if test='param.eoasnky != null and param.eoasnky !=""'>
+				AND WRI.EOASNKY = #{param.eoasnky}
+			</if>
+			<if test='param.rcvdcky != null and param.rcvdcky !=""'>
+				AND WRI.RCVDCKY = #{param.rcvdcky}
+			</if>
+			<if test='param.taskoky != null and param.taskoky != ""'>
+				AND WTA.TASKOKY = #{param.taskoky}
+			</if>
+		</where>
+		ORDER BY WRI.STLAYER DESC
+	</select>
+
+	<!-- 입고문서번호 채번 -->
+	<select id="selectRcvdcky" resultType="String">
+		/* selectRcvdcky */
+		SELECT ${userData.schema}.FN_IM_RCVDCKY() AS `rcvdcky` FROM DUAL
+	</select>
+
+    <!-- 입고예정번호 아이템 채번 -->
+    <select id="selectRcvdcit" resultType="Integer">
+     	/* selectRcvdcit */
+     	SELECT
+     		${userData.schema}.FN_IM_RCVDCIT(#{rcvdcky}) AS `rcvdcit`
+   		FROM
+   			DUAL
+    </select>
+
+	<!-- 입고문서 헤더 생성 -->
+	<insert id="insertWrcvhd" parameterType="com.kbph.logistics.im.domain.WrcvhdDTO">
+		/* insertWrcvhd */
+		INSERT INTO ${userData.schema}.WRCVHD(
+			<!-- P.K -->
+			RCVDCKY,
+			<!-- Columns -->
+			WAREKEY, DOCCATE, DOCTYPE, PASTRKY,
+			RCVDCST, RCVRSCD, RCVRSNM, RCARSCD,
+			RCARSNM, VOWNKEY, VEHICKY, VHCFNAM,
+			DRVERNM,
+			<!-- Common Columns -->
+			CREDATE, CRETIME, CREUSER, LMODATE,
+			LMOTIME, LMOUSER
+		)
+		VALUES(
+			#{param.rcvdcky},
+			#{param.warekey}, #{param.doccate}, #{param.doctype}, #{param.pastrky},
+			#{param.rcvdcst}, #{param.rcvrscd}, #{param.rcvrsnm}, #{param.rcarscd},
+			#{param.rcarsnm}, #{param.vownkey}, #{param.vehicky}, #{param.vhcfnam},
+			#{param.drvernm},
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}, date_format(now(), '%Y%m%d'),
+			date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+	</insert>
+
+	<!-- 입고문서 아이템 생성 -->
+	<insert id="insertWrcvitList" parameterType="com.kbph.logistics.im.domain.WrcvitDTO">
+		/* insertWrcvitList */
+		<foreach collection="insertList" item="item" separator=";">
+		INSERT INTO
+			${userData.schema}.WRCVIT(
+				<!-- P.K -->
+				RCVDCKY, RCVDCIT,
+				<!-- Columns -->
+				POSHPDT, POSHPTM, POSHPDY,
+				INVOICE, WAREKEY, OWNERKY, OWNRNAM,
+				RCVITST, CUSTCOD, CUSTNAM, SKUGRKY, SKUMKEY,
+				SKUDESC, SKULENG, SKUWIDT, SKUTHIC,
+				SKUWEIG, GROSSWG, GROSSLN, GROSSWD,
+				GROSSTH, STLAYER, REGIORG, DEORGNM,
+				REGIMOD, DEMODNM, ULLOCKY, ADDCOKY,
+				SKUSTRD, RESTKYN, TOAREKY, TOLOCKY,
+				TOLAYER, ITEMCOD, STLOTNB, PURCNUM,
+				ORDERLN,
+				RCVDCDT,
+				RCVDCTM,
+				ASNDQTY,
+				RCHSQTY, SUOMKEY, SHPLIMT, DELVDSR,
+				BTRFSTC, EOASNKY, EOASNIT, COSTRKY,
+				COSTRIT, RCVRSCD, RCVRSNM,
+				BTRCATE, SERINUM, SAVEPOS, SCHDATE,
+				MIXLOAD, DESTTRG, YARDTRG, INBDATE,
+				INBVHNM, OUBVHNM, SHPDRNM, PRSALDT,
+				CMPDATE, PREPRDE, ARVDATE, SHPODAT,
+				TRSODAT, INDIMET, OUTDIMT, DOCCATE,
+				DOCTYPE, EQUIPKY,
+				DEMDMAN, DEMDADR, DEMPOCD, DEMDTLN,
+				<!-- Common Columns -->
+				CREDATE, CRETIME, CREUSER, LMODATE,
+				LMOTIME, LMOUSER
+			)
+		VALUES(
+			<!-- P.K -->
+			#{item.rcvdcky}, #{item.rcvdcit},
+			<!-- Columns -->
+			REPLACE(#{item.poshpdt}, '-', ''), REPLACE(#{item.poshptm}, ':', ''), #{item.poshpdy},
+			#{item.invoice}, #{item.warekey}, #{item.ownerky}, #{item.ownrnam},
+			#{item.rcvitst}, #{item.custcod}, #{item.custnam}, (
+															SELECT MG.SKUGRKY
+													        FROM ${userData.schema}.MGRPMA MG
+													        WHERE
+													        	((MG.MINLENG = 0 OR MG.MINLENG <![CDATA[<=]]> #{item.skuleng}) AND (MG.MAXLENG = 0 OR #{item.skuleng} <![CDATA[<]]> MG.MAXLENG))
+													        	AND ((MG.MINWIDT = 0 OR MG.MINWIDT <![CDATA[<=]]> #{item.skuwidt}) AND (MG.MAXWIDT = 0 OR #{item.skuwidt} <![CDATA[<]]> MG.MAXWIDT))
+													        	AND MG.GRUSEYN = 'Y'
+											        	), #{item.skumkey},
+			#{item.skudesc}, #{item.skuleng}, #{item.skuwidt}, #{item.skuthic},
+			#{item.skuweig}, #{item.grosswg}, #{item.grossln}, #{item.grosswd},
+			#{item.grossth}, IFNULL(#{item.stlayer}, #{item.eoasnit}), #{item.regiorg}, #{item.deorgnm},
+			#{item.regimod}, #{item.demodnm}, #{item.ullocky}, <include refid="getAddcoky"></include>,
+			#{item.skustrd}, IFNULL(#{item.restkyn}, 'N'), #{item.toareky}, #{item.tolocky},
+			#{item.tolayer}, #{item.itemcod}, #{item.stlotnb}, #{item.purcnum},
+			#{item.orderln},
+			IF(#{item.rcvdcdt} IS NULL OR #{item.rcvdcdt} = '', date_format(now(), '%Y%m%d'), REPLACE(#{item.rcvdcdt}, '-', '')),
+			IF(#{item.rcvdctm} IS NULL OR #{item.rcvdctm} = '', date_format(now(), '%H%i%s'), REPLACE(#{item.rcvdctm}, ':', '')),
+			1,
+			0, #{item.suomkey}, IF(#{item.shplimt} IS NULL OR #{item.shplimt} = '', '', REPLACE(#{item.shplimt}, '-','')), IF(#{item.delvdsr} IS NULL OR #{item.delvdsr} = '', '', REPLACE(#{item.delvdsr}, '-','')),
+			IFNULL(#{item.btrfstc},''), #{item.eoasnky}, #{item.eoasnit}, #{item.costrky},
+			#{item.costrit}, #{item.rcvrscd}, #{item.rcvrsnm},
+			#{item.btrcate}, #{item.serinum}, #{item.savepos}, #{item.schdate},
+			#{item.mixload}, #{item.desttrg}, #{item.yardtrg}, #{item.inbdate},
+			#{item.inbvhnm}, #{item.oubvhnm}, #{item.shpdrnm}, #{item.prsaldt},
+			#{item.cmpdate}, #{item.preprde}, #{item.arvdate}, #{item.shpodat},
+			#{item.trsodat}, #{item.indimet}, #{item.outdimt}, #{item.doccate},
+			#{item.doctype}, #{item.equipky},
+			#{item.demdman}, #{item.demdadr}, #{item.dempocd}, #{item.demdtln},
+			<!-- Common Columns -->
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}, date_format(now(), '%Y%m%d'),
+			date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+		</foreach>
+	</insert>
+
+	<!-- 입고문서 헤더 상태변경-->
+	<update id="updateWrcvhdStatus">
+		/* updateWrcvhdStatus */
+		UPDATE ${userData.schema}.WRCVHD
+		SET
+			RCVDCST = #{status},
+			<if test='param.rcarscd != null'>
+				RCARSCD= #{param.rcarscd},
+			</if>
+			<if test='param.rcarsnm != null'>
+				RCARSNM = #{param.rcarsnm},
+			</if>
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND RCVDCKY = #{param.rcvdcky}
+	</update>
+
+	<!-- 입고문서아이템 상태 변경 -->
+	<update id="updateWrcvitStatus">
+		/* updateWrcvitStatus */
+		<foreach collection="updateList" item="data" separator=";">
+		UPDATE ${userData.schema}.WRCVIT
+		SET
+			RCVITST = #{status},
+			<if test='data.rchsqty != null'>
+			RCHSQTY = #{data.rchsqty},
+			</if>
+			<if test='data.rcarscd != null'>
+				RCVRSCD= #{data.rcarscd},
+			</if>
+			<if test='data.rcarsnm != null'>
+				RCVRSNM = #{data.rcarsnm},
+			</if>
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract}
+		WHERE
+			WAREKEY = #{data.warekey}
+			AND RCVDCKY = #{data.rcvdcky}
+			<if test = 'data.rcvdcit != null'>
+			AND RCVDCIT = #{data.rcvdcit}
+			</if>
+			<if test="withoutCancel == true">
+			AND RCVITST != 'CANCEL'
+			</if>
+		</foreach>
+	</update>
+	<!-- 입고 task 생성 -->
+	<insert id="insertWtakitList" parameterType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* insertWtakitList */
+		<foreach collection="insertList" item="item" separator=";">
+		INSERT INTO
+			${userData.schema}.WTAKIT(
+				<!-- P.K -->
+				TASKOKY, TASKOIT,
+				<!-- Columns -->
+				WAREKEY, TASKDAT, DOCCATE, DOCTYPE,
+				TASKSTS, LOTNMKY, OWNERKY, OWNRNAM, CUSTCOD, CUSTNAM,
+				SKUMKEY, SKUDESC, FRAREKY, FRLOCKY,
+				FRLAYER, TOAREKY, TOLOCKY, TOLAYER, EQUIPKY,
+				FORDQTY, TCMPQTY, ALLGRKY, PARSNCD,
+				PARSNNM, PKRSNCD, PKRSNNM, STOCKKY,
+				EOASNKY, EOASNIT, COSTRKY, COSTRIT,
+				RCVDCKY, RCVDCIT, OUTBOKY, OUTBOIT,
+				SHPDCKY, SHPDCIT,
+				<if test='item.physicalCreateDocFlag != null and item.physicalCreateDocFlag'>
+				MVSTDAT, MVSTTIM, MVEDDAT, MVEDTIM,
+				</if>
+				<!-- Common Columns -->
+				CREDATE, CRETIME, CREUSER, LMODATE,
+				LMOTIME, LMOUSER
+			)
+		VALUES(
+			<!-- P.K -->
+			#{item.taskoky}, #{item.taskoit},
+			<!-- Columns -->
+			#{item.warekey}, #{item.taskdat}, #{item.doccate}, #{item.doctype},
+			#{item.tasksts}, #{item.lotnmky}, #{item.ownerky}, #{item.ownrnam}, #{item.custcod}, #{item.custnam},
+			#{item.skumkey}, #{item.skudesc}, #{item.frareky}, #{item.frlocky},
+			#{item.frlayer}, #{item.toareky}, #{item.tolocky}, #{item.tolayer}, #{item.equipky},
+			#{item.fordqty}, #{item.tcmpqty}, #{item.allgrky}, #{item.parsncd},
+			#{item.parsnnm}, #{item.pkrsncd}, #{item.pkrsnnm}, #{item.stockky},
+			#{item.eoasnky}, #{item.eoasnit}, #{item.costrky}, #{item.costrit},
+			#{item.rcvdcky}, #{item.rcvdcit}, #{item.outboky}, #{item.outboit},
+			#{item.shpdcky}, #{item.shpdcit},
+			<if test='item.physicalCreateDocFlag != null and item.physicalCreateDocFlag'>
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'),
+			</if>
+			<!-- Common Columns -->
+			date_format(now(), '%Y%m%d'), date_format(now(), '%H%i%s'), #{userData.useract}, date_format(now(), '%Y%m%d'),
+			date_format(now(), '%H%i%s'), #{userData.useract}
+		)
+		</foreach>
+	</insert>
+
+	<insert id="saveDirectShippingHeader" parameterType="com.kbph.logistics.im.domain.WasnhdDTO">
+		INSERT
+		  INTO ${userInfo.schema}.TPLNHD
+		  (
+		  		WAREKEY, VHPLNKY, VOWNKEY, VEHICKY
+		  	  , DOCCATE, DOCTYPE, LOADKEY, APROVYN
+		  	  , MIXCUYN
+		  	  , VHCMAXW
+		  	  , VHPDATE, VHPTIME, TPNSTAT
+		  	  , DRVERNM
+		  	  , DRVERPH
+		  	  , APROVDT, APROVTM
+		  	  , STPITDT, STPITTM
+		  	  , TRNINDT, TRNINTM
+		  	  , CREUSER, LMODATE, LMOTIME, LMOUSER
+		  )
+		  VALUES
+		  (
+		  		#{param.warekey}, #{param.vhplnky}, #{param.vownkey}, #{param.vehicky}
+		  	  , #{param.doccate}, #{param.doctype}, #{param.loadkey}, #{param.aprovyn}
+		  	  , (
+		  	  		CASE
+		  	  			WHEN (SELECT COUNT(1) FROM ${userInfo.schema}.WASNIT WHERE WAREKEY = #{param.warekey} AND EOASNKY = #{param.eoasnky} AND MIXLOAD = 'Y') > 0
+		  	  			    THEN 'Y'
+		  	  			WHEN (SELECT COUNT(DISTINCT DEMODNM) FROM ${userInfo.schema}.WASNIT WHERE WAREKEY = #{param.warekey} AND EOASNKY = #{param.eoasnky}) > 1
+		  	  				THEN 'Y'
+		  	  		    ELSE 'N'
+		  	  		 END
+		  	  )
+		  	  , (SELECT VHCMAXW FROM ${userInfo.commonSchema}.MVHCMA WHERE VOWNKEY = #{param.vownkey} AND VEHICKY = #{param.vehicky})
+		  	  , REPLACE(#{param.asndate}, '-', ''), REPLACE(#{param.asntime}, ':', ''), 'FINISH'
+		  	  , #{param.drvernm}
+		  	  , (SELECT DRVERPH FROM ${userInfo.commonSchema}.MVHCMA WHERE VOWNKEY = #{param.vownkey} AND VEHICKY = #{param.vehicky})
+		  	  , TO_CHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD'), TO_CHAR(CURRENT_TIMESTAMP(),'HH24MISS')
+		  	  , TO_CHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD'), TO_CHAR(CURRENT_TIMESTAMP(),'HH24MISS')
+		  	  , TO_CHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD'), TO_CHAR(CURRENT_TIMESTAMP(),'HH24MISS')
+		  	  , #{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD'), TO_CHAR(CURRENT_TIMESTAMP(),'HH24MISS'), #{userInfo.useract}
+		  )
+
+	</insert>
+
+	<insert id="saveDirectShippingItem" parameterType="com.kbph.logistics.im.domain.WasnhdDTO">
+		INSERT
+		  INTO ${userInfo.schema}.TPLNIT
+		  (
+		  		WAREKEY, VHPLNKY, VHPLNIT, CUSTCOD
+		  	  , CUSTNAM, TPISTAT, OWNERKY, OWNRNAM
+		  	  , SKUMKEY, SKUDESC, TRITQTY, REGIORG
+		  	  , REGIMOD, DESTORG, DEORGNM, DESTMOD
+		  	  , DEMODNM, DEMDMAN, DEMPOCD, DEMDADR
+		  	  , DEMDTLN, ITEMCOD, SKUGRKY, SKUTHIC
+		  	  , SKUWIDT, SKULENG, SKUWEIG, GROSSWD
+		  	  , GROSSLN, GROSSTH, STKMEMO, GROSSWG
+		  	  , ADDCOKY, BTRCATE, PURCNUM, ORDERLN
+		  	  , SUOMKEY, EOASNKY, EOASNIT, POSHPDT
+		  	  , POSHPTM, POSHPDY, SHPLIMT, DELVDSR, BTRFSTC
+		  	  , TRNCPDT, TRNCPTM
+		  	  , PLNSIZE, BILDATE
+		  	  , CREUSER, LMODATE, LMOTIME, LMOUSER
+		  )
+		  SELECT WA.WAREKEY, #{param.vhplnky}, ${userInfo.schema}.FN_TM_VHPLNIT(#{param.vhplnky}), WI.CUSTCOD
+		       , WI.CUSTNAM, 'ARRIVE', WI.OWNERKY, WI.OWNRNAM
+		       , WI.SKUMKEY, WI.SKUDESC, WI.ASNDQTY, WI.REGIORG
+		       , WI.REGIMOD, WI.DESTORG, WI.DEORGNM, WI.DESTMOD
+		       , WI.DEMODNM, WI.DEMDMAN, WI.DEMPOCD, WI.DEMDADR
+		       , WI.DEMDTLN, WI.ITEMCOD, WI.SKUGRKY, WI.SKUTHIC
+		       , WI.SKUWIDT, WI.SKULENG, WI.SKUWEIG, WI.GROSSWD
+		       , WI.GROSSLN, WI.GROSSTH, WI.STKMEMO, WI.GROSSWG
+		       , WI.ADDCOKY, WI.BTRCATE, WI.PURCNUM, WI.ORDERLN
+		       , WI.SUOMKEY, WI.EOASNKY, WI.EOASNIT, WI.POSHPDT
+		       , WI.POSHPTM, WI.POSHPDY, WI.SHPLIMT, WI.DELVDSR, WI.BTRFSTC
+		       , TO_CHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD'), TO_CHAR(CURRENT_TIMESTAMP(),'HH24MISS')
+		       , WI.SKUGRKY, TO_CHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD')
+		  	   , #{userInfo.useract}, TO_CHAR(CURRENT_TIMESTAMP(), 'YYYYMMDD'), TO_CHAR(CURRENT_TIMESTAMP(),'HH24MISS'), #{userInfo.useract}
+		    FROM ${userInfo.schema}.WASNHD WA
+		   INNER JOIN ${userInfo.schema}.WASNIT WI
+		      ON WA.EOASNKY = WI.EOASNKY
+		     AND WA.WAREKEY = WI.WAREKEY
+		  <where>
+		  		AND WA.WAREKEY = #{param.warekey}
+		  		AND WA.EOASNKY = #{param.eoasnky}
+		  </where>
+		    ORDER BY WI.EOASNIT
+	</insert>
+
+	<select id="wasnitCount" resultType="integer">
+		SELECT COUNT(1)
+		  FROM ${userInfo.schema}.WASNIT
+		 <where>
+	  	   AND WAREKEY = #{param.warekey}
+	  	   AND EOASNKY = #{param.eoasnky}
+		 </where>
+	</select>
+
+	<delete id="deleteWasnhd" parameterType="com.kbph.logistics.im.domain.WasnhdDTO">
+		DELETE
+		  FROM ${userInfo.schema}.WASNHD
+		 <where>
+	  	   AND WAREKEY = #{param.warekey}
+	  	   AND EOASNKY = #{param.eoasnky}
+		 </where>
+	</delete>
+
+	<delete id="deleteWasnit" parameterType="com.kbph.logistics.im.domain.WasnhdDTO">
+		DELETE
+		  FROM ${userInfo.schema}.WASNIT
+		 <where>
+	  	   AND WAREKEY = #{param.warekey}
+	  	   AND EOASNKY = #{param.eoasnky}
+		 </where>
+	</delete>
+
+	<!-- doe024 입고예정 아이템 취소 -->
+	<delete id="deleteDoe024Wasnit" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* deleteDoe024Wasnit */
+		DELETE
+		  FROM ${userInfo.schema}.WASNIT
+		 <where>
+	  	   AND WAREKEY = #{param.warekey}
+	  	   AND EOASNKY = #{param.eoasnky}
+	  	   AND EOASNIT = #{param.eoasnit}
+	  	   AND SKUMKEY = #{param.skumkey}
+	  	   AND UPDTCHK = #{param.updtchk}
+		 </where>
+	</delete>
+
+	<!-- doe024 입고예정 아이템 취소 MSKUWC -->
+	<delete id="deleteDoe024Mskuwc" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* deleteDoe024Mskuwc */
+		DELETE
+		  FROM ${userInfo.schema}.MSKUWC
+		 <where>
+	  	   AND WAREKEY = #{param.warekey}
+	  	   AND SKUMKEY = #{param.skumkey}
+		 </where>
+	</delete>
+
+	<!-- doe024 차량단 shift 대상 아이템 조회 -->
+	<select id="getDoe024AsnItemListStlayer" resultType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* getDoe024AsnItemListStlayer */
+		SELECT
+			WAREKEY, EOASNKY, EOASNIT, SKUMKEY
+			, STLAYER, UPDTCHK
+		FROM
+			${userInfo.schema}.WASNIT
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND EOASNKY = #{param.eoasnky}
+		ORDER BY STLAYER
+	</select>
+
+	<!-- doe024 차량단 shift -->
+	<update id="updateDoe024AsnItemStlayer" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* updateDoe024AsnItemStlayer */
+		UPDATE ${userInfo.schema}.WASNIT
+			SET STLAYER = #{param.stlayer},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{userInfo.useract},
+				UPDTCHK = #{param.updtchk} + 1
+			WHERE
+				WAREKEY = #{param.warekey}
+				AND EOASNKY = #{param.eoasnky}
+				AND EOASNIT = #{param.eoasnit}
+				AND SKUMKEY = #{param.skumkey}
+				AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- 베드, 베드단 재고유무 확인 -->
+	<select id="isSameLocationAndLayer" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* isSameLocationAndLayer */
+		SELECT
+			STOCKKY, SKUMKEY
+		FROM
+			${userData.schema}.WSTKKY
+		WHERE
+			AREAKEY = #{param.toareky}
+			AND LOCAKEY = #{param.tolocky}
+			AND LOLAYER = #{param.tolayer}
+		LIMIT 1
+	</select>
+
+
+	<select id="getAsnTaskoky" resultType="com.kbph.logistics.sm.domain.WtakitDTO">
+		/* getAsnTaskoky */
+		SELECT
+			TASKOKY, TASKOIT
+		FROM
+			${userData.schema}.WTAKIT
+		WHERE
+			EOASNKY = #{param.eoasnky}
+			AND EOASNIT = #{param.eoasnit}
+	</select>
+
+	<update id="updateWtakitStockky" parameterType="com.kbph.logistics.im.domain.WasnitDTO">
+		/* updateWtakitStockky */
+		UPDATE ${userData.schema}.WTAKIT
+			SET LOTNMKY = #{param.lotnmky},
+				STOCKKY = #{param.stockky},
+				LMODATE = date_format(now(), '%Y%m%d'),
+				LMOTIME = date_format(now(), '%H%i%s'),
+				LMOUSER = #{userData.useract}
+			WHERE
+				TASKOKY = #{param.taskoky}
+				AND TASKOIT = #{param.taskoit}
+	</update>
+
+	<!-- 실사생성 시 to베드 재고 조회 -->
+	<select id="getFromLocationAndLayerStock" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getFromLocationAndLayerStock */
+		SELECT
+			STOCKKY, WAREKEY, SKUMKEY, AREAKEY, LOCAKEY, LOLAYER
+			, UPDTCHK
+		FROM
+			${userData.schema}.WSTKKY
+		WHERE
+			AREAKEY = #{param.toareky}
+			AND LOCAKEY = #{param.tolocky}
+			AND LOLAYER >= #{param.tolayer}
+		ORDER BY LOLAYER ASC
+	</select>
+
+	<!-- 단+1 -->
+	<update id="updateLayerStockShift" parameterType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* updateLayerStockShift */
+		UPDATE ${userData.schema}.WSTKKY
+		SET	LOLAYER = #{param.lolayer},
+			LMODATE = date_format(now(), '%Y%m%d'),
+			LMOTIME = date_format(now(), '%H%i%s'),
+			LMOUSER = #{userData.useract},
+			UPDTCHK = #{param.updtchk} + 1
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND STOCKKY = #{param.stockky}
+			AND AREAKEY = #{param.areakey}
+			AND LOCAKEY = #{param.locakey}
+			AND UPDTCHK = #{param.updtchk}
+	</update>
+
+	<!-- 실사생성 api set 조회용 -->
+	<select id="getPhyCreateApiData" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getPhyCreateApiData */
+		SELECT
+			WS.SKUMKEY, WS.AREAKEY, WS.LOCAKEY, WS.LOLAYER as STLAYER
+			, WS.STOCKKY, WS.SKUGRKY, MGR.GRPKYNM, WS.OWNERKY, WS.SKUDESC
+			, WS.ITEMCOD, MCO.COMCDTX, WS.SKULENG, WS.SKUWEIG, WS.SKUWIDT, WS.SKUTHIC, WS.STKSTAT as SKUSTAT
+		FROM
+			${userData.schema}.WSTKKY WS
+        INNER JOIN ${userData.schema}.MGRPMA MGR
+        	ON MGR.SKUGRKY = WS.SKUGRKY
+		INNER JOIN ${userData.schema}.MCODEM MCO
+			ON MCO.COMCDVL = WS.ITEMCOD
+			AND MCO.COMCDKY = 'ITEMCOD'
+		WHERE
+			WS.STOCKKY = #{param.stockky}
+			AND WS.SKUMKEY = #{param.skumkey}
+	</select>
+
+	<select id="getPhyCreateLocationStockInfo" resultType="com.kbph.logistics.sm.domain.WstkkyDTO">
+		/* getPhyCreateLocationStockInfo */
+		SELECT
+			STOCKKY, WAREKEY, SKUMKEY, AREAKEY, LOCAKEY, LOLAYER as STLAYER
+			, 'N' as RMSTKYN, 'N' as RETUNYN
+			, DATE_FORMAT(now(), '%y-%m-%d %H:%i:%s') as PHYDTTM
+		FROM
+			${userData.schema}.WSTKKY
+		WHERE
+			WAREKEY = #{param.warekey}
+			AND AREAKEY = #{param.toareky}
+			AND LOCAKEY = #{param.tolocky}
+		ORDER BY LOLAYER ASC
+	</select>
+</mapper>

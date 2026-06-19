@@ -1,0 +1,1096 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{/main/fragment/defaultLayout}">
+	<div class="tab-contents" layout:fragment="content">
+		<div class="location"></div>
+		<div class="search-conditions con-box">
+			<div class="search-btn-group" hidden='hidden'>
+				<select id="doe041Custkey" data-cb-val="" data-cb-name="" data-cb-url="/md/partner/customer" data-cb-variable="custkeyList">
+				</select>
+			</div>
+			<div class="setting-grid">
+				<label for="doe041Warekey" class="setting-grid-title ic-title-nece">[[#{search.whnamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe041Warekey" name="doe041Warekey"
+						data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/organization/warehouse"
+						data-cb-select="" data-cb-variable="warekeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe041Areakey" class="setting-grid-title">[[#{search.areanam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe041Areakey" name="doe041Areakey"
+						data-cb-val="areakey" data-cb-name="areanam" data-cb-url="/md/organization/area/relation"
+						data-cb-select="" data-cb-variable="areakeyList">
+							<option value="">[[#{ms.chooseAll}]]</option>
+						</select>
+					</div>
+				</div>
+				<label for="doe041Locakey" class="setting-grid-title">[[#{search.locanam}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe041Locakey" name="doe041Locakey"
+						data-cb-val="locakey" data-cb-name="locanam" data-cb-url="/md/wal-relations?loctypeList=BED,TMP"
+						data-cb-select="" data-cb-variable="locakeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe041Skumkey" class="setting-grid-title">[[#{search.skuCode}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.skuCode')}" id="doe041Skumkey" name="doe041Skumkey" onkeyup="doe041KeyupEvt()"/>
+					</div>
+				</div>
+				<label for="doe041Custnam" class="setting-grid-title">[[#{search.cunamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.cunamlc')}" id="doe041Custnam" name="doe041Custnam" onkeyup="doe041KeyupEvt()"/>
+					</div>
+				</div>
+				<label for="doe041Purcnum" class="setting-grid-title">[[#{grid.purcnum}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('grid.purcnum')}" id="doe041Purcnum" name="doe041Purcnum" onkeyup="doe041KeyupEvt()">
+					</div>
+				</div>
+				<label for="doe041Orderln" class="setting-grid-title">[[#{grid.orderln}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('grid.orderln')}" id="doe041Orderln" name="doe041Orderln" onkeyup="doe041KeyupEvt()">
+					</div>
+				</div>
+				<label for="doe041Regikey" class="setting-grid-title">[[#{search.renamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-group">
+						<select id="doe041Regikey"
+							data-cb-val="combovl" data-cb-name="combonm" data-cb-url="/md/partner/region"
+							data-cb-select="" data-cb-variable="regionList">
+						</select>
+						<select id="doe041Destkey" style="display : none"
+							data-cb-val="destkey" data-cb-name="denamlc" data-cb-url="/md/doe010/grid?deuseyn=Y"
+							data-cb-select="" data-cb-variable="doe041DestkeyList">
+						</select>
+					</div>
+				</div>
+				<label for="doe041Demodnm" class="setting-grid-title">[[#{search.denamlc}]]</label>
+				<div class="setting-grid-content">
+					<div class="input-wrapper">
+						<input type="text" th:placeholder="${#messages.msg('search.denamlc')}" id="doe041Demodnm" name="doe041Demodnm" onkeyup="doe041KeyupEvt()">
+					</div>
+				</div>
+			</div>
+			<div class="search-btn-group">
+				<button type="button" class="btn-search btn-navy btn-green" id="doe041BtnSearch"><img>[[#{bt.search}]]</button>
+				<button type="button" class="btn-clear btn-white" id="doe041BtnReset"><img>[[#{bt.reset}]]</button>
+			</div>
+		</div>
+		<div class="search-list">
+			<div class="list-top">
+				<div class="list-title ic-title-mark">
+					<span>[[#{menu.sm.doe041}]]</span>
+				</div>
+				<div class="edit-btn-wrapper">
+                    <span>[[#{grid.itemcnt}]] : </span>
+                    <span id="doe041Itemcnt">0</span>
+                    /
+                    <span>[[#{bm.common.totalwg}]] : </span>
+                    <span id="doe041TotalKg">0</span>
+                    /
+                    <span>[[#{sy.main.totalWeight}]] : </span>
+                    <span id="doe041TotalTon">0</span>
+					<button class="btn-navy btn-green" id="doe041ModalOpen" data-bs-toggle="modal" data-bs-target="#doe041Modal">착지변경</button>
+					<button class="btn-navy btn-green" id="doe041BtnSave"><img class="ic-bt-save">[[#{bt.adjustRegistration}]]</button>
+				</div>
+			</div>
+			<div class="list-grid-wrapper con-box">
+				<div id="doe041Grid"></div>
+			</div>
+		</div>
+		<!-- 모달 -->
+		<div class="modal fade modalTm" id="doe041Modal" role="dialog" aria-labelledby="doe041Modal" aria-hidden="true">
+			<div class="modal-dialog modal-lg" role="document" style="width: 420px">
+				<div class="modal-content">
+					<div class="modal-top">
+						<button type="button" class="close" id="doe041ModalClose" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
+					<div class="modal-body doe041">
+							<div class="list-top">
+								<div class="list-title ic-title-mark">
+									<span>착지변경</span>
+								</div>
+							</div>
+							<div class="setting-grid con-box" style="grid-template-columns: 90px 1fr;">
+								<label for="doe041MdCustkey" class="setting-grid-title">고객명</label>
+								<div class="input-wrapper">
+									<input type="text" th:placeholder="'고객명'" id="doe041MdCustkey" name="doe041MdCustkey" style="width: 100%" readonly />
+								</div>
+
+								<label for="doe041MdDestkey" class="setting-grid-title">[[#{grid.destmod}]]</label>
+								<div class="input-group">
+									<select id="doe041MdDestkey" name="doe041MdDestkey">
+									</select>
+								</div>
+
+								<label for="doe041MdDemodnm" class="setting-grid-title ic-title-nece">[[#{grid.demodnm}]]</label>
+								<div class="input-wrapper" style="display: inline-flex; gap: 8px;">
+									<input type="text" th:placeholder="'상세착지명'" id="doe041MdDemodnm" name="doe041MdDemodnm" style="width: 80%"/>
+									<button class="btn-save btn-navy btn-green" id="doe041MdestkeyConditions" style="width: 20%; padding: 4px">검색</button>
+								</div>
+
+								<label for="doe041Demdadr" class="setting-grid-title ic-title-nece">[[#{grid.demdadr}]]</label>
+								<div class="input-wrapper" style="display: inline-flex; gap: 8px;">
+								    <input type="text" th:placeholder="${#messages.msg('grid.demdadr')}" id="doe041Demdadr" name="doe041Demdadr" style="width: 80%">
+									<button class="btn-save btn-navy btn-green" id="doe041DemdadrKakao" style="width: 20%; padding: 4px">주소</button>
+								</div>
+
+								<label for="doe041Deposcd" class="setting-grid-title">우편번호</label>
+								<div class="input-wrapper">
+									<input type="text" th:placeholder="'우편번호'" id="doe041Deposcd" name="doe041Deposcd" style="width: 100%"/>
+								</div>
+
+								<label for="doe041MdRegikey" class="setting-grid-title ic-title-nece">[[#{grid.renamlc}]]</label>
+								<div class="input-group">
+									<select id="doe041MdRegikey" name="doe041MdRegikey">
+									</select>
+								</div>
+
+								<label for="doe041Demdman" class="setting-grid-title">[[#{grid.demdman}]]</label>
+								<div class="input-wrapper">
+									<input type="text" th:placeholder="${#messages.msg('grid.demdman')}" id="doe041Demdman" name="doe041Demdman" style="width: 100%">
+								</div>
+
+								<label for="doe041Desteln" class="setting-grid-title">[[#{grid.demdtln}]]</label>
+								<div class="input-wrapper">
+									<input type="text" th:placeholder="${#messages.msg('grid.demdtln')}" id="doe041Desteln" name="doe041Desteln" style="width: 100%">
+								</div>
+							</div>
+						</div>
+					<div class="modal-bottom">
+						<button class="btn-save btn-navy btn-green" id="doe041ModalSave">[[#{bt.save}]]</button>
+						<button class="btn-white" id="doe041ModalCancel">[[#{bt.cancel}]]</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	<script>
+	!function(){
+		const pageId = '[[${tabPage}]]';
+		const doe041ModalId = document.getElementById('doe041Modal');
+		//모달 키보드와 마우스로 안닫히게끔 설정
+		const doe041Modal = new bootstrap.Modal(doe041ModalId, {
+			backdrop: 'static',
+			keyboard: false
+		});
+
+		console.log('doe041 :: 재고조정등록')
+		let doe041CurrentWarekey;
+		let doe041StockList;
+		let modalDemdadr = ''; //주소 전역변수
+		let denamlcList;
+
+		const doe041GridCM = [
+			{ title: '', dataType: 'string',  dataIndx: 'state', type: 'checkbox', align: 'center'
+				, maxWidth:'30', maxHeight:'30', menuIcon: false, sortable: false, editor: false,
+				nodrag: true, nodrop: true,
+				cb: { all: false, header: true, check: 'Y', uncheck: 'N' },
+				nodrag: true, nodrop: true
+			},
+			{ title: '[[#{common.grid.recIndx}]]', dataType: 'string', dataIndx: 'rowkey', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.stockky}]]', dataType: 'string', dataIndx: 'stockky', editable: false, hidden: true}, // hidden 처리
+			{ title: '[[#{grid.wareCode}]]', dataType: 'string', dataIndx: 'warekey', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{grid.whnamlc}]]', dataType: 'string', dataIndx: 'whnamlc', editable: false },
+			{ title: '[[#{grid.areakey}]]', dataType: 'string', dataIndx: 'areakey', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{grid.areanam}]]', dataType: 'string', dataIndx: 'areanam', editable: false },
+			{ title: '[[#{grid.locakey}]]', dataType: 'string', dataIndx: 'locakey', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{grid.locanam}]]', dataType: 'string', dataIndx: 'locanam', editable: false },
+			{ title: '[[#{grid.layer}]]', dataType: 'integer', dataIndx: 'lolayer', editable: false },
+			{ title: '[[#{sm.wstkky.emskuyn}]]', dataType: 'string', dataIndx: 'emskuyn', type: 'checkbox', align: 'center'
+				, menuIcon: false, sortable: false, editor: false,
+				cb: { all: false, header: false, check: 'Y', uncheck: 'N' },
+				styleHead: { 'background-color' : '[[#{grid.styleHead02}]]' }
+			},
+			{ title: '[[#{sm.wstkky.stkmemo}]]', dataType: 'string', dataIndx: 'stkmemo',
+				styleHead: { 'background-color' : '[[#{grid.styleHead02}]]' }
+			},
+			{ title: '[[#{grid.btrcate}]]', dataType: 'string', dataIndx: 'btrcate', editable: false, hidden : true },
+			{ title: '[[#{grid.btrcnam}]]', dataType: 'string', dataIndx: 'btrcnam', editable: false },
+			{ title: '[[#{bm.baddco.addcoky}]]', dataType: 'string', dataIndx: 'addcoky', editable: false, hidden : true},
+			{ title: '[[#{bm.baddco.addconm}]]', dataType: 'string', dataIndx: 'addconm', editable: false },
+			{ title: '[[#{grid.grpkynm}]]', dataType: 'string', dataIndx: 'grpkynm', editable: false},
+			{ title: '[[#{sm.wstkky.skumkey}]]', dataType: 'string', dataIndx: 'skumkey', editable: false },
+			{ title: '[[#{sm.wstkky.skuthic}]]', dataType: 'double', dataIndx: 'skuthic', format: '#,###.000',
+				styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' },
+			},
+			{ title: '[[#{sm.wstkky.skuwidt}]]', dataType: 'double', dataIndx: 'skuwidt', format: '#,###.0',
+				styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' },
+			},
+			{ title: '[[#{sm.wstkky.skuleng}]]', dataType: 'integer', dataIndx: 'skuleng', format: '#,###',
+				styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' },
+			},
+			{ title: '[[#{sm.wstkky.skuweig}]]', dataType: 'integer', dataIndx: 'skuweig', format: '#,###',
+				styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' },
+			},
+			{ title: '[[#{sm.wstkky.grossth}]]', dataType: 'double', dataIndx: 'grossth', format: '#,###.000', editable: false },
+			{ title: '[[#{sm.wstkky.grosswd}]]', dataType: 'double', dataIndx: 'grosswd', format: '#,###.0', editable: false},
+			{ title: '[[#{sm.wstkky.grossln}]]', dataType: 'integer', dataIndx: 'grossln', format: '#,###', editable: false },
+			{ title: '[[#{sm.wstkky.grosswg}]]', dataType: 'integer', dataIndx: 'grosswg',format: '#,###', editable: false},
+			{ title: '[[#{sm.wstkky.parsncd}]]', dataType: 'string', dataIndx: 'parsncd',
+				styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' },
+				editor: {
+					type: 'select',
+		            init: function (ui) {
+		            	ui.$cell.find('select').pqSelect({ checkbox : true });
+		                setTimeout(function () {
+		                	ui.$cell.find('select').pqSelect('open');
+			        	}, 250);
+					},
+				    options: ui => {
+				    	return window['rsncodeRelationList']?.map(e => {
+							if(e.warekey === ui.rowData.warekey && e.doccate === '600' && e.doctype === '610'){
+								const obj = {};
+								obj[e.rsncode] = e.rsncdnm;
+
+								return obj;
+							}
+						}).filter(e => e);
+				    }
+				},
+				render : ui =>{
+					const target = window['rsncodeRelationList']?.find( e => e.warekey === ui.rowData.warekey && e.doccate === '600' && e.doctype === '610' && e.rsncode === ui.cellData);
+					return {
+						text : target ? target.rsncdnm : ''
+					}
+				},
+				editable: true
+			},
+			{ title: '[[#{sm.wstkky.parsnnm}]]', dataType: 'string', dataIndx: 'parsnnm',
+				styleHead: { 'background-color' : '[[#{grid.styleHead02}]]' }
+			},
+			{ title: '[[#{sm.wstkky.ownerky}]]', dataType: 'string', dataIndx: 'ownerky', editable: true,
+				styleHead: { 'background-color' : '[[#{grid.styleHead02}]]' },
+				editor: {
+					type: 'select',
+					init: ui => {
+	        			 ui.$cell.find('select').pqSelect({
+	        						 checkbox: true,
+	        						 search: true,
+	        						 width: getSelectBoxWidthCondition(ui)
+	        					});
+	        			 setTimeout(() => {
+	        				 ui.$cell.find('select').pqSelect('open');
+        				 }, 250);
+        			},
+					valueIndx: '[[#{grid.comboKey}]]',
+		            labelIndx: '[[#{grid.comboValue}]]',
+					options: ui => window['custkeyList']
+				},
+				render: ui => {
+					const target = window['custkeyList']?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData);
+						return {
+							text: target ? target['[[#{grid.comboValue}]]'] : ''
+						};
+				},
+			},
+			{ title: '[[#{sm.wstkky.ownrnam}]]', dataType: 'string', dataIndx: 'ownrnam', editable: true,
+				styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' }
+			},
+			{ title: '[[#{sm.wstkky.custkey}]]', dataType: 'string', dataIndx: 'custcod', editable: true,
+				styleHead: { 'background-color' : '[[#{grid.styleHead02}]]' },
+				editor: {
+					type: 'select',
+					init: ui => {
+	        			 ui.$cell.find('select').pqSelect({
+	        						 checkbox: true,
+	        						 search: true,
+	        						 width: getSelectBoxWidthCondition(ui)
+	        					});
+	        			 setTimeout(() => {
+	        				 ui.$cell.find('select').pqSelect('open');
+        				 }, 250);
+        			},
+					valueIndx: '[[#{grid.comboKey}]]',
+		            labelIndx: '[[#{grid.comboValue}]]',
+					options: ui => window['custkeyList']
+				},
+				render: ui => {
+					const target = window['custkeyList']?.find( e => e['[[#{grid.comboKey}]]'] === ui.cellData);
+						return {
+							text: target ? target['[[#{grid.comboValue}]]'] : ''
+						};
+				},
+			},
+			{ title: '[[#{sm.wstkky.custnam}]]', dataType: 'string', dataIndx: 'custnam', editable: true,
+				styleHead: { 'background-color' : '[[#{grid.styleHead01}]]' }
+			},
+			{ title: '[[#{sm.wstkky.regiorg}]]', dataType: 'string', dataIndx: 'regiorg', editable: false }, // hidden 처리
+			{ title: '[[#{sm.wstkky.regiorg}]]', dataType: 'string', dataIndx: 'renamlc', editable: false },
+			{ title: '[[#{sm.wstkky.regimod}]]', dataType: 'string', dataIndx: 'regimod', editable: false,
+				render: ui => {
+					const target = window.regionList.find(e => {
+						return e.combovl === ui.cellData;
+					});
+					return {
+						text: target ? target['combonm'] : ui.cellData
+					};
+				}
+			},
+			{ title: '[[#{sm.wstkky.destorg}]]', dataType: 'string', dataIndx: 'destorg', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.deorgnm}]]', dataType: 'string', dataIndx: 'deorgnm', editable: false },
+			{ title: '[[#{sm.wstkky.destmod}]]', dataType: 'string', dataIndx: 'destmod', editable: false, hidden: true }, // hidden 처리
+			{ title: '[[#{sm.wstkky.demodnm}]]', dataType: 'string', dataIndx: 'demodnm', editable: false },
+			{ title: '[[#{md.poscd}]]', dataType: 'string', dataIndx: 'dempocd', editable: false },
+			{ title: '[[#{md.addr}]]', dataType: 'string', dataIndx: 'demdadr', editable: false },
+			{ title: '[[#{md.mannm}]]', dataType: 'string', dataIndx: 'demdman', editable: false },
+			{ title: '[[#{md.mdesma.desteln}]]', dataType: 'string', dataIndx: 'demdtln', editable: false },
+			{ title: '[[#{sm.wstkky.purcnum}]]', dataType: 'string', dataIndx: 'purcnum', editable: false },
+			{ title: '[[#{sm.wstkky.lotnmky}]]', dataType: 'string', dataIndx: 'lotnmky', editable: false },
+			{ title: '[[#{sm.wstkky.orderln}]]', dataType: 'string', dataIndx: 'orderln', editable: false },
+			{ title: '[[#{sm.wstkky.stlotnb}]]', dataType: 'string', dataIndx: 'stlotnb', editable: false },
+			{ title: '[[#{sm.wstkky.skudesc}]]', dataType: 'string', dataIndx: 'skudesc', editable: false },
+			{ title: '[[#{sm.wstkky.itemcod}]]', dataType: 'string', dataIndx: 'itemcod', editable: false },
+			{ title: '[[#{grid.btrfstc}]]', dataType: 'string', dataIndx: 'btrfstc', editable: false },
+			{ title: '[[#{sm.wstkky.skugrky}]]', dataType: 'string', dataIndx: 'skugrky', editable: false, hidden : true},
+			{ title: '[[#{sm.wstkky.stotqty}]]', dataType: 'integer', dataIndx: 'stotqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.taskqty}]]', dataType: 'integer', dataIndx: 'taskqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.sallqty}]]', dataType: 'integer', dataIndx: 'sallqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.sbloqty}]]', dataType: 'integer', dataIndx: 'sbloqty', editable: false, summary: { type : 'sum' }},
+			{ title: '[[#{sm.wstkky.planqty}]]', dataType: 'integer', dataIndx: 'planqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.plcmqty}]]', dataType: 'integer', dataIndx: 'plcmqty', editable: false, summary: { type : 'sum' } },
+			{ title: '[[#{sm.wstkky.suomkey}]]', dataType: 'string', dataIndx: 'suomkey', editable: false },
+			{ title: '[[#{sm.wstkky.rcvdcdt}]]', dataType: 'string', dataIndx: 'rcvdcdt', editable: false },
+			{ title: '[[#{sm.wstkky.lotat01}]]', dataType: 'string', dataIndx: 'lotat01', editable: false },
+			{ title: '[[#{sm.wstkky.lotat02}]]', dataType: 'string', dataIndx: 'lotat02', editable: false },
+			{ title: '[[#{sm.wstkky.lotat03}]]', dataType: 'string', dataIndx: 'lotat03', editable: false },
+			{ title: '[[#{sm.wstkky.stkstat}]]', dataType: 'string', dataIndx: 'stkstat', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.stkstat}]]', dataType: 'string', dataIndx: 'statnam', editable: false },
+			{ title: '[[#{sm.wstkky.blockid}]]', dataType: 'string', dataIndx: 'blockid', editable: false },
+			{ title: '[[#{sm.wstkky.rcvdcky}]]', dataType: 'string', dataIndx: 'rcvdcky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.rcvdcit}]]', dataType: 'integer', dataIndx: 'rcvdcit', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.adjsoky}]]', dataType: 'string', dataIndx: 'adjsoky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.adjsoit}]]', dataType: 'integer', dataIndx: 'adjsoit', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.physoky}]]', dataType: 'string', dataIndx: 'physoky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.physoit}]]', dataType: 'integer', dataIndx: 'physoit', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.shpdcky}]]', dataType: 'string', dataIndx: 'shpdcky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.shpdcit}]]', dataType: 'integer', dataIndx: 'shpdcit', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.taskoky}]]', dataType: 'string', dataIndx: 'taskoky', editable: false, hidden: true },
+			{ title: '[[#{sm.wstkky.taskoit}]]', dataType: 'integer', dataIndx: 'taskoit', editable: false, hidden: true },
+			{ title: '[[#{grid.credate}]]', dataType: 'string', dataIndx: 'credate', editable: false },										// 생성일자
+			{ title: '[[#{grid.cretime}]]', dataType: 'string', dataIndx: 'cretime', editable: false },										// 생성일시
+			{ title: '[[#{grid.creuser}]]', dataType: 'string', dataIndx: 'creuser', editable: false },										// 생성사용자
+			{ title: '[[#{grid.lmodate}]]', dataType: 'string', dataIndx: 'lmodate', editable: false },										// 수정일자
+			{ title: '[[#{grid.lmotime}]]', dataType: 'string', dataIndx: 'lmotime', editable: false },										// 수정일시
+			{ title: '[[#{grid.lmouser}]]', dataType: 'string', dataIndx: 'lmouser', editable: false },										// 수정사용자
+			{ title: '[[#{grid.updtchk}]]', dataType: 'integer', dataIndx: 'updtchk', editable: false, hidden: true },
+		];
+
+		const doe041GridObject = new GridUtil(doe041GridCM, 'doe041', 'doe041Grid');
+
+		doe041GridObject.setCreate(async function(){
+			await _commonInit(pageId);
+
+			const areakeyFilter = areakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe041Warekey').value;
+			});
+			await makeOptionAreakey(areakeyFilter);
+
+			const locakeyFilter = locakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe041Warekey').value;
+			});
+
+			$('#doe041Locakey').val('').attr('multiple', 'multiple')
+			.pqSelect({
+				searchId: 'doe041Locakey',
+				multiplePlaceholder: '[[#{ms.chooseAll}]]',
+				selectallText: '[[#{ms.chooseAll}]]',
+				displayText : '{0}개 선택',
+				checkbox: true,
+				width: '100%'
+			});
+			makeOptionLocakey(locakeyFilter);
+
+			$('#doe041Regikey').val('').attr('multiple', 'multiple')
+			.pqSelect({
+				searchId: 'doe041Regikey',
+				multiplePlaceholder: '[[#{ms.chooseAll}]]',
+				selectallText: '[[#{ms.chooseAll}]]',
+				displayText : '{0}개 선택',
+				checkbox: true,
+				width: '100%'
+			}).pqSelect('refreshData');
+
+			$('#doe041Locakey').pqSelect({ search: true, deselect : false, width: '100%' });
+		    $('#doe041Regikey').pqSelect({ search: true, deselect : false, width: '100%' });
+
+		    const grid = pq.grid('#doe041Grid');
+
+		    //colModel에서 체크박스가 제일 최상단이어야함.
+		    //freezeCols는 고정시킬 열의 갯수를 지정하는 것.
+		    grid.option('freezeCols', 1);
+		});
+
+		doe041GridObject.setBeforeValidate(function(evt, ui){
+			if ((ui.source != 'undo' && ui.source == 'edit') || ui.source === 'paste'){
+				for(const updateData of ui.updateList){
+					this.updateRow({
+						rowIndx : updateData.rowIndx,
+						newRow : {
+							state : 'Y'
+						},
+						checkEditable : false
+					});
+				}
+			}
+		});
+
+		doe041GridObject.setRowInit(function(ui){
+			const rowStyle = {};
+			if(ui.rowData.sbloqty){
+				rowStyle.style = 'background-color: #90EE90; font-weight: bold;'
+			}else if(ui.rowData.emskuyn === 'Y'){
+				rowStyle.style = 'background-color: #FAED7D; font-weight: bold;'
+			}
+
+			const rsncdnmOptions = this.getColumn({dataIndx : 'parsncd'}).editor.options(ui)
+			if(rsncdnmOptions.length) {
+				ui.rowData.parsncd = Object.keys(rsncdnmOptions[0])[0];
+			}
+
+			return rowStyle;
+		});
+
+		doe041GridObject.setSelectEnd(function(evt, ui){
+			if(ui.selection._areas[0].type === 'cell'){
+				return;
+			}
+
+			const checkMap = new Map();
+
+			this.Selection().getSelection().forEach(function(data){
+				if(!checkMap.has(data.rowIndx)){
+					checkMap.set(data.rowIndx, data);
+					return true;
+				}
+				return false;
+			});
+
+			for(const [rowIndx, data] of checkMap){
+				this.updateRow({
+					rowIndx : rowIndx,
+					newRow : {
+						state : data.rowData.state === 'Y' ? 'N' : 'Y'
+					},
+					checkEditable : false
+				});
+			}
+		});
+
+		doe041GridObject.setCheck(function(evt, ui){
+			if(ui.dataIndx === 'state'){
+				const gridCheckList = this.Checkbox('state').getCheckedNodes();
+
+				let weightSummary = 0;
+
+				for(const gridCheck of gridCheckList){
+					weightSummary += Number(gridCheck.skuweig);
+				}
+
+				document.querySelector('#doe041Itemcnt').innerHTML = String(gridCheckList.length);
+				document.querySelector('#doe041TotalKg').innerHTML = String(weightSummary).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+				document.querySelector('#doe041TotalTon').innerHTML = String(weightSummary / 1000);
+			}
+		});
+
+		doe041GridObject.setChange(function(evt, ui){
+			if(ui.source === 'edit' || ui.source === 'paste'){
+				const updateRowList = [];
+
+				for(const updateData of ui.updateList){
+					const newRow = {};
+
+					if(updateData.newRow.hasOwnProperty('custcod') && updateData.newRow.custcod){
+						const custcodFind = window.custkeyList.find(e=> e.combovl === updateData.newRow.custcod);
+						newRow['custnam'] = custcodFind ? custcodFind.combonm : '';
+					}
+
+					if(updateData.newRow.hasOwnProperty('custnam') && updateData.newRow.custnam){
+						newRow['custcod'] = '';
+					}
+
+					if(updateData.newRow.hasOwnProperty('ownerky') && updateData.newRow.ownerky){
+						const ownerkyFind = window.custkeyList.find(e=> e.combovl === updateData.newRow.ownerky);
+						newRow['ownrnam'] = ownerkyFind ? ownerkyFind.combonm : '';
+					}
+
+					if(updateData.newRow.hasOwnProperty('ownrnam') && updateData.newRow.ownrnam){
+						newRow['ownerky'] = '';
+					}
+
+	    			updateRowList.push({
+						rowIndx: updateData.rowIndx,
+						newRow: newRow
+					});
+				}
+				this.updateRow({
+					rowList: updateRowList,
+					checkEditable: false
+				});
+			}
+			if(ui.source === 'checkbox'){
+				for(const updateData of ui.updateList){
+					if(updateData.newRow.hasOwnProperty('emskuyn') && updateData.newRow.emskuyn){
+						this.updateRow({
+							rowIndx: updateData.rowIndx,
+							newRow: {
+								state : 'Y'
+							},
+							checkEditable: false
+						});
+					}
+				}
+			}
+		});
+		initFunc();
+		doe041GridObject.setReset();
+		doe041GridObject.open();
+		const essentialFields = ['emskuyn', 'stkmemo'
+								, 'skuthic', 'skuwidt', 'skuleng', 'skuweig'
+								, 'ownerky', 'ownrnam', 'custcod', 'custnam'];
+		//모달 open
+		document.querySelector('#doe041ModalOpen').addEventListener('click', function() {
+			const doe041Grid = pq.grid('#doe041Grid');
+			const doe041GridChecked = doe041Grid.Checkbox('state').getCheckedNodes();
+			const doe041GridChangeList = doe041Grid.getChanges({ all : true });
+			const doe041SameRegimod = doe041GridChecked.every(item=> item.regimod === doe041GridChecked[0].regimod);
+
+			if(!doe041GridChecked.length) {
+				alert('[[#{ms.choiceRowZero}]]');
+				return;
+			}
+
+			for(const doe041GridChangeData of doe041GridChangeList.oldList){
+				for(const essentialField of essentialFields){
+					if(doe041GridChangeData.hasOwnProperty(essentialField)){
+						alert(`[[#{ms.dataChanged}]]`); // 수정된 데이터가 있습니다.\n조정등록 후 착지변경을 해주세요.
+						return;
+					}
+				}
+			}
+
+			if(!doe041SameRegimod){
+				alert('[[#{ms.unmatchRegikey}]]');
+				return;
+			}
+
+			//고객명은 비어있을 수 없음. 빈문자는 건너뛰는 filter 처리 고려. (ownerky)
+			document.querySelector('#doe041MdCustkey').value = [...new Set(doe041GridChecked.map(obj => obj.ownrnam.trim()).filter(ownrnam => ownrnam !== ''))].join(', ');
+			doe041Modal.show();
+
+		});
+
+		document.querySelector('#doe041MdestkeyConditions').addEventListener('click', async function(){
+
+			const destName = document.querySelector('#doe041MdDemodnm').value;
+
+			if(destName.length < 2){
+				alert('[[#{ms.minInputValue(2)}]]');
+				obj.focus();
+				return;
+			}
+
+			const response = await fetchUtil('GET','/sm/inventory/doe041/denamlc', {denamlc : destName});
+
+			denamlcList = await response.json();
+
+			//모달 상세착지 selectBox
+			const option = document.createElement('option');
+			option.value = '';
+			option.text = '[[#{tm.doe058.choice}]]';
+
+			const modalDestkeySelectBox = document.querySelector('#doe041MdDestkey');
+			modalDestkeySelectBox.innerHTML = '';
+			modalDestkeySelectBox.appendChild(option);
+
+			denamlcList.forEach((destkeyData, index) =>{
+				const destkeyOption = document.createElement('option');
+				destkeyOption.value = destkeyData.destkey;
+				destkeyOption.text = destkeyData.denamlc;
+				modalDestkeySelectBox.appendChild(destkeyOption);
+
+				if(index === 0){
+					destkeyOption.selected = true;
+				}
+			});
+
+ 			document.querySelector('#doe041MdDemodnm').value = denamlcList[0].denamlc ? denamlcList[0].denamlc : '';
+ 			document.querySelector('#doe041Demdadr').value = denamlcList[0].desaddr ? denamlcList[0].desaddr : '';
+ 			document.querySelector('#doe041Demdman').value = denamlcList[0].demannm ? denamlcList[0].demannm : '';
+ 			document.querySelector('#doe041Deposcd').value = denamlcList[0].deposcd ? denamlcList[0].deposcd : '';
+ 			document.querySelector('#doe041Desteln').value = denamlcList[0].desteln ? denamlcList[0].desteln.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`) : '';
+
+ 			$('#doe041MdDestkey').pqSelect('open').pqSelect('refreshData');
+		});
+
+		document.querySelector('#doe041MdDemodnm').addEventListener('input', function(event){
+			//모달 상세착지 selectBox
+			const option = document.createElement('option');
+			option.value = '';
+			option.text = '[[#{tm.doe058.choice}]]';
+
+			const modalDestkeySelectBox = document.querySelector('#doe041MdDestkey');
+			modalDestkeySelectBox.innerHTML = '';
+			modalDestkeySelectBox.appendChild(option);
+
+			if(event.target.value === originDestkeyObj.demodnm){
+				[originDestkeyObj].forEach((destkeyData, index) =>{
+					const destkeyOption = document.createElement('option');
+					destkeyOption.value = destkeyData.destmod;
+					destkeyOption.text = destkeyData.demodnm;
+					modalDestkeySelectBox.appendChild(destkeyOption);
+
+					if(index === 0){
+						destkeyOption.selected = true;
+					}
+				});
+			}
+
+			$('#doe041MdDestkey').pqSelect('refreshData');
+ 			document.querySelector('#doe041Demdadr').value = '';
+ 			document.querySelector('#doe041Demdman').value = '';
+ 			document.querySelector('#doe041Deposcd').value = '';
+ 			document.querySelector('#doe041Desteln').value = '';
+			this.focus();
+		});
+
+		//모달 오픈시 세팅된 변경착지키, 변경착지명
+		const originDestkeyObj = {};
+		//모달 show 이벤트
+		$('#doe041Modal').on('shown.bs.modal', async function() {
+
+			const doe041Grid = pq.grid('#doe041Grid');
+			const doe041GridChecked = doe041Grid.Checkbox('state').getCheckedNodes();
+
+ 			document.querySelector('#doe041MdDemodnm').value = doe041GridChecked[0].demodnm ? doe041GridChecked[0].demodnm : '';
+ 			document.querySelector('#doe041Demdadr').value = doe041GridChecked[0].demdadr ? doe041GridChecked[0].demdadr : '';
+ 			document.querySelector('#doe041Demdman').value = doe041GridChecked[0].demannm ? doe041GridChecked[0].demannm : '';
+ 			document.querySelector('#doe041Deposcd').value = doe041GridChecked[0].dempocd ? doe041GridChecked[0].dempocd : '';
+ 			document.querySelector('#doe041Desteln').value = doe041GridChecked[0].demdtln ? doe041GridChecked[0].demdtln.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`) : '';
+ 			modalDemdadr = document.querySelector('#doe041Demdadr').value;
+
+ 			originDestkeyObj.destmod = doe041GridChecked[0].destmod ? doe041GridChecked[0].destmod :'';
+ 			originDestkeyObj.demodnm = doe041GridChecked[0].demodnm? doe041GridChecked[0].demodnm : '';
+ 			originDestkeyObj.demdadr = doe041GridChecked[0].demdadr? doe041GridChecked[0].demdadr : '';
+ 			originDestkeyObj.demannm = doe041GridChecked[0].demannm? doe041GridChecked[0].demannm : '';
+ 			originDestkeyObj.dempocd = doe041GridChecked[0].dempocd? doe041GridChecked[0].dempocd : '';
+ 			originDestkeyObj.demdtln = doe041GridChecked[0].demdtln? doe041GridChecked[0].demdtln.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`) : '';
+
+ 			const option = document.createElement('option');
+			option.value = '';
+			option.text = '[[#{tm.doe058.choice}]]';
+
+			//모달 목적지 selectBox
+			const modalRegikeySelectBox = document.querySelector('#doe041MdRegikey');
+			modalRegikeySelectBox.innerHTML = '';
+			modalRegikeySelectBox.appendChild(option);
+
+			for(const regikey of window.regionList) {
+				const regikeyOption = document.createElement('option');
+				regikeyOption.value = regikey.combovl;
+				regikeyOption.text = regikey.combonm;
+				if(regikey.combovl === doe041GridChecked[0].regimod){
+					regikeyOption.selected = true;
+				}
+				modalRegikeySelectBox.appendChild(regikeyOption);
+			}
+
+			$('#doe041MdRegikey').pqSelect({
+				searchId: 'doe041MdRegikey',
+				search: true,
+				deselect: false,
+				width: '100%'
+			}).pqSelect('refreshData');
+
+			const response = await fetchUtil('GET','/sm/inventory/doe041/denamlc', {denamlc : doe041GridChecked[0].demodnm});
+
+			denamlcList = await response.json();
+
+			const modalDestkeySelectBox = document.querySelector('#doe041MdDestkey');
+			modalDestkeySelectBox.innerHTML = '';
+			modalDestkeySelectBox.appendChild(option);
+
+			for(const destkey of denamlcList) {
+				const destkeyOption = document.createElement('option');
+				destkeyOption.value = destkey.destkey;
+				destkeyOption.text = destkey.denamlc;
+				if(destkey.denamlc === doe041GridChecked[0].demodnm){
+					destkeyOption.selected = true;
+				}
+				modalDestkeySelectBox.appendChild(destkeyOption);
+			}
+
+ 			$('#doe041MdDestkey').pqSelect({
+				searchId: 'doe041MdDestkey',
+				search: true,
+				deselect: false,
+				width: '100%'
+			}).on('change', function(event) {
+				if(event.target.value === '') {
+					document.querySelector('#doe041Desteln').value = '';
+					document.querySelector('#doe041Demdman').value = '';
+					document.querySelector('#doe041Demdadr').value = '';
+					document.querySelector('#doe041Deposcd').value = '';
+					return false;
+				}else{
+					const findValue = denamlcList.find(function(data){
+						return data.denamlc === event.target.selectedOptions[0].text;
+					});
+					document.querySelector('#doe041MdDemodnm').value = findValue.denamlc ? findValue.denamlc : '';
+					document.querySelector('#doe041Desteln').value = findValue.desteln ? findValue.desteln.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`) : '';
+					document.querySelector('#doe041Demdman').value = findValue.demannm ? findValue.demannm : '';
+					document.querySelector('#doe041Demdadr').value = findValue.desaddr ? findValue.desaddr : '';
+					document.querySelector('#doe041Deposcd').value = findValue.deposcd ? findValue.deposcd : '';
+				}
+			}).pqSelect('refreshData').pqSelect({ deselect : false });
+		});
+
+		//모달 저장 이벤트
+		document.querySelector('#doe041ModalSave').addEventListener('click', async function() {
+			const doe041Grid = pq.grid('#doe041Grid');
+			const doe041GridChecked = doe041Grid.Checkbox('state').getCheckedNodes();
+
+			//validation
+			if(!doe041ModalSaveValidation()) {
+				return false;
+			}
+
+			const demodnm = document.querySelector('#doe041MdDemodnm').value;
+			const demdadr = document.querySelector('#doe041Demdadr').value;
+			const regimodObj = document.querySelector('#doe041MdRegikey');
+			const regimodText = regimodObj.options[regimodObj.selectedIndex].text;
+
+			const message = `[[#{ms.changeDestkeyConfirm}]]`;
+
+			const replaceMessage = message
+									.replace('{0}', demodnm)
+									.replace('{1}', demdadr)
+									.replace('{2}', regimodText);
+			if(!confirm(replaceMessage)) {
+				return false;
+			}
+
+
+			if(modalDemdadr !== demdadr){
+				document.querySelector('#doe041Deposcd').value = '';
+			}
+
+			const data = {
+					checkList: doe041GridChecked,
+					demdman: document.querySelector('#doe041Demdman').value,
+					demdtln: document.querySelector('#doe041Desteln').value,
+					dempocd: document.querySelector('#doe041Deposcd').value,
+					destmod: document.querySelector('#doe041MdDestkey').value,
+					demdadr: demdadr,
+					regimod: regimodObj.value,
+					demodnm: demodnm,
+			}
+
+			const response = await fetchUtil('PATCH', '/sm/inventory/doe041/modal/update', data);
+
+			if(response.status === 200) {
+				await getDoe041List();
+				modalDemdadr='';
+
+				//모달 닫기
+				modalHide(doe041Modal);
+			} else {
+				console.log(response);
+			}
+		});
+
+		//모달 저장 validation
+		function doe041ModalSaveValidation() {
+			 const requiredLabelFields = document.querySelectorAll('.modal-body.doe041 .ic-title-nece');
+
+			 for(const requiredLabelField of requiredLabelFields){
+					const requiredElement = requiredLabelField.control;
+
+					if(!requiredElement.value){
+						alert(requiredLabelField.textContent + ' [[#{ms.requiredValue}]]');
+						if(requiredElement.className === 'pq-select'){
+							$('#'+requiredElement.id).pqSelect('open');
+						}else{
+							requiredElement.focus();
+						}
+						return false;
+					}
+			}
+			return true;
+		}
+
+		//모달 닫기 이벤트
+		document.querySelector('#doe041ModalClose').addEventListener('click', function() {
+			modalHide(doe041Modal);
+		});
+
+		//모달 닫기 이벤트
+		document.querySelector('#doe041ModalCancel').addEventListener('click', function() {
+			modalHide(doe041Modal);
+		});
+
+		//모달 닫기 이벤트
+		function modalHide(modalObj) {
+			document.querySelectorAll('.modal-body input[id*="doe041"], .modal-body select[id*="doe041"]').forEach(function(select) {
+
+				if(select.localName === 'select'){
+					select.innerHTML = '';
+					$('#' + select.id).pqSelect('refreshData');
+				}else{
+					select.value = '';
+				}
+			});
+			modalDemdadr='';
+
+			modalObj.hide();
+			document.activeElement.blur()
+		}
+
+		async function initFunc(){
+
+			const relationList = await Promise.allSettled([
+				getReasonCodeRelationList(),
+				getVehicelRelationList(),
+				getAreaRelationList(),
+				getLocationRelationList(),
+				getDestinationRelationList(),
+				getBtrcateList()
+			]);
+
+			const dataList = [
+				{
+					listName: 'rsncodeRelationList'
+				}, {
+					listName: 'vehickyRelationList'
+				}, {
+					listName: 'areaRelationList'
+				}, {
+					listName: 'locationRelationList'
+				}, {
+					listName: 'destinationRelationList'
+			}, {
+					listName: 'btrcateList'
+			}];
+
+			for(let idx=0; idx < relationList.length; idx++){
+				const target = dataList[idx];
+				target['list'] = relationList[idx].value;
+			}
+
+			setPreloadDataOnWindow(dataList);
+			resetSearchConditions(pageId);
+		};
+
+		//조회버튼 클릭 시
+		document.querySelector('#doe041BtnSearch').addEventListener('click', function(){
+			getDoe041List();
+		});
+
+		//검색
+		async function getDoe041List(){
+			resetSkuCountHtml();
+			modalDemdadr='';
+			const grid = pq.grid('#doe041Grid');
+			const searchParams = document.querySelectorAll('input[id*="doe041"], select[id*="doe041"]');
+
+			const locakeyList = Array.from(document.querySelector('#doe041Locakey').selectedOptions, function(option){
+				return option.value;
+			});
+
+			const regikeyList = Array.from(document.querySelector('#doe041Regikey').selectedOptions, function(option){
+				return option.value;
+			});
+
+			const params = {};
+
+			//asnstat 및 doctype을 제외한 검색 조건 params.
+			for(const searchParam of searchParams) {
+				const key = searchParam.id.substring(6).toLowerCase();
+				params[key] = searchParam.value;
+			}
+
+			if(params.skumkey.trim() !== '') {
+				params.skumkeyList = params.skumkey.split(' ');
+			}
+
+			if(params.orderln.trim() !== '') {
+				params.orderlnList = params.orderln.split(' ');
+			}
+
+			params.locakeyList = locakeyList;
+			params.regikeyList = regikeyList;
+			doe041CurrentWarekey = params.warekey;
+			grid.showLoading();
+
+
+			const doe041Response = await fetchUtil('GET', '/sm/inventory/stock/grid', params);
+			if(doe041Response.status === 200) {
+				doe041StockList = await doe041Response.json();
+				grid.option('dataModel', { data: doe041StockList, recIndx: 'rowkey' });
+			}
+
+			grid.refreshDataAndView();
+			grid.hideLoading();
+		}
+
+		function resetSkuCountHtml(){
+			document.querySelector('#doe041Itemcnt').innerHTML = 0;
+			document.querySelector('#doe041TotalKg').innerHTML = 0;
+			document.querySelector('#doe041TotalTon').innerHTML = 0;
+		}
+
+		//초기화 버튼 클릭 시
+		document.querySelector('#doe041BtnReset').addEventListener('click', function(){
+			const grid = pq.grid('#' + pageId + 'Grid');
+			if(grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					return;
+				}
+			}
+			resetSearchConditions(pageId); //공통 초기화함수
+
+			makeEmptyGrid(doe041GridObject);
+
+			const areakeyFilter = areakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe041Warekey').value;
+			});
+			makeOptionAreakey(areakeyFilter);
+
+			const locakeyFilter = locakeyList.filter(e=> e.warekey === document.querySelector('#doe041Warekey').value && e.loctype === 'BED' || e.loctype === 'TMP');
+			makeOptionLocakey(locakeyFilter);
+
+			resetSkuCountHtml();
+
+			$('#doe041Regikey').val('').pqSelect('refreshData');
+
+		});
+
+		//창고동 검색조건 변경 시
+		document.querySelector('#doe041Areakey').addEventListener('change', function(event){
+			const areakeyAndlocakeyFilter = locakeyList.filter(e=>{
+				if(event.target.value){
+					return e.areakey === event.target.value && e.warekey === document.querySelector('#doe041Warekey').value && (e.loctype === 'BED' || e.loctype === 'TMP');
+				}
+				return e.warekey === document.querySelector('#doe041Warekey').value && (e.loctype === 'BED' || e.loctype === 'TMP');
+			});
+			makeOptionLocakey(areakeyAndlocakeyFilter);
+		});
+
+		async function makeOptionAreakey(filterList){
+			let html = '<option value ="">[[#{ms.chooseAll}]]</option>';
+			for(const areakeyData of filterList){
+				html += '<option value="'+ areakeyData?.areakey +'">'+ areakeyData?.areanam +'</option>';
+			}
+			document.querySelector('#doe041Areakey').innerHTML = html;
+		}
+
+
+		function makeOptionLocakey(filterList){
+			let html = '';
+			for(const locakeyData of filterList){
+				html += '<option value="'+ locakeyData.locakey +'">'+ locakeyData.locanam +'</option>';
+			}
+
+			document.querySelector('#doe041Locakey').innerHTML = html;
+			$('#doe041Locakey').val('').pqSelect('refreshData');
+		}
+
+		//선별지시(저장) 버튼 클릭
+		document.querySelector('#doe041BtnSave').addEventListener('click', function(){
+			saveDoe041();
+		});
+
+		async function saveDoe041(){
+			const grid = pq.grid('#doe041Grid');
+
+			const params = makeSaveData(grid);
+
+			if(!params){
+				return;
+			}
+
+			if(confirm('[[#{ms.checksave}]]')) {
+				grid.showLoading();
+
+				const rData = await fetchUtil('POST','/sm/inventory/doe041/save', params);
+
+				if(rData.status === 200){
+					await getDoe041List();
+					grid.refreshDataAndView();
+					resetSkuCountHtml();
+				}
+
+				grid.hideLoading();
+			}
+		}
+
+		//변경 모달 내 주소 input 클릭 이벤트
+		//카카오 주소 api
+		document.querySelector('#doe041DemdadrKakao').addEventListener('click', function(){
+
+			if(document.querySelector('#doe041MdDemodnm').value === '') {
+				alert('[[#{ms.firstSelectDestkey}]]');
+			}else {
+				new daum.Postcode({
+					//검색결과 선택시 이벤트
+					oncomplete : data => {
+						document.querySelector('#doe041Deposcd').value = data.zonecode;
+						document.querySelector('#doe041Demdadr').value = data.address;
+						modalDemdadr = data.address; // 변경 체크용
+					},
+					onclose : state => {
+						console.log(state)
+					}
+				}).open({
+					popupTitle: 'postcode'
+				});
+			}
+		});
+
+		//keyup
+		doe041KeyupEvt = async function (){
+			const key = this.event.key || this.event.keyCode;
+			if(key === 'Enter' || key === 13) {
+				await getDoe041List();
+			}
+		}
+
+		// 담당자 연락처 하이픈 추가 이벤트
+		document.querySelector('#doe041Desteln').addEventListener('input', function(event){
+			telValue = event.target.value;
+			event.target.value = telValue.replace(/[^0-9]/g, '').replace(/^(\d{2,3})(\d{3,4})(\d{4})$/, `$1-$2-$3`);
+		});
+
+		// 창고 변경시 자동조회
+		document.querySelector('#doe041Warekey').addEventListener('change', async function() {
+			const areakeyFilter = areakeyList.filter(e=>{
+				return e.warekey === document.querySelector('#doe041Warekey').value;
+			});
+			makeOptionAreakey(areakeyFilter);
+			const locakeyFilter = locakeyList.filter(e=> e.warekey === document.querySelector('#doe041Warekey').value && (e.loctype === 'BED' || e.loctype === 'TMP'));
+			makeOptionLocakey(locakeyFilter);
+
+			const grid = pq.grid('#doe041Grid');
+			if(doe041CurrentWarekey && grid.pdata.length > 0){
+				if (!confirm('[[#{ms.listViewRollback}]]')) {
+					this.value = doe041CurrentWarekey;
+					return;
+				}
+			}
+			makeEmptyGrid(doe041GridObject);
+			await getDoe041List();
+		});
+	}();
+	</script>
+</div>
+</html>
